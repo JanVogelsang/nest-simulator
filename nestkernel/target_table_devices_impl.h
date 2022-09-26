@@ -64,6 +64,7 @@ nest::TargetTableDevices::add_connection_from_device( Node& source,
   assert( ldid < target_from_devices_[ tid ].size() );
   assert( syn_id < target_from_devices_[ tid ][ ldid ].size() );
 
+  // JV: Is there anything that has to be changed for devices?
   kernel()
     .model_manager.get_connection_model( syn_id, tid )
     .add_connection( source, target, target_from_devices_[ tid ][ ldid ], syn_id, p, d, w );

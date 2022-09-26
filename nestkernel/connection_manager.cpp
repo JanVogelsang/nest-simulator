@@ -767,6 +767,7 @@ nest::ConnectionManager::connect_( Node& s,
       "connection." );
   }
 
+  // JV: Create the synapse in the target neuron instead of in this singleton. Is it enough to change the "hetconn" reference?
   kernel()
     .model_manager.get_connection_model( syn_id, tid )
     .add_connection( s, r, connections_[ tid ], syn_id, params, delay, weight );
@@ -852,6 +853,7 @@ nest::ConnectionManager::find_connection( const thread tid,
     return invalid_index;
   }
 
+  // JV: Rethink the ConnectorBase system
   // lcid will hold the position of the /first/ connection from node
   // snode_id to node tnode_id, or be invalid
   lcid = connections_[ tid ][ syn_id ]->find_first_target( tid, lcid, tnode_id );
@@ -879,6 +881,7 @@ nest::ConnectionManager::disconnect( const thread tid,
     throw InexistentConnection();
   }
 
+  // JV: Does disabling equal deletion of a synapse?
   connections_[ tid ][ syn_id ]->disable_connection( lcid );
   source_table_.disable_connection( tid, syn_id, lcid );
 

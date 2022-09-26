@@ -112,7 +112,7 @@ EventDeliveryManager::send_remote( thread tid, SpikeEvent& e, const long lag )
     const thread assigned_tid = ( *it ).get_rank() / kernel().vp_manager.get_num_assigned_ranks_per_thread();
 
     // Unroll spike multiplicity as plastic synapses only handle individual spikes.
-    for ( int i = 0; i < e.get_multiplicity(); ++i )
+    for ( int i = 0; i < e.get_multiplicity(); ++i )  // JV: Why unroll before communication?
     {
       spike_register_[ tid ][ assigned_tid ][ lag ].push_back( *it );
     }

@@ -70,6 +70,7 @@ ArchivingNode::register_stdp_connection( double t_first_read, double delay )
   // connections afterwards without leaving spikes in the history.
   // For details see bug #218. MH 08-04-22
 
+  // JV: Remove this block
   for ( std::deque< histentry >::iterator runner = history_.begin();
         runner != history_.end() and ( t_first_read - runner->t_ > -1.0 * kernel().connection_manager.get_stdp_eps() );
         ++runner )
@@ -82,6 +83,7 @@ ArchivingNode::register_stdp_connection( double t_first_read, double delay )
   max_delay_ = std::max( delay, max_delay_ );
 }
 
+// JV: Reduce this to a simple getter
 double
 nest::ArchivingNode::get_K_value( double t )
 {
@@ -111,6 +113,7 @@ nest::ArchivingNode::get_K_value( double t )
   return trace_;
 }
 
+// JV: Reduce this to a simple getter
 void
 nest::ArchivingNode::get_K_values( double t,
   double& K_value,
@@ -149,6 +152,7 @@ nest::ArchivingNode::get_K_values( double t,
   K_value = 0.0;
 }
 
+// JV: Remove this method
 void
 nest::ArchivingNode::get_history( double t1,
   double t2,
@@ -184,7 +188,7 @@ nest::ArchivingNode::set_spiketime( Time const& t_sp, double offset )
 
   const double t_sp_ms = t_sp.get_ms() - offset;
 
-  if ( n_incoming_ )
+  if ( n_incoming_ )  // JV: Remove this whole block, but still update the K value
   {
     // prune all spikes from history which are no longer needed
     // only remove a spike if:
@@ -206,15 +210,14 @@ nest::ArchivingNode::set_spiketime( Time const& t_sp, double offset )
       }
     }
     // update spiking history
-    Kminus_ = Kminus_ * std::exp( ( last_spike_ - t_sp_ms ) * tau_minus_inv_ ) + 1.0;
-    Kminus_triplet_ = Kminus_triplet_ * std::exp( ( last_spike_ - t_sp_ms ) * tau_minus_triplet_inv_ ) + 1.0;
-    last_spike_ = t_sp_ms;
-    history_.push_back( histentry( last_spike_, Kminus_, Kminus_triplet_, 0 ) );
+    Kminus_ *= std::exp( ( last_spike_ - t_sp_ms ) * tau_minus_inv_ ) + 1.0;
+    Kminus_triplet_ *= std::exp( ( last_spike_ - t_sp_ms ) * tau_minus_triplet_inv_ ) + 1.0;
+    history_.push_back( histentry( t_sp_ms, Kminus_, Kminus_triplet_, 0 ) );
   }
-  else
-  {
-    last_spike_ = t_sp_ms;
-  }
+
+  // Here we loop over all incoming synapses (though maybe not in ArchivingNode, but in a parent) and update the weights
+
+  last_spike_ = t_sp_ms;
 }
 
 void
