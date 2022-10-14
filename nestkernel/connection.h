@@ -160,6 +160,17 @@ public:
   void calibrate( const TimeConverter& );
 
   /**
+   * Framework for STDP with predominantly axonal delays:
+   * Correct this synapse and the corresponding presiously sent spike
+   * taking into account a new post-synaptic spike.
+   */
+  void correct_synapse_stdp_ax_delay( const thread tid,
+    const double t_last_pre_spike,
+    double* weight_revert,
+    const double t_post_spike,
+    const CommonSynapseProperties& );
+
+  /**
    * Return the delay of the connection in ms
    */
   double
@@ -381,6 +392,17 @@ Connection< targetidentifierT >::calibrate( const TimeConverter& tc )
   {
     syn_id_delay_.delay = 1;
   }
+}
+
+template < typename targetidentifierT >
+inline void
+Connection< targetidentifierT >::correct_synapse_stdp_ax_delay( const thread,
+  const double,
+  double*,
+  const double,
+  const CommonSynapseProperties& )
+{
+  throw IllegalConnection( "Connection does not support correction in case of STDP with predominantly axonal delays." );
 }
 
 template < typename targetidentifierT >

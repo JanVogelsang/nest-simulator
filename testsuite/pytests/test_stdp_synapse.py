@@ -64,7 +64,7 @@ class TestSTDPSynapse:
             "weight": self.init_weight
         }
         self.neuron_parameters = {
-            "tau_minus": self.tau_post,
+            "tau_minus": self.tau_post
         }
 
         # While the random sequences, fairly long, would supposedly

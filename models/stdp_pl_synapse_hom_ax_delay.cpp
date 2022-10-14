@@ -1,5 +1,5 @@
 /*
- *  stdp_pl_synapse_hom.cpp
+ *  stdp_pl_synapse_hom_ax_delay.cpp
  *
  *  This file is part of NEST.
  *
@@ -20,7 +20,7 @@
  *
  */
 
-#include "stdp_pl_synapse_hom.h"
+#include "stdp_pl_synapse_hom_ax_delay.h"
 
 // Includes from nestkernel:
 #include "common_synapse_properties.h"
@@ -35,10 +35,10 @@ namespace nest
 {
 
 //
-// Implementation of class STDPPLHomCommonProperties.
+// Implementation of class STDPPLHomAxDelayCommonProperties.
 //
 
-STDPPLHomCommonProperties::STDPPLHomCommonProperties()
+STDPPLHomAxDelayCommonProperties::STDPPLHomAxDelayCommonProperties()
   : CommonSynapseProperties()
   , tau_plus_( 20.0 )
   , tau_plus_inv_( 1. / tau_plus_ )
@@ -50,7 +50,7 @@ STDPPLHomCommonProperties::STDPPLHomCommonProperties()
 }
 
 void
-STDPPLHomCommonProperties::get_status( DictionaryDatum& d ) const
+STDPPLHomAxDelayCommonProperties::get_status( DictionaryDatum& d ) const
 {
   CommonSynapseProperties::get_status( d );
 
@@ -62,7 +62,7 @@ STDPPLHomCommonProperties::get_status( DictionaryDatum& d ) const
 }
 
 void
-STDPPLHomCommonProperties::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+STDPPLHomAxDelayCommonProperties::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 {
   CommonSynapseProperties::set_status( d, cm );
 

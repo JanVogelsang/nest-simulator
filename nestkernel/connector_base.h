@@ -157,6 +157,11 @@ public:
    */
   virtual index send( const thread tid, const index lcid, const std::vector< ConnectorModel* >& cm, Event& e ) = 0;
 
+  virtual void correct_synapse_stdp_ax_delay( const SpikeData& spike_data,
+    const double t_last_pre_spike,
+    double* weight_revert,
+    const double t_post_spike ) = 0;
+
   virtual void
   send_weight_event( const thread tid, const unsigned int lcid, Event& e, const CommonSynapseProperties& cp ) = 0;
 
@@ -410,6 +415,11 @@ public:
 
     return 1 + lcid_offset; // event was delivered to at least one target
   }
+
+  void correct_synapse_stdp_ax_delay( const SpikeData& spike_data,
+    const double t_last_pre_spike,
+    double* weight_revert,
+    const double t_post_spike );
 
   // Implemented in connector_base_impl.h
   void
