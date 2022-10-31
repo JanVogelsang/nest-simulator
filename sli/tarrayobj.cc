@@ -53,7 +53,7 @@ TokenArrayObj::TokenArrayObj( const TokenArrayObj& a )
   , alloc_block_size( ARRAY_ALLOC_SIZE )
   , refs_( 1 )
 {
-  if ( a.p != nullptr )
+  if ( a.p )
   {
     resize( a.size(), a.alloc_block_size, Token() );
     Token* from = a.p;
@@ -102,7 +102,7 @@ TokenArrayObj::allocate( size_t new_s, size_t new_c, size_t new_a, const Token& 
   end_of_free_storage = h + new_c; // [,) convention
   begin_of_free_storage = h + new_s;
 
-  if ( p != nullptr )
+  if ( p )
   {
 
     size_t min_l;
@@ -133,7 +133,7 @@ TokenArrayObj::resize( size_t s, size_t alloc, const Token& t )
 {
   alloc_block_size = ( alloc == 0 ) ? alloc_block_size : alloc;
 
-  if ( ( s != size() && ( s != 0 ) ) || ( size() == 0 && alloc_block_size != 0 ) )
+  if ( ( s != size() and ( s != 0 ) ) or ( size() == 0 and alloc_block_size != 0 ) )
   {
     allocate( s, s + alloc_block_size, alloc_block_size, t );
   }
@@ -170,7 +170,7 @@ TokenArrayObj::operator=( const TokenArrayObj& a )
   else
   {
 
-    if ( p != nullptr )
+    if ( p )
     {
       delete[] p;
       p = nullptr;
@@ -240,7 +240,7 @@ TokenArrayObj::rotate( Token* first, Token* middle, Token* last )
 {
 
   // This algorithm is taken from the HP STL implementation.
-  if ( ( first < middle ) && ( middle < last ) )
+  if ( first < middle and middle < last )
   {
     for ( Token* i = middle;; )
     {
@@ -617,21 +617,10 @@ TokenArrayObj::append_move( TokenArrayObj& a )
 bool
 TokenArrayObj::operator==( const TokenArrayObj& a ) const
 {
-
-  // std::cout << "comparison of TokenArrayObj" << std::endl;
-  // std::cout << "p:   " << p << std::endl;
-  // std::cout << "a.p: " << a.p << std::endl;
-
   if ( p == a.p )
   {
     return true;
   }
-
-  // experimentally replaced by line below 090120, Diesmann
-  // because [] cvx has non NULL p
-  //
-  //    if( p == NULL || a.p == NULL || size() != a.size())
-  //    return false;
 
   if ( size() != a.size() )
   {
@@ -662,19 +651,19 @@ TokenArrayObj::info( std::ostream& out ) const
 bool
 TokenArrayObj::valid() const
 {
-  if ( p == nullptr )
+  if ( not p )
   {
     std::cerr << "TokenArrayObj::valid: Data pointer missing!" << std::endl;
     return false;
   }
 
-  if ( begin_of_free_storage == nullptr )
+  if ( not begin_of_free_storage )
   {
     std::cerr << "TokenArrayObj::valid: begin of free storage pointer missing!" << std::endl;
     return false;
   }
 
-  if ( end_of_free_storage == nullptr )
+  if ( not end_of_free_storage )
   {
     std::cerr << "TokenArrayObj::valid: end of free storage pointer missing!" << std::endl;
     return false;

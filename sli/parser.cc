@@ -26,14 +26,11 @@
 
 #include "parser.h"
 
-// Generated includes:
-#include "config.h"
 
 // Includes from sli:
 #include "arraydatum.h"
 #include "namedatum.h"
 #include "scanner.h"
-#include "symboldatum.h"
 
 /*****************************************************************/
 /* parse                                                         */
@@ -60,7 +57,7 @@ Parser::Parser( std::istream& is )
   , ParseStack( 128 )
 {
   init( is );
-  assert( s != nullptr );
+  assert( s );
 }
 
 Parser::Parser()
@@ -68,14 +65,14 @@ Parser::Parser()
   , ParseStack( 128 )
 {
   init( std::cin );
-  assert( s != nullptr );
+  assert( s );
 }
 
 
 bool
 Parser::operator()( Token& t )
 {
-  assert( s != nullptr );
+  assert( s );
 
   Token pt;
 
@@ -158,13 +155,13 @@ Parser::operator()( Token& t )
           if ( pt->isoftype( SLIInterpreter::Arraytype ) )
           {
             ArrayDatum* pa = dynamic_cast< ArrayDatum* >( pt.datum() );
-            assert( pa != nullptr );
+            assert( pa );
             pa->push_back( t );
           }
           else // now it must be a procedure
           {
             LitprocedureDatum* pp = dynamic_cast< LitprocedureDatum* >( pt.datum() );
-            assert( pp != nullptr );
+            assert( pp );
             pp->set_executable();
             pp->push_back( t );
           }
@@ -180,7 +177,7 @@ Parser::operator()( Token& t )
     } // if(ok)
     //      else std::cerr << "<Scanner> : unable to scan input, Result:" << ok
     //      << '\n';
-  } while ( ( result == tokencontinue ) || ( result == scancontinue ) );
+  } while ( result == tokencontinue or result == scancontinue );
 
   if ( result != tokencompleted )
   {

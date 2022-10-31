@@ -24,7 +24,6 @@
 
 // C++ includes:
 #include <iostream>
-#include <sstream>
 
 // Includes from libnestutil:
 #include "logging.h"
@@ -56,7 +55,6 @@
 #include "arraydatum.h"
 #include "booldatum.h"
 #include "doubledatum.h"
-#include "integerdatum.h"
 #include "interpret.h"
 #include "sliexceptions.h"
 #include "stringdatum.h"
@@ -125,6 +123,13 @@ NestModule::create_parameter( const Token& t )
     return new ConstantParameter( *dd );
   }
 
+  // If t is a IntegerDatum, create a ConstantParameter with this value
+  IntegerDatum* id = dynamic_cast< IntegerDatum* >( t.datum() );
+  if ( id )
+  {
+    return new ConstantParameter( static_cast< double >( *id ) );
+  }
+
   DictionaryDatum* dictd = dynamic_cast< DictionaryDatum* >( t.datum() );
   if ( dictd )
   {
@@ -184,7 +189,7 @@ NestModule::create_mask( const Token& t )
   {
 
     DictionaryDatum* dd = dynamic_cast< DictionaryDatum* >( t.datum() );
-    if ( dd == nullptr )
+    if ( not dd )
     {
       throw BadProperty( "Mask must be masktype or dictionary." );
     }
@@ -209,7 +214,7 @@ NestModule::create_mask( const Token& t )
       else
       {
 
-        if ( mask != nullptr )
+        if ( mask )
         { // mask has already been defined
           throw BadProperty( "Mask definition dictionary contains extraneous items." );
         }

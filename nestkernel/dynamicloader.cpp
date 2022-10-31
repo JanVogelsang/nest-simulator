@@ -93,7 +93,8 @@ DynamicLoaderModule::getLinkedModules()
   the following SLI datastructures: Name, Dictionary.
 */
 DynamicLoaderModule::DynamicLoaderModule( SLIInterpreter& interpreter )
-  : loadmodule_function( dyn_modules )
+  : dyn_modules()
+  , loadmodule_function( dyn_modules )
 {
   interpreter.def( "moduledict", new DictionaryDatum( moduledict_ ) );
 }
@@ -103,7 +104,7 @@ DynamicLoaderModule::~DynamicLoaderModule()
   // unload all loaded modules
   for ( vecDynModules::iterator it = dyn_modules.begin(); it != dyn_modules.end(); ++it )
   {
-    if ( it->handle != nullptr )
+    if ( it->handle )
     {
       lt_dlclose( it->handle );
       it->handle = nullptr;
@@ -284,7 +285,7 @@ DynamicLoaderModule::init( SLIInterpreter* i )
 int
 DynamicLoaderModule::registerLinkedModule( SLIModule* pModule )
 {
-  assert( pModule != nullptr );
+  assert( pModule );
   getLinkedModules().push_back( pModule );
   return getLinkedModules().size();
 }
