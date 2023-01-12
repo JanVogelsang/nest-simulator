@@ -186,8 +186,8 @@ private:
   void update( Time const&, const long, const long ) override;
 
   // The next two classes need to be friends to access the State_ class/member
-  friend class RecordablesMap< iaf_psc_alpha >;
-  friend class UniversalDataLogger< iaf_psc_alpha >;
+  friend class RecordablesMap< iaf_psc_alpha_ax_delay >;
+  friend class UniversalDataLogger< iaf_psc_alpha_ax_delay >;
 
   // ----------------------------------------------------------------
 
