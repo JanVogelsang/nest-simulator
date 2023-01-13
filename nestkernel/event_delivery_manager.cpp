@@ -139,6 +139,10 @@ EventDeliveryManager::get_status( DictionaryDatum& dict )
   def< double >( dict, names::time_communicate_spike_data, sw_communicate_spike_data_.elapsed() );
   def< double >( dict, names::time_deliver_spike_data, sw_deliver_spike_data_.elapsed() );
   def< double >( dict, names::time_communicate_target_data, sw_communicate_target_data_.elapsed() );
+  def< double >( dict, names::time_collocate_spike_data, sw_archiving_get_k_value.elapsed() );
+  def< double >( dict, names::time_communicate_spike_data, sw_archiving_get_k_values.elapsed() );
+  def< double >( dict, names::time_deliver_spike_data, sw_archiving_get_history.elapsed() );
+  def< double >( dict, names::time_communicate_target_data, sw_archiving_set_spiketime.elapsed() );
 #endif
 }
 
@@ -286,6 +290,10 @@ EventDeliveryManager::reset_timers_for_dynamics()
   sw_collocate_spike_data_.reset();
   sw_communicate_spike_data_.reset();
   sw_deliver_spike_data_.reset();
+  sw_archiving_get_k_value.reset();
+  sw_archiving_get_k_values.reset();
+  sw_archiving_get_history.reset();
+  sw_archiving_set_spiketime.reset();
 #endif
 }
 

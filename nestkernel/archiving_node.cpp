@@ -85,6 +85,14 @@ ArchivingNode::register_stdp_connection( double t_first_read, double delay )
 double
 nest::ArchivingNode::get_K_value( double t )
 {
+#ifdef TIMER_DETAILED
+  if ( kernel().vp_manager.get_thread_id() == 0 )
+  {
+    kernel().event_delivery_manager.sw_archiving_get_k_value.start();
+  }
+#endif
+
+
   // case when the neuron has not yet spiked
   if ( history_.empty() )
   {
@@ -108,6 +116,14 @@ nest::ArchivingNode::get_K_value( double t )
   // this case occurs when the trace was requested at a time precisely at or
   // before the first spike in the history
   trace_ = 0.;
+
+#ifdef TIMER_DETAILED
+  if ( kernel().vp_manager.get_thread_id() == 0 )
+  {
+    kernel().event_delivery_manager.sw_archiving_get_k_value.stop();
+  }
+#endif
+
   return trace_;
 }
 
@@ -117,6 +133,13 @@ nest::ArchivingNode::get_K_values( double t,
   double& nearest_neighbor_K_value,
   double& K_triplet_value )
 {
+#ifdef TIMER_DETAILED
+  if ( kernel().vp_manager.get_thread_id() == 0 )
+  {
+    kernel().event_delivery_manager.sw_archiving_get_k_values.start();
+  }
+#endif
+
   // case when the neuron has not yet spiked
   if ( history_.empty() )
   {
@@ -147,6 +170,13 @@ nest::ArchivingNode::get_K_values( double t,
   K_triplet_value = 0.0;
   nearest_neighbor_K_value = 0.0;
   K_value = 0.0;
+
+#ifdef TIMER_DETAILED
+  if ( kernel().vp_manager.get_thread_id() == 0 )
+  {
+    kernel().event_delivery_manager.sw_archiving_get_k_values.stop();
+  }
+#endif
 }
 
 void
@@ -155,6 +185,13 @@ nest::ArchivingNode::get_history( double t1,
   std::deque< histentry >::iterator* start,
   std::deque< histentry >::iterator* finish )
 {
+#ifdef TIMER_DETAILED
+  if ( kernel().vp_manager.get_thread_id() == 0 )
+  {
+    kernel().event_delivery_manager.sw_archiving_get_history.start();
+  }
+#endif
+
   *finish = history_.end();
   if ( history_.empty() )
   {
@@ -175,6 +212,13 @@ nest::ArchivingNode::get_history( double t1,
     ++runner;
   }
   *start = runner.base();
+
+#ifdef TIMER_DETAILED
+  if ( kernel().vp_manager.get_thread_id() == 0 )
+  {
+    kernel().event_delivery_manager.sw_archiving_get_history.start();
+  }
+#endif
 }
 
 void
@@ -182,6 +226,12 @@ nest::ArchivingNode::set_spiketime( Time const& t_sp, double offset )
 {
   StructuralPlasticityNode::set_spiketime( t_sp, offset );
 
+#ifdef TIMER_DETAILED
+  if ( kernel().vp_manager.get_thread_id() == 0 )
+  {
+    kernel().event_delivery_manager.sw_archiving_set_spiketime.stop();
+  }
+#endif
   const double t_sp_ms = t_sp.get_ms() - offset;
 
   if ( n_incoming_ )
@@ -215,6 +265,13 @@ nest::ArchivingNode::set_spiketime( Time const& t_sp, double offset )
   {
     last_spike_ = t_sp_ms;
   }
+
+#ifdef TIMER_DETAILED
+  if ( kernel().vp_manager.get_thread_id() == 0 )
+  {
+    kernel().event_delivery_manager.sw_archiving_set_spiketime.stop();
+  }
+#endif
 }
 
 void

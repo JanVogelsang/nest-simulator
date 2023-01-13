@@ -57,6 +57,13 @@ class SendBufferPosition;
 class EventDeliveryManager : public ManagerInterface
 {
 public:
+#ifdef TIMER_DETAILED
+  Stopwatch sw_archiving_get_k_value;
+  Stopwatch sw_archiving_get_k_values;
+  Stopwatch sw_archiving_get_history;
+  Stopwatch sw_archiving_set_spiketime;
+#endif
+
   EventDeliveryManager();
   ~EventDeliveryManager() override;
 
