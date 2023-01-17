@@ -309,7 +309,7 @@ protected:
   void check_connection_( Node& dummy_target, Node& source, Node& target, const rport receptor_type );
 
   /* the order of the members below is critical
-     as it influcences the size of the object. Please leave unchanged
+     as it influences the size of the object. Please leave unchanged
      as
      targetidentifierT target_;
      SynIdDelay syn_id_delay_;        //!< syn_id (char) and delay (24 bit) in

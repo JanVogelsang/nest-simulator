@@ -406,15 +406,13 @@ private:
   std::vector< std::vector< std::vector< std::vector< OffGridTarget > > > > off_grid_emitted_spike_register_;
 
   /**
-   * Buffer to collect the secondary events
-   * after serialization.
+   * Buffer to collect the secondary events after serialization.
    */
   std::vector< unsigned int > send_buffer_secondary_events_;
   std::vector< unsigned int > recv_buffer_secondary_events_;
 
   /**
-   * Number of generated spike events (both off- and on-grid) during the last
-   * call to simulate.
+   * Number of generated spike events (both off- and on-grid) during the last call to simulate.
    */
   std::vector< unsigned long > local_spike_counter_;
 
