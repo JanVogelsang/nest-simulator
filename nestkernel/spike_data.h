@@ -42,8 +42,7 @@ enum enum_status_spike_data_id
 };
 
 /**
- * Used to communicate spikes. These are the elements of the MPI
- * buffers.
+ * Used to communicate spikes. These are the elements of the MPI buffers.
  *
  * @see TargetData
  */
@@ -52,28 +51,43 @@ class SpikeData
 protected:
   static constexpr int MAX_LAG = generate_max_value( NUM_BITS_LAG );
 
-  index lcid_ : NUM_BITS_LCID;                       //!< local connection index
-  unsigned int marker_ : NUM_BITS_MARKER_SPIKE_DATA; //!< status flag
-  unsigned int lag_ : NUM_BITS_LAG;                  //!< lag in this min-delay interval
-  unsigned int tid_ : NUM_BITS_TID;                  //!< thread index
-  synindex syn_id_ : NUM_BITS_SYN_ID;                //!< synapse-type index
+  index local_target_node_id_ : NUM_BITS_LOCAL_NODE_ID;             //!< thread-local neuron index
+  index local_target_connection_id_ : NUM_BITS_LOCAL_CONNECTION_ID; //!< node-local connection index
+  unsigned int marker_ : NUM_BITS_MARKER_SPIKE_DATA;                //!< status flag
+  unsigned int lag_ : NUM_BITS_LAG;                                 //!< lag in this min-delay interval
+  unsigned int tid_ : NUM_BITS_TID;                                 //!< thread index
+  synindex syn_id_ : NUM_BITS_SYN_ID;                               //!< synapse-type index
 
 public:
   SpikeData();
   SpikeData( const SpikeData& rhs );
-  SpikeData( const thread tid, const synindex syn_id, const index lcid, const unsigned int lag );
+  SpikeData( const thread tid,
+    const synindex syn_id,
+    const index local_target_node_id,
+    const index local_target_connection_id,
+    const unsigned int lag );
 
   SpikeData& operator=( const SpikeData& rhs );
 
-  void set( const thread tid, const synindex syn_id, const index lcid, const unsigned int lag, const double offset );
+  void set( const thread tid,
+    const synindex syn_id,
+    const index local_target_node_id,
+    const index local_target_connection_id,
+    const unsigned int lag,
+    const double offset );
 
   template < class TargetT >
   void set( const TargetT& target, const unsigned int lag );
 
   /**
-   * Returns local connection ID.
+   * Returns thread-local target neuron ID.
    */
-  index get_lcid() const;
+  index get_local_target_node_id() const;
+
+  /**
+   * Returns node-local target connection ID.
+   */
+  index get_local_target_connection_id() const;
 
   /**
    * Returns lag in min-delay interval.
@@ -135,7 +149,8 @@ public:
 using success_spike_data_size = StaticAssert< sizeof( SpikeData ) == 8 >::success;
 
 inline SpikeData::SpikeData()
-  : lcid_( 0 )
+  : local_target_node_id_( 0 )
+  , local_target_connection_id_( 0 )
   , marker_( SPIKE_DATA_ID_DEFAULT )
   , lag_( 0 )
   , tid_( 0 )
@@ -144,7 +159,8 @@ inline SpikeData::SpikeData()
 }
 
 inline SpikeData::SpikeData( const SpikeData& rhs )
-  : lcid_( rhs.lcid_ )
+  : local_target_node_id_( rhs.local_target_node_id_ )
+  , local_target_connection_id_( rhs.local_target_connection_id_ )
   , marker_( SPIKE_DATA_ID_DEFAULT )
   , lag_( rhs.lag_ )
   , tid_( rhs.tid_ )
@@ -152,8 +168,13 @@ inline SpikeData::SpikeData( const SpikeData& rhs )
 {
 }
 
-inline SpikeData::SpikeData( const thread tid, const synindex syn_id, const index lcid, const unsigned int lag )
-  : lcid_( lcid )
+inline SpikeData::SpikeData( const thread tid,
+  const synindex syn_id,
+  const index local_target_node_id,
+  const index local_target_connection_id,
+  const unsigned int lag )
+  : local_target_node_id_( local_target_node_id )
+  , local_target_connection_id_( local_target_connection_id )
   , marker_( SPIKE_DATA_ID_DEFAULT )
   , lag_( lag )
   , tid_( tid )
@@ -164,7 +185,8 @@ inline SpikeData::SpikeData( const thread tid, const synindex syn_id, const inde
 inline SpikeData&
 SpikeData::operator=( const SpikeData& rhs )
 {
-  lcid_ = rhs.lcid_;
+  local_target_node_id_ = rhs.local_target_node_id_;
+  local_target_connection_id_ = rhs.local_target_connection_id_;
   marker_ = SPIKE_DATA_ID_DEFAULT;
   lag_ = rhs.lag_;
   tid_ = rhs.tid_;
@@ -173,15 +195,22 @@ SpikeData::operator=( const SpikeData& rhs )
 }
 
 inline void
-SpikeData::set( const thread tid, const synindex syn_id, const index lcid, const unsigned int lag, const double )
+SpikeData::set( const thread tid,
+  const synindex syn_id,
+  const index local_target_node_id,
+  const index local_target_connection_id,
+  const unsigned int lag,
+  const double )
 {
   assert( 0 <= tid );
   assert( tid <= MAX_TID );
   assert( syn_id <= MAX_SYN_ID );
-  assert( lcid <= MAX_LCID );
+  assert( local_target_node_id <= MAX_LOCAL_NODE_ID );
+  assert( local_target_connection_id <= MAX_LOCAL_CONNECTION_ID );
   assert( lag < MAX_LAG );
 
-  lcid_ = lcid;
+  local_target_node_id_ = local_target_node_id;
+  local_target_connection_id_ = local_target_connection_id;
   marker_ = SPIKE_DATA_ID_DEFAULT;
   lag_ = lag;
   tid_ = tid;
@@ -195,7 +224,8 @@ SpikeData::set( const TargetT& target, const unsigned int lag )
 {
   // the assertions in the above function are granted by the TargetT object!
   assert( lag < MAX_LAG );
-  lcid_ = target.get_lcid();
+  local_target_node_id_ = target.get_local_target_node_id();
+  local_target_connection_id_ = target.get_local_target_connection_id();
   marker_ = SPIKE_DATA_ID_DEFAULT;
   lag_ = lag;
   tid_ = target.get_tid();
@@ -203,9 +233,15 @@ SpikeData::set( const TargetT& target, const unsigned int lag )
 }
 
 inline index
-SpikeData::get_lcid() const
+SpikeData::get_local_target_node_id() const
 {
-  return lcid_;
+  return local_target_node_id_;
+}
+
+inline index
+SpikeData::get_local_target_connection_id() const
+{
+  return local_target_connection_id_;
 }
 
 inline unsigned int
@@ -283,10 +319,16 @@ public:
   OffGridSpikeData();
   OffGridSpikeData( const thread tid,
     const synindex syn_id,
-    const index lcid,
+    const index local_target_node_id,
+    const index local_target_connection_id,
     const unsigned int lag,
     const double offset );
-  void set( const thread tid, const synindex syn_id, const index lcid, const unsigned int lag, const double offset );
+  void set( const thread tid,
+    const synindex syn_id,
+    const index local_target_node_id,
+    const index local_target_connection_id,
+    const unsigned int lag,
+    const double offset );
 
   template < class TargetT >
   void set( const TargetT& target, const unsigned int lag );
@@ -304,10 +346,11 @@ inline OffGridSpikeData::OffGridSpikeData()
 
 inline OffGridSpikeData::OffGridSpikeData( const thread tid,
   const synindex syn_id,
-  const index lcid,
+  const index local_target_node_id,
+  const index local_target_connection_id,
   const unsigned int lag,
   const double offset )
-  : SpikeData( tid, syn_id, lcid, lag )
+  : SpikeData( tid, syn_id, local_target_node_id, local_target_connection_id, lag )
   , offset_( offset )
 {
 }
@@ -316,16 +359,19 @@ inline OffGridSpikeData::OffGridSpikeData( const thread tid,
 inline void
 OffGridSpikeData::set( const thread tid,
   const synindex syn_id,
-  const index lcid,
+  const index local_target_node_id,
+  const index local_target_connection_id,
   const unsigned int lag,
   const double offset )
 {
   assert( tid <= MAX_TID );
   assert( syn_id <= MAX_SYN_ID );
-  assert( lcid <= MAX_LCID );
+  assert( local_target_node_id <= MAX_LOCAL_NODE_ID );
+  assert( local_target_connection_id <= MAX_LOCAL_CONNECTION_ID );
   assert( lag < MAX_LAG );
 
-  lcid_ = lcid;
+  local_target_node_id_ = local_target_node_id;
+  local_target_connection_id_ = local_target_connection_id;
   marker_ = SPIKE_DATA_ID_DEFAULT;
   lag_ = lag;
   tid_ = tid;

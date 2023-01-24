@@ -28,6 +28,7 @@
 #include <deque>
 
 // Includes from nestkernel:
+#include "connector_model.h"
 #include "histentry.h"
 #include "nest_time.h"
 #include "nest_types.h"
@@ -125,6 +126,27 @@ public:
    */
   void register_stdp_connection( double t_first_read, double delay ) override;
 
+  /**
+   * Postponed delivery is required for STDP synapses with predominantly axonal delay. The archiving node supports this
+   * feature by utilizing an intermediate spike buffer.
+   */
+  inline virtual bool
+  supports_postponed_delivery() const
+  {
+    return false;
+  }
+
+  // TODO JV
+  /**
+   * When receiving an incoming event, forward it to the corresponding connection and handle the event updated by the
+   * connection.
+   */
+  virtual void deliver_event( const thread tid,
+    const synindex syn_id,
+    const index local_target_connection_id,
+    const std::vector< ConnectorModel* >& cm,
+    SpikeEvent& se ) override;
+
   void get_status( DictionaryDatum& d ) const override;
   void set_status( const DictionaryDatum& d ) override;
 
@@ -188,6 +210,15 @@ private:
 
   // spiking history needed by stdp synapses
   std::deque< histentry > history_;
+
+  /**
+   * Data structure to store incoming spikes sent over STDP synapses with predominantly axonal delay. If at time of
+   * delivery there might occur any post-synaptic spike that reaches the synapse before the pre-synaptic spike
+   * (i.e., after the dendritic delay), the pre-synaptic spike has to be buffered until no more critical post-synaptic
+   * spike can occur.
+   * Arranged in a 2d structure: X|X
+   */
+  // std::vector <  > intermediate_spike_buffer_;
 
   /**
    * Framework for STDP with predominantly axonal delays:

@@ -99,7 +99,7 @@ set ( nestkernel_sources
       target.h target_data.h static_assert.h
       send_buffer_position.h
       source.h
-      source_table.h source_table.cpp
+        source_manager.h source_manager.cpp
       source_table_position.h
       spike_data.h
       structural_plasticity_node.h structural_plasticity_node.cpp

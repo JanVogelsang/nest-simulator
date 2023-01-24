@@ -36,7 +36,8 @@ namespace nest
 class TargetDataFields
 {
 private:
-  unsigned int lcid_ : NUM_BITS_LCID;
+  unsigned int local_target_node_id_ : NUM_BITS_LOCAL_NODE_ID;
+  unsigned int local_target_connection_id_ : NUM_BITS_LOCAL_CONNECTION_ID;
   unsigned int tid_ : NUM_BITS_TID;
   unsigned int syn_id_ : NUM_BITS_SYN_ID;
 
@@ -44,14 +45,25 @@ public:
   // Members must be set explicitly -- no defaults
 
   /**
-   * Sets the local connection ID.
+   * Set thread-local target neuron ID.
    */
-  void set_lcid( const index lcid );
+  void set_local_target_node_id( const index local_target_node_id );
 
   /**
-   * Returns the local connection ID.
+   * Set node-local target connection ID.
    */
-  index get_lcid() const;
+  void set_local_target_connection_id( const index local_target_connection_id );
+
+  /**
+   * Returns thread-local target neuron ID.
+   */
+  index get_local_target_node_id() const;
+
+  /**
+   * Returns node-local target connection ID.
+   */
+  index get_local_target_connection_id() const;
+
 
   /**
    * Sets the target ID.
@@ -78,15 +90,27 @@ public:
 using success_target_data_fields_size = StaticAssert< sizeof( TargetDataFields ) == 8 >::success;
 
 inline void
-TargetDataFields::set_lcid( const index lcid )
+TargetDataFields::set_local_target_node_id( const index local_target_node_id )
 {
-  lcid_ = lcid;
+  local_target_node_id_ = local_target_node_id;
 }
 
 inline index
-TargetDataFields::get_lcid() const
+TargetDataFields::get_local_target_node_id() const
 {
-  return lcid_;
+  return local_target_node_id_;
+}
+
+inline void
+TargetDataFields::set_local_target_connection_id( const index local_target_connection_id )
+{
+  local_target_connection_id_ = local_target_connection_id;
+}
+
+inline index
+TargetDataFields::get_local_target_connection_id() const
+{
+  return local_target_connection_id_;
 }
 
 inline void
@@ -165,16 +189,14 @@ enum enum_status_target_data_id
 };
 
 /**
- * Used to communicate part of the connection infrastructure from
- * post- to presynaptic side. These are the elements of the MPI
- * buffers.
+ * Used to communicate part of the connection infrastructure from post- to presynaptic side. These are the elements of
+ * the MPI buffers.
  * SeeAlso: SpikeData
  */
 class TargetData
 {
   // Members must be set explicitly -- no defaults
-  // Done this way to create large vector without preconstruction
-  // and to handle variant fields
+  // Done this way to create large vector without preconstruction and to handle variant fields
 
 private:
   static constexpr uint8_t NUM_BITS_LID = 19U;

@@ -34,12 +34,13 @@
 #include "conn_builder.h"
 #include "connection_id.h"
 #include "connector_base.h"
+#include "kernel_manager.h"
 #include "nest_time.h"
 #include "nest_timeconverter.h"
 #include "nest_types.h"
 #include "node_collection.h"
 #include "per_thread_bool_indicator.h"
-#include "source_table.h"
+#include "source_manager.h"
 #include "spike_data.h"
 #include "target_table.h"
 #include "target_table_devices.h"
@@ -51,13 +52,13 @@
 
 namespace nest
 {
-class GenericConnBuilderFactory;
-class spikecounter;
-class Node;
-class Event;
-class SecondaryEvent;
 class DelayChecker;
+class Event;
+class GenericConnBuilderFactory;
 class GrowthCurve;
+class Node;
+class SecondaryEvent;
+class spikecounter;
 class SpikeData;
 
 class ConnectionManager : public ManagerInterface
@@ -158,9 +159,9 @@ public:
     size_t n,
     std::string syn_model );
 
-  index find_connection( const thread tid, const synindex syn_id, const index snode_id, const index tnode_id );
+  index find_connection( const thread tid, const synindex syn_id, const index snode_id, const Node* target_node );
 
-  void disconnect( const thread tid, const synindex syn_id, const index snode_id, const index tnode_id );
+  void disconnect( const thread tid, const synindex syn_id, const index snode_id, Node* target_node );
 
   /**
    * Check whether a connection between the given source and target
@@ -228,8 +229,6 @@ public:
 
   const std::vector< Target >& get_remote_targets_of_local_node( const thread tid, const index lid ) const;
 
-  index get_target_node_id( const thread tid, const synindex syn_id, const index lcid ) const;
-
   bool get_device_connected( thread tid, index lcid ) const;
   /**
    * Triggered by volume transmitter in update.
@@ -253,14 +252,6 @@ public:
 
   bool get_user_set_delay_extrema() const;
 
-  void
-  send( const thread tid, const synindex syn_id, const index lcid, const std::vector< ConnectorModel* >& cm, Event& e );
-
-  void correct_synapse_stdp_ax_delay( const SpikeData& spike_data,
-    const double t_last_pre_spike,
-    double* weight_revert,
-    const double t_post_spike );
-
   /**
    * Send event e to all device targets of source source_node_id
    */
@@ -275,7 +266,7 @@ public:
   /**
    * Send event e to all targets of node source on thread t
    */
-  void send_local( thread t, Node& source, Event& e );
+  // void send_local( thread t, Node& source, Event& e );
 
   /**
    * Resize the structures for the Connector objects if necessary.
@@ -339,7 +330,7 @@ public:
    * Sorts connections in the presynaptic infrastructure by increasing
    * source node ID.
    */
-  void sort_connections( const thread tid );
+  void sort_connections_and_sources( const thread tid );
 
   /**
    * Removes disabled connections (of structural plasticity)
@@ -373,9 +364,6 @@ public:
    */
   void restructure_connection_tables( const thread tid );
 
-  void
-  set_source_has_more_targets( const thread tid, const synindex syn_id, const index lcid, const bool more_targets );
-
   void no_targets_to_process( const thread tid );
 
   const std::vector< size_t >&
@@ -402,7 +390,10 @@ public:
 
   bool secondary_connections_exist() const;
 
-  index get_source_node_id( const thread tid, const synindex syn_id, const index lcid );
+  index get_source_node_id( const thread tid,
+    const synindex syn_id,
+    const index local_target_node_id,
+    const index local_connection_id );
 
   double get_stdp_eps() const;
 
@@ -417,7 +408,7 @@ public:
 private:
   size_t get_num_target_data( const thread tid ) const;
 
-  size_t get_num_connections_( const thread tid, const synindex syn_id ) const;
+  // size_t get_num_connections_( const thread tid, const synindex syn_id ) const;
 
   void
   get_source_node_ids_( const thread tid, const synindex syn_id, const index tnode_id, std::vector< index >& sources );
@@ -543,21 +534,6 @@ private:
   void increase_connection_count( const thread tid, const synindex syn_id );
 
   /**
-   * A structure to hold the Connector objects which in turn hold the
-   * connection information. Corresponds to a three dimensional
-   * structure: threads|synapses|connections
-   */
-  std::vector< std::vector< ConnectorBase* > > connections_;
-
-  /**
-   * A structure to hold the node IDs of presynaptic neurons during
-   * postsynaptic connection creation, before the connection
-   * information has been transferred to the presynaptic side.
-   * Internally arranged in a 3d structure: threads|synapses|node IDs
-   */
-  SourceTable source_table_;
-
-  /**
    * A structure to hold "unpacked" spikes on the postsynaptic side if
    * spike compression is enabled. Internally arranged in a 3d
    * structure: synapses|sources|spike data
@@ -584,8 +560,7 @@ private:
   std::vector< DelayChecker > delay_checkers_;
 
   /**
-   * A structure to count the number of synapses of a specific
-   * type. Arranged in a 2d structure: threads|synapsetypes.
+   * A structure to count the number of synapses of a specific type. Arranged in a 2d structure: threads|synapsetypes.
    */
   std::vector< std::vector< size_t > > num_connections_;
 
@@ -659,7 +634,7 @@ ConnectionManager::clean_source_table( const thread tid )
 {
   if ( not keep_source_table_ )
   {
-    source_table_.clean( tid );
+    kernel().source_manager.clean( tid );
   }
 }
 
@@ -668,7 +643,7 @@ ConnectionManager::clear_source_table( const thread tid )
 {
   if ( not keep_source_table_ )
   {
-    source_table_.clear( tid );
+    kernel().source_manager.clear( tid );
   }
 }
 
@@ -681,7 +656,7 @@ ConnectionManager::get_keep_source_table() const
 inline bool
 ConnectionManager::is_source_table_cleared() const
 {
-  return source_table_.is_cleared();
+  return kernel().source_manager.is_cleared();
 }
 
 inline void
@@ -699,31 +674,31 @@ ConnectionManager::resize_target_table_devices_to_number_of_synapse_types()
 inline void
 ConnectionManager::reject_last_target_data( const thread tid )
 {
-  source_table_.reject_last_target_data( tid );
+  kernel().source_manager.reject_last_target_data( tid );
 }
 
 inline void
 ConnectionManager::save_source_table_entry_point( const thread tid )
 {
-  source_table_.save_entry_point( tid );
+  kernel().source_manager.save_entry_point( tid );
 }
 
 inline void
 ConnectionManager::no_targets_to_process( const thread tid )
 {
-  source_table_.no_targets_to_process( tid );
+  kernel().source_manager.no_targets_to_process( tid );
 }
 
 inline void
 ConnectionManager::reset_source_table_entry_point( const thread tid )
 {
-  source_table_.reset_entry_point( tid );
+  kernel().source_manager.reset_entry_point( tid );
 }
 
 inline void
 ConnectionManager::restore_source_table_entry_point( const thread tid )
 {
-  source_table_.restore_entry_point( tid );
+  kernel().source_manager.restore_entry_point( tid );
 }
 
 inline void
@@ -757,7 +732,7 @@ ConnectionManager::get_next_target_data( const thread tid,
   thread& target_rank,
   TargetData& next_target_data )
 {
-  return source_table_.get_next_target_data( tid, rank_start, rank_end, target_rank, next_target_data );
+  return kernel().source_manager.get_next_target_data( tid, rank_start, rank_end, target_rank, next_target_data );
 }
 
 inline const std::vector< size_t >&
@@ -772,16 +747,13 @@ ConnectionManager::get_secondary_recv_buffer_position( const thread tid, const s
   return secondary_recv_buffer_pos_[ tid ][ syn_id ][ lcid ];
 }
 
-inline size_t
-ConnectionManager::get_num_connections_( const thread tid, const synindex syn_id ) const
-{
-  return connections_[ tid ][ syn_id ]->size();
-}
-
 inline index
-ConnectionManager::get_source_node_id( const thread tid, const synindex syn_index, const index lcid )
+ConnectionManager::get_source_node_id( const thread tid,
+  const synindex syn_index,
+  const index local_target_node_id,
+  const index local_connection_id )
 {
-  return source_table_.get_node_id( tid, syn_index, lcid );
+  return kernel().source_manager.get_node_id( tid, syn_index, local_target_node_id, local_connection_id );
 }
 
 inline bool
@@ -814,12 +786,6 @@ ConnectionManager::get_stdp_eps() const
   return stdp_eps_;
 }
 
-inline index
-ConnectionManager::get_target_node_id( const thread tid, const synindex syn_id, const index lcid ) const
-{
-  return connections_[ tid ][ syn_id ]->get_target_node_id( tid, lcid );
-}
-
 inline bool
 ConnectionManager::get_device_connected( const thread tid, const index lcid ) const
 {
@@ -827,52 +793,23 @@ ConnectionManager::get_device_connected( const thread tid, const index lcid ) co
 }
 
 inline void
-ConnectionManager::send( const thread tid,
-  const synindex syn_id,
-  const index lcid,
-  const std::vector< ConnectorModel* >& cm,
-  Event& e )
-{
-  connections_[ tid ][ syn_id ]->send( tid, lcid, cm, e );
-}
-
-inline void
-ConnectionManager::correct_synapse_stdp_ax_delay( const SpikeData& spike_data,
-  const double t_last_pre_spike,
-  double* weight_revert,
-  const double t_post_spike )
-{
-  connections_[ spike_data.get_tid() ][ spike_data.get_syn_id() ]->correct_synapse_stdp_ax_delay(
-    spike_data, t_last_pre_spike, weight_revert, t_post_spike );
-}
-
-inline void
 ConnectionManager::restructure_connection_tables( const thread tid )
 {
-  assert( not source_table_.is_cleared() );
+  assert( not kernel().source_manager.is_cleared() );
   target_table_.clear( tid );
-  source_table_.reset_processed_flags( tid );
-}
-
-inline void
-ConnectionManager::set_source_has_more_targets( const thread tid,
-  const synindex syn_id,
-  const index lcid,
-  const bool more_targets )
-{
-  connections_[ tid ][ syn_id ]->set_source_has_more_targets( lcid, more_targets );
+  kernel().source_manager.reset_processed_flags( tid );
 }
 
 inline const std::vector< SpikeData >&
 ConnectionManager::get_compressed_spike_data( const synindex syn_id, const index idx )
 {
-  return compressed_spike_data_.at( syn_id ).at( idx );
+  return compressed_spike_data_[ syn_id ][ idx ];
 }
 
 inline void
 ConnectionManager::clear_compressed_spike_data_map( const thread tid )
 {
-  source_table_.clear_compressed_spike_data_map( tid );
+  kernel().source_manager.clear_compressed_spike_data_map( tid );
 }
 
 } // namespace nest

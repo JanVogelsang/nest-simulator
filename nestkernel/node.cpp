@@ -31,7 +31,6 @@
 #include "kernel_manager.h"
 
 // Includes from sli:
-#include "arraydatum.h"
 #include "dictutils.h"
 #include "namedatum.h"
 
@@ -89,8 +88,18 @@ Node::init()
 }
 
 void
+Node::finalize()
+{
+  std::vector< ConnectorBase* >().swap( connections_ );
+
+  sources_.clear();
+}
+
+void
 Node::init_buffers_()
 {
+  connections_ = std::vector< ConnectorBase* >( kernel().model_manager.get_num_connection_models() );
+  sources_.resize( 0 );
 }
 
 void
@@ -126,6 +135,26 @@ DictionaryDatum
 Node::get_status_dict_()
 {
   return DictionaryDatum( new Dictionary );
+}
+
+DictionaryDatum
+Node::get_connection_status( const synindex syn_id, const index lcid, DictionaryDatum& dict ) const
+{
+  // synapses from neurons to neurons and from neurons to globally receiving devices
+  if ( connections_[ syn_id ] )
+  {
+    connections_[ syn_id ]->get_synapse_status( thread_, lcid, dict );
+  }
+}
+
+void
+Node::set_connection_status( const synindex syn_id, const index lcid, const DictionaryDatum& dict, ConnectorModel& cm )
+{
+  // synapses from neurons to neurons and from neurons to globally receiving devices
+  if ( connections_[ syn_id ] )
+  {
+    connections_[ syn_id ]->set_synapse_status( lcid, dict, cm );
+  }
 }
 
 void
@@ -220,6 +249,80 @@ void
 Node::register_stdp_connection( double, double )
 {
   throw IllegalConnection( "The target node does not support STDP synapses." );
+}
+
+template < typename ConnectionT >
+void
+Node::add_connection( Node& source_node,
+  const synindex syn_id,
+  ConnectionT& connection,
+  const rport receptor_type,
+  const bool is_primary,
+  typename ConnectionT::CommonPropertiesType const& cp )
+{
+  // Add to connection table
+  ConnectorBase* connector = connections_[ syn_id ];
+
+  if ( not connector )
+  {
+    // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
+    connections_[ syn_id ] = new Connector< ConnectionT >( syn_id );
+  }
+
+  assert( connector );
+
+  Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connector );
+  vc->push_back( connection );
+
+  // Add to sources table
+  const Source src( source_node.get_node_id(), is_primary );
+  sources_[ syn_id ].push_back( src );
+}
+
+void
+Node::delete_connections()
+{
+  for ( auto syn_type_connections : connections_ )
+  {
+    delete syn_type_connections;
+  }
+}
+
+void
+Node::disable_connection( const synindex syn_id, const index local_connection_id )
+{
+  connections_[ syn_id ]->disable_connection( local_connection_id );
+  sources_[ syn_id ][ local_connection_id ].disable();
+}
+
+void
+Node::remove_disabled_connections()
+{
+  assert( false );  // TODO JV (pt): Structural plasticity
+
+  /*for ( synindex syn_id = 0; syn_id < connections_.size(); ++syn_id )
+  {
+    if ( not connections_[ syn_id ] )
+    {
+      continue;
+    }
+
+    connections_[ syn_id ]->remove_disabled_connections();
+  }*/
+}
+
+void
+Node::deliver_event( const thread tid,
+  const synindex syn_id,
+  const index local_target_connection_id,
+  const std::vector< ConnectorModel* >& cm,
+  SpikeEvent& se )
+{
+  // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
+  // event by adding a weight (TODO JV: only weight?).
+  connections_[ syn_id ]->send( tid, sources_[ syn_id ][ local_target_connection_id ].get_node_id(), local_target_connection_id, cm, se );
+
+  handle( se );
 }
 
 /**

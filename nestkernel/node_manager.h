@@ -133,7 +133,7 @@ public:
   /**
    * Return pointer to the specified Node. The function expects that
    * the given node ID and thread are valid. If they are not, an assertion
-   * will fail. In case the given Node does not exist on the fiven
+   * will fail. In case the given Node does not exist on the given
    * thread, a proxy is returned instead.
    *
    * @param node_id index of the Node

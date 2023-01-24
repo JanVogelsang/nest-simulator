@@ -56,7 +56,8 @@ public:
     const bool requires_symmetric,
     const bool supports_wfr,
     const bool requires_clopath_archiving,
-    const bool requires_urbanczik_archiving );
+    const bool requires_urbanczik_archiving,
+    const bool requires_postponed_delivery );
   ConnectorModel( const ConnectorModel&, const std::string );
   virtual ~ConnectorModel()
   {
@@ -80,11 +81,11 @@ public:
    */
   virtual void add_connection( Node& src,
     Node& tgt,
-    std::vector< ConnectorBase* >& hetconn,
     const synindex syn_id,
     const DictionaryDatum& d,
     const double delay = NAN,
-    const double weight = NAN ) = 0;
+    const double weight = NAN,
+    const bool is_primary = true ) = 0;
 
   virtual ConnectorModel* clone( std::string, synindex syn_id ) const = 0;
 
@@ -143,6 +144,12 @@ public:
   }
 
   bool
+  requires_postponed_delivery() const
+  {
+    return requires_postponed_delivery_;
+  }
+
+  bool
   supports_wfr() const
   {
     return supports_wfr_;
@@ -165,6 +172,9 @@ protected:
   bool requires_clopath_archiving_;
   //! indicates that ConnectorModel requires Urbanczik archiving
   bool requires_urbanczik_archiving_;
+  //! indicates that ConnectorModel requires pre-synaptic spike delivery to be postponed until it reaches the synapse
+  //! before any following post-synaptic spike
+  bool requires_postponed_delivery_;
 
 }; // ConnectorModel
 
@@ -187,14 +197,16 @@ public:
     bool requires_symmetric,
     bool supports_wfr,
     bool requires_clopath_archiving,
-    bool requires_urbanczik_archiving )
+    bool requires_urbanczik_archiving,
+    bool requires_postponed_delivery )
     : ConnectorModel( name,
       is_primary,
       has_delay,
       requires_symmetric,
       supports_wfr,
       requires_clopath_archiving,
-      requires_urbanczik_archiving )
+      requires_urbanczik_archiving,
+      requires_postponed_delivery )
     , receptor_type_( 0 )
   {
   }
@@ -210,11 +222,11 @@ public:
 
   void add_connection( Node& src,
     Node& tgt,
-    std::vector< ConnectorBase* >& hetconn,
     const synindex syn_id,
     const DictionaryDatum& d,
     const double delay,
-    const double weight ) override;
+    const double weight,
+    const bool is_primary ) override;
 
   ConnectorModel* clone( std::string, synindex ) const override;
 
@@ -262,13 +274,6 @@ public:
 private:
   void used_default_delay();
 
-  void add_connection_( Node& src,
-    Node& tgt,
-    std::vector< ConnectorBase* >& hetconn,
-    const synindex syn_id,
-    ConnectionT& c,
-    const rport receptor_type );
-
 }; // GenericConnectorModel
 
 template < typename ConnectionT >
@@ -289,7 +294,8 @@ public:
       requires_symmetric,
       supports_wfr,
       /*requires_clopath_archiving=*/false,
-      /*requires_urbanczik_archiving=*/false )
+      /*requires_urbanczik_archiving=*/false,
+      /*requires_postponed_delivery=*/false )
     , pev_( 0 )
   {
     pev_ = new typename ConnectionT::EventType();

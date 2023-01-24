@@ -172,7 +172,10 @@ public:
    * Set tid, syn_id, lcid of spike_data_.
    * These are required to retrieve the Node ID of a non-local sender from the SourceTable.
    */
-  void set_sender_node_id_info( const thread tid, const synindex syn_id, const index lcid );
+  void set_sender_node_id_info( const thread tid,
+    const synindex syn_id,
+    const index local_target_node_id,
+    const index local_target_connection_id );
 
   /**
    * Return time stamp of the event.
@@ -907,10 +910,13 @@ Event::set_sender_node_id( const index node_id )
 }
 
 inline void
-Event::set_sender_node_id_info( const thread tid, const synindex syn_id, const index lcid )
+Event::set_sender_node_id_info( const thread tid,
+  const synindex syn_id,
+  const index local_target_node_id,
+  const index local_target_connection_id )
 {
   // lag and offset of SpikeData are not used here
-  sender_spike_data_.set( tid, syn_id, lcid, 0, 0.0 );
+  sender_spike_data_.set( tid, syn_id, local_target_node_id, local_target_connection_id, 0, 0.0 );
 }
 
 inline Node&

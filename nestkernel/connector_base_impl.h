@@ -34,7 +34,8 @@ namespace nest
 template < typename ConnectionT >
 void
 Connector< ConnectionT >::send_weight_event( const thread tid,
-  const unsigned int lcid,
+  const index snode_id,
+  const index local_target_connection_id,
   Event& e,
   const CommonSynapseProperties& cp )
 {
@@ -48,7 +49,7 @@ Connector< ConnectionT >::send_weight_event( const thread tid,
     wr_e.set_rport( e.get_rport() );
     wr_e.set_stamp( e.get_stamp() );
     wr_e.set_sender( e.get_sender() );
-    wr_e.set_sender_node_id( kernel().connection_manager.get_source_node_id( tid, syn_id_, lcid ) );
+    wr_e.set_sender_node_id( snode_id );
     wr_e.set_weight( e.get_weight() );
     wr_e.set_delay_steps( e.get_delay_steps() );
     // Set weight_recorder as receiver
@@ -59,20 +60,6 @@ Connector< ConnectionT >::send_weight_event( const thread tid,
     wr_e.set_receiver_node_id( e.get_receiver_node_id() );
     wr_e();
   }
-}
-
-template < typename ConnectionT >
-void
-Connector< ConnectionT >::correct_synapse_stdp_ax_delay( const SpikeData& spike_data,
-  const double t_last_pre_spike,
-  double* weight_revert,
-  const double t_post_spike )
-{
-  typename ConnectionT::CommonPropertiesType const& cp = static_cast< GenericConnectorModel< ConnectionT >* >(
-    kernel().model_manager.get_connection_models( spike_data.get_tid() )[ spike_data.get_syn_id() ] )
-                                                           ->get_common_properties();
-  C_[ spike_data.get_lcid() ].correct_synapse_stdp_ax_delay(
-    spike_data.get_tid(), t_last_pre_spike, weight_revert, t_post_spike, cp );
 }
 
 } // of namespace nest

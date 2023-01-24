@@ -433,6 +433,14 @@ ModelManager::connector_requires_urbanczik_archiving( const synindex syn_id ) co
   return connection_models_[ 0 ][ syn_id ]->requires_urbanczik_archiving();
 }
 
+bool
+ModelManager::connector_requires_postponed_delivery( const synindex syn_id ) const
+{
+  assert_valid_syn_id( syn_id );
+
+  return connection_models_[ 0 ][ syn_id ]->requires_postponed_delivery();
+}
+
 void
 ModelManager::clear_node_models_()
 {

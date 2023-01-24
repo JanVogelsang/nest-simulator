@@ -35,6 +35,7 @@
 #include "node_manager.h"
 #include "random_manager.h"
 #include "simulation_manager.h"
+#include "source_manager.h"
 #include "sp_manager.h"
 #include "vp_manager.h"
 
@@ -245,6 +246,7 @@ public:
   SimulationManager simulation_manager;
   ModelRangeManager modelrange_manager;
   ConnectionManager connection_manager;
+  SourceManager source_manager;
   SPManager sp_manager;
   EventDeliveryManager event_delivery_manager;
   ModelManager model_manager;

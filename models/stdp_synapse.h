@@ -229,8 +229,7 @@ stdp_synapse< targetidentifierT >::send( Event& e, thread t, const CommonSynapse
   // synapse STDP depressing/facilitation dynamics
   const double t_spike = e.get_stamp().get_ms();
 
-  // use accessor functions (inherited from Connection< >) to obtain delay and
-  // target
+  // use accessor functions (inherited from Connection< >) to obtain delay and target
   Node* target = get_target( t );
   double dendritic_delay = get_delay();
 
@@ -238,14 +237,11 @@ stdp_synapse< targetidentifierT >::send( Event& e, thread t, const CommonSynapse
   std::deque< histentry >::iterator start;
   std::deque< histentry >::iterator finish;
 
-  // For a new synapse, t_lastspike_ contains the point in time of the last
-  // spike. So we initially read the
-  // history(t_last_spike - dendritic_delay, ..., T_spike-dendritic_delay]
-  // which increases the access counter for these entries.
-  // At registration, all entries' access counters of
-  // history[0, ..., t_last_spike - dendritic_delay] have been
-  // incremented by ArchivingNode::register_stdp_connection(). See bug #218 for
-  // details.
+  // For a new synapse, t_lastspike_ contains the point in time of the last spike. So we initially read the
+  // history(t_last_spike - dendritic_delay, ..., T_spike-dendritic_delay] which increases the access counter for these
+  // entries.
+  // At registration, all entries' access counters of history[0, ..., t_last_spike - dendritic_delay] have been
+  // incremented by ArchivingNode::register_stdp_connection(). See bug #218 for details.
   target->get_history( t_lastspike_ - dendritic_delay, t_spike - dendritic_delay, &start, &finish );
   // facilitation due to postsynaptic spikes since last pre-synaptic spike
   double minus_dt;
@@ -253,8 +249,7 @@ stdp_synapse< targetidentifierT >::send( Event& e, thread t, const CommonSynapse
   {
     minus_dt = t_lastspike_ - ( start->t_ + dendritic_delay );
     ++start;
-    // get_history() should make sure that
-    // start->t_ > t_lastspike - dendritic_delay, i.e. minus_dt < 0
+    // get_history() should make sure that start->t_ > t_lastspike - dendritic_delay, i.e. minus_dt < 0
     assert( minus_dt < -1.0 * kernel().connection_manager.get_stdp_eps() );
     weight_ = facilitate_( weight_, Kplus_ * std::exp( minus_dt / tau_plus_ ) );
   }

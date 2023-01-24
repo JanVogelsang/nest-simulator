@@ -184,11 +184,11 @@ template < typename ConnectionT >
 void
 GenericConnectorModel< ConnectionT >::add_connection( Node& src,
   Node& tgt,
-  std::vector< ConnectorBase* >& thread_local_connectors,
   const synindex syn_id,
   const DictionaryDatum& p,
   const double delay,
-  const double weight )
+  const double weight,
+  const bool is_primary )
 {
   if ( not numerics::is_nan( delay ) )
   {
@@ -252,36 +252,13 @@ GenericConnectorModel< ConnectionT >::add_connection( Node& src,
 #endif
   updateValue< long >( p, names::receptor_type, actual_receptor_type );
 
-  add_connection_( src, tgt, thread_local_connectors, syn_id, connection, actual_receptor_type );
-}
-
-
-template < typename ConnectionT >
-void
-GenericConnectorModel< ConnectionT >::add_connection_( Node& src,
-  Node& tgt,
-  std::vector< ConnectorBase* >& thread_local_connectors,
-  const synindex syn_id,
-  ConnectionT& connection,
-  const rport receptor_type )
-{
   assert( syn_id != invalid_synindex );
 
-  if ( not thread_local_connectors[ syn_id ] )
-  {
-    // No homogeneous Connector with this syn_id exists, we need to create a new
-    // homogeneous Connector.
-    thread_local_connectors[ syn_id ] = new Connector< ConnectionT >( syn_id );
-  }
-
-  ConnectorBase* connector = thread_local_connectors[ syn_id ];
+  typename ConnectionT::CommonPropertiesType const& cp = get_common_properties();
   // The following line will throw an exception, if it does not work.
-  connection.check_connection( src, tgt, receptor_type, get_common_properties() );
+  connection.check_connection( src, tgt, actual_receptor_type, cp );
 
-  assert( connector );
-
-  Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connector );
-  vc->push_back( connection );
+  tgt.add_connection( src, syn_id, connection, actual_receptor_type, is_primary, cp );
 }
 
 } // namespace nest

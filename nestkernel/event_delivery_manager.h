@@ -282,8 +282,7 @@ private:
     std::vector< SpikeDataT >& send_buffer ) const;
 
   /**
-   * Sets marker in MPI buffer that signals end of communication
-   * across MPI ranks.
+   * Sets marker in MPI buffer that signals end of communication across MPI ranks.
    */
   template < typename SpikeDataT >
   void set_complete_marker_spike_data_( const AssignedRanks& assigned_ranks,
@@ -291,21 +290,28 @@ private:
     std::vector< SpikeDataT >& send_buffer ) const;
 
   /**
-   * Reads spikes from MPI buffers and delivers them to ringbuffer of
-   * nodes.
+   *
+   */
+  void deliver_event_to_node( const thread tid,
+    const synindex syn_id,
+    const index local_target_node_id,
+    const index local_target_connection_id,
+    const std::vector< ConnectorModel* >& cm,
+    SpikeEvent& se );
+
+  /**
+   * Reads spikes from MPI buffers and delivers them to ringbuffer of nodes.
    */
   template < typename SpikeDataT >
   bool deliver_events_( const thread tid, const std::vector< SpikeDataT >& recv_buffer );
 
   /**
-   * Deletes all spikes from spike registers and resets spike
-   * counters.
+   * Deletes all spikes from spike registers and resets spike counters.
    */
   void reset_spike_register_( const thread tid );
 
   /**
-   * Resizes spike registers according minimal delay so it can
-   * accommodate all possible lags.
+   * Resizes spike registers according minimal delay so it can accommodate all possible lags.
    */
   void resize_spike_register_( const thread tid );
 
@@ -333,22 +339,19 @@ private:
     SendBufferPosition& send_buffer_position );
 
   /**
-   * Sets marker in MPI buffer that signals end of communication
-   * across MPI ranks.
+   * Sets marker in MPI buffer that signals end of communication across MPI ranks.
    */
   void set_complete_marker_target_data_( const AssignedRanks& assigned_ranks,
     const SendBufferPosition& send_buffer_position );
 
   /**
-   * Reads TargetData objects from MPI buffers and creates Target
-   * objects on TargetTable (presynaptic part of connection
-   * infrastructure).
+   * Reads TargetData objects from MPI buffers and creates Target objects on TargetTable (presynaptic part of
+   * connection infrastructure).
    */
   bool distribute_target_data_buffers_( const thread tid );
 
   /**
-   * Sends event e to all targets of node source. Delivers events from
-   * devices directly to targets.
+   * Sends event e to all targets of node source. Delivers events from devices directly to targets.
    */
   template < class EventT >
   void send_local_( Node& source, EventT& e, const long lag );
@@ -356,8 +359,7 @@ private:
 
   //--------------------------------------------------//
 
-  bool off_grid_spiking_; //!< indicates whether spikes are not constrained to
-                          //!< the grid
+  bool off_grid_spiking_; //!< indicates whether spikes are not constrained to the grid
 
   /**
    * Table of pre-computed modulos.

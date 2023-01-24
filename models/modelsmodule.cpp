@@ -326,8 +326,10 @@ ModelsModule::init( SLIInterpreter* )
   register_connection_model< stdp_nn_restr_synapse >( "stdp_nn_restr_synapse" );
   register_connection_model< stdp_nn_symm_synapse >( "stdp_nn_symm_synapse" );
   register_connection_model< stdp_nn_pre_centered_synapse >( "stdp_nn_pre_centered_synapse" );
-  register_connection_model< stdp_pl_synapse_hom >( "stdp_pl_synapse_hom" );
-  register_connection_model< stdp_pl_synapse_hom_ax_delay >( "stdp_pl_synapse_hom_ax_delay" );
+  register_connection_model< stdp_pl_synapse_hom >(
+    "stdp_pl_synapse_hom", default_connection_model_flags | RegisterConnectionModelFlags::REQUIRES_POSTPONED_DELIVERY );
+  register_connection_model< stdp_pl_synapse_hom_ax_delay >( "stdp_pl_synapse_hom_ax_delay",
+    default_connection_model_flags | RegisterConnectionModelFlags::REQUIRES_POSTPONED_DELIVERY );
   register_connection_model< stdp_triplet_synapse >( "stdp_triplet_synapse" );
   register_connection_model< tsodyks_synapse >( "tsodyks_synapse" );
   register_connection_model< tsodyks_synapse_hom >( "tsodyks_synapse_hom" );

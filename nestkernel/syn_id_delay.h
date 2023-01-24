@@ -66,18 +66,6 @@ struct SynIdDelay
     delay = Time::delay_ms_to_steps( d );
   }
 
-  void
-  set_source_has_more_targets( const bool more_targets )
-  {
-    this->more_targets = more_targets;
-  }
-
-  bool
-  source_has_more_targets() const
-  {
-    return more_targets;
-  }
-
   /**
    * Disables the synapse.
    *

@@ -24,14 +24,12 @@
 #define NODE_H
 
 // C++ includes:
-#include <bitset>
 #include <deque>
-#include <sstream>
 #include <string>
-#include <utility>
 #include <vector>
 
 // Includes from nestkernel:
+#include "connector_base.h"
 #include "deprecation_warning.h"
 #include "event.h"
 #include "histentry.h"
@@ -40,6 +38,7 @@
 #include "nest_types.h"
 #include "node_collection.h"
 #include "secondary_event.h"
+#include "source.h"
 
 // Includes from sli:
 #include "dictdatum.h"
@@ -50,6 +49,7 @@
 
 namespace nest
 {
+class ConnectorBase;
 class Model;
 class ArchivingNode;
 class TimeConverter;
@@ -139,6 +139,16 @@ public:
    * Returns true if the node supports the Urbanczik-Senn plasticity rule
    */
   virtual bool supports_urbanczik_archiving() const;
+
+  /**
+   * Base Node class does not support postponed delivery. Postponed delivery has to be implemented in derived classes if
+   * they need to support this feature.
+   */
+  inline virtual bool
+  supports_postponed_delivery() const
+  {
+    return false;
+  }
 
   /**
    * Returns true if the node only receives events from nodes/devices
@@ -282,10 +292,7 @@ public:
    * full simulation, i.e., a cycle of Prepare, Run, Cleanup. Typical
    * use-cases are devices that need to close files.
    */
-  virtual void
-  finalize()
-  {
-  }
+  virtual void finalize();
 
   /**
    * Bring the node from state $t$ to $t+n*dt$.
@@ -350,6 +357,11 @@ public:
    * @ingroup status_interface
    */
   virtual void get_status( DictionaryDatum& ) const = 0;
+
+  DictionaryDatum get_connection_status( const synindex syn_id, const index lcid, DictionaryDatum& dict ) const;
+
+  void
+  set_connection_status( const synindex syn_id, const index lcid, const DictionaryDatum& dict, ConnectorModel& cm );
 
 public:
   /**
@@ -449,6 +461,33 @@ public:
   virtual void sends_secondary_event( DelayedRateConnectionEvent& re );
 
   /**
+   * TODO JV
+   */
+  template < typename ConnectionT >
+  void add_connection( Node& source_node,
+    const synindex syn_id,
+    ConnectionT& connection,
+    const rport receptor_type,
+    const bool is_primary,
+    typename ConnectionT::CommonPropertiesType const& cp );
+
+  /**
+   * TODO JV
+   */
+  void delete_connections();
+
+  /**
+   * Get a connection index by source node id. Returns invalid_index if no connection to the source node exists.
+   */
+  inline size_t get_connection_index( const synindex syn_id, const index source_node_id ) const;
+
+  inline Source&
+  get_source( const synindex syn_id, const index local_connection_id )
+  {
+    return sources_[ syn_id ][ local_connection_id ];
+  }
+
+  /**
    * Register a STDP connection
    *
    * @throws IllegalConnection
@@ -456,13 +495,78 @@ public:
    */
   virtual void register_stdp_connection( double, double );
 
+  inline void
+  resize_connections( const size_t size )
+  {
+    connections_.resize( size );
+  }
+
+  inline void
+  resize_sources( const size_t size )
+  {
+    sources_.resize( size );
+  }
+
+  inline void
+  clear_sources()
+  {
+    // TODO JV: Is this actually safe? Or is swap the better way of clearing 2D vectors?
+    sources_.clear();
+  }
+
+  /**
+   * TODO JV
+   */
+  inline void
+  sort_connections_and_sources()
+  {
+    for ( size_t syn_id = 0; syn_id < connections_.size(); ++syn_id )
+    {
+      connections_[ syn_id ]->sort_connections_and_sources( sources_[ syn_id ] );
+    }
+  }
+
+  /**
+   * TODO JV
+   */
+  void disable_connection( const synindex syn_id, const index local_connection_id );
+
+  // TODO JV: Make this and add_connection virtual, as connections_ is accessible from derived classes as well?
+  void remove_disabled_connections();
+
+  /**
+   * Returns the number of incoming nodes (sources) using a connection of the specified type.
+   */
+  inline size_t
+  get_num_conn_type_sources( const synindex syn_id ) const
+  {
+    return sources_[ syn_id ].size();
+  }
+
+  inline size_t
+  get_num_sources() const
+  {
+    return std::accumulate( sources_.cbegin(),
+      sources_.cend(),
+      0,
+      []( size_t sum, auto sources_syn_id ) { return sum + sources_syn_id.size(); } );
+  }
+
+  /**
+   * When receiving an incoming spike event, forward it to the corresponding connection and handle the event previously
+   * updated by the connection.
+   */
+  virtual void deliver_event( const thread tid,
+    const synindex syn_id,
+    const index local_target_connection_id,
+    const std::vector< ConnectorModel* >& cm,
+    SpikeEvent& se );
+
   /**
    * Handle incoming spike events.
-   * @param thrd Id of the calling thread.
    * @param e Event object.
    *
-   * This handler has to be implemented if a Node should
-   * accept spike events.
+   * This handler has to be implemented if a Node should accept spike events.
    * @see class SpikeEvent
    * @ingroup event_interface
    */
@@ -470,11 +574,9 @@ public:
 
   /**
    * Handle incoming weight recording events.
-   * @param thrd Id of the calling thread.
    * @param e Event object.
    *
-   * This handler has to be implemented if a Node should
-   * accept weight recording events.
+   * This handler has to be implemented if a Node should accept weight recording events.
    * @see class WeightRecordingEvent
    * @ingroup event_interface
    */
@@ -858,8 +960,8 @@ protected:
   /**
    * Configure persistent internal data structures.
    *
-   * Let node configure persistent internal data structures, such as input
-   * buffers or ODE solvers, to runtime information prior to first simulation.
+   * Let node configure persistent internal data structures, such as input buffers or ODE solvers, to runtime
+   * information prior to first simulation.
    */
   virtual void init_buffers_();
 
@@ -875,8 +977,7 @@ protected:
   }
 
   /**
-   * Auxiliary function to downcast a Node to a concrete class derived from
-   * Node.
+   * Auxiliary function to downcast a Node to a concrete class derived from Node.
    * @note This function is used to convert generic Node references to specific
    *       ones when intializing parameters or state from a prototype.
    */
@@ -911,6 +1012,27 @@ private:
   bool node_uses_wfr_; //!< node uses waveform relaxation method
 
   NodeCollectionPTR nc_ptr_;
+
+protected:
+  /**
+   * A structure to hold the Connector objects which in turn hold the connection information of all incoming connections
+   * to this node. Corresponds to a two dimensional structure:
+   * synapse types|connections
+   */
+  std::vector< ConnectorBase* > connections_;
+
+  /**
+   * This data structure stores the node IDs of presynaptic neurons connected to this neuron. If structural plasticity
+   * is disabled, it is only relevant during postsynaptic connection creation, before the connection information has
+   * been transferred to the presynaptic side.
+   * Arranged in a 2d array:
+   * 1st dimension: synapse types
+   * 2nd dimension: source node IDs
+   * After all connections have been created, the information stored in this structure is transferred to the presynaptic
+   * side and the sources vector can be cleared, unless further required for structural plasticity.
+   */
+   // TODO JV: This should be converted from type Source to index once the simulation starts
+  std::vector< std::vector< Source > > sources_;
 };
 
 inline bool
@@ -1059,6 +1181,12 @@ inline index
 Node::get_thread_lid() const
 {
   return thread_lid_;
+}
+
+inline index
+Node::get_connection_index( const synindex syn_id, const index source_node_id ) const
+{
+  return connections_[ syn_id ]->get_connection_index( source_node_id );
 }
 
 } // namespace

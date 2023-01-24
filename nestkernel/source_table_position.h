@@ -23,12 +23,8 @@
 #ifndef SOURCE_TABLE_POSITION_H
 #define SOURCE_TABLE_POSITION_H
 
-// C++ includes:
-#include <cassert>
-#include <iostream>
-#include <vector>
-
-#include "block_vector.h"
+// Includes from nestkernel:
+#include "kernel_manager.h"
 
 namespace nest
 {
@@ -38,24 +34,29 @@ namespace nest
  */
 struct SourceTablePosition
 {
-  long tid;    //!< thread index
-  long syn_id; //!< synapse-type index
-  long lcid;   //!< local connection index
+  long tid;                        //!< thread index
+  long syn_id;                     //!< synapse-type index
+  long local_target_node_id;       //!< thread-local target node index
+  long local_target_connection_id; //!< node-local target connection index
 
   SourceTablePosition();
-  SourceTablePosition( const long tid, const long syn_id, const long lcid );
+  SourceTablePosition( const long tid,
+    const long syn_id,
+    const long local_target_node_id,
+    const long local_target_connection_id );
   SourceTablePosition( const SourceTablePosition& rhs ) = default;
   SourceTablePosition& operator=( const SourceTablePosition& rhs ) = default;
 
-  /**
-   * Decreases indices until a valid entry is found.
-   */
-  void seek_to_next_valid_index( const std::vector< std::vector< BlockVector< Source > > >& sources );
 
   /**
-   * Decreases the inner most index (lcid).
+   * Decreases the index.
    */
   void decrease();
+
+  /**
+   * Increases the index.
+   */
+  void increase();
 
   /**
    * Returns true if the indices point outside the SourceTable, e.g.,
@@ -67,79 +68,125 @@ struct SourceTablePosition
 inline SourceTablePosition::SourceTablePosition()
   : tid( -1 )
   , syn_id( -1 )
-  , lcid( -1 )
+  , local_target_node_id( -1 )
+  , local_target_connection_id( -1 )
 {
 }
 
-inline SourceTablePosition::SourceTablePosition( const long tid, const long syn_id, const long lcid )
+inline SourceTablePosition::SourceTablePosition( const long tid,
+  const long syn_id,
+  const long local_target_node_id,
+  const long local_target_connection_id )
   : tid( tid )
   , syn_id( syn_id )
-  , lcid( lcid )
+  , local_target_node_id( local_target_node_id )
+  , local_target_connection_id( local_target_connection_id )
 {
-}
-
-inline void
-SourceTablePosition::seek_to_next_valid_index( const std::vector< std::vector< BlockVector< Source > > >& sources )
-{
-  if ( lcid >= 0 )
-  {
-    return; // nothing to do if we are at a valid index
-  }
-
-  // we stay in this loop either until we can return a valid position,
-  // i.e., lcid >= 0, or we have reached the end of the
-  // multidimensional vector
-  while ( lcid < 0 )
-  {
-    // first try finding a valid lcid by only decreasing synapse index
-    --syn_id;
-    if ( syn_id >= 0 )
-    {
-      lcid = sources[ tid ][ syn_id ].size() - 1;
-      continue;
-    }
-
-    // if we can not find a valid lcid by decreasing synapse indices,
-    // try decreasing thread index
-    --tid;
-    if ( tid >= 0 )
-    {
-      syn_id = sources[ tid ].size() - 1;
-      if ( syn_id >= 0 )
-      {
-        lcid = sources[ tid ][ syn_id ].size() - 1;
-      }
-      continue;
-    }
-
-    // if we can not find a valid lcid by decreasing synapse or thread
-    // indices, we have read all entries
-    assert( tid == -1 );
-    assert( syn_id == -1 );
-    assert( lcid == -1 );
-    return; // reached the end without finding a valid entry
-  }
-
-  return; // found a valid entry
-}
-
-inline bool
-SourceTablePosition::is_invalid() const
-{
-  return ( tid == -1 and syn_id == -1 and lcid == -1 );
 }
 
 inline void
 SourceTablePosition::decrease()
 {
-  --lcid;
-  assert( lcid >= -1 );
+  // first try finding a valid index by only decreasing target-local connection id
+  --local_target_connection_id;
+  if ( local_target_connection_id < 0 )
+  {
+    // then try finding a valid index by decreasing synapse index
+    --syn_id;
+    if ( syn_id < 0 )
+    {
+      // then try finding a valid index by decreasing target node id
+      --local_target_node_id;
+      if ( local_target_node_id < 0 )
+      {
+        // then try finding a valid index by decreasing thread index
+        --tid;
+        if ( tid < 0 )
+        {
+          return; // reached the end without finding a valid entry
+        }
+
+        local_target_node_id = kernel().node_manager.get_local_nodes( tid ).size() - 1;
+      }
+
+      syn_id = kernel().model_manager.get_num_connection_models() - 1;
+    }
+
+    local_target_connection_id = kernel()
+                                   .node_manager.get_local_nodes( tid )
+                                   .get_node_by_index( local_target_node_id )
+                                   ->get_num_conn_type_sources( syn_id )
+      - 1;
+  }
+
+  // if the found index is not valid, decrease further
+  if ( local_target_connection_id
+    == kernel()
+         .node_manager.get_local_nodes( tid )
+         .get_node_by_index( local_target_node_id )
+         ->get_num_conn_type_sources( syn_id ) )
+  {
+    decrease();
+  }
+}
+
+inline void
+SourceTablePosition::increase()
+{
+  // first try finding a valid index by only increasing target-local connection id
+  ++local_target_connection_id;
+  if ( local_target_connection_id
+    == kernel()
+         .node_manager.get_local_nodes( tid )
+         .get_node_by_index( local_target_node_id )
+         ->get_num_conn_type_sources( syn_id ) )
+  {
+    // then try finding a valid index by increasing synapse index
+    ++syn_id;
+    if ( syn_id == kernel().model_manager.get_num_connection_models() )
+    {
+      // then try finding a valid index by increasing target node id
+      ++local_target_node_id;
+      if ( local_target_node_id == ernel().node_manager.get_local_nodes( tid ).size() )
+      {
+        // then try finding a valid index by increasing thread index
+        ++tid;
+        if ( tid == kernel().vp_manager.get_num_threads() )
+        {
+          return; // reached the end without finding a valid entry
+        }
+
+        local_target_node_id = 0;
+      }
+
+      syn_id = 0;
+    }
+
+    local_target_connection_id = 0;
+  }
+
+  // if the found index is still not valid, increase further
+  if ( local_target_connection_id
+    == kernel()
+         .node_manager.get_local_nodes( tid )
+         .get_node_by_index( local_target_node_id )
+         ->get_num_conn_type_sources( syn_id ) )
+  {
+    increase();
+  }
+}
+
+inline bool
+SourceTablePosition::is_invalid() const
+{
+  return ( tid == -1 and syn_id == -1 and local_target_node_id == -1 and local_target_connection_id == -1 );
 }
 
 inline bool
 operator==( const SourceTablePosition& lhs, const SourceTablePosition& rhs )
 {
-  return ( lhs.tid == rhs.tid and lhs.syn_id == rhs.syn_id and lhs.lcid == rhs.lcid );
+  return ( lhs.tid == rhs.tid and lhs.syn_id == rhs.syn_id and lhs.local_target_node_id == rhs.local_target_node_id
+    and lhs.local_target_connection_id == rhs.local_target_connection_id );
 }
 
 inline bool
@@ -155,7 +202,14 @@ operator<( const SourceTablePosition& lhs, const SourceTablePosition& rhs )
   {
     if ( lhs.syn_id == rhs.syn_id )
     {
-      return lhs.lcid < rhs.lcid;
+      if ( lhs.local_target_node_id == rhs.local_target_node_id )
+      {
+        return lhs.local_target_connection_id < rhs.local_target_connection_id;
+      }
+      else
+      {
+        return lhs.local_target_node_id < rhs.local_target_node_id;
+      }
     }
     else
     {

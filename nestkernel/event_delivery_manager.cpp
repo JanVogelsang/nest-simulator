@@ -569,6 +569,19 @@ EventDeliveryManager::set_complete_marker_spike_data_( const AssignedRanks& assi
   }
 }
 
+void
+EventDeliveryManager::deliver_event_to_node( const thread tid,
+  const synindex syn_id,
+  const index local_target_node_id,
+  const index local_target_connection_id,
+  const std::vector< ConnectorModel* >& cm,
+  SpikeEvent& se )
+{
+  // TODO JV: Make this an inline function?
+  Node* target_node = kernel().node_manager.thread_lid_to_node( tid, local_target_node_id );
+  target_node->deliver_event( tid, syn_id, local_target_connection_id, cm, se );
+}
+
 template < typename SpikeDataT >
 bool
 EventDeliveryManager::deliver_events_( const thread tid, const std::vector< SpikeDataT >& recv_buffer )
@@ -618,20 +631,25 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
         if ( spike_data.get_tid() == tid )
         {
           const index syn_id = spike_data.get_syn_id();
-          const index lcid = spike_data.get_lcid();
+          const index local_target_node_id = spike_data.get_local_target_node_id();
+          const index local_target_connection_id = spike_data.get_local_target_connection_id();
 
           // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
           // only if needed, as this is computationally costly
-          se.set_sender_node_id_info( tid, syn_id, lcid );
-          kernel().connection_manager.send( tid, syn_id, lcid, cm, se );
+          se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id );
+          deliver_event_to_node( tid, syn_id, local_target_node_id, local_target_connection_id, cm, se );
         }
       }
       else
       {
-        const index syn_id = spike_data.get_syn_id();
+        assert( false ); // TODO JV: Spike compression
+
+        /*const index syn_id = spike_data.get_syn_id();
         // for compressed spikes lcid holds the index in the
         // compressed_spike_data structure
-        const index idx = spike_data.get_lcid();
+        // TODO JV: Replace two indices by a single one in target data when using compression (union maybe)
+        const index local_target_node_id = spike_data.get_local_target_node_id();
+        const index local_target_connection_id = spike_data.get_local_target_connection_id();
         const std::vector< SpikeData >& compressed_spike_data =
           kernel().connection_manager.get_compressed_spike_data( syn_id, idx );
         for ( auto it = compressed_spike_data.cbegin(); it != compressed_spike_data.cend(); ++it )
@@ -642,10 +660,11 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
 
             // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
             // only if needed, as this is computationally costly
-            se.set_sender_node_id_info( tid, syn_id, lcid );
-            kernel().connection_manager.send( tid, syn_id, lcid, cm, se );  // JV: This send might need to get changed
+            se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id ); // TODO JV:
+        What is this for? deliver_event_to_node( tid, syn_id, local_target_node_id, local_target_connection_id, cm, se
+        );
           }
-        }
+        }*/
       }
 
       // break if this was the last valid entry from this rank
@@ -751,11 +770,9 @@ EventDeliveryManager::collocate_target_data_buffers_( const thread tid,
   // reset markers
   for ( thread rank = assigned_ranks.begin; rank < assigned_ranks.end; ++rank )
   {
-    // reset last entry to avoid accidentally communicating done
-    // marker
+    // reset last entry to avoid accidentally communicating done marker
     send_buffer_target_data_[ send_buffer_position.end( rank ) - 1 ].reset_marker();
-    // set first entry to invalid to avoid accidentally reading
-    // uninitialized parts of the receive buffer
+    // set first entry to invalid to avoid accidentally reading uninitialized parts of the receive buffer
     send_buffer_target_data_[ send_buffer_position.begin( rank ) ].set_invalid_marker();
   }
 
@@ -767,15 +784,12 @@ EventDeliveryManager::collocate_target_data_buffers_( const thread tid,
     {
       if ( send_buffer_position.is_chunk_filled( source_rank ) )
       {
-        // entry does not fit in this part of the MPI buffer any more,
-        // so we need to reject it
+        // entry does not fit in this part of the MPI buffer anymore, so we need to reject it
         kernel().connection_manager.reject_last_target_data( tid );
-        // after rejecting the last target, we need to save the
-        // position to start at this point again next communication
+        // after rejecting the last target, we need to save the position to start at this point again next communication
         // round
         kernel().connection_manager.save_source_table_entry_point( tid );
-        // we have just rejected an entry, so source table can not be
-        // fully read
+        // we have just rejected an entry, so source table can not be fully read
         is_source_table_read = false;
         if ( send_buffer_position.are_all_chunks_filled() ) // buffer is full
         {

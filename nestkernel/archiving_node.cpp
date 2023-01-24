@@ -33,7 +33,7 @@ namespace nest
 
 // member functions for ArchivingNode
 
-nest::ArchivingNode::ArchivingNode()
+ArchivingNode::ArchivingNode()
   : n_incoming_( 0 )
   , Kminus_( 0.0 )
   , Kminus_triplet_( 0.0 )
@@ -51,7 +51,7 @@ nest::ArchivingNode::ArchivingNode()
   correction_entries_stdp_ax_delay_.resize( num_time_slots );
 }
 
-nest::ArchivingNode::ArchivingNode( const ArchivingNode& n )
+ArchivingNode::ArchivingNode( const ArchivingNode& n )
   : StructuralPlasticityNode( n )
   , n_incoming_( n.n_incoming_ )
   , Kminus_( n.Kminus_ )
@@ -102,9 +102,8 @@ ArchivingNode::register_stdp_connection( double t_first_read, double delay )
   max_delay_ = std::max( delay, max_delay_ );
 }
 
-// JV: Reduce this to a simple getter
 double
-nest::ArchivingNode::get_K_value( double t )
+ArchivingNode::get_K_value( double t )
 {
   // case when the neuron has not yet spiked
   if ( history_.empty() )
@@ -132,12 +131,8 @@ nest::ArchivingNode::get_K_value( double t )
   return trace_;
 }
 
-// JV: Reduce this to a simple getter
 void
-nest::ArchivingNode::get_K_values( double t,
-  double& K_value,
-  double& nearest_neighbor_K_value,
-  double& K_triplet_value )
+ArchivingNode::get_K_values( double t, double& K_value, double& nearest_neighbor_K_value, double& K_triplet_value )
 {
   // case when the neuron has not yet spiked
   if ( history_.empty() )
@@ -173,7 +168,7 @@ nest::ArchivingNode::get_K_values( double t,
 
 // JV: Remove this method
 void
-nest::ArchivingNode::get_history( double t1,
+ArchivingNode::get_history( double t1,
   double t2,
   std::deque< histentry >::iterator* start,
   std::deque< histentry >::iterator* finish )
@@ -201,13 +196,42 @@ nest::ArchivingNode::get_history( double t1,
 }
 
 void
-nest::ArchivingNode::set_spiketime( Time const& t_sp, double offset )
+ArchivingNode::deliver_event( const thread tid,
+  const synindex syn_id,
+  const index local_target_connection_id,
+  const std::vector< ConnectorModel* >& cm,
+  SpikeEvent& se )
+{
+  ConnectorBase* conn = connections_[ syn_id ];
+
+  // STDP synapses need to make sure all post-synaptic spikes are known when delivering the spike to the synapse.
+  // Spikes will therefore be stored in an intermediate spike buffer until no more post-synaptic spike could reach the
+  // synapse before this spike will.
+
+  // Only specific synapse types need to postpone the delivery
+  /*if ( cm[ syn_id ]->requires_postponed_delivery() ) {
+    if ( const double t_spike = se.get_stamp().get_ms(), delay dendritic_delay = 0, const Time& ori =
+  kernel().simulation_manager.get_slice_origin(); t_spike + axonal - conn->get_connection_delay() < now ) {
+      dynamic_spike_buffer_.push_back(se);
+      return;
+    }
+  }*/
+
+  // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
+  // event by adding a weight (TODO JV: only weight?).
+  conn->send( tid, sources_[ syn_id ][ local_target_connection_id ].get_node_id(), local_target_connection_id, cm, se );
+
+  handle( se );
+}
+
+void
+ArchivingNode::set_spiketime( Time const& t_sp, double offset )
 {
   StructuralPlasticityNode::set_spiketime( t_sp, offset );
 
   const double t_sp_ms = t_sp.get_ms() - offset;
 
-  if ( n_incoming_ )  // JV: Remove this whole block, but still update the K value
+  if ( n_incoming_ ) // JV: Remove this whole block, but still update the K value
   {
     // prune all spikes from history which are no longer needed
     // only remove a spike if:
@@ -239,7 +263,7 @@ nest::ArchivingNode::set_spiketime( Time const& t_sp, double offset )
 }
 
 void
-nest::ArchivingNode::get_status( DictionaryDatum& d ) const
+ArchivingNode::get_status( DictionaryDatum& d ) const
 {
   def< double >( d, names::t_spike, get_spiketime_ms() );
   def< double >( d, names::tau_minus, tau_minus_ );
@@ -254,7 +278,7 @@ nest::ArchivingNode::get_status( DictionaryDatum& d ) const
 }
 
 void
-nest::ArchivingNode::set_status( const DictionaryDatum& d )
+ArchivingNode::set_status( const DictionaryDatum& d )
 {
   // We need to preserve values in case invalid values are set
   double new_tau_minus = tau_minus_;
@@ -285,7 +309,7 @@ nest::ArchivingNode::set_status( const DictionaryDatum& d )
 }
 
 void
-nest::ArchivingNode::clear_history()
+ArchivingNode::clear_history()
 {
   last_spike_ = -1.0;
   Kminus_ = 0.0;
@@ -344,7 +368,7 @@ ArchivingNode::reset_correction_entries_stdp_ax_delay_()
 }
 
 void
-nest::ArchivingNode::correct_synapses_stdp_ax_delay_( const Time& t_spike )
+ArchivingNode::correct_synapses_stdp_ax_delay_( const Time& t_spike )
 {
   if ( has_stdp_ax_delay_ )
   {
@@ -354,7 +378,7 @@ nest::ArchivingNode::correct_synapses_stdp_ax_delay_( const Time& t_spike )
     assert( correction_entries_stdp_ax_delay_.size()
       == static_cast< size_t >( kernel().connection_manager.get_min_delay() + maxdelay_steps ) );
 
-    for ( long lag = t_spike_rel.get_steps() - 1; lag < maxdelay_steps + 1; ++lag ) // Edit JV:
+    for ( long lag = t_spike_rel.get_steps() - 1; lag < maxdelay_steps + 1; ++lag )
     {
       const long idx = kernel().event_delivery_manager.get_modulo( lag );
       assert( static_cast< size_t >( idx ) < correction_entries_stdp_ax_delay_.size() );
@@ -363,10 +387,11 @@ nest::ArchivingNode::correct_synapses_stdp_ax_delay_( const Time& t_spike )
             it_corr_entry < correction_entries_stdp_ax_delay_[ idx ].end();
             ++it_corr_entry )
       {
-        kernel().connection_manager.correct_synapse_stdp_ax_delay( it_corr_entry->spike_data_,
-          it_corr_entry->t_last_pre_spike_,
-          &it_corr_entry->weight_revert_,
-          t_spike.get_ms() );
+        connections_[ it_corr_entry->spike_data_.get_syn_id() ]
+          ->correct_synapse_stdp_ax_delay( it_corr_entry->spike_data_,
+            it_corr_entry->t_last_pre_spike_,
+            &it_corr_entry->weight_revert_,
+            t_spike.get_ms() );
       }
       // indicate that the new spike was processed by these STDP synapses
       history_.back().access_counter_ += correction_entries_stdp_ax_delay_[ idx ].size();

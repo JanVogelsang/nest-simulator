@@ -94,8 +94,11 @@ nest::TargetTable::add_target( const thread tid, const thread target_rank, const
   {
     const TargetDataFields& target_fields = target_data.target_data;
 
-    targets_[ tid ][ lid ].push_back(
-      Target( target_fields.get_tid(), target_rank, target_fields.get_syn_id(), target_fields.get_lcid() ) );
+    targets_[ tid ][ lid ].push_back( Target( target_fields.get_tid(),
+      target_rank,
+      target_fields.get_syn_id(),
+      target_fields.get_local_target_node_id(),
+      target_fields.get_local_target_connection_id() ) );
   }
   else
   {

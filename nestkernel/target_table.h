@@ -25,13 +25,10 @@
 
 // C++ includes:
 #include <cassert>
-#include <iostream>
-#include <map>
 #include <vector>
 
 // Includes from nestkernel:
 #include "nest_types.h"
-#include "spike_data.h"
 #include "target.h"
 #include "target_data.h"
 

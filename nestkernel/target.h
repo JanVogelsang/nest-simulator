@@ -40,7 +40,7 @@ namespace nest
  * of the connection infrastructure.
  *
  * The bitwise layout of the neuron identifier for the "standard" CMAKE option:
- *
+ *  TODO JV
  *  +-------- processed flag
  *  |   +---- synapse-type id (syn_id)
  *  |   |
@@ -59,11 +59,9 @@ namespace nest
  *  |       |  |       |  |       |  |       |  |       |  |       |  |       |  |       |
  *  63      56 55      48 47      40 39      32 31      24 23      16 15      8  7       0
  *
- * Other custom layouts can be chosen by providing a list of 5
- * numbers, representing the bits required for rank, thread, synapse
- * id, local connection id and processed flag, respectively. The number
- * of bits needs to sum to 64. The processed flag must always use one
- * bit.
+ * Other custom layouts can be chosen by providing a list of 5 numbers, representing the bits required for rank, thread,
+ * synapse id, local connection id and processed flag, respectively. The number of bits needs to sum to 64.
+ * The processed flag must always use one bit.
  */
 
 enum enum_status_target_id
@@ -77,8 +75,9 @@ class Target
 private:
   uint64_t remote_target_id_;
 
-  static constexpr uint8_t BITPOS_LCID = 0U;
-  static constexpr uint8_t BITPOS_RANK = NUM_BITS_LCID;
+  static constexpr uint8_t BITPOS_LOCAL_TARGET_NODE_ID = 0U;
+  static constexpr uint8_t BITPOS_LOCAL_TARGET_CONNECTION_ID = NUM_BITS_LOCAL_NODE_ID;
+  static constexpr uint8_t BITPOS_RANK = BITPOS_LOCAL_TARGET_CONNECTION_ID + NUM_BITS_LOCAL_CONNECTION_ID;
   static constexpr uint8_t BITPOS_TID = BITPOS_RANK + NUM_BITS_RANK;
   static constexpr uint8_t BITPOS_SYN_ID = BITPOS_TID + NUM_BITS_TID;
   static constexpr uint8_t BITPOS_PROCESSED_FLAG = BITPOS_SYN_ID + NUM_BITS_SYN_ID;
@@ -87,7 +86,10 @@ private:
   using position_of_processed_flag = StaticAssert< BITPOS_PROCESSED_FLAG == 63U >::success;
 
   // generate bit-masks used in bit-operations
-  static constexpr uint64_t MASK_LCID = generate_bit_mask( NUM_BITS_LCID, BITPOS_LCID );
+  static constexpr uint64_t MASK_LOCAL_TARGET_NODE_ID =
+    generate_bit_mask( NUM_BITS_LOCAL_NODE_ID, BITPOS_LOCAL_TARGET_NODE_ID );
+  static constexpr uint64_t MASK_LOCAL_TARGET_CONNECTION_ID =
+    generate_bit_mask( NUM_BITS_LOCAL_CONNECTION_ID, BITPOS_LOCAL_TARGET_CONNECTION_ID );
   static constexpr uint64_t MASK_RANK = generate_bit_mask( NUM_BITS_RANK, BITPOS_RANK );
   static constexpr uint64_t MASK_TID = generate_bit_mask( NUM_BITS_TID, BITPOS_TID );
   static constexpr uint64_t MASK_SYN_ID = generate_bit_mask( NUM_BITS_SYN_ID, BITPOS_SYN_ID );
@@ -96,19 +98,33 @@ private:
 public:
   Target();
   Target( const Target& target );
-  Target( const thread tid, const thread rank, const synindex syn_id, const index lcid );
+  Target( const thread tid,
+    const thread rank,
+    const synindex syn_id,
+    const index local_target_node_id,
+    const index local_target_connection_id );
 
   Target& operator=( const Target& );
 
   /**
-   * Set local connection id.
+   * Set thread-local target neuron ID.
    */
-  void set_lcid( const index lcid );
+  void set_local_target_node_id( const index local_target_node_id );
 
   /**
-   * Return local connection id.
+   * Set node-local target connection ID.
    */
-  index get_lcid() const;
+  void set_local_target_connection_id( const index local_target_connection_id );
+
+  /**
+   * Returns thread-local target neuron ID.
+   */
+  index get_local_target_node_id() const;
+
+  /**
+   * Returns node-local target connection ID.
+   */
+  index get_local_target_connection_id() const;
 
   /**
    * Set rank.
@@ -188,15 +204,21 @@ Target::operator=( const Target& other )
   return *this;
 }
 
-inline Target::Target( const thread tid, const thread rank, const synindex syn_id, const index lcid )
+inline Target::Target( const thread tid,
+  const thread rank,
+  const synindex syn_id,
+  const index local_target_node_id,
+  const index local_target_connection_id )
   : remote_target_id_( 0 )
 {
   assert( tid <= MAX_TID );
   assert( rank <= MAX_RANK );
   assert( syn_id <= MAX_SYN_ID );
-  assert( lcid <= MAX_LCID );
+  assert( local_target_node_id <= MAX_LOCAL_NODE_ID );
+  assert( local_target_connection_id <= MAX_LOCAL_CONNECTION_ID );
 
-  set_lcid( lcid );
+  set_local_target_node_id( local_target_node_id );
+  set_local_target_connection_id( local_target_connection_id );
   set_rank( rank );
   set_tid( tid );
   set_syn_id( syn_id );
@@ -204,16 +226,31 @@ inline Target::Target( const thread tid, const thread rank, const synindex syn_i
 }
 
 inline void
-Target::set_lcid( const index lcid )
+Target::set_local_target_node_id( const index local_target_node_id )
 {
-  assert( lcid <= MAX_LCID );
-  remote_target_id_ = ( remote_target_id_ & ( ~MASK_LCID ) ) | ( static_cast< uint64_t >( lcid ) << BITPOS_LCID );
+  assert( local_target_node_id <= MAX_LOCAL_NODE_ID );
+  remote_target_id_ = ( remote_target_id_ & ( ~MASK_LOCAL_TARGET_NODE_ID ) )
+    | ( static_cast< uint64_t >( local_target_node_id ) << BITPOS_LOCAL_TARGET_NODE_ID );
 }
 
 inline index
-Target::get_lcid() const
+Target::get_local_target_node_id() const
 {
-  return ( ( remote_target_id_ & MASK_LCID ) >> BITPOS_LCID );
+  return ( ( remote_target_id_ & MASK_LOCAL_TARGET_NODE_ID ) >> BITPOS_LOCAL_TARGET_NODE_ID );
+}
+
+inline void
+Target::set_local_target_connection_id( const index local_target_connection_id )
+{
+  assert( local_target_connection_id <= MAX_LOCAL_CONNECTION_ID );
+  remote_target_id_ = ( remote_target_id_ & ( ~MASK_LOCAL_TARGET_CONNECTION_ID ) )
+    | ( static_cast< uint64_t >( local_target_connection_id ) << BITPOS_LOCAL_TARGET_CONNECTION_ID );
+}
+
+inline index
+Target::get_local_target_connection_id() const
+{
+  return ( ( remote_target_id_ & MASK_LOCAL_TARGET_CONNECTION_ID ) >> BITPOS_LOCAL_TARGET_CONNECTION_ID );
 }
 
 inline void

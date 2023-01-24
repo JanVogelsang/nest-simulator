@@ -36,7 +36,6 @@
 #include "nest_types.h"
 #include "node.h"
 #include "spikecounter.h"
-#include "syn_id_delay.h"
 
 // Includes from sli:
 #include "arraydatum.h"
@@ -121,9 +120,10 @@ public:
   typedef SecondaryEvent EventType;
 
   Connection()
-    : target_()
-    , syn_id_delay_( 1.0 )
+  //: target_()
+  //, syn_id_delay_( 1.0 )
   {
+    set_delay_ms( 1.0 );
   }
 
   Connection( const Connection< targetidentifierT >& rhs ) = default;
@@ -161,7 +161,7 @@ public:
 
   /**
    * Framework for STDP with predominantly axonal delays:
-   * Correct this synapse and the corresponding presiously sent spike
+   * Correct this synapse and the corresponding previously sent spike
    * taking into account a new post-synaptic spike.
    */
   void correct_synapse_stdp_ax_delay( const thread tid,
@@ -173,11 +173,16 @@ public:
   /**
    * Return the delay of the connection in ms
    */
-  double
+   double
+  get_delay() const
+  {
+   return Time::delay_steps_to_ms( delay_ );
+  }
+  /*double
   get_delay() const
   {
     return syn_id_delay_.get_delay_ms();
-  }
+  }*/
 
   /**
    * Return the delay of the connection in steps
@@ -185,8 +190,13 @@ public:
   long
   get_delay_steps() const
   {
-    return syn_id_delay_.delay;
+    return delay_;
   }
+  /*long
+  get_delay_steps() const
+  {
+    return syn_id_delay_.delay;
+  }*/
 
   /**
    * Set the delay of the connection
@@ -194,8 +204,13 @@ public:
   void
   set_delay( const double delay )
   {
-    syn_id_delay_.set_delay_ms( delay );
+    delay_ = Time::delay_ms_to_steps( delay );
   }
+  /*void
+  set_delay( const double delay )
+  {
+    syn_id_delay_.set_delay_ms( delay );
+  }*/
 
   /**
    * Set the delay of the connection in steps
@@ -203,26 +218,31 @@ public:
   void
   set_delay_steps( const long delay )
   {
-    syn_id_delay_.delay = delay;
+    delay_ = delay;
   }
+  /*void
+  set_delay_steps( const long delay )
+  {
+    syn_id_delay_.delay = delay;
+  }*/
 
   /**
    * Set the synapse id of the connection
    */
-  void
+  /*void
   set_syn_id( synindex syn_id )
   {
     syn_id_delay_.syn_id = syn_id;
-  }
+  }*/
 
   /**
    * Get the synapse id of the connection
    */
-  synindex
+  /*synindex
   get_syn_id() const
   {
     return syn_id_delay_.syn_id;
-  }
+  }*/
 
   long
   get_label() const
@@ -231,70 +251,46 @@ public:
   }
 
   /**
-   * triggers an update of a synaptic weight
-   * this function is needed for neuromodulated synaptic plasticity
+   * Triggers an update of a synaptic weight. This function is needed for neuromodulated synaptic plasticity.
    */
   void trigger_update_weight( const thread,
     const std::vector< spikecounter >&,
     const double,
     const CommonSynapseProperties& );
 
-  Node*
+  /* Node*
   get_target( const thread tid ) const
   {
     return target_.get_target_ptr( tid );
-  }
-  rport
+  }*/
+
+  /*rport
   get_rport() const
   {
     return target_.get_rport();
-  }
-
-  /**
-   * Sets a flag in the connection to signal that the following connection has
-   * the same source.
-   *
-   * @see source_has_more_targets
-   */
-  void
-  set_source_has_more_targets( const bool more_targets )
-  {
-    syn_id_delay_.set_source_has_more_targets( more_targets );
-  }
-
-  /**
-   * Returns a flag denoting whether the connection has source subsequent
-   * targets.
-   *
-   * @see set_source_has_more_targets
-   */
-  bool
-  source_has_more_targets() const
-  {
-    return syn_id_delay_.source_has_more_targets();
-  }
+  }*/
 
   /**
    * Disables the connection.
    *
    * @see is_disabled
    */
-  void
+  /*void
   disable()
   {
     syn_id_delay_.disable();
-  }
+  }*/
 
   /**
    * Returns a flag denoting if the connection is disabled.
    *
    * @see disable
    */
-  bool
+  /*bool
   is_disabled() const
   {
     return syn_id_delay_.is_disabled();
-  }
+  }*/
 
 protected:
   /**
@@ -308,17 +304,14 @@ protected:
    */
   void check_connection_( Node& dummy_target, Node& source, Node& target, const rport receptor_type );
 
-  /* the order of the members below is critical
-     as it influences the size of the object. Please leave unchanged
-     as
+  /* the order of the members below is critical as it influences the size of the object. Please leave unchanged as
      targetidentifierT target_;
-     SynIdDelay syn_id_delay_;        //!< syn_id (char) and delay (24 bit) in
-     timesteps of this
-     connection
+     SynIdDelay syn_id_delay_;
   */
-  targetidentifierT target_;
+  // targetidentifierT target_;
   //! syn_id (9 bit), delay (21 bit) in timesteps of this connection and more_targets and disabled flags (each 1 bit)
-  SynIdDelay syn_id_delay_;
+  // SynIdDelay syn_id_delay_;
+  double delay_;
 };
 
 
@@ -357,7 +350,7 @@ template < typename targetidentifierT >
 inline void
 Connection< targetidentifierT >::get_status( DictionaryDatum& d ) const
 {
-  def< double >( d, names::delay, syn_id_delay_.get_delay_ms() );
+  def< double >( d, names::delay, get_delay_ms() );
   target_.get_status( d );
 }
 
@@ -369,7 +362,7 @@ Connection< targetidentifierT >::set_status( const DictionaryDatum& d, Connector
   if ( updateValue< double >( d, names::delay, delay ) )
   {
     kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
-    syn_id_delay_.set_delay_ms( delay );
+    set_delay_ms( delay );
   }
   // no call to target_.set_status() because target and rport cannot be changed
 }
@@ -384,12 +377,12 @@ template < typename targetidentifierT >
 inline void
 Connection< targetidentifierT >::calibrate( const TimeConverter& tc )
 {
-  Time t = tc.from_old_steps( syn_id_delay_.delay );
-  syn_id_delay_.delay = t.get_steps();
+  Time t = tc.from_old_steps( delay_ );
+  delay_ = t.get_steps();
 
-  if ( syn_id_delay_.delay == 0 )
+  if ( delay_ == 0 )
   {
-    syn_id_delay_.delay = 1;
+    delay_ = 1;
   }
 }
 

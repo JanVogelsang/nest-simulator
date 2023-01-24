@@ -64,7 +64,8 @@ ModelManager::register_connection_model( const std::string& name, const Register
     enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_SYMMETRIC ),
     enumFlagSet( flags, RegisterConnectionModelFlags::SUPPORTS_WFR ),
     enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_CLOPATH_ARCHIVING ),
-    enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_URBANCZIK_ARCHIVING ) );
+    enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_URBANCZIK_ARCHIVING ),
+    enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_POSTPONED_DELIVERY ) );
   register_connection_model_( cf );
 
   // register the "hpc" version with the same parameters but a different target identifier
@@ -76,7 +77,8 @@ ModelManager::register_connection_model( const std::string& name, const Register
       enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_SYMMETRIC ),
       enumFlagSet( flags, RegisterConnectionModelFlags::SUPPORTS_WFR ),
       enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_CLOPATH_ARCHIVING ),
-      enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_URBANCZIK_ARCHIVING ) );
+      enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_URBANCZIK_ARCHIVING ),
+      enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_POSTPONED_DELIVERY ) );
     register_connection_model_( cf );
   }
 
@@ -89,7 +91,9 @@ ModelManager::register_connection_model( const std::string& name, const Register
       enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_SYMMETRIC ),
       enumFlagSet( flags, RegisterConnectionModelFlags::SUPPORTS_WFR ),
       enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_CLOPATH_ARCHIVING ),
-      enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_URBANCZIK_ARCHIVING ) );
+      enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_URBANCZIK_ARCHIVING ),
+      enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_POSTPONED_DELIVERY ) );
+
     register_connection_model_( cf );
   }
 }

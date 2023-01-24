@@ -53,6 +53,7 @@ nest::KernelManager::KernelManager()
   , simulation_manager()
   , modelrange_manager()
   , connection_manager()
+  , source_manager()
   , sp_manager()
   , event_delivery_manager()
   , model_manager()
@@ -67,6 +68,7 @@ nest::KernelManager::KernelManager()
       &modelrange_manager,
       &model_manager,
       &connection_manager,
+      &source_manager,
       &sp_manager,
       &event_delivery_manager,
       &music_manager,

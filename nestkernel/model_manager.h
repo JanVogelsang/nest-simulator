@@ -173,6 +173,12 @@ public:
    */
   bool connector_requires_urbanczik_archiving( const synindex syn_id ) const;
 
+  /**
+   * Checks, whether synapse type requires pre-synaptic spike delivery to be postponed until it reaches the synapse
+   * before any following post-synaptic spike
+   */
+  bool connector_requires_postponed_delivery( const synindex syn_id ) const;
+
   void set_connector_defaults( synindex syn_id, const DictionaryDatum& d );
 
   /**
