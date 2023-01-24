@@ -34,16 +34,18 @@
 #include "conn_builder.h"
 #include "connection_id.h"
 #include "connector_base.h"
-#include "kernel_manager.h"
+#include "nest_names.h"
 #include "nest_time.h"
 #include "nest_timeconverter.h"
 #include "nest_types.h"
 #include "node_collection.h"
 #include "per_thread_bool_indicator.h"
-#include "source_manager.h"
 #include "spike_data.h"
 #include "target_table.h"
 #include "target_table_devices.h"
+
+// Debug
+#include "node.h"
 
 // Includes from sli:
 #include "arraydatum.h"
@@ -629,34 +631,11 @@ ConnectionManager::get_max_delay() const
   return max_delay_;
 }
 
-inline void
-ConnectionManager::clean_source_table( const thread tid )
-{
-  if ( not keep_source_table_ )
-  {
-    kernel().source_manager.clean( tid );
-  }
-}
-
-inline void
-ConnectionManager::clear_source_table( const thread tid )
-{
-  if ( not keep_source_table_ )
-  {
-    kernel().source_manager.clear( tid );
-  }
-}
 
 inline bool
 ConnectionManager::get_keep_source_table() const
 {
   return keep_source_table_;
-}
-
-inline bool
-ConnectionManager::is_source_table_cleared() const
-{
-  return kernel().source_manager.is_cleared();
 }
 
 inline void
@@ -669,36 +648,6 @@ inline void
 ConnectionManager::resize_target_table_devices_to_number_of_synapse_types()
 {
   target_table_devices_.resize_to_number_of_synapse_types();
-}
-
-inline void
-ConnectionManager::reject_last_target_data( const thread tid )
-{
-  kernel().source_manager.reject_last_target_data( tid );
-}
-
-inline void
-ConnectionManager::save_source_table_entry_point( const thread tid )
-{
-  kernel().source_manager.save_entry_point( tid );
-}
-
-inline void
-ConnectionManager::no_targets_to_process( const thread tid )
-{
-  kernel().source_manager.no_targets_to_process( tid );
-}
-
-inline void
-ConnectionManager::reset_source_table_entry_point( const thread tid )
-{
-  kernel().source_manager.reset_entry_point( tid );
-}
-
-inline void
-ConnectionManager::restore_source_table_entry_point( const thread tid )
-{
-  kernel().source_manager.restore_entry_point( tid );
 }
 
 inline void
@@ -725,16 +674,6 @@ ConnectionManager::add_target( const thread tid, const thread target_rank, const
   target_table_.add_target( tid, target_rank, target_data );
 }
 
-inline bool
-ConnectionManager::get_next_target_data( const thread tid,
-  const thread rank_start,
-  const thread rank_end,
-  thread& target_rank,
-  TargetData& next_target_data )
-{
-  return kernel().source_manager.get_next_target_data( tid, rank_start, rank_end, target_rank, next_target_data );
-}
-
 inline const std::vector< size_t >&
 ConnectionManager::get_secondary_send_buffer_positions( const thread tid, const index lid, const synindex syn_id ) const
 {
@@ -745,15 +684,6 @@ inline size_t
 ConnectionManager::get_secondary_recv_buffer_position( const thread tid, const synindex syn_id, const index lcid ) const
 {
   return secondary_recv_buffer_pos_[ tid ][ syn_id ][ lcid ];
-}
-
-inline index
-ConnectionManager::get_source_node_id( const thread tid,
-  const synindex syn_index,
-  const index local_target_node_id,
-  const index local_connection_id )
-{
-  return kernel().source_manager.get_node_id( tid, syn_index, local_target_node_id, local_connection_id );
 }
 
 inline bool
@@ -792,13 +722,6 @@ ConnectionManager::get_device_connected( const thread tid, const index lcid ) co
   return target_table_devices_.is_device_connected( tid, lcid );
 }
 
-inline void
-ConnectionManager::restructure_connection_tables( const thread tid )
-{
-  assert( not kernel().source_manager.is_cleared() );
-  target_table_.clear( tid );
-  kernel().source_manager.reset_processed_flags( tid );
-}
 
 inline const std::vector< SpikeData >&
 ConnectionManager::get_compressed_spike_data( const synindex syn_id, const index idx )
@@ -806,11 +729,6 @@ ConnectionManager::get_compressed_spike_data( const synindex syn_id, const index
   return compressed_spike_data_[ syn_id ][ idx ];
 }
 
-inline void
-ConnectionManager::clear_compressed_spike_data_map( const thread tid )
-{
-  kernel().source_manager.clear_compressed_spike_data_map( tid );
-}
 
 } // namespace nest
 

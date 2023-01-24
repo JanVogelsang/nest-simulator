@@ -76,7 +76,7 @@ cont_delay_synapse< targetidentifierT >::set_status( const DictionaryDatum& d, C
 
     if ( frac_delay == 0 )
     {
-      kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
+      KernelManager::get_kernel_manager().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
       set_delay_steps( Time::delay_ms_to_steps( delay ) );
       delay_offset_ = 0.0;
     }

@@ -35,6 +35,7 @@
 #include "connector_base.h"
 #include "delay_checker.h"
 #include "kernel_manager.h"
+#include "nest.h"
 #include "nest_time.h"
 #include "nest_timeconverter.h"
 
@@ -194,7 +195,7 @@ GenericConnectorModel< ConnectionT >::add_connection( Node& src,
   {
     if ( has_delay_ )
     {
-      kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
+      KernelManager::get_kernel_manager().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
     }
 
     if ( p->known( names::delay ) )
@@ -213,7 +214,7 @@ GenericConnectorModel< ConnectionT >::add_connection( Node& src,
     {
       if ( has_delay_ )
       {
-        kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
+        KernelManager::get_kernel_manager().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
       }
     }
     else
@@ -255,7 +256,8 @@ GenericConnectorModel< ConnectionT >::add_connection( Node& src,
   assert( syn_id != invalid_synindex );
 
   typename ConnectionT::CommonPropertiesType const& cp = get_common_properties();
-  // The following line will throw an exception, if it does not work.
+  // The following lines will throw an exception, if the connection is not possible.
+  tgt.check_connection<ConnectionT>( src, syn_id, actual_receptor_type );
   connection.check_connection( src, tgt, actual_receptor_type, cp );
 
   tgt.add_connection( src, syn_id, connection, actual_receptor_type, is_primary, cp );

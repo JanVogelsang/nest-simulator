@@ -27,6 +27,8 @@
 #include "compose.hpp"
 
 // Includes from nestkernel:
+#include "connector_base.h"
+#include "connector_model.h"
 #include "exceptions.h"
 #include "kernel_manager.h"
 

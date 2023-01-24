@@ -74,7 +74,7 @@ class ConnTestDummyNodeBase : public Node
   {
   }
   void
-  update( const nest::Time&, long, long ) override
+  update( const nest::Time&, const long, const long ) override
   {
   }
   void
@@ -120,10 +120,8 @@ public:
   typedef SecondaryEvent EventType;
 
   Connection()
-  //: target_()
-  //, syn_id_delay_( 1.0 )
   {
-    set_delay_ms( 1.0 );
+    set_delay( 1.0 );
   }
 
   Connection( const Connection< targetidentifierT >& rhs ) = default;
@@ -293,17 +291,6 @@ public:
   }*/
 
 protected:
-  /**
-   * This function calls check_connection() on the sender to check if the
-   * receiver accepts the event type and receptor type requested by the sender.
-   * \param s The source node
-   * \param r The target node
-   * \param receptor The ID of the requested receptor type
-   * \param the last spike produced by the presynaptic neuron (for STDP and
-   * maturing connections)
-   */
-  void check_connection_( Node& dummy_target, Node& source, Node& target, const rport receptor_type );
-
   /* the order of the members below is critical as it influences the size of the object. Please leave unchanged as
      targetidentifierT target_;
      SynIdDelay syn_id_delay_;
@@ -314,44 +301,11 @@ protected:
   double delay_;
 };
 
-
-template < typename targetidentifierT >
-inline void
-Connection< targetidentifierT >::check_connection_( Node& dummy_target,
-  Node& source,
-  Node& target,
-  const rport receptor_type )
-{
-  // 1. does this connection support the event type sent by source
-  // try to send event from source to dummy_target
-  // this line might throw an exception
-  source.send_test_event( dummy_target, receptor_type, get_syn_id(), true );
-
-  // 2. does the target accept the event type sent by source
-  // try to send event from source to target
-  // this returns the port of the incoming connection
-  // p must be stored in the base class connection
-  // this line might throw an exception
-  target_.set_rport( source.send_test_event( target, receptor_type, get_syn_id(), false ) );
-
-  // 3. do the events sent by source mean the same thing as they are
-  // interpreted in target?
-  // note that we here use a bitwise and operation (&), because we interpret
-  // each bit in the signal type as a collection of individual flags
-  if ( not( source.sends_signal() & target.receives_signal() ) )
-  {
-    throw IllegalConnection( "Source and target neuron are not compatible (e.g., spiking vs binary neuron)." );
-  }
-
-  target_.set_target( &target );
-}
-
 template < typename targetidentifierT >
 inline void
 Connection< targetidentifierT >::get_status( DictionaryDatum& d ) const
 {
-  def< double >( d, names::delay, get_delay_ms() );
-  target_.get_status( d );
+  def< double >( d, names::delay, get_delay() );
 }
 
 template < typename targetidentifierT >
@@ -362,9 +316,8 @@ Connection< targetidentifierT >::set_status( const DictionaryDatum& d, Connector
   if ( updateValue< double >( d, names::delay, delay ) )
   {
     kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
-    set_delay_ms( delay );
+    set_delay( delay );
   }
-  // no call to target_.set_status() because target and rport cannot be changed
 }
 
 template < typename targetidentifierT >

@@ -33,6 +33,7 @@
 
 // Includes from nestkernel:
 #include "kernel_manager.h"
+#include "nest.h"
 #include "mpi_manager.h"
 #include "nest_types.h"
 #include "per_thread_bool_indicator.h"
@@ -256,34 +257,6 @@ public:
 };
 
 inline void
-SourceManager::clear( const thread tid )
-{
-  // TODO JV: Make sure iteration over all nodes is efficient
-  const SparseNodeArray& thread_local_nodes = kernel().node_manager.get_local_nodes( tid );
-
-  for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
-  {
-    n->get_node()->remove_disabled_connections();
-  }
-
-  is_cleared_[ tid ].set_true();
-}
-
-inline void
-SourceManager::reject_last_target_data( const thread tid )
-{
-  // The last target data returned by get_next_target_data() could not be inserted into MPI buffer due to overflow.
-  // We hence need to correct the processed flag of the last entry
-  current_positions_.increase();
-  Source current_source =
-    kernel()
-      .node_manager.get_local_nodes( current_positions_[ tid ].tid )
-      .get_node_by_index( current_positions_[ tid ].local_target_node_id )
-      ->get_source( current_positions_[ tid ].syn_id, current_positions_[ tid ].local_target_connection_id )
-      .set_processed( false );
-}
-
-inline void
 SourceManager::save_entry_point( const thread tid )
 {
   saved_positions_[ tid ] = current_positions_[ tid ];
@@ -293,54 +266,6 @@ inline void
 SourceManager::restore_entry_point( const thread tid )
 {
   current_positions_[ tid ] = saved_positions_[ tid ];
-}
-
-inline void
-SourceManager::reset_entry_point( const thread tid )
-{
-  // Since we read the source table backwards, we need to set saved values to the biggest possible value. These will be
-  // used to initialize current_positions_ correctly upon calling restore_entry_point. However, this can only be done if
-  // other values have valid values.
-
-  const thread num_threads = kernel().vp_manager.get_num_threads();
-  const size_t num_connection_models = kernel().model_manager.get_num_connection_models();
-  if ( num_threads > 0 )
-  {
-    saved_positions_[ tid ].tid = num_threads - 1;
-    saved_positions_[ tid ].syn_id = num_connection_models - 1;
-    saved_positions_[ tid ].local_target_node_id = kernel().node_manager.get_local_nodes( tid ).size() - 1;
-    const Node* last_local_node =
-      kernel().node_manager.get_local_nodes( tid ).get_node_by_index( saved_positions_[ tid ].local_target_node_id );
-    saved_positions_[ tid ].local_target_connection_id =
-      last_local_node->get_num_conn_type_sources( num_connection_models - 1 );
-  }
-  else
-  {
-    saved_positions_[ tid ].tid = -1;
-    saved_positions_[ tid ].syn_id = -1;
-    saved_positions_[ tid ].local_target_node_id = -1;
-    saved_positions_[ tid ].local_target_connection_id = -1;
-  }
-}
-
-inline void
-SourceManager::reset_processed_flags( const thread tid )
-{
-  // TODO JV: Make sure iteration over all nodes is efficient
-  const SparseNodeArray& thread_local_nodes = kernel().node_manager.get_local_nodes( tid );
-
-  for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
-  {
-    for ( std::vector< std::vector< Source > >::iterator it = n->get_node()->sources_[ tid ].begin();
-          it != n->get_node()->sources_[ tid ].end();
-          ++it )
-    {
-      for ( std::vector< Source >::iterator iit = it->begin(); iit != it->end(); ++iit )
-      {
-        iit->set_processed( false );
-      }
-    }
-  }
 }
 
 inline void

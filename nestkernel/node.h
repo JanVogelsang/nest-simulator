@@ -49,7 +49,7 @@
 
 namespace nest
 {
-class ConnectorBase;
+class ConnectorModel;
 class Model;
 class ArchivingNode;
 class TimeConverter;

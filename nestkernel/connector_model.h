@@ -41,7 +41,6 @@
 
 namespace nest
 {
-class ConnectorBase;
 class CommonSynapseProperties;
 class TimeConverter;
 class Node;
