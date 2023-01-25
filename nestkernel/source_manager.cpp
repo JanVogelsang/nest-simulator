@@ -240,13 +240,12 @@ SourceManager::reject_last_target_data( const thread tid )
 {
   // The last target data returned by get_next_target_data() could not be inserted into MPI buffer due to overflow.
   // We hence need to correct the processed flag of the last entry
-  current_positions_.increase();
-  Source current_source =
-    kernel()
-      .node_manager.get_local_nodes( current_positions_[ tid ].tid )
-      .get_node_by_index( current_positions_[ tid ].local_target_node_id )
-      ->get_source( current_positions_[ tid ].syn_id, current_positions_[ tid ].local_target_connection_id )
-      .set_processed( false );
+  current_positions_[ tid ].increase();
+  kernel()
+    .node_manager.get_local_nodes( current_positions_[ tid ].tid )
+    .get_node_by_index( current_positions_[ tid ].local_target_node_id )
+    ->get_source( current_positions_[ tid ].syn_id, current_positions_[ tid ].local_target_connection_id )
+    .set_processed( false );
 }
 void
 SourceManager::reset_processed_flags( const thread tid )

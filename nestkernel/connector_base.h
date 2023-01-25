@@ -34,7 +34,7 @@
 
 // Includes from nestkernel:
 #include "common_synapse_properties.h"
-#include "connection.h"
+// #include "connection.h"
 #include "connection_label.h"
 #include "event.h"
 #include "nest_datums.h"

@@ -488,7 +488,7 @@ public:
   /**
    * Get a connection index by source node id. Returns invalid_index if no connection to the source node exists.
    */
-  inline size_t get_connection_index( const synindex syn_id, const index source_node_id ) const;
+  size_t get_connection_index( const synindex syn_id, const index source_node_id ) const;
 
   inline Source&
   get_source( const synindex syn_id, const index local_connection_id )

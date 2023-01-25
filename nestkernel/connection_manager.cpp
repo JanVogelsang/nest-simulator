@@ -887,8 +887,12 @@ ConnectionManager::trigger_update_weight( const long vt_id,
 size_t
 ConnectionManager::get_num_target_data( const thread tid ) const
 {
-  // TODO JV: Iterate over syn types
-  return kernel().source_manager.num_unique_sources( tid );
+  size_t num = 0;
+  for ( synindex syn_id = 0; syn_id < kernel().model_manager.get_num_connection_models(); ++syn_id )
+  {
+    num += kernel().source_manager.num_unique_sources( tid, syn_id );
+  }
+  return num;
 }
 
 size_t
@@ -995,7 +999,8 @@ ConnectionManager::get_connections( const DictionaryDatum& params )
 
 // Helper method which removes ConnectionIDs from input deque and
 // appends them to output deque.
-static std::deque< ConnectionID >&
+// TODO JV (pt): Structural plasticity
+/*static std::deque< ConnectionID >&
 extend_connectome( std::deque< ConnectionID >& out, std::deque< ConnectionID >& in )
 {
   while ( not in.empty() )
@@ -1005,7 +1010,7 @@ extend_connectome( std::deque< ConnectionID >& out, std::deque< ConnectionID >& 
   }
 
   return out;
-}
+}*/
 
 void
 ConnectionManager::split_to_neuron_device_vectors_( const thread tid,

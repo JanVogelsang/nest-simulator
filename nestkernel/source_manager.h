@@ -26,24 +26,20 @@
 // C++ includes:
 #include <algorithm>
 #include <cassert>
-#include <iostream>
 #include <map>
-#include <set>
 #include <vector>
+
+// Includes from libnestutil:
+#include "manager_interface.h"
 
 // Includes from nestkernel:
 #include "kernel_manager.h"
-#include "nest.h"
 #include "mpi_manager.h"
 #include "nest_types.h"
 #include "per_thread_bool_indicator.h"
 #include "source.h"
 #include "source_table_position.h"
 #include "spike_data.h"
-
-// Includes from libnestutil
-#include "block_vector.h"
-#include "vector_util.h"
 
 namespace nest
 {
@@ -55,8 +51,6 @@ class TargetData;
  * information has been transferred to the presynaptic side. After all connections have been created, the information
  * stored by this structure in the neurons is transferred to the presynaptic side and can be cleared.
  */
-// TODO JV: Implement interface
-// TODO JV: Make source manager a member in kernel
 class SourceManager : public ManagerInterface
 {
 private:
