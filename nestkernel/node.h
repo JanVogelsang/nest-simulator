@@ -25,11 +25,11 @@
 
 // C++ includes:
 #include <deque>
+#include <numeric>
 #include <string>
 #include <vector>
 
 // Includes from nestkernel:
-#include "connector_base.h"
 #include "deprecation_warning.h"
 #include "event.h"
 #include "histentry.h"
@@ -49,9 +49,9 @@
 
 namespace nest
 {
+class ConnectorBase;
 class ConnectorModel;
 class Model;
-class ArchivingNode;
 class TimeConverter;
 
 
@@ -105,7 +105,6 @@ class Node
   friend class NodeManager;
   friend class ModelManager;
   friend class proxynode;
-  friend class Synapse;
   friend class Model;
   friend class SimulationManager;
 
@@ -460,6 +459,16 @@ public:
    */
   virtual void sends_secondary_event( DelayedRateConnectionEvent& re );
 
+    /**
+   * This function calls check_connection() on the sender to check if the
+   * receiver accepts the event type and receptor type requested by the sender.
+   * \param source The source node
+   * \param syn_id Connection type of the connection as index
+   * \param receptor The ID of the requested receptor type
+   */
+  template < typename ConnectionT >
+  void check_connection( Node& source, const synindex syn_id, const rport receptor_type );
+
   /**
    * TODO JV
    */
@@ -495,18 +504,23 @@ public:
    */
   virtual void register_stdp_connection( double, double );
 
-  inline void
-  resize_connections( const size_t size )
-  {
-    connections_.resize( size );
-  }
+  /**
+   * TODO JV
+   */
+  void resize_connections( const size_t size );
 
+  /**
+   * TODO JV
+   */
   inline void
   resize_sources( const size_t size )
   {
     sources_.resize( size );
   }
 
+  /**
+   * TODO JV
+   */
   inline void
   clear_sources()
   {
@@ -517,14 +531,7 @@ public:
   /**
    * TODO JV
    */
-  inline void
-  sort_connections_and_sources()
-  {
-    for ( size_t syn_id = 0; syn_id < connections_.size(); ++syn_id )
-    {
-      connections_[ syn_id ]->sort_connections_and_sources( sources_[ syn_id ] );
-    }
-  }
+  void sort_connections_and_sources();
 
   /**
    * TODO JV
@@ -1181,12 +1188,6 @@ inline index
 Node::get_thread_lid() const
 {
   return thread_lid_;
-}
-
-inline index
-Node::get_connection_index( const synindex syn_id, const index source_node_id ) const
-{
-  return connections_[ syn_id ]->get_connection_index( source_node_id );
 }
 
 } // namespace

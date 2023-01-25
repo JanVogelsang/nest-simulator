@@ -24,8 +24,6 @@
 #define TARGET_TABLE_DEVICES_H
 
 // C++ includes:
-#include <cassert>
-#include <map>
 #include <vector>
 
 // Includes from nestkernel:
@@ -35,7 +33,6 @@
 #include "nest_types.h"
 
 // Includes from SLI:
-#include "arraydatum.h"
 #include "dictdatum.h"
 
 namespace nest

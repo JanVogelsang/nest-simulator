@@ -24,6 +24,7 @@
 
 // Includes from nestkernel:
 #include "kernel_manager.h"
+#include "connector_model.h"
 
 #ifndef CONNECTOR_BASE_IMPL_H
 #define CONNECTOR_BASE_IMPL_H

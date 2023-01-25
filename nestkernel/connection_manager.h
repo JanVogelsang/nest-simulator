@@ -44,9 +44,6 @@
 #include "target_table.h"
 #include "target_table_devices.h"
 
-// Debug
-#include "node.h"
-
 // Includes from sli:
 #include "arraydatum.h"
 #include "dict.h"

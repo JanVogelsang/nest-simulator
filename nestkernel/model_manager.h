@@ -35,13 +35,14 @@
 #include "nest_time.h"
 #include "nest_timeconverter.h"
 #include "nest_types.h"
-#include "node.h"
 
 // Includes from sli:
 #include "dictutils.h"
 
 namespace nest
 {
+class Node;
+
 class ModelManager : public ManagerInterface
 {
 public:

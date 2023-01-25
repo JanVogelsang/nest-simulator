@@ -36,7 +36,6 @@
 #include "common_synapse_properties.h"
 #include "connection.h"
 #include "connection_label.h"
-#include "connector_model.h"
 #include "event.h"
 #include "nest_datums.h"
 #include "nest_names.h"
@@ -49,6 +48,8 @@
 
 namespace nest
 {
+
+class ConnectorModel;
 
 /**
  * Base class to allow storing Connectors for different synapse types

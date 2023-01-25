@@ -37,6 +37,7 @@
 #include "model_manager_impl.h"
 #include "proxynode.h"
 #include "vp_manager_impl.h"
+#include "node.h"
 
 
 namespace nest

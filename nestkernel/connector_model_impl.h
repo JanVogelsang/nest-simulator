@@ -257,7 +257,7 @@ GenericConnectorModel< ConnectionT >::add_connection( Node& src,
 
   typename ConnectionT::CommonPropertiesType const& cp = get_common_properties();
   // The following lines will throw an exception, if the connection is not possible.
-  tgt.check_connection<ConnectionT>( src, syn_id, actual_receptor_type );
+  tgt.check_connection< ConnectionT >( src, syn_id, actual_receptor_type );
   connection.check_connection( src, tgt, actual_receptor_type, cp );
 
   tgt.add_connection( src, syn_id, connection, actual_receptor_type, is_primary, cp );

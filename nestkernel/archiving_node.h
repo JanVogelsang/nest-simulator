@@ -28,7 +28,6 @@
 #include <deque>
 
 // Includes from nestkernel:
-#include "connector_model.h"
 #include "histentry.h"
 #include "nest_time.h"
 #include "nest_types.h"
@@ -42,6 +41,8 @@
 
 namespace nest
 {
+
+class ConnectorModel;
 
 /**
  * A node which archives spike history for the purposes of spike-timing

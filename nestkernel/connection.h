@@ -26,7 +26,6 @@
 // Includes from nestkernel:
 #include "common_synapse_properties.h"
 #include "connection_label.h"
-#include "connector_base_impl.h"
 #include "delay_checker.h"
 #include "event.h"
 #include "kernel_manager.h"
@@ -315,7 +314,7 @@ Connection< targetidentifierT >::set_status( const DictionaryDatum& d, Connector
   double delay;
   if ( updateValue< double >( d, names::delay, delay ) )
   {
-    kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
+    //kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
     set_delay( delay );
   }
 }
