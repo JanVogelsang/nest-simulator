@@ -294,37 +294,6 @@ stdp_pl_synapse_hom::send( Event& e, thread t, const STDPPLHomCommonProperties& 
   t_lastspike_ = t_spike;
 }
 
-stdp_pl_synapse_hom::stdp_pl_synapse_hom()
-  : ConnectionBase()
-  , weight_( 1.0 )
-  , Kplus_( 0.0 )
-  , t_lastspike_( 0.0 )
-{
-}
-
-void
-stdp_pl_synapse_hom::get_status( DictionaryDatum& d ) const
-{
-
-  // base class properties, different for individual synapse
-  ConnectionBase::get_status( d );
-  def< double >( d, names::weight, weight_ );
-
-  // own properties, different for individual synapse
-  def< double >( d, names::Kplus, Kplus_ );
-  def< long >( d, names::size_of, sizeof( *this ) );
-}
-
-void
-stdp_pl_synapse_hom::set_status( const DictionaryDatum& d, ConnectorModel& cm )
-{
-  // base class properties
-  ConnectionBase::set_status( d, cm );
-  updateValue< double >( d, names::weight, weight_ );
-
-  updateValue< double >( d, names::Kplus, Kplus_ );
-}
-
 } // of namespace nest
 
 #endif // of #ifndef STDP_PL_SYNAPSE_HOM_H

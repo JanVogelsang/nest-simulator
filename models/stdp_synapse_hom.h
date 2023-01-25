@@ -260,14 +260,6 @@ private:
 // Implementation of class stdp_synapse_hom.
 //
 
-stdp_synapse_hom::stdp_synapse_hom()
-  : ConnectionBase()
-  , weight_( 1.0 )
-  , Kplus_( 0.0 )
-  , t_lastspike_( 0.0 )
-{
-}
-
 /**
  * Send an event to the receiver of this connection.
  * \param e The event to send
@@ -310,29 +302,6 @@ stdp_synapse_hom::send( Event& e, thread t, const STDPHomCommonProperties& cp, N
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) / cp.tau_plus_ ) + 1.0;
 
   t_lastspike_ = t_spike;
-}
-
-void
-stdp_synapse_hom::get_status( DictionaryDatum& d ) const
-{
-
-  // base class properties, different for individual synapse
-  ConnectionBase::get_status( d );
-  def< double >( d, names::weight, weight_ );
-
-  // own properties, different for individual synapse
-  def< double >( d, names::Kplus, Kplus_ );
-  def< long >( d, names::size_of, sizeof( *this ) );
-}
-
-void
-stdp_synapse_hom::set_status( const DictionaryDatum& d, ConnectorModel& cm )
-{
-  // base class properties
-  ConnectionBase::set_status( d, cm );
-  updateValue< double >( d, names::weight, weight_ );
-
-  updateValue< double >( d, names::Kplus, Kplus_ );
 }
 
 } // of namespace nest

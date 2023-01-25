@@ -136,8 +136,7 @@ public:
   void
   check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
   {
-    ConnTestDummyNode dummy_target;
-      }
+  }
 
   void
   send( Event& e, thread t, const CommonSynapseProperties&, Node* target  )

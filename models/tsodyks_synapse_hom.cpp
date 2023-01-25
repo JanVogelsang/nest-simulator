@@ -82,4 +82,47 @@ TsodyksHomCommonProperties::set_status( const DictionaryDatum& d, ConnectorModel
   }
 }
 
+
+tsodyks_synapse_hom::tsodyks_synapse_hom()
+  : ConnectionBase()
+  , x_( 1.0 )
+  , y_( 0.0 )
+  , u_( 0.0 )
+  , t_lastspike_( 0.0 )
+{
+}
+
+void
+tsodyks_synapse_hom::get_status( DictionaryDatum& d ) const
+{
+  ConnectionBase::get_status( d );
+
+  def< double >( d, names::x, x_ );
+  def< double >( d, names::y, y_ );
+  def< double >( d, names::u, u_ );
+}
+
+void
+tsodyks_synapse_hom::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+{
+  // Handle parameters that may throw an exception first, so we can leave the
+  // synapse untouched in case of invalid parameter values
+  double x = x_;
+  double y = y_;
+  updateValue< double >( d, names::x, x );
+  updateValue< double >( d, names::y, y );
+
+  if ( x + y > 1.0 )
+  {
+    throw BadProperty( "x + y must be <= 1.0." );
+  }
+
+  x_ = x;
+  y_ = y;
+
+  ConnectionBase::set_status( d, cm );
+
+  updateValue< double >( d, names::u, u_ );
+}
+
 } // of namespace nest

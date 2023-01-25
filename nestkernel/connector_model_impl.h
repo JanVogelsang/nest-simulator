@@ -260,7 +260,7 @@ GenericConnectorModel< ConnectionT >::add_connection( Node& src,
   tgt.check_connection< ConnectionT >( src, syn_id, actual_receptor_type );
   connection.check_connection( src, tgt, actual_receptor_type, cp );
 
-  tgt.add_connection( src, syn_id, connection, actual_receptor_type, is_primary, cp );
+  tgt.add_connection< ConnectionT >( src, syn_id, connection, actual_receptor_type, is_primary, cp );
 }
 
 } // namespace nest

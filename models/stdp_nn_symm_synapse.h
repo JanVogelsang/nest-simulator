@@ -132,7 +132,6 @@ public:
    */
   stdp_nn_symm_synapse();
 
-
   /**
    * Copy constructor.
    * Needs to be defined properly in order for GenericConnector to work.
