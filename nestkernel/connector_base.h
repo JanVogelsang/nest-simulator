@@ -23,9 +23,6 @@
 #ifndef CONNECTOR_BASE_H
 #define CONNECTOR_BASE_H
 
-// Generated includes:
-#include "config.h"
-
 // C++ includes:
 #include <vector>
 
@@ -34,8 +31,6 @@
 
 // Includes from nestkernel:
 #include "common_synapse_properties.h"
-// #include "connection.h"
-#include "connection_label.h"
 #include "event.h"
 #include "nest_datums.h"
 #include "nest_names.h"
@@ -142,15 +137,16 @@ public:
    * indicating whether the following connection belongs to the same
    * source.
    */
-  virtual void send( const thread tid, const index snode_id, const index local_target_connection_id, const std::vector< ConnectorModel* >& cm, Event& e ) = 0;
+  virtual void send( const thread tid, const index snode_id, const index local_target_connection_id, const std::vector< ConnectorModel* >& cm, Event& e, const Node* target ) = 0;
 
   virtual void correct_synapse_stdp_ax_delay( const SpikeData& spike_data,
     const double t_last_pre_spike,
     double* weight_revert,
-    const double t_post_spike ) = 0;
+    const double t_post_spike,
+    Node* target ) = 0;
 
   virtual void
-  send_weight_event( const thread tid, const index snode_id, const index local_target_connection_id, Event& e, const CommonSynapseProperties& cp ) = 0;
+  send_weight_event( const thread tid, const index snode_id, const index local_target_connection_id, Event& e, const CommonSynapseProperties& cp, Node* target ) = 0;
 
   /**
    * Update weights of dopamine modulated STDP connections.
@@ -165,23 +161,6 @@ public:
    * Sort connections according to source node IDs.
    */
   virtual void sort_connections_and_sources( std::vector< Source >& ) = 0;
-
-  /**
-   * Return lcid of the first connection after start_lcid (inclusive)
-   * where the node_id of the target matches target_node_id. If there are no matches,
-   * the function returns invalid_index.
-   */
-  virtual index find_first_target( const thread tid, const index start_lcid, const index target_node_id ) const = 0;
-
-  /**
-   * Return lcid of first connection where the node ID of the target
-   * matches target_node_id; consider only the connections with lcids
-   * given in matching_lcids. If there is no match, the function returns
-   * invalid_index.
-   */
-  virtual index find_matching_target( const thread tid,
-    const std::vector< index >& matching_lcids,
-    const index target_node_id ) const = 0;
 
   /**
    * Disable the transfer of events through the connection at position
@@ -237,7 +216,7 @@ public:
 
     // get target node ID here, where tid is available
     // necessary for hpc synapses using TargetIdentifierIndex
-    def< long >( dict, names::target, C_[ lcid ].get_target( tid )->get_node_id() );
+    // def< long >( dict, names::target, C_[ lcid ].get_target( tid )->get_node_id() );
   }
 
   void
@@ -270,6 +249,9 @@ public:
     const long synapse_label,
     std::deque< ConnectionID >& conns ) const override
   {
+    // TODO JV: Devices
+
+    /*
     if ( not C_[ lcid ].is_disabled() )
     {
       if ( synapse_label == UNLABELED_CONNECTION or C_[ lcid ].get_label() == synapse_label )
@@ -281,7 +263,7 @@ public:
             ConnectionDatum( ConnectionID( source_node_id, current_target_node_id, tid, syn_id_, lcid ) ) );
         }
       }
-    }
+    }*/
   }
 
   index
@@ -317,7 +299,9 @@ public:
     const long synapse_label,
     std::deque< ConnectionID >& conns ) const override
   {
-    if ( not C_[ lcid ].is_disabled() )
+    assert( false );  // TODO JV (pt): Structural plasticity
+
+    /*if ( not C_[ lcid ].is_disabled() )
     {
       if ( synapse_label == UNLABELED_CONNECTION or C_[ lcid ].get_label() == synapse_label )
       {
@@ -329,7 +313,7 @@ public:
             ConnectionDatum( ConnectionID( source_node_id, current_target_node_id, tid, syn_id_, lcid ) ) );
         }
       }
-    }
+    }*/
   }
 
   void
@@ -355,12 +339,12 @@ public:
     {
       e.set_port( lcid );
       assert( not C_[ lcid ].is_disabled() );
-      C_[ lcid ].send( e, tid, cp );
+      C_[ lcid ].send( e, tid, cp, nullptr );  // TODO JV: Fix devices
     }
   }
 
   void
-  send( const thread tid, const index snode_id, const index local_target_connection_id, const std::vector< ConnectorModel* >& cm, Event& e ) override
+  send( const thread tid, const index snode_id, const index local_target_connection_id, const std::vector< ConnectorModel* >& cm, Event& e, const Node* target ) override
   {
     typename ConnectionT::CommonPropertiesType const& cp =
       static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties();
@@ -368,14 +352,14 @@ public:
     e.set_port( local_target_connection_id );
     if ( not C_[ local_target_connection_id ].is_disabled() )
     {
-      C_[ local_target_connection_id ].send( e, tid, cp );
-      send_weight_event( tid, e, cp );
+      C_[ local_target_connection_id ].send( e, tid, cp, target );
+      send_weight_event( tid, e, cp, target );
     }
   }
 
   // Implemented in connector_base_impl.h
   void
-  send_weight_event( const thread tid, const index snode_id, const index local_target_connection_id, Event& e, const CommonSynapseProperties& cp ) override;
+  send_weight_event( const thread tid, const index snode_id, const index local_target_connection_id, Event& e, const CommonSynapseProperties& cp, Node* target ) override;
 
   void
   trigger_update_weight( const long vt_node_id,
@@ -403,37 +387,6 @@ public:
   sort_connections_and_sources( std::vector< Source >& sources ) override
   {
     nest::sort( sources, C_ );
-  }
-
-  index
-  find_first_target( const thread tid, const index start_lcid, const index target_node_id ) const override
-  {
-    index lcid = start_lcid;
-    while ( true )
-    {
-      if ( C_[ lcid ].get_target( tid )->get_node_id() == target_node_id and not C_[ lcid ].is_disabled() )
-      {
-        return lcid;
-      }
-
-      ++lcid;
-    }
-  }
-
-  index
-  find_matching_target( const thread tid,
-    const std::vector< index >& matching_lcids,
-    const index target_node_id ) const override
-  {
-    for ( size_t i = 0; i < matching_lcids.size(); ++i )
-    {
-      if ( C_[ matching_lcids[ i ] ].get_target( tid )->get_node_id() == target_node_id )
-      {
-        return matching_lcids[ i ];
-      }
-    }
-
-    return invalid_index;
   }
 
   void

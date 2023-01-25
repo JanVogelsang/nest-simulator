@@ -73,13 +73,12 @@ static_synapse, iaf_psc_alpha_ps
 
 EndUserDocs */
 
-template < typename targetidentifierT >
-class cont_delay_synapse : public Connection< targetidentifierT >
+class cont_delay_synapse : public Connection
 {
 
 public:
   typedef CommonSynapseProperties CommonPropertiesType;
-  typedef Connection< targetidentifierT > ConnectionBase;
+  typedef Connection ConnectionBase;
 
   /**
    * Default Constructor.
@@ -105,9 +104,7 @@ public:
   // functions are used. Since ConnectionBase depends on the template parameter,
   // they are not automatically found in the base class.
   using ConnectionBase::get_delay_steps;
-  using ConnectionBase::get_rport;
-  using ConnectionBase::get_target;
-  using ConnectionBase::set_delay_steps;
+      using ConnectionBase::set_delay_steps;
 
   //! Used by ConnectorModel::add_connection() for fast initialization
   void
@@ -136,7 +133,7 @@ public:
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp );
+  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target  );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -190,8 +187,7 @@ public:
   check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
-  }
+      }
 
 private:
   double weight_;       //!< synaptic weight
@@ -204,14 +200,11 @@ private:
  * \param e The event to send
  * \param p The port under which this connection is stored in the Connector.
  */
-template < typename targetidentifierT >
 inline void
-cont_delay_synapse< targetidentifierT >::send( Event& e, thread t, const CommonSynapseProperties& )
+cont_delay_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target  )
 {
-  e.set_receiver( *get_target( t ) );
-  e.set_weight( weight_ );
-  e.set_rport( get_rport() );
-  double orig_event_offset = e.get_offset();
+    e.set_weight( weight_ );
+    double orig_event_offset = e.get_offset();
   double total_offset = orig_event_offset + delay_offset_;
   // As far as i have seen, offsets are outside of tics regime provided
   // by the Time-class to allow more precise spike-times, hence comparing

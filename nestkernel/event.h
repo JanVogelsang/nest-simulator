@@ -24,13 +24,11 @@
 #define EVENT_H
 
 // C++ includes:
-#include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <vector>
 
 // Includes from nestkernel:
-#include "exceptions.h"
 #include "nest_time.h"
 #include "nest_types.h"
 #include "spike_data.h"
@@ -125,21 +123,6 @@ public:
   virtual void operator()() = 0;
 
   /**
-   * Change pointer to receiving Node.
-   */
-  void set_receiver( Node& );
-
-  /**
-   * Return reference to receiving Node.
-   */
-  Node& get_receiver() const;
-
-  /**
-   * Return node ID of receiving Node.
-   */
-  index get_receiver_node_id() const;
-
-  /**
    * Return reference to sending Node.
    *
    * @note This will cause a segmentation fault if sender has not been set via set_sender().
@@ -225,13 +208,8 @@ public:
    */
   port get_port() const;
 
-  /**
-   * Return the receiver port number of the event.
-   * This function returns the number of the r-port over which the
-   * Event was sent.
-   * @note A return value of 0 indicates that the r-port is not used.
-   */
-  rport get_rport() const;
+  // TODO JV (pt): Rport not needed anymore in event
+  port get_rport() const { return 0; }
 
   /**
    * Set the port number.
@@ -242,16 +220,6 @@ public:
    * @param p Port number of the connection, or -1 if unknown.
    */
   void set_port( port p );
-
-  /**
-   * Set the receiver port number (r-port).
-   * When a connection is established, the receiving Node may issue
-   * a port number (r-port) to distinguish the incomin
-   * connection. By the default, the r-port is not used and its port
-   * number defaults to zero.
-   * @param p Receiver port number of the connection, or 0 if unused.
-   */
-  void set_rport( rport p );
 
   /**
    * Return the creation time offset of the Event.
@@ -298,11 +266,6 @@ public:
   bool sender_is_valid() const;
 
   /**
-   * Returns true if the pointer to the receiver node is valid.
-   */
-  bool receiver_is_valid() const;
-
-  /**
    * Check integrity of the event.
    * This function returns true, if all data, in particular sender
    * and receiver pointers are correctly set.
@@ -326,14 +289,11 @@ protected:
   index sender_node_id_;        //!< node ID of sender or 0
   SpikeData sender_spike_data_; //!< spike data of sender node, in some cases required to retrieve node ID
   /*
-   * The original formulation used references to Nodes as
-   * members, however, in order to avoid the reference of reference
-   * problem, we store sender and receiver as pointers and use
-   * references in the interface.
+   * The original formulation used references to Nodes as members, however, in order to avoid the reference of reference
+   * problem, we store sender as pointer and use references in the interface.
    * Thus, we can still ensure that the pointers are never nullptr.
    */
   Node* sender_;   //!< Pointer to sender or nullptr.
-  Node* receiver_; //!< Pointer to receiver or nullptr.
 
 
   /**
@@ -345,17 +305,6 @@ protected:
    * number indicates an unknown port.
    */
   port p_;
-
-  /**
-   * Receiver port number (r-port).
-   * The receiver port (r-port) can be used by the receiving Node to
-   * distinguish incoming connections. E.g. the r-port number can be
-   * used by Events to access specific parts of a Node. In most
-   * cases, however, this port will no be used.
-   * @note The use of this port number is optional.
-   * @note An r-port number of 0 indicates that the port is not used.
-   */
-  rport rp_;
 
   /**
    * Transmission delay.
@@ -405,7 +354,7 @@ class SpikeEvent : public Event
 {
 public:
   SpikeEvent();
-  void operator()() override;
+  void operator()() override {}
   SpikeEvent* clone() const override;
 
   void set_multiplicity( int );
@@ -447,7 +396,7 @@ class WeightRecorderEvent : public Event
 public:
   WeightRecorderEvent();
   WeightRecorderEvent* clone() const override;
-  void operator()() override;
+  void operator()() override {}
 
   /**
    * Return node ID of receiving Node.
@@ -522,7 +471,7 @@ class RateEvent : public Event
   double r_;
 
 public:
-  void operator()() override;
+  void operator()() override {}
   RateEvent* clone() const override;
 
   void set_rate( double );
@@ -556,7 +505,7 @@ class CurrentEvent : public Event
   double c_;
 
 public:
-  void operator()() override;
+  void operator()() override {}
   CurrentEvent* clone() const override;
 
   void set_current( double );
@@ -632,7 +581,7 @@ public:
 
   DataLoggingRequest* clone() const override;
 
-  void operator()() override;
+  void operator()() override {}
 
   /** Access to stored time interval.*/
   const Time& get_recording_interval() const;
@@ -751,7 +700,7 @@ public:
   //! Construct with reference to data and time stamps to transmit
   DataLoggingReply( const Container& );
 
-  void operator()() override;
+  void operator()() override {}
 
   //! Access referenced data
   const Container&
@@ -860,7 +809,7 @@ DataEvent< D >::get_pointer() const
 class DoubleDataEvent : public DataEvent< double >
 {
 public:
-  void operator()() override;
+  void operator()() override {}
   DoubleDataEvent* clone() const override;
 };
 
@@ -880,21 +829,9 @@ Event::sender_is_valid() const
 }
 
 inline bool
-Event::receiver_is_valid() const
-{
-  return receiver_;
-}
-
-inline bool
 Event::is_valid() const
 {
-  return ( sender_is_valid() and receiver_is_valid() and d_ > 0 );
-}
-
-inline void
-Event::set_receiver( Node& r )
-{
-  receiver_ = &r;
+  return ( sender_is_valid() and d_ > 0 );
 }
 
 inline void
@@ -917,12 +854,6 @@ Event::set_sender_node_id_info( const thread tid,
 {
   // lag and offset of SpikeData are not used here
   sender_spike_data_.set( tid, syn_id, local_target_node_id, local_target_connection_id, 0, 0.0 );
-}
-
-inline Node&
-Event::get_receiver() const
-{
-  return *receiver_;
 }
 
 inline Node&
@@ -1006,22 +937,10 @@ Event::get_port() const
   return p_;
 }
 
-inline rport
-Event::get_rport() const
-{
-  return rp_;
-}
-
 inline void
 Event::set_port( port p )
 {
   p_ = p;
-}
-
-inline void
-Event::set_rport( rport rp )
-{
-  rp_ = rp;
 }
 
 inline SpikeData

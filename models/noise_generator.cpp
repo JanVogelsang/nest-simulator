@@ -349,7 +349,6 @@ nest::noise_generator::event_hook( DSCurrentEvent& e )
   assert( 0 <= prt and static_cast< size_t >( prt ) < B_.amps_.size() );
 
   e.set_current( B_.amps_[ prt ] );
-  e.get_receiver().handle( e );
 }
 
 void

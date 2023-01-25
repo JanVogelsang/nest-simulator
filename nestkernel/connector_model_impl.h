@@ -178,7 +178,7 @@ template < typename ConnectionT >
 void
 GenericConnectorModel< ConnectionT >::set_syn_id( synindex syn_id )
 {
-  default_connection_.set_syn_id( syn_id );
+  // default_connection_.set_syn_id( syn_id );
 }
 
 template < typename ConnectionT >

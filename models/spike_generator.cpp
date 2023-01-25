@@ -390,7 +390,6 @@ void
 nest::spike_generator::event_hook( DSSpikeEvent& e )
 {
   e.set_weight( P_.spike_weights_[ S_.position_ ] * e.get_weight() );
-  e.get_receiver().handle( e );
 }
 
 /* ----------------------------------------------------------------

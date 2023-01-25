@@ -72,14 +72,13 @@ EndUserDocs */
  * Class representing a rate connection. A rate connection
  * has the properties weight and receiver port.
  */
-template < typename targetidentifierT >
-class RateConnectionInstantaneous : public Connection< targetidentifierT >
+class RateConnectionInstantaneous : public Connection
 {
 
 public:
   // this line determines which common properties to use
   typedef CommonSynapseProperties CommonPropertiesType;
-  typedef Connection< targetidentifierT > ConnectionBase;
+  typedef Connection ConnectionBase;
   typedef InstantaneousRateConnectionEvent EventType;
 
   /**
@@ -99,8 +98,6 @@ public:
   // automatically
   // found in the base class.
   using ConnectionBase::get_delay_steps;
-  using ConnectionBase::get_rport;
-  using ConnectionBase::get_target;
 
   void
   check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
@@ -109,8 +106,6 @@ public:
 
     s.sends_secondary_event( ge );
     ge.set_sender( s );
-    Connection< targetidentifierT >::target_.set_rport( t.handles_test_event( ge, receptor_type ) );
-    Connection< targetidentifierT >::target_.set_target( &t );
   }
 
   /**
@@ -119,12 +114,10 @@ public:
    * \param p The port under which this connection is stored in the Connector.
    */
   void
-  send( Event& e, thread t, const CommonSynapseProperties& )
+  send( Event& e, thread t, const CommonSynapseProperties&, Node* target  )
   {
     e.set_weight( weight_ );
-    e.set_receiver( *get_target( t ) );
-    e.set_rport( get_rport() );
-    e();
+            e();
   }
 
   void get_status( DictionaryDatum& d ) const;
@@ -149,18 +142,16 @@ private:
   double weight_; //!< connection weight
 };
 
-template < typename targetidentifierT >
 void
-RateConnectionInstantaneous< targetidentifierT >::get_status( DictionaryDatum& d ) const
+RateConnectionInstantaneous::get_status( DictionaryDatum& d ) const
 {
   ConnectionBase::get_status( d );
   def< double >( d, names::weight, weight_ );
   def< long >( d, names::size_of, sizeof( *this ) );
 }
 
-template < typename targetidentifierT >
 void
-RateConnectionInstantaneous< targetidentifierT >::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+RateConnectionInstantaneous::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 {
   // If the delay is set, we throw a BadProperty
   if ( d->known( names::delay ) )

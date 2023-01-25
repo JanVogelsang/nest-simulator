@@ -47,11 +47,9 @@
 #include "connector_model.h"
 #include "delay_checker.h"
 #include "exceptions.h"
-#include "mpi_manager_impl.h"
 #include "kernel_manager.h"
 #include "nest_names.h"
 #include "node.h"
-#include "source_manager.h"
 #include "target_table_devices_impl.h"
 #include "vp_manager_impl.h"
 

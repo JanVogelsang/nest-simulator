@@ -352,7 +352,6 @@ nest::sinusoidal_gamma_generator::event_hook( DSSpikeEvent& e )
 
   if ( V_.rng_->drand() < hazard_( tgt_idx ) )
   {
-    e.get_receiver().handle( e );
     B_.t0_ms_[ tgt_idx ] = V_.t_ms_;
     B_.Lambda_t0_[ tgt_idx ] = 0;
   }

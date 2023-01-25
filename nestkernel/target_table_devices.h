@@ -28,6 +28,7 @@
 
 // Includes from nestkernel:
 #include "connection_id.h"
+#include "connection_label.h"
 #include "connector_base.h"
 #include "event.h"
 #include "nest_types.h"

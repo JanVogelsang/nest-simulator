@@ -102,12 +102,11 @@ tsodyks2_synapse, stdp_synapse, static_synapse
 
 EndUserDocs */
 
-template < typename targetidentifierT >
-class quantal_stp_synapse : public Connection< targetidentifierT >
+class quantal_stp_synapse : public Connection
 {
 public:
   typedef CommonSynapseProperties CommonPropertiesType;
-  typedef Connection< targetidentifierT > ConnectionBase;
+  typedef Connection ConnectionBase;
 
   /**
    * Default Constructor.
@@ -126,8 +125,6 @@ public:
   // they are not automatically found in the base class.
   using ConnectionBase::get_delay;
   using ConnectionBase::get_delay_steps;
-  using ConnectionBase::get_rport;
-  using ConnectionBase::get_target;
 
   /**
    * Get all properties of this connection and put them into a dictionary.
@@ -145,7 +142,7 @@ public:
    * \param e The event to send
    * \param cp Common properties to all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp );
+  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target  );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -164,8 +161,7 @@ public:
   check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
-  }
+      }
 
   void
   set_weight( double w )
@@ -191,9 +187,8 @@ private:
  * \param t The thread on which this connection is stored.
  * \param cp Common properties object, containing the quantal_stp parameters.
  */
-template < typename targetidentifierT >
 inline void
-quantal_stp_synapse< targetidentifierT >::send( Event& e, thread t, const CommonSynapseProperties& )
+quantal_stp_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target  )
 {
   const double t_spike = e.get_stamp().get_ms();
   const double h = t_spike - t_lastspike_;
@@ -214,11 +209,9 @@ quantal_stp_synapse< targetidentifierT >::send( Event& e, thread t, const Common
 
   if ( n_release > 0 )
   {
-    e.set_receiver( *get_target( t ) );
-    e.set_weight( n_release * weight_ );
+        e.set_weight( n_release * weight_ );
     e.set_delay_steps( get_delay_steps() );
-    e.set_rport( get_rport() );
-    e();
+        e();
     a_ -= n_release;
   }
 

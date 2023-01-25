@@ -20,11 +20,14 @@
  *
  */
 
+
+
 // Includes from nestkernel:
-#include "nest.h"
-#include "source_manager.h"
+#include "kernel_manager.h"
 #include "mpi_manager_impl.h"
 #include "vp_manager_impl.h"
+#include "target_data.h"
+#include "source_manager.h"
 
 namespace nest
 {
@@ -255,15 +258,7 @@ SourceManager::reset_processed_flags( const thread tid )
 
   for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
   {
-    for ( std::vector< std::vector< Source > >::iterator it = n->get_node()->sources_[ tid ].begin();
-          it != n->get_node()->sources_[ tid ].end();
-          ++it )
-    {
-      for ( std::vector< Source >::iterator iit = it->begin(); iit != it->end(); ++iit )
-      {
-        iit->set_processed( false );
-      }
-    }
+    n->get_node()->reset_sources_processed_flags();
   }
 }
 

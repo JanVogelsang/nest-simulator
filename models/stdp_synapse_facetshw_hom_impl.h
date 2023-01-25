@@ -39,8 +39,7 @@ namespace nest
 // Implementation of class STDPFACETSHWHomCommonProperties.
 //
 
-template < typename targetidentifierT >
-STDPFACETSHWHomCommonProperties< targetidentifierT >::STDPFACETSHWHomCommonProperties()
+STDPFACETSHWHomCommonProperties::STDPFACETSHWHomCommonProperties()
   : CommonSynapseProperties()
   , tau_plus_( 20.0 )
   , tau_minus_( 20.0 )
@@ -118,16 +117,14 @@ STDPFACETSHWHomCommonProperties< targetidentifierT >::STDPFACETSHWHomCommonPrope
   calc_readout_cycle_duration_();
 }
 
-template < typename targetidentifierT >
 void
-STDPFACETSHWHomCommonProperties< targetidentifierT >::calc_readout_cycle_duration_()
+STDPFACETSHWHomCommonProperties::calc_readout_cycle_duration_()
 {
   readout_cycle_duration_ = int( ( no_synapses_ - 1.0 ) / synapses_per_driver_ + 1.0 ) * driver_readout_time_;
 }
 
-template < typename targetidentifierT >
 void
-STDPFACETSHWHomCommonProperties< targetidentifierT >::get_status( DictionaryDatum& d ) const
+STDPFACETSHWHomCommonProperties::get_status( DictionaryDatum& d ) const
 {
   CommonSynapseProperties::get_status( d );
 
@@ -149,9 +146,8 @@ STDPFACETSHWHomCommonProperties< targetidentifierT >::get_status( DictionaryDatu
   ( *d )[ names::reset_pattern ] = IntVectorDatum( new std::vector< long >( reset_pattern_ ) );
 }
 
-template < typename targetidentifierT >
 void
-STDPFACETSHWHomCommonProperties< targetidentifierT >::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+STDPFACETSHWHomCommonProperties::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 {
   CommonSynapseProperties::set_status( d, cm );
 
@@ -273,8 +269,7 @@ STDPFACETSHWHomCommonProperties< targetidentifierT >::set_status( const Dictiona
 //
 // Implementation of class stdp_facetshw_synapse_hom.
 //
-template < typename targetidentifierT >
-stdp_facetshw_synapse_hom< targetidentifierT >::stdp_facetshw_synapse_hom()
+stdp_facetshw_synapse_hom::stdp_facetshw_synapse_hom()
   : weight_( 1.0 )
   , a_causal_( 0.0 )
   , a_acausal_( 0.0 )
@@ -288,9 +283,8 @@ stdp_facetshw_synapse_hom< targetidentifierT >::stdp_facetshw_synapse_hom()
 {
 }
 
-template < typename targetidentifierT >
 void
-stdp_facetshw_synapse_hom< targetidentifierT >::get_status( DictionaryDatum& d ) const
+stdp_facetshw_synapse_hom::get_status( DictionaryDatum& d ) const
 {
   // base class properties, different for individual synapse
   ConnectionBase::get_status( d );
@@ -312,9 +306,8 @@ stdp_facetshw_synapse_hom< targetidentifierT >::get_status( DictionaryDatum& d )
   // weight_per_lut_entry_), weight_per_lut_entry_));
 }
 
-template < typename targetidentifierT >
 void
-stdp_facetshw_synapse_hom< targetidentifierT >::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+stdp_facetshw_synapse_hom::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 {
   // base class properties
   ConnectionBase::set_status( d, cm );

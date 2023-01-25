@@ -41,9 +41,7 @@ Event::Event()
                          // this is safe
   , sender_spike_data_()
   , sender_( nullptr )
-  , receiver_( nullptr )
   , p_( -1 )
-  , rp_( 0 )
   , d_( 1 )
   , stamp_( Time::step( 0 ) )
   , stamp_steps_( 0 )
@@ -69,24 +67,6 @@ Event::retrieve_sender_node_id_from_source_table() const
   }
 }
 
-index
-Event::get_receiver_node_id() const
-{
-  return receiver_->get_node_id();
-}
-
-void
-SpikeEvent::operator()()
-{
-  receiver_->handle( *this );
-}
-
-void
-WeightRecorderEvent::operator()()
-{
-  receiver_->handle( *this );
-}
-
 void
 DSSpikeEvent::operator()()
 {
@@ -94,69 +74,8 @@ DSSpikeEvent::operator()()
 }
 
 void
-RateEvent::operator()()
-{
-  receiver_->handle( *this );
-}
-
-void
-CurrentEvent::operator()()
-{
-  receiver_->handle( *this );
-}
-
-void
 DSCurrentEvent::operator()()
 {
   sender_->event_hook( *this );
 }
-
-void
-ConductanceEvent::operator()()
-{
-  receiver_->handle( *this );
-}
-
-void
-DoubleDataEvent::operator()()
-{
-  receiver_->handle( *this );
-}
-
-void
-DataLoggingRequest::operator()()
-{
-  receiver_->handle( *this );
-}
-
-void
-DataLoggingReply::operator()()
-{
-  receiver_->handle( *this );
-}
-
-void
-GapJunctionEvent::operator()()
-{
-  receiver_->handle( *this );
-}
-
-void
-InstantaneousRateConnectionEvent::operator()()
-{
-  receiver_->handle( *this );
-}
-
-void
-DelayedRateConnectionEvent::operator()()
-{
-  receiver_->handle( *this );
-}
-
-void
-DiffusionConnectionEvent::operator()()
-{
-  receiver_->handle( *this );
-}
-
 } // namespace nest

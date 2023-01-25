@@ -131,12 +131,11 @@ stdp_synapse, static_synapse, iaf_psc_exp, iaf_tum_2000
 
 EndUserDocs */
 
-template < typename targetidentifierT >
-class tsodyks_synapse : public Connection< targetidentifierT >
+class tsodyks_synapse : public Connection
 {
 public:
   typedef CommonSynapseProperties CommonPropertiesType;
-  typedef Connection< targetidentifierT > ConnectionBase;
+  typedef Connection ConnectionBase;
 
   /**
    * Default Constructor.
@@ -164,8 +163,6 @@ public:
   // they are not automatically found in the base class.
   using ConnectionBase::get_delay;
   using ConnectionBase::get_delay_steps;
-  using ConnectionBase::get_rport;
-  using ConnectionBase::get_target;
 
   /**
    * Get all properties of this connection and put them into a dictionary.
@@ -182,7 +179,7 @@ public:
    * \param e The event to send
    * \param cp Common properties to all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp );
+  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target  );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -201,8 +198,7 @@ public:
   check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
-  }
+      }
 
   void
   set_weight( double w )
@@ -228,14 +224,12 @@ private:
  * \param e The event to send
  * \param p The port under which this connection is stored in the Connector.
  */
-template < typename targetidentifierT >
 inline void
-tsodyks_synapse< targetidentifierT >::send( Event& e, thread t, const CommonSynapseProperties& )
+tsodyks_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target  )
 {
   const double t_spike = e.get_stamp().get_ms();
   const double h = t_spike - t_lastspike_;
 
-  Node* target = get_target( t );
 
 
   // t_lastspike_ = 0 initially
@@ -271,17 +265,14 @@ tsodyks_synapse< targetidentifierT >::send( Event& e, thread t, const CommonSyna
   y_ += delta_y_tsp;
 
 
-  e.set_receiver( *target );
-  e.set_weight( delta_y_tsp * weight_ );
+    e.set_weight( delta_y_tsp * weight_ );
   e.set_delay_steps( get_delay_steps() );
-  e.set_rport( get_rport() );
-  e();
+    e();
 
   t_lastspike_ = t_spike;
 }
 
-template < typename targetidentifierT >
-tsodyks_synapse< targetidentifierT >::tsodyks_synapse()
+tsodyks_synapse::tsodyks_synapse()
   : ConnectionBase()
   , weight_( 1.0 )
   , tau_psc_( 3.0 )
@@ -295,9 +286,8 @@ tsodyks_synapse< targetidentifierT >::tsodyks_synapse()
 {
 }
 
-template < typename targetidentifierT >
 void
-tsodyks_synapse< targetidentifierT >::get_status( DictionaryDatum& d ) const
+tsodyks_synapse::get_status( DictionaryDatum& d ) const
 {
   ConnectionBase::get_status( d );
   def< double >( d, names::weight, weight_ );
@@ -312,9 +302,8 @@ tsodyks_synapse< targetidentifierT >::get_status( DictionaryDatum& d ) const
   def< long >( d, names::size_of, sizeof( *this ) );
 }
 
-template < typename targetidentifierT >
 void
-tsodyks_synapse< targetidentifierT >::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+tsodyks_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 {
   // Handle parameters that may throw an exception first, so we can leave the
   // synapse untouched

@@ -189,13 +189,12 @@ STDPDopaCommonProperties::get_vt_node_id() const
  * Class representing an stdp_dopamine_synapse with homogeneous parameters,
  * i.e. parameters are the same for all synapses.
  */
-template < typename targetidentifierT >
-class stdp_dopamine_synapse : public Connection< targetidentifierT >
+class stdp_dopamine_synapse : public Connection
 {
 
 public:
   typedef STDPDopaCommonProperties CommonPropertiesType;
-  typedef Connection< targetidentifierT > ConnectionBase;
+  typedef Connection ConnectionBase;
 
   /**
    * Default Constructor.
@@ -216,8 +215,6 @@ public:
   // they are not automatically found in the base class.
   using ConnectionBase::get_delay;
   using ConnectionBase::get_delay_steps;
-  using ConnectionBase::get_rport;
-  using ConnectionBase::get_target;
 
   /**
    * Get all properties of this connection and put them into a dictionary.
@@ -242,7 +239,7 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void send( Event& e, thread t, const STDPDopaCommonProperties& cp );
+  void send( Event& e, thread t, const STDPDopaCommonProperties& cp, Node* target );
 
   void trigger_update_weight( thread t,
     const std::vector< spikecounter >& dopa_spikes,
@@ -286,7 +283,6 @@ public:
     }
 
     ConnTestDummyNode dummy_target;
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
 
     t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
   }
@@ -333,8 +329,7 @@ private:
 // Implementation of class stdp_dopamine_synapse.
 //
 
-template < typename targetidentifierT >
-stdp_dopamine_synapse< targetidentifierT >::stdp_dopamine_synapse()
+stdp_dopamine_synapse::stdp_dopamine_synapse()
   : ConnectionBase()
   , weight_( 1.0 )
   , Kplus_( 0.0 )
@@ -346,9 +341,8 @@ stdp_dopamine_synapse< targetidentifierT >::stdp_dopamine_synapse()
 {
 }
 
-template < typename targetidentifierT >
 void
-stdp_dopamine_synapse< targetidentifierT >::get_status( DictionaryDatum& d ) const
+stdp_dopamine_synapse::get_status( DictionaryDatum& d ) const
 {
 
   // base class properties, different for individual synapse
@@ -360,9 +354,8 @@ stdp_dopamine_synapse< targetidentifierT >::get_status( DictionaryDatum& d ) con
   def< double >( d, names::n, n_ );
 }
 
-template < typename targetidentifierT >
 void
-stdp_dopamine_synapse< targetidentifierT >::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+stdp_dopamine_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 {
   // base class properties
   ConnectionBase::set_status( d, cm );
@@ -372,9 +365,8 @@ stdp_dopamine_synapse< targetidentifierT >::set_status( const DictionaryDatum& d
   updateValue< double >( d, names::n, n_ );
 }
 
-template < typename targetidentifierT >
 void
-stdp_dopamine_synapse< targetidentifierT >::check_synapse_params( const DictionaryDatum& syn_spec ) const
+stdp_dopamine_synapse::check_synapse_params( const DictionaryDatum& syn_spec ) const
 {
   if ( syn_spec->known( names::vt ) )
   {
@@ -415,9 +407,8 @@ stdp_dopamine_synapse< targetidentifierT >::check_synapse_params( const Dictiona
   }
 }
 
-template < typename targetidentifierT >
 inline void
-stdp_dopamine_synapse< targetidentifierT >::update_dopamine_( const std::vector< spikecounter >& dopa_spikes,
+stdp_dopamine_synapse::update_dopamine_( const std::vector< spikecounter >& dopa_spikes,
   const STDPDopaCommonProperties& cp )
 {
   double minus_dt = dopa_spikes[ dopa_spikes_idx_ ].spike_time_ - dopa_spikes[ dopa_spikes_idx_ + 1 ].spike_time_;
@@ -425,9 +416,8 @@ stdp_dopamine_synapse< targetidentifierT >::update_dopamine_( const std::vector<
   n_ = n_ * std::exp( minus_dt / cp.tau_n_ ) + dopa_spikes[ dopa_spikes_idx_ ].multiplicity_ / cp.tau_n_;
 }
 
-template < typename targetidentifierT >
 inline void
-stdp_dopamine_synapse< targetidentifierT >::update_weight_( double c0,
+stdp_dopamine_synapse::update_weight_( double c0,
   double n0,
   double minus_dt,
   const STDPDopaCommonProperties& cp )
@@ -448,9 +438,8 @@ stdp_dopamine_synapse< targetidentifierT >::update_weight_( double c0,
   }
 }
 
-template < typename targetidentifierT >
 inline void
-stdp_dopamine_synapse< targetidentifierT >::process_dopa_spikes_( const std::vector< spikecounter >& dopa_spikes,
+stdp_dopamine_synapse::process_dopa_spikes_( const std::vector< spikecounter >& dopa_spikes,
   double t0,
   double t1,
   const STDPDopaCommonProperties& cp )
@@ -505,16 +494,14 @@ stdp_dopamine_synapse< targetidentifierT >::process_dopa_spikes_( const std::vec
   c_ = c_ * std::exp( ( t0 - t1 ) / cp.tau_c_ );
 }
 
-template < typename targetidentifierT >
 inline void
-stdp_dopamine_synapse< targetidentifierT >::facilitate_( double kplus, const STDPDopaCommonProperties& cp )
+stdp_dopamine_synapse::facilitate_( double kplus, const STDPDopaCommonProperties& cp )
 {
   c_ += cp.A_plus_ * kplus;
 }
 
-template < typename targetidentifierT >
 inline void
-stdp_dopamine_synapse< targetidentifierT >::depress_( double kminus, const STDPDopaCommonProperties& cp )
+stdp_dopamine_synapse::depress_( double kminus, const STDPDopaCommonProperties& cp )
 {
   c_ -= cp.A_minus_ * kminus;
 }
@@ -524,11 +511,9 @@ stdp_dopamine_synapse< targetidentifierT >::depress_( double kminus, const STDPD
  * \param e The event to send
  * \param p The port under which this connection is stored in the Connector.
  */
-template < typename targetidentifierT >
 inline void
-stdp_dopamine_synapse< targetidentifierT >::send( Event& e, thread t, const STDPDopaCommonProperties& cp )
+stdp_dopamine_synapse::send( Event& e, thread t, const STDPDopaCommonProperties& cp, Node* target )
 {
-  Node* target = get_target( t );
 
   // purely dendritic delay
   double dendritic_delay = get_delay();
@@ -565,20 +550,17 @@ stdp_dopamine_synapse< targetidentifierT >::send( Event& e, thread t, const STDP
   process_dopa_spikes_( dopa_spikes, t0, t_spike, cp );
   depress_( target->get_K_value( t_spike - dendritic_delay ), cp );
 
-  e.set_receiver( *target );
-  e.set_weight( weight_ );
+    e.set_weight( weight_ );
   e.set_delay_steps( get_delay_steps() );
-  e.set_rport( get_rport() );
-  e();
+    e();
 
   Kplus_ = Kplus_ * std::exp( ( t_last_update_ - t_spike ) / cp.tau_plus_ ) + 1.0;
   t_last_update_ = t_spike;
   t_lastspike_ = t_spike;
 }
 
-template < typename targetidentifierT >
 inline void
-stdp_dopamine_synapse< targetidentifierT >::trigger_update_weight( thread t,
+stdp_dopamine_synapse::trigger_update_weight( thread t,
   const std::vector< spikecounter >& dopa_spikes,
   const double t_trig,
   const STDPDopaCommonProperties& cp )
@@ -594,7 +576,7 @@ stdp_dopamine_synapse< targetidentifierT >::trigger_update_weight( thread t,
   // neuron
   std::deque< histentry >::iterator start;
   std::deque< histentry >::iterator finish;
-  get_target( t )->get_history( t_last_update_ - dendritic_delay, t_trig - dendritic_delay, &start, &finish );
+  // TODO JV get_target( t )->get_history( t_last_update_ - dendritic_delay, t_trig - dendritic_delay, &start, &finish );
 
   // facilitation due to postsyn. spikes since last update
   double t0 = t_last_update_;

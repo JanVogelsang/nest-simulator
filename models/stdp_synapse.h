@@ -109,13 +109,12 @@ EndUserDocs */
 // connections are templates of target identifier type (used for pointer /
 // target index addressing) derived from generic connection template
 
-template < typename targetidentifierT >
-class stdp_synapse : public Connection< targetidentifierT >
+class stdp_synapse : public Connection
 {
 
 public:
   typedef CommonSynapseProperties CommonPropertiesType;
-  typedef Connection< targetidentifierT > ConnectionBase;
+  typedef Connection ConnectionBase;
 
   /**
    * Default Constructor.
@@ -137,8 +136,6 @@ public:
   // they are not automatically found in the base class.
   using ConnectionBase::get_delay;
   using ConnectionBase::get_delay_steps;
-  using ConnectionBase::get_rport;
-  using ConnectionBase::get_target;
 
   /**
    * Get all properties of this connection and put them into a dictionary.
@@ -155,7 +152,7 @@ public:
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp );
+  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target  );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -176,7 +173,6 @@ public:
   {
     ConnTestDummyNode dummy_target;
 
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
 
     t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
   }
@@ -222,15 +218,13 @@ private:
  * \param t The thread on which this connection is stored.
  * \param cp Common properties object, containing the stdp parameters.
  */
-template < typename targetidentifierT >
 inline void
-stdp_synapse< targetidentifierT >::send( Event& e, thread t, const CommonSynapseProperties& )
+stdp_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
 {
   // synapse STDP depressing/facilitation dynamics
   const double t_spike = e.get_stamp().get_ms();
 
   // use accessor functions (inherited from Connection< >) to obtain delay and target
-  Node* target = get_target( t );
   double dendritic_delay = get_delay();
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
@@ -257,13 +251,11 @@ stdp_synapse< targetidentifierT >::send( Event& e, thread t, const CommonSynapse
   const double _K_value = target->get_K_value( t_spike - dendritic_delay );
   weight_ = depress_( weight_, _K_value );
 
-  e.set_receiver( *target );
-  e.set_weight( weight_ );
+    e.set_weight( weight_ );
   // use accessor functions (inherited from Connection< >) to obtain delay in
   // steps and rport
   e.set_delay_steps( get_delay_steps() );
-  e.set_rport( get_rport() );
-  e();
+    e();
 
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) / tau_plus_ ) + 1.0;
 
@@ -271,8 +263,7 @@ stdp_synapse< targetidentifierT >::send( Event& e, thread t, const CommonSynapse
 }
 
 
-template < typename targetidentifierT >
-stdp_synapse< targetidentifierT >::stdp_synapse()
+stdp_synapse::stdp_synapse()
   : ConnectionBase()
   , weight_( 1.0 )
   , tau_plus_( 20.0 )
@@ -286,9 +277,8 @@ stdp_synapse< targetidentifierT >::stdp_synapse()
 {
 }
 
-template < typename targetidentifierT >
 void
-stdp_synapse< targetidentifierT >::get_status( DictionaryDatum& d ) const
+stdp_synapse::get_status( DictionaryDatum& d ) const
 {
   ConnectionBase::get_status( d );
   def< double >( d, names::weight, weight_ );
@@ -301,9 +291,8 @@ stdp_synapse< targetidentifierT >::get_status( DictionaryDatum& d ) const
   def< long >( d, names::size_of, sizeof( *this ) );
 }
 
-template < typename targetidentifierT >
 void
-stdp_synapse< targetidentifierT >::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+stdp_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 {
   ConnectionBase::set_status( d, cm );
   updateValue< double >( d, names::weight, weight_ );

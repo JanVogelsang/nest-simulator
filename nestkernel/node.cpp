@@ -353,7 +353,10 @@ Node::deliver_event( const thread tid,
 {
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight (TODO JV: only weight?).
-  connections_[ syn_id ]->send( tid, sources_[ syn_id ][ local_target_connection_id ].get_node_id(), local_target_connection_id, cm, se );
+  connections_[ syn_id ]->send( tid, sources_[ syn_id ][ local_target_connection_id ].get_node_id(), local_target_connection_id, cm, se, this );
+
+  // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
+  //  handle, or just handing the entire local connection id to the handle function.
 
   handle( se );
 }
@@ -624,13 +627,13 @@ nest::Node::get_tau_syn_in( int )
 void
 Node::event_hook( DSSpikeEvent& e )
 {
-  e.get_receiver().handle( e );
+  // e.get_receiver().handle( e );
 }
 
 void
 Node::event_hook( DSCurrentEvent& e )
 {
-  e.get_receiver().handle( e );
+  // e.get_receiver().handle( e );
 }
 
 void

@@ -127,16 +127,14 @@ public:
    * This limits the number of thread local neurons to 65,536. No support for
    * different receptor types. Otherwise identical to non-hpc version.
    *
-   * When called, this function should be specialised by a class template,
-   * e.g. `bernoulli_synapse< targetidentifierT >`
    *
    * @param name The name under which the ConnectorModel will be registered.
    */
-  template < template < typename targetidentifierT > class ConnectionT >
+  template < class ConnectionT >
   void register_connection_model( const std::string& name,
     const RegisterConnectionModelFlags flags = default_connection_model_flags );
 
-  template < template < typename targetidentifierT > class ConnectionT >
+  template < class ConnectionT >
   void register_secondary_connection_model( const std::string& name,
     const RegisterConnectionModelFlags flags = default_secondary_connection_model_flags );
 

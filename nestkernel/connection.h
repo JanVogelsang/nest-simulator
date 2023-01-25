@@ -108,7 +108,6 @@ class ConnTestDummyNodeBase : public Node
  * or if needs to be changed, everything has to be reset after sending
  * (i.e. after Event::operator() has been called).
  */
-template < typename targetidentifierT >
 class Connection
 {
 
@@ -123,8 +122,8 @@ public:
     set_delay( 1.0 );
   }
 
-  Connection( const Connection< targetidentifierT >& rhs ) = default;
-  Connection& operator=( const Connection< targetidentifierT >& rhs ) = default;
+  Connection( const Connection& rhs ) = default;
+  Connection& operator=( const Connection& rhs ) = default;
 
   /**
    * Get all properties of this connection and put them into a dictionary.
@@ -165,7 +164,8 @@ public:
     const double t_last_pre_spike,
     double* weight_revert,
     const double t_post_spike,
-    const CommonSynapseProperties& );
+    const CommonSynapseProperties&,
+    Node* target);
 
   /**
    * Return the delay of the connection in ms
@@ -175,11 +175,6 @@ public:
   {
    return Time::delay_steps_to_ms( delay_ );
   }
-  /*double
-  get_delay() const
-  {
-    return syn_id_delay_.get_delay_ms();
-  }*/
 
   /**
    * Return the delay of the connection in steps
@@ -189,11 +184,6 @@ public:
   {
     return delay_;
   }
-  /*long
-  get_delay_steps() const
-  {
-    return syn_id_delay_.delay;
-  }*/
 
   /**
    * Set the delay of the connection
@@ -203,11 +193,6 @@ public:
   {
     delay_ = Time::delay_ms_to_steps( delay );
   }
-  /*void
-  set_delay( const double delay )
-  {
-    syn_id_delay_.set_delay_ms( delay );
-  }*/
 
   /**
    * Set the delay of the connection in steps
@@ -217,29 +202,6 @@ public:
   {
     delay_ = delay;
   }
-  /*void
-  set_delay_steps( const long delay )
-  {
-    syn_id_delay_.delay = delay;
-  }*/
-
-  /**
-   * Set the synapse id of the connection
-   */
-  /*void
-  set_syn_id( synindex syn_id )
-  {
-    syn_id_delay_.syn_id = syn_id;
-  }*/
-
-  /**
-   * Get the synapse id of the connection
-   */
-  /*synindex
-  get_syn_id() const
-  {
-    return syn_id_delay_.syn_id;
-  }*/
 
   long
   get_label() const
@@ -254,18 +216,6 @@ public:
     const std::vector< spikecounter >&,
     const double,
     const CommonSynapseProperties& );
-
-  /* Node*
-  get_target( const thread tid ) const
-  {
-    return target_.get_target_ptr( tid );
-  }*/
-
-  /*rport
-  get_rport() const
-  {
-    return target_.get_rport();
-  }*/
 
   /**
    * Disables the connection.
@@ -300,16 +250,14 @@ protected:
   double delay_;
 };
 
-template < typename targetidentifierT >
 inline void
-Connection< targetidentifierT >::get_status( DictionaryDatum& d ) const
+Connection::get_status( DictionaryDatum& d ) const
 {
   def< double >( d, names::delay, get_delay() );
 }
 
-template < typename targetidentifierT >
 inline void
-Connection< targetidentifierT >::set_status( const DictionaryDatum& d, ConnectorModel& )
+Connection::set_status( const DictionaryDatum& d, ConnectorModel& )
 {
   double delay;
   if ( updateValue< double >( d, names::delay, delay ) )
@@ -319,15 +267,13 @@ Connection< targetidentifierT >::set_status( const DictionaryDatum& d, Connector
   }
 }
 
-template < typename targetidentifierT >
 inline void
-Connection< targetidentifierT >::check_synapse_params( const DictionaryDatum& ) const
+Connection::check_synapse_params( const DictionaryDatum& ) const
 {
 }
 
-template < typename targetidentifierT >
 inline void
-Connection< targetidentifierT >::calibrate( const TimeConverter& tc )
+Connection::calibrate( const TimeConverter& tc )
 {
   Time t = tc.from_old_steps( delay_ );
   delay_ = t.get_steps();
@@ -338,20 +284,19 @@ Connection< targetidentifierT >::calibrate( const TimeConverter& tc )
   }
 }
 
-template < typename targetidentifierT >
 inline void
-Connection< targetidentifierT >::correct_synapse_stdp_ax_delay( const thread,
+Connection::correct_synapse_stdp_ax_delay( const thread,
   const double,
   double*,
   const double,
-  const CommonSynapseProperties& )
+  const CommonSynapseProperties&,
+  Node* target)
 {
   throw IllegalConnection( "Connection does not support correction in case of STDP with predominantly axonal delays." );
 }
 
-template < typename targetidentifierT >
 inline void
-Connection< targetidentifierT >::trigger_update_weight( const thread,
+Connection::trigger_update_weight( const thread,
   const std::vector< spikecounter >&,
   const double,
   const CommonSynapseProperties& )

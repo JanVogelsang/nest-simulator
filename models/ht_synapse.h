@@ -92,12 +92,11 @@ ht_neuron, tsodyks_synapse, stdp_synapse, static_synapse
 
 EndUserDocs */
 
-template < typename targetidentifierT >
-class ht_synapse : public Connection< targetidentifierT >
+class ht_synapse : public Connection
 {
 public:
   typedef CommonSynapseProperties CommonPropertiesType;
-  typedef Connection< targetidentifierT > ConnectionBase;
+  typedef Connection ConnectionBase;
 
   /**
    * Default Constructor.
@@ -117,8 +116,6 @@ public:
   // they are not automatically found in the base class.
   using ConnectionBase::get_delay;
   using ConnectionBase::get_delay_steps;
-  using ConnectionBase::get_rport;
-  using ConnectionBase::get_target;
 
   /**
    * Default Destructor.
@@ -142,7 +139,7 @@ public:
    * \param e The event to send
    * \param cp Common properties to all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp );
+  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target  );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -161,8 +158,7 @@ public:
   check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
-  }
+      }
 
   //! allows efficient initialization from ConnectorModel::add_connection()
   void
@@ -188,9 +184,8 @@ private:
  * \param e The event to send
  * \param p The port under which this connection is stored in the Connector.
  */
-template < typename targetidentifierT >
 inline void
-ht_synapse< targetidentifierT >::send( Event& e, thread t, const CommonSynapseProperties& )
+ht_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target  )
 {
   // propagation t_lastspike -> t_spike, t_lastspike_ = 0 initially, p_ = 1
   const double t_spike = e.get_stamp().get_ms();
@@ -198,11 +193,9 @@ ht_synapse< targetidentifierT >::send( Event& e, thread t, const CommonSynapsePr
   p_ = 1 - ( 1 - p_ ) * std::exp( -h / tau_P_ );
 
   // send the spike to the target
-  e.set_receiver( *get_target( t ) );
-  e.set_weight( weight_ * p_ );
+    e.set_weight( weight_ * p_ );
   e.set_delay_steps( get_delay_steps() );
-  e.set_rport( get_rport() );
-  e();
+    e();
 
   // reduce pool after spike is sent
   p_ *= ( 1 - delta_P_ );
@@ -210,8 +203,7 @@ ht_synapse< targetidentifierT >::send( Event& e, thread t, const CommonSynapsePr
   t_lastspike_ = t_spike;
 }
 
-template < typename targetidentifierT >
-ht_synapse< targetidentifierT >::ht_synapse()
+ht_synapse::ht_synapse()
   : ConnectionBase()
   , weight_( 1.0 )
   , tau_P_( 500.0 )
@@ -221,9 +213,8 @@ ht_synapse< targetidentifierT >::ht_synapse()
 {
 }
 
-template < typename targetidentifierT >
 void
-ht_synapse< targetidentifierT >::get_status( DictionaryDatum& d ) const
+ht_synapse::get_status( DictionaryDatum& d ) const
 {
   ConnectionBase::get_status( d );
   def< double >( d, names::weight, weight_ );
@@ -233,9 +224,8 @@ ht_synapse< targetidentifierT >::get_status( DictionaryDatum& d ) const
   def< long >( d, names::size_of, sizeof( *this ) );
 }
 
-template < typename targetidentifierT >
 void
-ht_synapse< targetidentifierT >::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+ht_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 {
   ConnectionBase::set_status( d, cm );
 

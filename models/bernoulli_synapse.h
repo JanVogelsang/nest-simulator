@@ -88,13 +88,12 @@ static_synapse, static_synapse_hom_w
 
 EndUserDocs */
 
-template < typename targetidentifierT >
-class bernoulli_synapse : public Connection< targetidentifierT >
+class bernoulli_synapse : public Connection
 {
 public:
   // this line determines which common properties to use
   typedef CommonSynapseProperties CommonPropertiesType;
-  typedef Connection< targetidentifierT > ConnectionBase;
+  typedef Connection ConnectionBase;
 
   /**
    * Default Constructor.
@@ -119,8 +118,6 @@ public:
   // functions are used. Since ConnectionBase depends on the template parameter,
   // they are not automatically found in the base class.
   using ConnectionBase::get_delay_steps;
-  using ConnectionBase::get_rport;
-  using ConnectionBase::get_target;
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -140,11 +137,10 @@ public:
   check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
-  }
+      }
 
   void
-  send( Event& e, thread t, const CommonSynapseProperties& )
+  send( Event& e, thread t, const CommonSynapseProperties&, Node* target  )
   {
     SpikeEvent e_spike = static_cast< SpikeEvent& >( e );
 
@@ -164,9 +160,7 @@ public:
       e_spike.set_multiplicity( n_spikes_out );
       e.set_weight( weight_ );
       e.set_delay_steps( get_delay_steps() );
-      e.set_receiver( *get_target( t ) );
-      e.set_rport( get_rport() );
-      e();
+                  e();
     }
 
     // Resets multiplicity for consistency
@@ -188,9 +182,8 @@ private:
   double p_transmit_;
 };
 
-template < typename targetidentifierT >
 void
-bernoulli_synapse< targetidentifierT >::get_status( DictionaryDatum& d ) const
+bernoulli_synapse::get_status( DictionaryDatum& d ) const
 {
   ConnectionBase::get_status( d );
   def< double >( d, names::weight, weight_ );
@@ -198,9 +191,8 @@ bernoulli_synapse< targetidentifierT >::get_status( DictionaryDatum& d ) const
   def< long >( d, names::size_of, sizeof( *this ) );
 }
 
-template < typename targetidentifierT >
 void
-bernoulli_synapse< targetidentifierT >::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+bernoulli_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 {
   ConnectionBase::set_status( d, cm );
   updateValue< double >( d, names::weight, weight_ );

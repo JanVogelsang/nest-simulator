@@ -169,7 +169,6 @@ nest::spike_dilutor::event_hook( DSSpikeEvent& e )
   if ( n_spikes > 0 )
   {
     e.set_multiplicity( n_spikes );
-    e.get_receiver().handle( e );
   }
 
   e.set_multiplicity( n_mother_spikes );

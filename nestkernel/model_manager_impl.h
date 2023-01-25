@@ -53,12 +53,12 @@ ModelManager::register_node_model( const Name& name, std::string deprecation_inf
   return register_node_model_( model );
 }
 
-template < template < typename targetidentifierT > class ConnectionT >
+template < class ConnectionT >
 void
 ModelManager::register_connection_model( const std::string& name, const RegisterConnectionModelFlags flags )
 {
   // register normal version of the synapse
-  ConnectorModel* cf = new GenericConnectorModel< ConnectionT< TargetIdentifierPtrRport > >( name,
+  ConnectorModel* cf = new GenericConnectorModel< ConnectionT >( name,
     enumFlagSet( flags, RegisterConnectionModelFlags::IS_PRIMARY ),
     enumFlagSet( flags, RegisterConnectionModelFlags::HAS_DELAY ),
     enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_SYMMETRIC ),
@@ -71,7 +71,7 @@ ModelManager::register_connection_model( const std::string& name, const Register
   // register the "hpc" version with the same parameters but a different target identifier
   if ( enumFlagSet( flags, RegisterConnectionModelFlags::REGISTER_HPC ) )
   {
-    cf = new GenericConnectorModel< ConnectionT< TargetIdentifierIndex > >( name + "_hpc",
+    cf = new GenericConnectorModel< ConnectionT >( name + "_hpc",
       enumFlagSet( flags, RegisterConnectionModelFlags::IS_PRIMARY ),
       enumFlagSet( flags, RegisterConnectionModelFlags::HAS_DELAY ),
       enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_SYMMETRIC ),
@@ -85,7 +85,7 @@ ModelManager::register_connection_model( const std::string& name, const Register
   // register the "lbl" (labeled) version with the same parameters but a different connection type
   if ( enumFlagSet( flags, RegisterConnectionModelFlags::REGISTER_LBL ) )
   {
-    cf = new GenericConnectorModel< ConnectionLabel< ConnectionT< TargetIdentifierPtrRport > > >( name + "_lbl",
+    cf = new GenericConnectorModel< ConnectionLabel< ConnectionT > >( name + "_lbl",
       enumFlagSet( flags, RegisterConnectionModelFlags::IS_PRIMARY ),
       enumFlagSet( flags, RegisterConnectionModelFlags::HAS_DELAY ),
       enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_SYMMETRIC ),
@@ -101,11 +101,11 @@ ModelManager::register_connection_model( const std::string& name, const Register
 /**
  * Register a synape with default Connector and without any common properties.
  */
-template < template < typename targetidentifierT > class ConnectionT >
+template < class ConnectionT >
 void
 ModelManager::register_secondary_connection_model( const std::string& name, const RegisterConnectionModelFlags flags )
 {
-  ConnectorModel* cm = new GenericSecondaryConnectorModel< ConnectionT< TargetIdentifierPtrRport > >( name,
+  ConnectorModel* cm = new GenericSecondaryConnectorModel< ConnectionT >( name,
     enumFlagSet( flags, RegisterConnectionModelFlags::HAS_DELAY ),
     enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_SYMMETRIC ),
     enumFlagSet( flags, RegisterConnectionModelFlags::SUPPORTS_WFR ) );
@@ -113,7 +113,7 @@ ModelManager::register_secondary_connection_model( const std::string& name, cons
   register_connection_model_( cm );
 
   // create labeled secondary event connection model
-  cm = new GenericSecondaryConnectorModel< ConnectionLabel< ConnectionT< TargetIdentifierPtrRport > > >( name + "_lbl",
+  cm = new GenericSecondaryConnectorModel< ConnectionLabel< ConnectionT > >( name + "_lbl",
     enumFlagSet( flags, RegisterConnectionModelFlags::HAS_DELAY ),
     enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_SYMMETRIC ),
     enumFlagSet( flags, RegisterConnectionModelFlags::SUPPORTS_WFR ) );

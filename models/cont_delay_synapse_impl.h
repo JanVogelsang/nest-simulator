@@ -36,17 +36,15 @@
 namespace nest
 {
 
-template < typename targetidentifierT >
-cont_delay_synapse< targetidentifierT >::cont_delay_synapse()
+cont_delay_synapse::cont_delay_synapse()
   : ConnectionBase()
   , weight_( 1.0 )
   , delay_offset_( 0.0 )
 {
 }
 
-template < typename targetidentifierT >
 void
-cont_delay_synapse< targetidentifierT >::get_status( DictionaryDatum& d ) const
+cont_delay_synapse::get_status( DictionaryDatum& d ) const
 {
   ConnectionBase::get_status( d );
 
@@ -55,9 +53,8 @@ cont_delay_synapse< targetidentifierT >::get_status( DictionaryDatum& d ) const
   def< long >( d, names::size_of, sizeof( *this ) );
 }
 
-template < typename targetidentifierT >
 void
-cont_delay_synapse< targetidentifierT >::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+cont_delay_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 {
   ConnectionBase::set_status( d, cm );
 
@@ -90,9 +87,8 @@ cont_delay_synapse< targetidentifierT >::set_status( const DictionaryDatum& d, C
   }
 }
 
-template < typename targetidentifierT >
 void
-cont_delay_synapse< targetidentifierT >::check_synapse_params( const DictionaryDatum& syn_spec ) const
+cont_delay_synapse::check_synapse_params( const DictionaryDatum& syn_spec ) const
 {
   if ( syn_spec->known( names::delay ) )
   {

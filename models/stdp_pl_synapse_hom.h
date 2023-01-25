@@ -124,13 +124,12 @@ public:
  * Class representing an STDP connection with homogeneous parameters, i.e.
  * parameters are the same for all synapses.
  */
-template < typename targetidentifierT >
-class stdp_pl_synapse_hom : public Connection< targetidentifierT >
+class stdp_pl_synapse_hom : public Connection
 {
 
 public:
   typedef STDPPLHomCommonProperties CommonPropertiesType;
-  typedef Connection< targetidentifierT > ConnectionBase;
+  typedef Connection ConnectionBase;
 
 
   /**
@@ -152,8 +151,6 @@ public:
   // they are not automatically found in the base class.
   using ConnectionBase::get_delay;
   using ConnectionBase::get_delay_steps;
-  using ConnectionBase::get_rport;
-  using ConnectionBase::get_target;
 
   /**
    * Get all properties of this connection and put them into a dictionary.
@@ -169,7 +166,7 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void send( Event& e, thread t, const STDPPLHomCommonProperties& );
+  void send( Event& e, thread t, const STDPPLHomCommonProperties&, Node* target );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -202,7 +199,6 @@ public:
   {
     ConnTestDummyNode dummy_target;
 
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
 
     const double delay = get_delay();
     if ( cp.axonal_delay_ > delay )
@@ -254,9 +250,8 @@ private:
  * \param e The event to send
  * \param p The port under which this connection is stored in the Connector.
  */
-template < typename targetidentifierT >
 inline void
-stdp_pl_synapse_hom< targetidentifierT >::send( Event& e, thread t, const STDPPLHomCommonProperties& cp )
+stdp_pl_synapse_hom::send( Event& e, thread t, const STDPPLHomCommonProperties& cp, Node* target )
 {
   // synapse STDP depressing/facilitation dynamics
 
@@ -264,7 +259,6 @@ stdp_pl_synapse_hom< targetidentifierT >::send( Event& e, thread t, const STDPPL
 
   // t_lastspike_ = 0 initially
 
-  Node* target = get_target( t );
 
   double dendritic_delay = get_delay() - cp.axonal_delay_;
 
@@ -291,19 +285,16 @@ stdp_pl_synapse_hom< targetidentifierT >::send( Event& e, thread t, const STDPPL
   const double K_minus = target->get_K_value( t_spike + cp.axonal_delay_ - dendritic_delay );
   weight_ = depress_( weight_, K_minus, cp );
 
-  e.set_receiver( *target );
-  e.set_weight( weight_ );
+    e.set_weight( weight_ );
   e.set_delay_steps( get_delay_steps() );
-  e.set_rport( get_rport() );
-  e();
+    e();
 
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) * cp.tau_plus_inv_ ) + 1.0;
 
   t_lastspike_ = t_spike;
 }
 
-template < typename targetidentifierT >
-stdp_pl_synapse_hom< targetidentifierT >::stdp_pl_synapse_hom()
+stdp_pl_synapse_hom::stdp_pl_synapse_hom()
   : ConnectionBase()
   , weight_( 1.0 )
   , Kplus_( 0.0 )
@@ -311,9 +302,8 @@ stdp_pl_synapse_hom< targetidentifierT >::stdp_pl_synapse_hom()
 {
 }
 
-template < typename targetidentifierT >
 void
-stdp_pl_synapse_hom< targetidentifierT >::get_status( DictionaryDatum& d ) const
+stdp_pl_synapse_hom::get_status( DictionaryDatum& d ) const
 {
 
   // base class properties, different for individual synapse
@@ -325,9 +315,8 @@ stdp_pl_synapse_hom< targetidentifierT >::get_status( DictionaryDatum& d ) const
   def< long >( d, names::size_of, sizeof( *this ) );
 }
 
-template < typename targetidentifierT >
 void
-stdp_pl_synapse_hom< targetidentifierT >::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+stdp_pl_synapse_hom::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 {
   // base class properties
   ConnectionBase::set_status( d, cm );

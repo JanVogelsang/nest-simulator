@@ -229,7 +229,6 @@ nest::DynamicUniversalDataLogger< HostNode >::DataLogger_::handle( HostNode& hos
 
   reply.set_sender( host );
   reply.set_sender_node_id( host.get_node_id() );
-  reply.set_receiver( request.get_sender() );
   reply.set_port( request.get_port() );
 
   // send it off
@@ -436,7 +435,7 @@ nest::UniversalDataLogger< HostNode >::DataLogger_::handle( HostNode& host, cons
 
   reply.set_sender( host );
   reply.set_sender_node_id( host.get_node_id() );
-  reply.set_receiver( request.get_sender() );
+  // reply.set_receiver( request.get_sender() );  // TODO JV
   reply.set_port( request.get_port() );
 
   // send it off

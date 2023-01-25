@@ -158,17 +158,15 @@ EndUserDocs */
 // template class forward declaration required by common properties friend
 // definition
 
-template < typename targetidentifierT >
 class stdp_facetshw_synapse_hom;
 
 /**
  * Class containing the common properties for all synapses of type
  * stdp_facetshw_synapse_hom.
  */
-template < typename targetidentifierT >
 class STDPFACETSHWHomCommonProperties : public CommonSynapseProperties
 {
-  friend class stdp_facetshw_synapse_hom< targetidentifierT >;
+  friend class stdp_facetshw_synapse_hom;
 
 public:
   /**
@@ -227,13 +225,12 @@ private:
  * Class representing an STDP connection with homogeneous parameters, i.e.
  * parameters are the same for all synapses.
  */
-template < typename targetidentifierT >
-class stdp_facetshw_synapse_hom : public Connection< targetidentifierT >
+class stdp_facetshw_synapse_hom : public Connection
 {
 
 public:
-  typedef STDPFACETSHWHomCommonProperties< targetidentifierT > CommonPropertiesType;
-  typedef Connection< targetidentifierT > ConnectionBase;
+  typedef STDPFACETSHWHomCommonProperties CommonPropertiesType;
+  typedef Connection ConnectionBase;
 
   /**
    * Default Constructor.
@@ -254,8 +251,6 @@ public:
   // they are not automatically found in the base class.
   using ConnectionBase::get_delay;
   using ConnectionBase::get_delay_steps;
-  using ConnectionBase::get_rport;
-  using ConnectionBase::get_target;
 
   /**
    * Get all properties of this connection and put them into a dictionary.
@@ -271,7 +266,7 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void send( Event& e, thread t, const STDPFACETSHWHomCommonProperties< targetidentifierT >& );
+  void send( Event& e, thread t, const STDPFACETSHWHomCommonProperties& );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -306,7 +301,6 @@ public:
   {
     ConnTestDummyNode dummy_target;
 
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
 
     t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
   }
@@ -346,9 +340,8 @@ private:
   double t_lastspike_;
 };
 
-template < typename targetidentifierT >
 inline bool
-stdp_facetshw_synapse_hom< targetidentifierT >::eval_function_( double a_causal,
+stdp_facetshw_synapse_hom::eval_function_( double a_causal,
   double a_acausal,
   double a_thresh_th,
   double a_thresh_tl,
@@ -361,26 +354,23 @@ stdp_facetshw_synapse_hom< targetidentifierT >::eval_function_( double a_causal,
     / ( 1 + configbit[ 0 ] + configbit[ 3 ] );
 }
 
-template < typename targetidentifierT >
 inline unsigned int
-stdp_facetshw_synapse_hom< targetidentifierT >::weight_to_entry_( double weight, double weight_per_lut_entry )
+stdp_facetshw_synapse_hom::weight_to_entry_( double weight, double weight_per_lut_entry )
 {
   // returns the discrete weight in terms of the look-up table index
   return round( weight / weight_per_lut_entry );
 }
 
-template < typename targetidentifierT >
 inline double
-stdp_facetshw_synapse_hom< targetidentifierT >::entry_to_weight_( unsigned int discrete_weight,
+stdp_facetshw_synapse_hom::entry_to_weight_( unsigned int discrete_weight,
   double weight_per_lut_entry )
 {
   // returns the continuous weight
   return discrete_weight * weight_per_lut_entry;
 }
 
-template < typename targetidentifierT >
 inline unsigned int
-stdp_facetshw_synapse_hom< targetidentifierT >::lookup_( unsigned int discrete_weight_, std::vector< long > table )
+stdp_facetshw_synapse_hom::lookup_( unsigned int discrete_weight_, std::vector< long > table )
 {
   // look-up in table
   return table[ discrete_weight_ ];
@@ -392,11 +382,10 @@ stdp_facetshw_synapse_hom< targetidentifierT >::lookup_( unsigned int discrete_w
  * \param e The event to send
  * \param p The port under which this connection is stored in the Connector.
  */
-template < typename targetidentifierT >
 inline void
-stdp_facetshw_synapse_hom< targetidentifierT >::send( Event& e,
+stdp_facetshw_synapse_hom::send( Event& e,
   thread t,
-  const STDPFACETSHWHomCommonProperties< targetidentifierT >& cp )
+  const STDPFACETSHWHomCommonProperties& cp )
 {
   // synapse STDP dynamics
 
@@ -408,8 +397,8 @@ stdp_facetshw_synapse_hom< targetidentifierT >::send( Event& e,
   // generate wring results on distributed systems,
   // because the number of synapses counted is only
   // the number of synapses local to the current machine
-  STDPFACETSHWHomCommonProperties< targetidentifierT >& cp_nonconst =
-    const_cast< STDPFACETSHWHomCommonProperties< targetidentifierT >& >( cp );
+  STDPFACETSHWHomCommonProperties& cp_nonconst =
+    const_cast< STDPFACETSHWHomCommonProperties& >( cp );
 
   // init the readout time
   if ( not init_flag_ )
@@ -490,7 +479,7 @@ stdp_facetshw_synapse_hom< targetidentifierT >::send( Event& e,
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
   std::deque< histentry >::iterator start;
   std::deque< histentry >::iterator finish;
-  get_target( t )->get_history( t_lastspike_ - dendritic_delay, t_spike - dendritic_delay, &start, &finish );
+  // TOOD JV get_target( t )->get_history( t_lastspike_ - dendritic_delay, t_spike - dendritic_delay, &start, &finish );
 
   // facilitation due to the first postsynaptic spike since the last
   // pre-synaptic spike
@@ -513,11 +502,9 @@ stdp_facetshw_synapse_hom< targetidentifierT >::send( Event& e,
     a_acausal_ += std::exp( minus_dt_acausal / cp.tau_minus_ );
   }
 
-  e.set_receiver( *get_target( t ) );
-  e.set_weight( weight_ );
+    e.set_weight( weight_ );
   e.set_delay_steps( get_delay_steps() );
-  e.set_rport( get_rport() );
-  e();
+    e();
 
   t_lastspike_ = t_spike;
 }

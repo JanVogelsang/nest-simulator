@@ -531,6 +531,20 @@ public:
   /**
    * TODO JV
    */
+  inline void reset_sources_processed_flags()
+  {
+    for ( std::vector< std::vector< Source > >::iterator sources_per_syn_type = sources_.begin(); sources_per_syn_type != sources_.end(); ++sources_per_syn_type )
+    {
+      for ( std::vector< Source >::iterator source = sources_per_syn_type->begin(); source != sources_per_syn_type->end(); ++source )
+      {
+        source->set_processed( false );
+      }
+    }
+  }
+
+  /**
+   * TODO JV
+   */
   void sort_connections_and_sources();
 
   /**

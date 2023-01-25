@@ -36,8 +36,7 @@
 namespace nest
 {
 
-template < typename targetidentifierT >
-quantal_stp_synapse< targetidentifierT >::quantal_stp_synapse()
+quantal_stp_synapse::quantal_stp_synapse()
   : ConnectionBase()
   , weight_( 1.0 )
   , U_( 0.5 )
@@ -50,9 +49,8 @@ quantal_stp_synapse< targetidentifierT >::quantal_stp_synapse()
 {
 }
 
-template < typename targetidentifierT >
 void
-quantal_stp_synapse< targetidentifierT >::get_status( DictionaryDatum& d ) const
+quantal_stp_synapse::get_status( DictionaryDatum& d ) const
 {
   ConnectionBase::get_status( d );
   def< double >( d, names::weight, weight_ );
@@ -65,9 +63,8 @@ quantal_stp_synapse< targetidentifierT >::get_status( DictionaryDatum& d ) const
 }
 
 
-template < typename targetidentifierT >
 void
-quantal_stp_synapse< targetidentifierT >::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+quantal_stp_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 {
   ConnectionBase::set_status( d, cm );
   updateValue< double >( d, names::weight, weight_ );

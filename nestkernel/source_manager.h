@@ -33,7 +33,6 @@
 #include "manager_interface.h"
 
 // Includes from nestkernel:
-#include "kernel_manager.h"
 #include "mpi_manager.h"
 #include "nest_types.h"
 #include "per_thread_bool_indicator.h"

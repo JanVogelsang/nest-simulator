@@ -260,7 +260,6 @@ nest::poisson_generator_ps::event_hook( DSSpikeEvent& e )
   {
     e.set_stamp( nextspk.first );
     e.set_offset( nextspk.second );
-    e.get_receiver().handle( e );
 
     // Draw time of next spike
     // Time of spike relative to current nextspk.first stamp

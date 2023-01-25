@@ -61,22 +61,19 @@ static_synapse
 
 EndUserDocs */
 
-template < typename targetidentifierT >
-class static_synapse_hom_w : public Connection< targetidentifierT >
+class static_synapse_hom_w : public Connection
 {
 
 public:
   // this line determines which common properties to use
   typedef CommonPropertiesHomW CommonPropertiesType;
-  typedef Connection< targetidentifierT > ConnectionBase;
+  typedef Connection ConnectionBase;
 
   // Explicitly declare all methods inherited from the dependent base
   // ConnectionBase. This avoids explicit name prefixes in all places these
   // functions are used. Since ConnectionBase depends on the template parameter,
   // they are not automatically found in the base class.
   using ConnectionBase::get_delay_steps;
-  using ConnectionBase::get_rport;
-  using ConnectionBase::get_target;
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -133,8 +130,7 @@ public:
   check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
-  }
+      }
 
   /**
    * Checks to see if weight is given in syn_spec.
@@ -161,8 +157,6 @@ public:
   {
     e.set_weight( cp.get_weight() );
     e.set_delay_steps( get_delay_steps() );
-    e.set_receiver( *get_target( tid ) );
-    e.set_rport( get_rport() );
     e();
   }
 
@@ -177,9 +171,8 @@ public:
 };
 
 
-template < typename targetidentifierT >
 void
-static_synapse_hom_w< targetidentifierT >::get_status( DictionaryDatum& d ) const
+static_synapse_hom_w::get_status( DictionaryDatum& d ) const
 {
   ConnectionBase::get_status( d );
   def< long >( d, names::size_of, sizeof( *this ) );

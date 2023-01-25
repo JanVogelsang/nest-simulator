@@ -113,8 +113,7 @@ ArchivingNode::get_K_value( double t )
     return trace_;
   }
 
-  // search for the latest post spike in the history buffer that came strictly
-  // before `t`
+  // search for the latest post spike in the history buffer that came strictly before `t`
   int i = history_.size() - 1;
   while ( i >= 0 )
   {
@@ -220,7 +219,7 @@ ArchivingNode::deliver_event( const thread tid,
 
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight (TODO JV: only weight?).
-  conn->send( tid, sources_[ syn_id ][ local_target_connection_id ].get_node_id(), local_target_connection_id, cm, se );
+  conn->send( tid, sources_[ syn_id ][ local_target_connection_id ].get_node_id(), local_target_connection_id, cm, se, this );
 
   handle( se );
 }
@@ -392,7 +391,8 @@ ArchivingNode::correct_synapses_stdp_ax_delay_( const Time& t_spike )
           ->correct_synapse_stdp_ax_delay( it_corr_entry->spike_data_,
             it_corr_entry->t_last_pre_spike_,
             &it_corr_entry->weight_revert_,
-            t_spike.get_ms() );
+            t_spike.get_ms(),
+            this );
       }
       // indicate that the new spike was processed by these STDP synapses
       history_.back().access_counter_ += correction_entries_stdp_ax_delay_[ idx ].size();
