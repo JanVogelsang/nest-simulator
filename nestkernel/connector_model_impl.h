@@ -38,6 +38,7 @@
 #include "nest.h"
 #include "nest_time.h"
 #include "nest_timeconverter.h"
+#include "node_impl.h"
 
 // Includes from sli:
 #include "dictutils.h"

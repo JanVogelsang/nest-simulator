@@ -266,7 +266,7 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void send( Event& e, thread t, const STDPFACETSHWHomCommonProperties& );
+  void send( Event& e, thread t, const STDPFACETSHWHomCommonProperties&, Node* target );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -385,7 +385,8 @@ stdp_facetshw_synapse_hom::lookup_( unsigned int discrete_weight_, std::vector< 
 inline void
 stdp_facetshw_synapse_hom::send( Event& e,
   thread t,
-  const STDPFACETSHWHomCommonProperties& cp )
+  const STDPFACETSHWHomCommonProperties& cp,
+  Node* target )
 {
   // synapse STDP dynamics
 

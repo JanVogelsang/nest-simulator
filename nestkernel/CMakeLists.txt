@@ -51,7 +51,7 @@ set ( nestkernel_sources
       nest_timeconverter.h nest_timeconverter.cpp
       modelrange.h modelrange.cpp
       modelrange_manager.h modelrange_manager.cpp
-      node.h node.cpp
+      node.h node_impl.h node.cpp
       parameter.h parameter.cpp
       per_thread_bool_indicator.h per_thread_bool_indicator.cpp
       proxynode.h proxynode.cpp

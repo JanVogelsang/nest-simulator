@@ -1589,7 +1589,6 @@ ConnectionManager::resize_connections()
     {
       Node* node = n->get_node();
       node->resize_connections( kernel().model_manager.get_num_connection_models() );
-      node->resize_sources( kernel().model_manager.get_num_connection_models() );
     }
   }
 

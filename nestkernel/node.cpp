@@ -93,15 +93,12 @@ void
 Node::finalize()
 {
   std::vector< ConnectorBase* >().swap( connections_ );
-
-  sources_.clear();
 }
 
 void
 Node::init_buffers_()
 {
   connections_ = std::vector< ConnectorBase* >( kernel().model_manager.get_num_connection_models() );
-  sources_.resize( 0 );
 }
 
 void
@@ -254,64 +251,6 @@ Node::register_stdp_connection( double, double )
   throw IllegalConnection( "The target node does not support STDP synapses." );
 }
 
-
-template < typename ConnectionT >
-void
-Node::check_connection( Node& source,
-  const synindex syn_id,
-  const rport receptor_type )
-{
-  // 1. does this connection support the event type sent by source
-  // try to send event from source to dummy_target
-  // this line might throw an exception
-  source.send_test_event( ConnectionT::ConnTestDummyNode(), receptor_type, syn_id, true );
-
-  // 2. does the target accept the event type sent by source
-  // try to send event from source to target
-  // this returns the port of the incoming connection
-  // p must be stored in the base class connection
-  // this line might throw an exception
-  // TODO JV (pt): Add rport to neurons who need it, but not to all connections
-  // target_.set_rport( source.send_test_event( target, receptor_type, get_syn_id(), false ) );
-
-  // 3. do the events sent by source mean the same thing as they are
-  // interpreted in target?
-  // note that we here use a bitwise and operation (&), because we interpret
-  // each bit in the signal type as a collection of individual flags
-  if ( not( source.sends_signal() & receives_signal() ) )
-  {
-    throw IllegalConnection( "Source and target neuron are not compatible (e.g., spiking vs binary neuron)." );
-  }
-}
-
-template < typename ConnectionT >
-void
-Node::add_connection( Node& source_node,
-  const synindex syn_id,
-  ConnectionT& connection,
-  const rport receptor_type,
-  const bool is_primary,
-  typename ConnectionT::CommonPropertiesType const& cp )
-{
-  // Add to connection table
-  ConnectorBase* connector = connections_[ syn_id ];
-
-  if ( not connector )
-  {
-    // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
-    connections_[ syn_id ] = new Connector< ConnectionT >( syn_id );
-  }
-
-  assert( connector );
-
-  Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connector );
-  vc->push_back( connection );
-
-  // Add to sources table
-  const Source src( source_node.get_node_id(), is_primary );
-  sources_[ syn_id ].push_back( src );
-}
-
 void
 Node::delete_connections()
 {
@@ -325,7 +264,6 @@ void
 Node::disable_connection( const synindex syn_id, const index local_connection_id )
 {
   connections_[ syn_id ]->disable_connection( local_connection_id );
-  sources_[ syn_id ][ local_connection_id ].disable();
 }
 
 void
@@ -353,7 +291,7 @@ Node::deliver_event( const thread tid,
 {
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight (TODO JV: only weight?).
-  connections_[ syn_id ]->send( tid, sources_[ syn_id ][ local_target_connection_id ].get_node_id(), local_target_connection_id, cm, se, this );
+  connections_[ syn_id ]->send( tid, local_target_connection_id, cm, se, this );
 
   // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
   //  handle, or just handing the entire local connection id to the handle function.
@@ -636,25 +574,4 @@ Node::event_hook( DSCurrentEvent& e )
   // e.get_receiver().handle( e );
 }
 
-void
-Node::resize_connections( const size_t size )
-{
-  connections_.resize( size );
-}
-
-void
-Node::sort_connections_and_sources()
-{
-  for ( size_t syn_id = 0; syn_id < connections_.size(); ++syn_id )
-  {
-    connections_[ syn_id ]->sort_connections_and_sources( sources_[ syn_id ] );
-  }
-}
-
-// TODO JV: Make this inline if possible
-index
-Node::get_connection_index( const synindex syn_id, const index source_node_id ) const
-{
-  return connections_[ syn_id ]->get_connection_index( source_node_id );
-}
 } // namespace

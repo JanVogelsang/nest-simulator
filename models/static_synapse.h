@@ -138,13 +138,12 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
+  check_connection( Node&, Node&, rport, const CommonPropertiesType& )
   {
-    ConnTestDummyNode dummy_target;
-      }
+  }
 
   void
-  send( Event& e, const thread tid, const CommonSynapseProperties& )
+  send( Event& e, const thread, const CommonSynapseProperties&, Node* )
   {
     e.set_weight( weight_ );
     e.set_delay_steps( get_delay_steps() );

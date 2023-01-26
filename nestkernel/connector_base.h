@@ -60,13 +60,12 @@ public:
   virtual ~ConnectorBase() {};
 
   /**
-   * Return syn_id_ of the synapse type of this Connector (index in
-   * list of synapse prototypes).
+   * Return syn_id_ of the synapse type of this Connector (index in list of synapse prototypes).
    */
   virtual synindex get_syn_id() const = 0;
 
   /**
-   * Return the number of connections in this Connector.
+   * Return the number of connections/sources in this Connector.
    */
   virtual size_t size() const = 0;
 
@@ -85,7 +84,7 @@ public:
   /**
    * Get the proportion of the transmission delay attributed to the dendrite.
    */
-  virtual void get_connection_delay( const index lcid, ConnectorModel& cm ) = 0;
+  virtual double get_connection_delay( const index lcid, ConnectorModel& cm ) = 0;
 
   /**
    * Add ConnectionID with given source_node_id and lcid to conns. If
@@ -102,7 +101,22 @@ public:
   /**
    * TODO JV
    */
+  virtual Source& get_source( const index local_target_connection_id ) = 0;
+
+  /**
+   * TODO JV
+   */
   virtual index get_connection_index( const index source_node_id ) const = 0;
+
+  /**
+   * TODO JV
+   */
+  virtual void clear_sources() = 0;
+
+  /**
+   * TODO JV
+   */
+  virtual void reset_sources_processed_flags() = 0;
 
   /**
    * Add ConnectionID with given source_node_id and lcid to conns. If
@@ -137,16 +151,16 @@ public:
    * indicating whether the following connection belongs to the same
    * source.
    */
-  virtual void send( const thread tid, const index snode_id, const index local_target_connection_id, const std::vector< ConnectorModel* >& cm, Event& e, const Node* target ) = 0;
+  virtual void send( const thread tid, const index local_target_connection_id, const std::vector< ConnectorModel* >& cm, Event& e, Node* target ) = 0;
 
-  virtual void correct_synapse_stdp_ax_delay( const SpikeData& spike_data,
+  virtual void correct_synapse_stdp_ax_delay( const index local_target_connection_id,
     const double t_last_pre_spike,
     double* weight_revert,
     const double t_post_spike,
     Node* target ) = 0;
 
   virtual void
-  send_weight_event( const thread tid, const index snode_id, const index local_target_connection_id, Event& e, const CommonSynapseProperties& cp, Node* target ) = 0;
+  send_weight_event( const index local_target_connection_id, Event& e, const CommonSynapseProperties& cp, Node* target ) = 0;
 
   /**
    * Update weights of dopamine modulated STDP connections.
@@ -160,7 +174,7 @@ public:
   /**
    * Sort connections according to source node IDs.
    */
-  virtual void sort_connections_and_sources( std::vector< Source >& ) = 0;
+  virtual void sort_connections_and_sources( ) = 0;
 
   /**
    * Disable the transfer of events through the connection at position
@@ -172,6 +186,20 @@ public:
    * Remove disabled connections from the connector.
    */
   virtual void remove_disabled_connections( const index first_disabled_index ) = 0;
+
+protected:
+  /**
+  * This data structure stores the node IDs of presynaptic neurons connected to this neuron. If structural plasticity
+  * is disabled, it is only relevant during postsynaptic connection creation, before the connection information has
+  * been transferred to the presynaptic side.
+  * Arranged in a 2d array:
+  * 1st dimension: synapse types
+  * 2nd dimension: source node IDs
+  * After all connections have been created, the information stored in this structure is transferred to the presynaptic
+  * side and the sources vector can be cleared, unless further required for structural plasticity.
+  */
+  // TODO JV: This should be converted from type Source to index once the simulation starts
+  std::vector< Source > sources_;
 };
 
 /**
@@ -227,7 +255,7 @@ public:
     C_[ lcid ].set_status( dict, static_cast< GenericConnectorModel< ConnectionT >& >( cm ) );
   }
 
-  void
+  double
   get_connection_delay( const index lcid, ConnectorModel& cm ) override
   {
     assert( lcid < C_.size() );
@@ -236,9 +264,10 @@ public:
   }
 
   void
-  push_back( const ConnectionT& c )
+  add_connection( const ConnectionT& c, const Source src )
   {
     C_.push_back( c );
+    sources_.push_back( src );
   }
 
   void
@@ -266,12 +295,18 @@ public:
     }*/
   }
 
+  Source&
+  get_source( const index local_target_connection_id ) override
+  {
+    return sources_[ local_target_connection_id ];
+  }
+
   index
   get_connection_index( const index source_node_id ) const override
   {
     // binary search in sorted sources
-    const std::vector< Source >::const_iterator begin = C_.begin();
-    const std::vector< Source >::const_iterator end = C_.end();
+    const std::vector< Source >::const_iterator begin = sources_.begin();
+    const std::vector< Source >::const_iterator end = sources_.end();
     // TODO JV: Is primary really always the case? (Adapted from master though)
     std::vector< Source >::const_iterator it = std::lower_bound( begin, end, Source( source_node_id, true ) );
 
@@ -281,14 +316,15 @@ public:
       return invalid_index;
     }
 
+    index connection_index = it - begin;
+
     // Connection is disabled
-    if ( ( *it ).is_disabled() )
+    if ( C_[ connection_index ].is_disabled() )
     {
       return invalid_index;
     }
 
-    // TODO JV: Is this required or can the iterator be cast to size_t
-    return it - begin;
+    return connection_index;
   }
 
   void
@@ -330,10 +366,25 @@ public:
   }
 
   void
+  clear_sources() override
+  {
+    // TODO JV: Is this actually safe? Or is swap the better way of clearing 2D vectors?
+    sources_.clear();
+  }
+
+  void reset_sources_processed_flags() override
+  {
+    for ( std::vector< Source >::iterator source = sources_.begin(); source != sources_.end(); ++source )
+    {
+      source->set_processed( false );
+    }
+  }
+
+  void
   send_to_all( const thread tid, const std::vector< ConnectorModel* >& cm, Event& e ) override
   {
     typename ConnectionT::CommonPropertiesType const& cp =
-      static_cast< GenericConnectorModel< ConnectionT >* >( cm )->get_common_properties();
+      static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties();
 
     for ( size_t lcid = 0; lcid < C_.size(); ++lcid )
     {
@@ -344,7 +395,7 @@ public:
   }
 
   void
-  send( const thread tid, const index snode_id, const index local_target_connection_id, const std::vector< ConnectorModel* >& cm, Event& e, const Node* target ) override
+  send( const thread tid, const index local_target_connection_id, const std::vector< ConnectorModel* >& cm, Event& e, Node* target ) override
   {
     typename ConnectionT::CommonPropertiesType const& cp =
       static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties();
@@ -353,13 +404,12 @@ public:
     if ( not C_[ local_target_connection_id ].is_disabled() )
     {
       C_[ local_target_connection_id ].send( e, tid, cp, target );
-      send_weight_event( tid, e, cp, target );
+      send_weight_event( local_target_connection_id, e, cp, target );
     }
   }
 
-  // Implemented in connector_base_impl.h
   void
-  send_weight_event( const thread tid, const index snode_id, const index local_target_connection_id, Event& e, const CommonSynapseProperties& cp, Node* target ) override;
+  send_weight_event( const index local_target_connection_id, Event& e, const CommonSynapseProperties& cp, Node* target ) override;
 
   void
   trigger_update_weight( const long vt_node_id,
@@ -383,10 +433,16 @@ public:
     }
   }
 
+  void correct_synapse_stdp_ax_delay( const index local_target_connection_id,
+    const double t_last_pre_spike,
+    double* weight_revert,
+    const double t_post_spike,
+    Node* target ) override;
+
   void
-  sort_connections_and_sources( std::vector< Source >& sources ) override
+  sort_connections_and_sources( ) override
   {
-    nest::sort( sources, C_ );
+    nest::sort( sources_, C_ );
   }
 
   void
@@ -394,6 +450,7 @@ public:
   {
     assert( not C_[ lcid ].is_disabled() );
     C_[ lcid ].disable();
+    sources_[ lcid ].disable();
   }
 
   void

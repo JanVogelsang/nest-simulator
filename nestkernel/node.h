@@ -25,11 +25,11 @@
 
 // C++ includes:
 #include <deque>
-#include <numeric>
 #include <string>
 #include <vector>
 
 // Includes from nestkernel:
+#include "connector_base.h"
 #include "deprecation_warning.h"
 #include "event.h"
 #include "histentry.h"
@@ -49,7 +49,6 @@
 
 namespace nest
 {
-class ConnectorBase;
 class ConnectorModel;
 class Model;
 class TimeConverter;
@@ -486,17 +485,6 @@ public:
   void delete_connections();
 
   /**
-   * Get a connection index by source node id. Returns invalid_index if no connection to the source node exists.
-   */
-  size_t get_connection_index( const synindex syn_id, const index source_node_id ) const;
-
-  inline Source&
-  get_source( const synindex syn_id, const index local_connection_id )
-  {
-    return sources_[ syn_id ][ local_connection_id ];
-  }
-
-  /**
    * Register a STDP connection
    *
    * @throws IllegalConnection
@@ -507,45 +495,83 @@ public:
   /**
    * TODO JV
    */
-  void resize_connections( const size_t size );
+  void
+  resize_connections( const size_t size )
+  {
+    connections_.resize( size );
+  }
 
   /**
-   * TODO JV
+   * Get a connection index by source node id. Returns invalid_index if no connection to the source node exists.
    */
-  inline void
-  resize_sources( const size_t size )
+  index
+  get_connection_index( const synindex syn_id, const index source_node_id ) const
   {
-    sources_.resize( size );
+    return connections_[ syn_id ]->get_connection_index( source_node_id );
   }
 
   /**
    * TODO JV
    */
-  inline void
+  size_t
+  get_num_conn_type_sources( const synindex syn_id ) const
+  {
+    return connections_[ syn_id ]->size();
+  }
+
+  /**
+   * TODO JV
+   */
+  size_t
+  get_num_sources() const
+  {
+    return std::accumulate( connections_.cbegin(),
+      connections_.cend(),
+      0,
+      []( size_t sum, auto sources_syn_id ) { return sum + sources_syn_id->size(); } );
+  }
+
+  /**
+   * TODO JV
+   */
+  Source& get_source( const synindex syn_id, const index local_connection_id )
+  {
+    return connections_[ syn_id ]->get_source( local_connection_id );
+  }
+
+  /**
+   * TODO JV
+   */
+  void
   clear_sources()
   {
-    // TODO JV: Is this actually safe? Or is swap the better way of clearing 2D vectors?
-    sources_.clear();
-  }
-
-  /**
-   * TODO JV
-   */
-  inline void reset_sources_processed_flags()
-  {
-    for ( std::vector< std::vector< Source > >::iterator sources_per_syn_type = sources_.begin(); sources_per_syn_type != sources_.end(); ++sources_per_syn_type )
+    for ( auto connections_per_syn_type : connections_ )
     {
-      for ( std::vector< Source >::iterator source = sources_per_syn_type->begin(); source != sources_per_syn_type->end(); ++source )
-      {
-        source->set_processed( false );
-      }
+      connections_per_syn_type->clear_sources();
     }
   }
 
   /**
    * TODO JV
    */
-  void sort_connections_and_sources();
+  void reset_sources_processed_flags()
+  {
+    for ( ConnectorBase* connections_per_syn_type : connections_ )
+    {
+      connections_per_syn_type->reset_sources_processed_flags();
+    }
+  }
+
+  /**
+   * TODO JV
+   */
+  void sort_connections_and_sources()
+  {
+    for ( ConnectorBase* connections_per_syn_type : connections_ )
+    {
+      connections_per_syn_type->sort_connections_and_sources();
+    }
+  }
 
   /**
    * TODO JV
@@ -554,24 +580,6 @@ public:
 
   // TODO JV: Make this and add_connection virtual, as connections_ is accessible from derived classes as well?
   void remove_disabled_connections();
-
-  /**
-   * Returns the number of incoming nodes (sources) using a connection of the specified type.
-   */
-  inline size_t
-  get_num_conn_type_sources( const synindex syn_id ) const
-  {
-    return sources_[ syn_id ].size();
-  }
-
-  inline size_t
-  get_num_sources() const
-  {
-    return std::accumulate( sources_.cbegin(),
-      sources_.cend(),
-      0,
-      []( size_t sum, auto sources_syn_id ) { return sum + sources_syn_id.size(); } );
-  }
 
   /**
    * When receiving an incoming spike event, forward it to the corresponding connection and handle the event previously
@@ -1041,19 +1049,6 @@ protected:
    * synapse types|connections
    */
   std::vector< ConnectorBase* > connections_;
-
-  /**
-   * This data structure stores the node IDs of presynaptic neurons connected to this neuron. If structural plasticity
-   * is disabled, it is only relevant during postsynaptic connection creation, before the connection information has
-   * been transferred to the presynaptic side.
-   * Arranged in a 2d array:
-   * 1st dimension: synapse types
-   * 2nd dimension: source node IDs
-   * After all connections have been created, the information stored in this structure is transferred to the presynaptic
-   * side and the sources vector can be cleared, unless further required for structural plasticity.
-   */
-   // TODO JV: This should be converted from type Source to index once the simulation starts
-  std::vector< std::vector< Source > > sources_;
 };
 
 inline bool

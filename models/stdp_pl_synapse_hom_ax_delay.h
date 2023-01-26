@@ -173,8 +173,7 @@ public:
    * Correct this synapse and the corresponding previously sent spike
    * taking into account a new post-synaptic spike.
    */
-  void correct_synapse_stdp_ax_delay( const thread tid,
-    const double t_last_spike,
+  void correct_synapse_stdp_ax_delay( const double t_last_spike,
     double* weight_revert,
     const double t_post_spike,
     const STDPPLHomAxDelayCommonProperties& cp,
@@ -326,8 +325,7 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e,
 }
 
 inline void
-stdp_pl_synapse_hom_ax_delay::correct_synapse_stdp_ax_delay( const thread tid,
-  const double t_last_spike,
+stdp_pl_synapse_hom_ax_delay::correct_synapse_stdp_ax_delay( const double t_last_spike,
   double* weight_revert,
   const double t_post_spike,
   const STDPPLHomAxDelayCommonProperties& cp,

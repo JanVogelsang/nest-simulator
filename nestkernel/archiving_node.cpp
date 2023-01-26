@@ -23,8 +23,8 @@
 #include "archiving_node.h"
 
 // Includes from nestkernel:
-#include "kernel_manager.h"
 #include "connector_model.h"
+#include "kernel_manager.h"
 
 // Includes from sli:
 #include "dictutils.h"
@@ -219,7 +219,7 @@ ArchivingNode::deliver_event( const thread tid,
 
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight (TODO JV: only weight?).
-  conn->send( tid, sources_[ syn_id ][ local_target_connection_id ].get_node_id(), local_target_connection_id, cm, se, this );
+  conn->send( tid, local_target_connection_id, cm, se, this );
 
   handle( se );
 }
@@ -345,7 +345,7 @@ ArchivingNode::add_correction_entry_stdp_ax_delay( SpikeEvent& spike_event,
   assert( static_cast< size_t >( idx ) < correction_entries_stdp_ax_delay_.size() );
 
   correction_entries_stdp_ax_delay_[ idx ].push_back(
-    CorrectionEntrySTDPAxDelay( spike_event.get_sender_spike_data(), t_last_pre_spike, weight_revert ) );
+    CorrectionEntrySTDPAxDelay( spike_event.get_sender_spike_data().get_syn_id(), spike_event.get_sender_spike_data().get_local_target_connection_id(), t_last_pre_spike, weight_revert ) );
 }
 
 void
@@ -387,8 +387,8 @@ ArchivingNode::correct_synapses_stdp_ax_delay_( const Time& t_spike )
             it_corr_entry < correction_entries_stdp_ax_delay_[ idx ].end();
             ++it_corr_entry )
       {
-        connections_[ it_corr_entry->spike_data_.get_syn_id() ]
-          ->correct_synapse_stdp_ax_delay( it_corr_entry->spike_data_,
+        connections_[ it_corr_entry->syn_id_ ]
+          ->correct_synapse_stdp_ax_delay( it_corr_entry->local_connection_id_,
             it_corr_entry->t_last_pre_spike_,
             &it_corr_entry->weight_revert_,
             t_spike.get_ms(),

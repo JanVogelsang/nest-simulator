@@ -110,7 +110,6 @@ class ConnTestDummyNodeBase : public Node
  */
 class Connection
 {
-
 public:
   // this typedef may be overwritten in the derived connection classes in order
   // to attach a specific event type to this connection type, used in secondary
@@ -124,6 +123,8 @@ public:
 
   Connection( const Connection& rhs ) = default;
   Connection& operator=( const Connection& rhs ) = default;
+
+  class ConnTestDummyNode : public ConnTestDummyNodeBase { };
 
   /**
    * Get all properties of this connection and put them into a dictionary.
@@ -160,8 +161,7 @@ public:
    * Correct this synapse and the corresponding previously sent spike
    * taking into account a new post-synaptic spike.
    */
-  void correct_synapse_stdp_ax_delay( const thread tid,
-    const double t_last_pre_spike,
+  void correct_synapse_stdp_ax_delay( const double t_last_pre_spike,
     double* weight_revert,
     const double t_post_spike,
     const CommonSynapseProperties&,
@@ -222,22 +222,23 @@ public:
    *
    * @see is_disabled
    */
-  /*void
+   void
   disable()
   {
-    syn_id_delay_.disable();
-  }*/
+    // syn_id_delay_.disable();
+  }
 
   /**
    * Returns a flag denoting if the connection is disabled.
    *
    * @see disable
    */
-  /*bool
+  bool
   is_disabled() const
   {
-    return syn_id_delay_.is_disabled();
-  }*/
+    return false;
+    // return syn_id_delay_.is_disabled();
+  }
 
 protected:
   /* the order of the members below is critical as it influences the size of the object. Please leave unchanged as
@@ -285,12 +286,11 @@ Connection::calibrate( const TimeConverter& tc )
 }
 
 inline void
-Connection::correct_synapse_stdp_ax_delay( const thread,
-  const double,
+Connection::correct_synapse_stdp_ax_delay( const double,
   double*,
   const double,
   const CommonSynapseProperties&,
-  Node* target)
+  Node* )
 {
   throw IllegalConnection( "Connection does not support correction in case of STDP with predominantly axonal delays." );
 }

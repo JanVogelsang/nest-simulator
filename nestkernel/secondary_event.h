@@ -311,7 +311,7 @@ public:
   {
   }
 
-  void operator()() override;
+  void operator()() override {}
   GapJunctionEvent* clone() const override;
 };
 
@@ -327,7 +327,7 @@ public:
   {
   }
 
-  void operator()() override;
+  void operator()() override {}
   InstantaneousRateConnectionEvent* clone() const override;
 };
 
@@ -343,7 +343,7 @@ public:
   {
   }
 
-  void operator()() override;
+  void operator()() override {}
   DelayedRateConnectionEvent* clone() const override;
 };
 
@@ -364,7 +364,7 @@ public:
   {
   }
 
-  void operator()() override;
+  void operator()() override {}
   DiffusionConnectionEvent* clone() const override;
 
   void
