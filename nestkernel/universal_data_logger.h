@@ -1,4 +1,5 @@
 /*
+ *
  *  universal_data_logger.h
  *
  *  This file is part of NEST.
@@ -96,8 +97,6 @@ namespace nest
  * nest::iaf_cond_alpha::iaf_cond_alpha(const iaf_cond_alpha& n)
  * : ..., B_(n.B_, *this) {}
  * @code
- *
- * @todo Could HostNode be passed as const& to handle() and record_data()?
  *
  * @note To avoid inclusion problems and code-bloat, the class
  *       interface is defined in this file, while most of the

@@ -71,7 +71,7 @@ Connector< ConnectionT >::correct_synapse_stdp_ax_delay( const index local_targe
   typename ConnectionT::CommonPropertiesType const& cp = static_cast< GenericConnectorModel< ConnectionT >* >(
     kernel().model_manager.get_connection_models( target->get_thread() )[ syn_id_ ] )
                                                            ->get_common_properties();
-  C_[ local_target_connection_id ].correct_synapse_stdp_ax_delay( t_last_pre_spike, weight_revert, t_post_spike, cp );
+  C_[ local_target_connection_id ].correct_synapse_stdp_ax_delay( t_last_pre_spike, weight_revert, t_post_spike, cp, target );
 }
 
 } // of namespace nest

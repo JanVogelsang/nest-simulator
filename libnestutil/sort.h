@@ -45,9 +45,9 @@ namespace nest
  * Calculates the median of three elements.
  * See http://algs4.cs.princeton.edu/23quicksort/QuickX.java.html.
  */
-template < typename T >
+template < template < typename, typename... > typename V, typename ...T >
 inline size_t
-median3_( const BlockVector< T >& vec, const size_t i, const size_t j, const size_t k )
+median3_( const V<T...>& vec, const size_t i, const size_t j, const size_t k )
 {
   return ( ( vec[ i ] < vec[ j ] ) ? ( ( vec[ j ] < vec[ k ] ) ? j
                : ( vec[ i ] < vec[ k ] )                       ? k
@@ -64,9 +64,9 @@ median3_( const BlockVector< T >& vec, const size_t i, const size_t j, const siz
  * entries in vec_sort and applying the same exchanges to
  * vec_perm.
  */
-template < typename T1, typename T2 >
+template < template < typename, typename... > typename V1, template < typename, typename... > typename V2, typename ...T1, typename ...T2 >
 void
-insertion_sort( BlockVector< T1 >& vec_sort, BlockVector< T2 >& vec_perm, const size_t lo, const size_t hi )
+insertion_sort( V1< T1... >& vec_sort, V2< T2... >& vec_perm, const size_t lo, const size_t hi )
 {
   for ( size_t i = lo + 1; i < hi + 1; ++i )
   {
@@ -87,9 +87,9 @@ insertion_sort( BlockVector< T1 >& vec_sort, BlockVector< T2 >& vec_perm, const 
  * sorting the entries in vec_sort and applying the same exchanges
  * to vec_perm.
  */
-template < typename T1, typename T2 >
+template < template < typename, typename... > typename V1, template < typename, typename... > typename V2, typename T1, typename T2, typename ...A1, typename ...A2 >
 void
-quicksort3way( BlockVector< T1 >& vec_sort, BlockVector< T2 >& vec_perm, const size_t lo, const size_t hi )
+quicksort3way( V1< T1, A1... >& vec_sort, V2< T2, A2... >& vec_perm, const size_t lo, const size_t hi )
 {
   if ( lo >= hi )
   {
@@ -170,17 +170,15 @@ quicksort3way( BlockVector< T1 >& vec_sort, BlockVector< T2 >& vec_perm, const s
 /**
  * Sorts two vectors according to elements in first vector. Convenience function.
  */
-
-template < typename T1, typename T2 >
+template < template < typename, typename... > typename V1, template < typename, typename... > typename V2, typename ...T1, typename ...T2 >
 void
-sort( std::vector< T1 >& vec_sort, std::vector< T2 >& vec_perm )
+sort( V1< T1... >& vec_sort, V2< T2... >& vec_perm )
 {
 #ifdef HAVE_BOOST
   boost::sort::spreadsort::integer_sort( make_iterator_pair( vec_sort.begin(), vec_perm.begin() ),
     make_iterator_pair( vec_sort.end(), vec_perm.end() ),
     rightshift_iterator_pair() );
 #else
-  // TODO JV (pt): Make this sort work for non-BlockVector as well
   quicksort3way( vec_sort, vec_perm, 0, vec_sort.size() - 1 );
 #endif
 }

@@ -60,14 +60,16 @@ BOOST_AUTO_TEST_CASE( test_target_object_type_constructor )
     const thread tid = std::rand() % ( MAX_TID + 1 );
     const thread rank = std::rand() % ( MAX_RANK + 1 );
     const synindex syn_id = std::rand() % ( MAX_SYN_ID + 1 );
-    const index lcid = std::rand() % ( MAX_LCID + 1 );
+    const index local_target_node_id = std::rand() % ( MAX_LOCAL_NODE_ID + 1 );
+    const index local_target_connection_id = std::rand() % ( MAX_LOCAL_CONNECTION_ID + 1 );
 
-    Target target_id_testInit( tid, rank, syn_id, lcid );
+    Target target_id_testInit( tid, rank, syn_id, local_target_node_id, local_target_connection_id );
 
     BOOST_REQUIRE( target_id_testInit.get_tid() == tid );
     BOOST_REQUIRE( target_id_testInit.get_rank() == rank );
     BOOST_REQUIRE( target_id_testInit.get_syn_id() == syn_id );
-    BOOST_REQUIRE( target_id_testInit.get_lcid() == lcid );
+    BOOST_REQUIRE( target_id_testInit.get_local_target_node_id() == local_target_node_id );
+    BOOST_REQUIRE( target_id_testInit.get_local_target_connection_id() == local_target_connection_id );
     BOOST_REQUIRE( target_id_testInit.get_status() == TARGET_ID_UNPROCESSED );
   }
 }
@@ -81,7 +83,8 @@ BOOST_AUTO_TEST_CASE( test_target_object_type_set_get )
     const thread tid = std::rand() % ( MAX_TID + 1 );
     const thread rank = std::rand() % ( MAX_RANK + 1 );
     const synindex syn_id = std::rand() % ( MAX_SYN_ID + 1 );
-    const index lcid = std::rand() % ( MAX_LCID + 1 );
+    const index local_target_node_id = std::rand() % ( MAX_LOCAL_NODE_ID + 1 );
+    const index local_target_connection_id = std::rand() % ( MAX_LOCAL_CONNECTION_ID + 1 );
 
     enum_status_target_id status_target_id = TARGET_ID_UNPROCESSED;
     if ( static_cast< bool >( std::rand() % 2 ) )
@@ -92,13 +95,15 @@ BOOST_AUTO_TEST_CASE( test_target_object_type_set_get )
     target_id_testSetGet.set_tid( tid );
     target_id_testSetGet.set_rank( rank );
     target_id_testSetGet.set_syn_id( syn_id );
-    target_id_testSetGet.set_lcid( lcid );
+    target_id_testSetGet.set_local_target_node_id( local_target_node_id );
+    target_id_testSetGet.set_local_target_connection_id( local_target_connection_id );
     target_id_testSetGet.set_status( status_target_id );
 
     BOOST_REQUIRE( target_id_testSetGet.get_tid() == tid );
     BOOST_REQUIRE( target_id_testSetGet.get_rank() == rank );
     BOOST_REQUIRE( target_id_testSetGet.get_syn_id() == syn_id );
-    BOOST_REQUIRE( target_id_testSetGet.get_lcid() == lcid );
+    BOOST_REQUIRE( target_id_testSetGet.get_local_target_node_id() == local_target_node_id );
+    BOOST_REQUIRE( target_id_testSetGet.get_local_target_connection_id() == local_target_connection_id );
     BOOST_REQUIRE( target_id_testSetGet.get_status() == status_target_id );
   }
 }

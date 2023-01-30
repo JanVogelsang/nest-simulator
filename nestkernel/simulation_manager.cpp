@@ -34,7 +34,6 @@
 #include "numerics.h"
 
 // Includes from nestkernel:
-#include "connection_manager_impl.h"
 #include "event_delivery_manager.h"
 #include "kernel_manager.h"
 

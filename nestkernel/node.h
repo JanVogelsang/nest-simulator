@@ -458,42 +458,15 @@ public:
    */
   virtual void sends_secondary_event( DelayedRateConnectionEvent& re );
 
-    /**
-   * This function calls check_connection() on the sender to check if the
-   * receiver accepts the event type and receptor type requested by the sender.
-   * \param source The source node
-   * \param syn_id Connection type of the connection as index
-   * \param receptor The ID of the requested receptor type
-   */
-  template < typename ConnectionT >
-  void check_connection( Node& source, const synindex syn_id, const rport receptor_type );
-
-  /**
-   * TODO JV
-   */
-  template < typename ConnectionT >
-  void add_connection( Node& source_node,
-    const synindex syn_id,
-    ConnectionT& connection,
-    const rport receptor_type,
-    const bool is_primary,
-    typename ConnectionT::CommonPropertiesType const& cp );
-
-  /**
-   * TODO JV
-   */
-  void delete_connections();
-
   /**
    * Register a STDP connection
    *
    * @throws IllegalConnection
-   *
    */
   virtual void register_stdp_connection( double, double );
 
   /**
-   * TODO JV
+   * Change the number of different connection types to this node.
    */
   void
   resize_connections( const size_t size )
@@ -502,16 +475,16 @@ public:
   }
 
   /**
-   * Get a connection index by source node id. Returns invalid_index if no connection to the source node exists.
+   * Get all connection indices by source node id.
    */
-  index
-  get_connection_index( const synindex syn_id, const index source_node_id ) const
+  std::vector< index >
+  get_connection_indices( const synindex syn_id, const index source_node_id ) const
   {
-    return connections_[ syn_id ]->get_connection_index( source_node_id );
+    return connections_[ syn_id ]->get_connection_indices( source_node_id );
   }
 
   /**
-   * TODO JV
+   * Get the number of connections to this neuron of a specific connection type.
    */
   size_t
   get_num_conn_type_sources( const synindex syn_id ) const
@@ -520,10 +493,10 @@ public:
   }
 
   /**
-   * TODO JV
+   * Get the total number of connections to this node.
    */
   size_t
-  get_num_sources() const
+  get_num_connections() const
   {
     return std::accumulate( connections_.cbegin(),
       connections_.cend(),
@@ -532,15 +505,27 @@ public:
   }
 
   /**
-   * TODO JV
+   * Get information about the source node of a specific connection.
    */
   Source& get_source( const synindex syn_id, const index local_connection_id )
   {
     return connections_[ syn_id ]->get_source( local_connection_id );
   }
 
+  void
+  get_all_connections( const index source_node_id,
+    const synindex syn_id,
+    const long synapse_label,
+    std::deque< ConnectionID >& conns ) const
+  {
+    for (index lcid : get_connection_indices( syn_id, source_node_id ))
+    {
+      conns.push_back( ConnectionDatum( ConnectionID( source_node_id, get_node_id(), get_thread(), syn_id, lcid) ) );
+    }
+  }
+
   /**
-   * TODO JV
+   * Remove source information of all connections to this node.
    */
   void
   clear_sources()
@@ -552,7 +537,7 @@ public:
   }
 
   /**
-   * TODO JV
+   * Reset all processed flags of all sources of this node.
    */
   void reset_sources_processed_flags()
   {
@@ -563,7 +548,7 @@ public:
   }
 
   /**
-   * TODO JV
+   * Sort all connections and sources by the source node id, per connection type.
    */
   void sort_connections_and_sources()
   {
@@ -574,12 +559,52 @@ public:
   }
 
   /**
-   * TODO JV
+   * Disables a connection to this node, without removing it.
    */
-  void disable_connection( const synindex syn_id, const index local_connection_id );
+  virtual void disable_connection( const synindex syn_id, const index local_connection_id );
 
-  // TODO JV: Make this and add_connection virtual, as connections_ is accessible from derived classes as well?
-  void remove_disabled_connections();
+  /**
+   * Deletes all connections which are marked disabled.
+   */
+  virtual void remove_disabled_connections();
+
+  /**
+     * Completely removes a connection to this node.
+   */
+  void delete_connections();
+
+  /**
+   * This function calls check_connection() on the sender to check if the
+   * receiver accepts the event type and receptor type requested by the sender.
+   * \param source The source node
+   * \param syn_id Connection type of the connection as index
+   * \param receptor The ID of the requested receptor type
+   */
+  template < typename ConnectionT >
+  void check_connection( Node& source, const synindex syn_id, const rport receptor_type );
+
+  /**
+   * Adds a connection to this node of a specific connection type.
+   */
+  template < typename ConnectionT >
+  const index add_connection( Node& source_node,
+    const synindex syn_id,
+    ConnectionT& connection,
+    const rport receptor_type,
+    const bool is_primary,
+    const bool from_device,
+    typename ConnectionT::CommonPropertiesType const& cp );
+
+  /**
+   * When receiving an event from a device, forward it to the corresponding connection and handle the event previously
+   * updated by the connection.
+   */
+  template < typename EventT >
+  void deliver_event_from_device( const thread tid,
+    const synindex syn_id,
+    const index local_target_connection_id,
+    const std::vector< ConnectorModel* >& cm,
+    EventT& e );
 
   /**
    * When receiving an incoming spike event, forward it to the corresponding connection and handle the event previously
@@ -692,6 +717,9 @@ public:
    * @throws UnexpectedEvent
    */
   virtual void handle( DelayedRateConnectionEvent& e );
+
+  // TODO JV (pt): Remove this again, is needed for devices to work, but should be cleaned up
+  virtual void handle( SecondaryEvent& e );
 
   /**
    * @defgroup SP_functions Structural Plasticity in NEST.
@@ -1049,6 +1077,13 @@ protected:
    * synapse types|connections
    */
   std::vector< ConnectorBase* > connections_;
+
+  /**
+   * A structure to hold the Connector objects which in turn hold the connection information of all incoming connections
+   * from devices to this node. Corresponds to a two dimensional structure:
+   * synapse types|connections
+   */
+  std::vector< ConnectorBase* > connections_from_devices_;
 };
 
 inline bool

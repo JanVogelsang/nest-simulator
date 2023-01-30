@@ -498,7 +498,7 @@ stdp_dopamine_synapse::trigger_update_weight( thread t,
   // neuron
   std::deque< histentry >::iterator start;
   std::deque< histentry >::iterator finish;
-  // TODO JV get_target( t )->get_history( t_last_update_ - dendritic_delay, t_trig - dendritic_delay, &start, &finish );
+  // TODO JV (pt): get_target( t )->get_history( t_last_update_ - dendritic_delay, t_trig - dendritic_delay, &start, &finish );
 
   // facilitation due to postsyn. spikes since last update
   double t0 = t_last_update_;

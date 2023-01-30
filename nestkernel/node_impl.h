@@ -60,29 +60,58 @@ Node::check_connection( Node& source, const synindex syn_id, const rport recepto
 }
 
 template < typename ConnectionT >
-void
+const index
 Node::add_connection( Node& source_node,
   const synindex syn_id,
   ConnectionT& connection,
   const rport receptor_type,
   const bool is_primary,
+  const bool from_device,
   typename ConnectionT::CommonPropertiesType const& cp )
 {
-  // Add to connection table
-  ConnectorBase* connector = connections_[ syn_id ];
-
-  if ( not connector )
+  ConnectorBase* connector;
+  // Check if the source of the connection is a device to add the connection to the corresponding container
+  if ( from_device )
   {
-    // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
-    connections_[ syn_id ] = new Connector< ConnectionT >( syn_id );
+    if ( not connections_from_devices_[ syn_id ] )
+    {
+      // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
+      connections_from_devices_[ syn_id ] = new Connector< ConnectionT >( syn_id );
+    }
+    connector = connections_from_devices_[ syn_id ];
   }
-
+  else
+  {
+    if ( not connections_[ syn_id ] )
+    {
+      // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
+      connections_[ syn_id ] = new Connector< ConnectionT >( syn_id );
+    }
+    connector = connections_[ syn_id ];
+  }
   assert( connector );
 
   const Source src( source_node.get_node_id(), is_primary );
   Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connector );
-  vc->add_connection( connection, src );
+  return vc->add_connection( connection, src );
+}
 
+template < typename EventT >
+void
+Node::deliver_event_from_device( const thread tid,
+  const synindex syn_id,
+  const index local_target_connection_id,
+  const std::vector< ConnectorModel* >& cm,
+  EventT& e )
+{
+  // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
+  // event by adding a weight and optionally updates its internal state as well.
+  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, cm, e, this );
+
+  // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
+  //  handle, or just handing the entire local connection id to the handle function.
+
+  handle( e );
 }
 
 }

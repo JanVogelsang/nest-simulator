@@ -24,7 +24,7 @@
 #define SOURCE_TABLE_POSITION_H
 
 // Includes from nestkernel:
-#include "kernel_manager.h"
+// #include "kernel_manager.h"
 
 namespace nest
 {
@@ -49,12 +49,12 @@ struct SourceTablePosition
 
 
   /**
-   * Decreases the index.
+   * Decreases the position.
    */
   void decrease();
 
   /**
-   * Increases the index.
+   * Increases the position.
    */
   void increase();
 

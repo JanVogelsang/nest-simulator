@@ -22,6 +22,10 @@
 
 #include "connector_model.h"
 
+// Includes from nestkernel:
+#include "event.h"
+#include "secondary_event.h"
+
 namespace nest
 {
 

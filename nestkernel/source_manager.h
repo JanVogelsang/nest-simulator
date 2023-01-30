@@ -273,7 +273,7 @@ SourceManager::no_targets_to_process( const thread tid )
 inline index
 SourceManager::find_first_source( const thread tid, const synindex syn_id, const index snode_id ) const
 {
-  assert( false ); // TODO JV: Structural plasticity
+  assert( false ); // TODO JV (pt): Structural plasticity
 
   /*// binary search in sorted sources
   const std::vector< Source >::const_iterator begin = sources_[ tid ][ syn_id ].begin();

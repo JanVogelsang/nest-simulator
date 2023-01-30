@@ -29,7 +29,6 @@
 #include "event_delivery_manager_impl.h"
 #include "kernel_manager.h"
 #include "nest_time.h"
-#include "node.h"
 
 template < typename HostNode >
 nest::DynamicUniversalDataLogger< HostNode >::DynamicUniversalDataLogger( HostNode& host )
@@ -407,21 +406,18 @@ nest::UniversalDataLogger< HostNode >::DataLogger_::handle( HostNode& host, cons
   const size_t rt = kernel().event_delivery_manager.read_toggle();
   assert( not data_[ rt ].empty() );
 
-  // Check if we have valid data, i.e., data with time stamps within the
-  // past time slice. This may not be the case if the node has been frozen.
-  // In that case, we still reset the recording marker, to prepare for the next
-  // round.
+  // Check if we have valid data, i.e., data with time stamps within the past time slice. This may not be the case if
+  // the node has been frozen.
+  // In that case, we still reset the recording marker, to prepare for the next round.
   if ( data_[ rt ][ 0 ].timestamp <= kernel().simulation_manager.get_previous_slice_origin() )
   {
     next_rec_[ rt ] = 0;
     return;
   }
 
-  // If recording interval and min_delay are not commensurable,
-  // the last entry of data_ will not contain useful data for every
-  // other slice. We mark this by time stamp -infinity.
-  // Applying this mark here is less work than initializing all time stamps
-  // to -infinity after each call to this function.
+  // If recording interval and min_delay are not commensurable, the last entry of data_ will not contain useful data for
+  // every other slice. We mark this by time stamp -infinity. Applying this mark here is less work than initializing all
+  // time stamps to -infinity after each call to this function.
   if ( next_rec_[ rt ] < data_[ rt ].size() )
   {
     data_[ rt ][ next_rec_[ rt ] ].timestamp = Time::neg_inf();
@@ -435,11 +431,10 @@ nest::UniversalDataLogger< HostNode >::DataLogger_::handle( HostNode& host, cons
 
   reply.set_sender( host );
   reply.set_sender_node_id( host.get_node_id() );
-  // reply.set_receiver( request.get_sender() );  // TODO JV
   reply.set_port( request.get_port() );
 
-  // send it off
-  kernel().event_delivery_manager.send_to_node( reply );
+  // send the reply back to the sender of the request
+  request.get_sender().handle(reply);
 }
 
 #endif // #ifndef UNIVERSAL_DATA_LOGGER_IMPL_H

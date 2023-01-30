@@ -45,7 +45,7 @@ EventDeliveryManager::send_local_( Node& source, EventT& e, const long lag )
 }
 
 inline void
-EventDeliveryManager::send_local_( Node& source, SecondaryEvent& e, const long )
+EventDeliveryManager::send_local_( Node& source, SecondaryEvent& e)
 {
   assert( not source.has_proxies() );
   e.set_stamp( kernel().simulation_manager.get_slice_origin() + Time::step( 1 ) );
@@ -67,8 +67,7 @@ inline void
 EventDeliveryManager::send< SpikeEvent >( Node& source, SpikeEvent& e, const long lag )
 {
   const thread tid = source.get_thread();
-  const index source_node_id = source.get_node_id();
-  e.set_sender_node_id( source_node_id );
+  e.set_sender_node_id( source.get_node_id() );
   if ( source.has_proxies() )
   {
     local_spike_counter_[ tid ] += e.get_multiplicity();
@@ -84,7 +83,7 @@ EventDeliveryManager::send< SpikeEvent >( Node& source, SpikeEvent& e, const lon
     {
       send_remote( tid, e, lag );
     }
-    kernel().connection_manager.send_to_devices( tid, source_node_id, e );
+    kernel().connection_manager.send_to_devices( tid, source.get_thread_lid(), e );
   }
   else
   {
@@ -142,8 +141,7 @@ inline void
 EventDeliveryManager::send_secondary( Node& source, SecondaryEvent& e )
 {
   const thread tid = kernel().vp_manager.get_thread_id();
-  const index source_node_id = source.get_node_id();
-  const index lid = kernel().vp_manager.node_id_to_lid( source_node_id );
+  const index lid = kernel().vp_manager.node_id_to_lid( source.get_node_id() );
 
   if ( source.has_proxies() )
   {
@@ -163,13 +161,11 @@ EventDeliveryManager::send_secondary( Node& source, SecondaryEvent& e )
         e >> it;
       }
     }
-    kernel().connection_manager.send_to_devices( tid, source_node_id, e );
+    kernel().connection_manager.send_to_devices( tid, source.get_thread_lid(), e );
   }
   else
   {
-    send_local_( source, e, 0 ); // need to pass lag (last argument), but not
-                                 // used in template specialization, so pass
-                                 // zero as dummy value
+    send_local_( source, e );
   }
 }
 
@@ -178,7 +174,6 @@ EventDeliveryManager::write_toggle() const
 {
   return kernel().simulation_manager.get_slice() % 2;
 }
-
 
 } // of namespace nest
 

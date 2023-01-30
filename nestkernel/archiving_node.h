@@ -28,6 +28,7 @@
 #include <deque>
 
 // Includes from nestkernel:
+#include "connector_base_impl.h"
 #include "histentry.h"
 #include "nest_time.h"
 #include "nest_types.h"
@@ -137,12 +138,11 @@ public:
     return false;
   }
 
-  // TODO JV
   /**
    * When receiving an incoming event, forward it to the corresponding connection and handle the event updated by the
    * connection.
    */
-  virtual void deliver_event( const thread tid,
+  void deliver_event( const thread tid,
     const synindex syn_id,
     const index local_target_connection_id,
     const std::vector< ConnectorModel* >& cm,

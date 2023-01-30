@@ -202,6 +202,7 @@ ArchivingNode::deliver_event( const thread tid,
   const std::vector< ConnectorModel* >& cm,
   SpikeEvent& se )
 {
+  // TODO JV: Think about removing access to connections_ in derived classes of node
   ConnectorBase* conn = connections_[ syn_id ];
 
   // STDP synapses need to make sure all post-synaptic spikes are known when delivering the spike to the synapse.
@@ -218,7 +219,7 @@ ArchivingNode::deliver_event( const thread tid,
   }*/
 
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
-  // event by adding a weight (TODO JV: only weight?).
+  // event by adding a weight.
   conn->send( tid, local_target_connection_id, cm, se, this );
 
   handle( se );

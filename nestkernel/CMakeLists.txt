@@ -28,7 +28,7 @@ set ( nestkernel_sources
       connection_label.h
       common_properties_hom_w.h
       syn_id_delay.h
-      connector_base.h connector_base_impl.h
+      connector_base.h connector_base_impl.h connector_base.cpp
       connector_model.h connector_model_impl.h connector_model.cpp
       connection_id.h connection_id.cpp
       deprecation_warning.h deprecation_warning.cpp
@@ -99,8 +99,8 @@ set ( nestkernel_sources
       target.h target_data.h static_assert.h
       send_buffer_position.h
       source.h
-        source_manager.h source_manager.cpp
-      source_table_position.h
+      source_manager.h source_manager.cpp
+      source_table_position.h source_table_position.cpp
       spike_data.h
       structural_plasticity_node.h structural_plasticity_node.cpp
       connection_creator.h connection_creator.cpp connection_creator_impl.h
@@ -113,7 +113,8 @@ set ( nestkernel_sources
       position.h
       spatial.h spatial.cpp
       stimulation_backend.h
-        adjacency_list.cpp adjacency_list.h source_table_position.cpp)
+      # adjacency_list.cpp adjacency_list.h
+      )
 
 
 if ( HAVE_SIONLIB )

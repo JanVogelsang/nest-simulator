@@ -31,7 +31,6 @@
 
 // Includes from nestkernel:
 #include "common_synapse_properties.h"
-#include "event.h"
 #include "nest_datums.h"
 #include "nest_names.h"
 #include "source.h"
@@ -45,6 +44,7 @@ namespace nest
 {
 
 class ConnectorModel;
+class Event;
 
 /**
  * Base class to allow storing Connectors for different synapse types
@@ -87,34 +87,22 @@ public:
   virtual double get_connection_delay( const index lcid, ConnectorModel& cm ) = 0;
 
   /**
-   * Add ConnectionID with given source_node_id and lcid to conns. If
-   * target_node_id is given, only add connection if target_node_id matches
-   * the node_id of the target of the connection.
-   */
-  virtual void get_connection( const index source_node_id,
-    const index target_node_id,
-    const thread tid,
-    const index lcid,
-    const long synapse_label,
-    std::deque< ConnectionID >& conns ) const = 0;
-
-  /**
-   * TODO JV
+   * Get information about the source node of a specific connection.
    */
   virtual Source& get_source( const index local_target_connection_id ) = 0;
 
   /**
-   * TODO JV
+   * Get the indices of all connection corresponding to a specific source node.
    */
-  virtual index get_connection_index( const index source_node_id ) const = 0;
+  virtual std::vector< index > get_connection_indices( const index source_node_id ) const = 0;
 
   /**
-   * TODO JV
+   * Remove source information of all connections in this container.
    */
   virtual void clear_sources() = 0;
 
   /**
-   * TODO JV
+   * Reset all processed flags of all sources in this container.
    */
   virtual void reset_sources_processed_flags() = 0;
 
@@ -127,17 +115,6 @@ public:
     const std::vector< size_t >& target_neuron_node_ids,
     const thread tid,
     const index lcid,
-    const long synapse_label,
-    std::deque< ConnectionID >& conns ) const = 0;
-
-  /**
-   * Add ConnectionIDs with given source_node_id to conns, looping over
-   * all lcids. If target_node_id is given, only add connection if
-   * target_node_id matches the node ID of the target of the connection.
-   */
-  virtual void get_all_connections( const index source_node_id,
-    const index target_node_id,
-    const thread tid,
     const long synapse_label,
     std::deque< ConnectionID >& conns ) const = 0;
 
@@ -186,6 +163,7 @@ public:
    * Remove disabled connections from the connector.
    */
   virtual void remove_disabled_connections( const index first_disabled_index ) = 0;
+
 
 protected:
   /**
@@ -263,36 +241,13 @@ public:
     return C_[ lcid ].get_delay();
   }
 
-  void
+  const index
   add_connection( const ConnectionT& c, const Source src )
   {
     C_.push_back( c );
     sources_.push_back( src );
-  }
-
-  void
-  get_connection( const index source_node_id,
-    const index target_node_id,
-    const thread tid,
-    const index lcid,
-    const long synapse_label,
-    std::deque< ConnectionID >& conns ) const override
-  {
-    // TODO JV: Devices
-
-    /*
-    if ( not C_[ lcid ].is_disabled() )
-    {
-      if ( synapse_label == UNLABELED_CONNECTION or C_[ lcid ].get_label() == synapse_label )
-      {
-        const index current_target_node_id = C_[ lcid ].get_target( tid )->get_node_id();
-        if ( current_target_node_id == target_node_id or target_node_id == 0 )
-        {
-          conns.push_back(
-            ConnectionDatum( ConnectionID( source_node_id, current_target_node_id, tid, syn_id_, lcid ) ) );
-        }
-      }
-    }*/
+    // Return index of added item
+    return C_.size() - 1;
   }
 
   Source&
@@ -301,30 +256,31 @@ public:
     return sources_[ local_target_connection_id ];
   }
 
-  index
-  get_connection_index( const index source_node_id ) const override
+  std::vector< index >
+  get_connection_indices( const index source_node_id ) const override
   {
     // binary search in sorted sources
     const std::vector< Source >::const_iterator begin = sources_.begin();
     const std::vector< Source >::const_iterator end = sources_.end();
-    // TODO JV: Is primary really always the case? (Adapted from master though)
+    // TODO JV (pt): Secondary events: Is primary really always the case? (Adapted from master though)
     std::vector< Source >::const_iterator it = std::lower_bound( begin, end, Source( source_node_id, true ) );
 
-    // Source id not found
-    if ( it == end && ( *it ).get_node_id() != source_node_id )
-    {
-      return invalid_index;
-    }
+    std::vector< index > indices;
 
     index connection_index = it - begin;
 
-    // Connection is disabled
-    if ( C_[ connection_index ].is_disabled() )
+    // TODO JV: This assumes the sources and connections are sorted by source node id
+    while ( it != end && it->get_node_id() == source_node_id )
     {
-      return invalid_index;
+      // Connection is disabled
+      if ( not C_[ connection_index ].is_disabled() )
+      {
+        indices.push_back( it - begin );
+      }
+      ++it;
     }
 
-    return connection_index;
+    return indices;
   }
 
   void
@@ -350,19 +306,6 @@ public:
         }
       }
     }*/
-  }
-
-  void
-  get_all_connections( const index source_node_id,
-    const index target_node_id,
-    const thread tid,
-    const long synapse_label,
-    std::deque< ConnectionID >& conns ) const override
-  {
-    for ( size_t lcid = 0; lcid < C_.size(); ++lcid )
-    {
-      get_connection( source_node_id, target_node_id, tid, lcid, synapse_label, conns );
-    }
   }
 
   void
@@ -448,17 +391,20 @@ public:
   void
   disable_connection( const index lcid ) override
   {
-    assert( not C_[ lcid ].is_disabled() );
+    assert( false );  // TODO JV (pt): Structural plasticity
+
+    /*assert( not C_[ lcid ].is_disabled() );
     C_[ lcid ].disable();
-    sources_[ lcid ].disable();
+    sources_[ lcid ].disable();*/
   }
 
   void
   remove_disabled_connections( const index first_disabled_index ) override
   {
-    // TODO JV
-    assert( C_[ first_disabled_index ].is_disabled() );
-    C_.erase( C_.begin() + first_disabled_index, C_.end() );
+    assert( false );  // TODO JV (pt): Structural plasticity
+
+    /*assert( C_[ first_disabled_index ].is_disabled() );
+    C_.erase( C_.begin() + first_disabled_index, C_.end() );*/
   }
 };
 

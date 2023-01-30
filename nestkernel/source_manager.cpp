@@ -20,14 +20,13 @@
  *
  */
 
-
+#include "source_manager.h"
 
 // Includes from nestkernel:
 #include "kernel_manager.h"
 #include "mpi_manager_impl.h"
 #include "vp_manager_impl.h"
 #include "target_data.h"
-#include "source_manager.h"
 
 namespace nest
 {

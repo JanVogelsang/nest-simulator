@@ -31,8 +31,6 @@
 // Includes from nestkernel:
 #include "conn_builder.h"
 #include "conn_builder_factory.h"
-#include "connector_base.h"
-#include "kernel_manager.h"
 #include "target_table_devices_impl.h"
 
 namespace nest
@@ -50,22 +48,18 @@ ConnectionManager::register_conn_builder( const std::string& name )
   connruledict_->insert( name, id );
 }
 
+template< typename EventT>
 inline void
-ConnectionManager::send_to_devices( const thread tid, const index source_node_id, Event& e )
+ConnectionManager::send_to_devices( const thread tid, const index source_node_lid, EventT& e )
 {
-  target_table_devices_.send_to_device( tid, source_node_id, e, kernel().model_manager.get_connection_models( tid ) );
+  target_table_devices_.send_to_devices( tid, source_node_lid, e );
 }
 
+template< typename EventT>
 inline void
-ConnectionManager::send_to_devices( const thread tid, const index source_node_id, SecondaryEvent& e )
+ConnectionManager::send_from_device( const thread tid, const index ldid, EventT& e )
 {
-  target_table_devices_.send_to_device( tid, source_node_id, e, kernel().model_manager.get_connection_models( tid ) );
-}
-
-inline void
-ConnectionManager::send_from_device( const thread tid, const index ldid, Event& e )
-{
-  target_table_devices_.send_from_device( tid, ldid, e, kernel().model_manager.get_connection_models( tid ) );
+  target_table_devices_.send_from_device( tid, ldid, e);
 }
 
 } // namespace nest

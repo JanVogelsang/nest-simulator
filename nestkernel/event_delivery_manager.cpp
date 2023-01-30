@@ -28,10 +28,7 @@
 
 // Includes from nestkernel:
 #include "connection_manager.h"
-#include "connection_manager_impl.h"
-#include "event_delivery_manager_impl.h"
 #include "kernel_manager.h"
-#include "mpi_manager_impl.h"
 #include "send_buffer_position.h"
 #include "source.h"
 #include "vp_manager.h"
@@ -569,19 +566,6 @@ EventDeliveryManager::set_complete_marker_spike_data_( const AssignedRanks& assi
   }
 }
 
-void
-EventDeliveryManager::deliver_event_to_node( const thread tid,
-  const synindex syn_id,
-  const index local_target_node_id,
-  const index local_target_connection_id,
-  const std::vector< ConnectorModel* >& cm,
-  SpikeEvent& se )
-{
-  // TODO JV: Make this an inline function?
-  Node* target_node = kernel().node_manager.thread_lid_to_node( tid, local_target_node_id );
-  target_node->deliver_event( tid, syn_id, local_target_connection_id, cm, se );
-}
-
 template < typename SpikeDataT >
 bool
 EventDeliveryManager::deliver_events_( const thread tid, const std::vector< SpikeDataT >& recv_buffer )
@@ -637,7 +621,8 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
           // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
           // only if needed, as this is computationally costly
           se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id );
-          deliver_event_to_node( tid, syn_id, local_target_node_id, local_target_connection_id, cm, se );
+          Node* target_node = kernel().node_manager.thread_lid_to_node( tid, local_target_node_id );
+          target_node->deliver_event( tid, syn_id, local_target_connection_id, cm, se );
         }
       }
       else

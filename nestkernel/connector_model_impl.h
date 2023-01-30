@@ -25,14 +25,11 @@
 
 #include "connector_model.h"
 
-// Generated includes:
-#include "config.h"
 
 // Includes from libnestutil:
 #include "compose.hpp"
 
 // Includes from nestkernel:
-#include "connector_base.h"
 #include "delay_checker.h"
 #include "kernel_manager.h"
 #include "nest.h"
@@ -69,6 +66,21 @@ GenericConnectorModel< ConnectionT >::clone( std::string name, synindex syn_id )
 {
   ConnectorModel* new_cm = new GenericConnectorModel( *this, name ); // calls copy construtor
   new_cm->set_syn_id( syn_id );
+  return new_cm;
+}
+
+template < typename ConnectionT >
+ConnectorModel*
+GenericSecondaryConnectorModel< ConnectionT >::clone( std::string name, synindex syn_id ) const
+{
+  ConnectorModel* new_cm = new GenericSecondaryConnectorModel( *this, name ); // calls copy construtor
+  new_cm->set_syn_id( syn_id );
+
+  if ( not new_cm->is_primary() )
+  {
+    new_cm->get_event()->add_syn_id( syn_id );
+  }
+
   return new_cm;
 }
 
@@ -183,14 +195,15 @@ GenericConnectorModel< ConnectionT >::set_syn_id( synindex syn_id )
 }
 
 template < typename ConnectionT >
-void
+const index
 GenericConnectorModel< ConnectionT >::add_connection( Node& src,
   Node& tgt,
   const synindex syn_id,
   const DictionaryDatum& p,
   const double delay,
   const double weight,
-  const bool is_primary )
+  const bool is_primary,
+  const bool from_device )
 {
   if ( not numerics::is_nan( delay ) )
   {
@@ -202,8 +215,7 @@ GenericConnectorModel< ConnectionT >::add_connection( Node& src,
     if ( p->known( names::delay ) )
     {
       throw BadParameter(
-        "Parameter dictionary must not contain delay if delay is given "
-        "explicitly." );
+        "Parameter dictionary must not contain delay if delay is given explicitly." );
     }
   }
   else
@@ -261,7 +273,7 @@ GenericConnectorModel< ConnectionT >::add_connection( Node& src,
   tgt.check_connection< ConnectionT >( src, syn_id, actual_receptor_type );
   connection.check_connection( src, tgt, actual_receptor_type, cp );
 
-  tgt.add_connection< ConnectionT >( src, syn_id, connection, actual_receptor_type, is_primary, cp );
+  return tgt.add_connection< ConnectionT >( src, syn_id, connection, actual_receptor_type, is_primary, from_device, cp );
 }
 
 } // namespace nest

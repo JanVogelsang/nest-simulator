@@ -26,6 +26,7 @@
 // Includes from nestkernel:
 #include "common_synapse_properties.h"
 #include "connection_label.h"
+#include "connector_base_impl.h"
 #include "delay_checker.h"
 #include "event.h"
 #include "kernel_manager.h"
@@ -37,10 +38,8 @@
 #include "spikecounter.h"
 
 // Includes from sli:
-#include "arraydatum.h"
 #include "dict.h"
 #include "dictutils.h"
-#include "doubledatum.h"
 
 namespace nest
 {
@@ -263,7 +262,7 @@ Connection::set_status( const DictionaryDatum& d, ConnectorModel& )
   double delay;
   if ( updateValue< double >( d, names::delay, delay ) )
   {
-    //kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
+    kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
     set_delay( delay );
   }
 }

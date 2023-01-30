@@ -31,10 +31,8 @@
 #include "numerics.h"
 
 // Includes from nestkernel:
-#include "event.h"
 #include "nest_time.h"
 #include "nest_types.h"
-#include "secondary_event.h"
 
 // Includes from sli:
 #include "dictutils.h"
@@ -42,8 +40,10 @@
 namespace nest
 {
 class CommonSynapseProperties;
-class TimeConverter;
+class Event;
 class Node;
+class SecondaryEvent;
+class TimeConverter;
 
 class ConnectorModel
 {
@@ -78,13 +78,14 @@ public:
    * omitted, NAN indicates this and weight/delay are set only if they are
    * valid.
    */
-  virtual void add_connection( Node& src,
+  virtual const index add_connection( Node& src,
     Node& tgt,
     const synindex syn_id,
     const DictionaryDatum& d,
     const double delay = NAN,
     const double weight = NAN,
-    const bool is_primary = true ) = 0;
+    const bool is_primary = true,
+    const bool from_device = false ) = 0;
 
   virtual ConnectorModel* clone( std::string, synindex syn_id ) const = 0;
 
@@ -219,13 +220,14 @@ public:
   {
   }
 
-  void add_connection( Node& src,
+  const index add_connection( Node& src,
     Node& tgt,
     const synindex syn_id,
     const DictionaryDatum& d,
     const double delay,
     const double weight,
-    const bool is_primary ) override;
+    const bool is_primary,
+    const bool from_device ) override;
 
   ConnectorModel* clone( std::string, synindex ) const override;
 
@@ -308,18 +310,7 @@ public:
 
 
   ConnectorModel*
-  clone( std::string name, synindex syn_id ) const
-  {
-    ConnectorModel* new_cm = new GenericSecondaryConnectorModel( *this, name ); // calls copy construtor
-    new_cm->set_syn_id( syn_id );
-
-    if ( not new_cm->is_primary() )
-    {
-      new_cm->get_event()->add_syn_id( syn_id );
-    }
-
-    return new_cm;
-  }
+  clone( std::string name, synindex syn_id ) const;
 
   SecondaryEvent*
   create_event() const

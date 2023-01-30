@@ -83,6 +83,8 @@ Node::init()
     return;
   }
 
+  connections_ = std::vector< ConnectorBase* >( kernel().model_manager.get_num_connection_models() );
+
   init_state_();
   init_buffers_();
 
@@ -98,7 +100,6 @@ Node::finalize()
 void
 Node::init_buffers_()
 {
-  connections_ = std::vector< ConnectorBase* >( kernel().model_manager.get_num_connection_models() );
 }
 
 void
@@ -290,7 +291,7 @@ Node::deliver_event( const thread tid,
   SpikeEvent& se )
 {
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
-  // event by adding a weight (TODO JV: only weight?).
+  // event by adding a weight and optionally updates its internal state as well.
   connections_[ syn_id ]->send( tid, local_target_connection_id, cm, se, this );
 
   // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
@@ -469,6 +470,12 @@ Node::handle( DelayedRateConnectionEvent& )
   throw UnexpectedEvent( "The target node does not handle delayed rate input." );
 }
 
+void
+Node::handle( SecondaryEvent& )
+{
+  throw UnexpectedEvent( "The target node does not handle secondary events." );
+}
+
 port
 Node::handles_test_event( DelayedRateConnectionEvent&, rport )
 {
@@ -480,7 +487,6 @@ Node::sends_secondary_event( DelayedRateConnectionEvent& )
 {
   throw IllegalConnection( "The source node does not support delayed rate output." );
 }
-
 
 double
 Node::get_LTD_value( double )

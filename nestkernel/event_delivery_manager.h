@@ -25,17 +25,14 @@
 
 // C++ includes:
 #include <cassert>
-#include <limits>
 #include <vector>
 
 // Includes from libnestutil:
 #include "manager_interface.h"
-#include "stopwatch.h"
 
 // Includes from nestkernel:
 #include "event.h"
 #include "mpi_manager.h" // OffGridSpike
-#include "nest_time.h"
 #include "nest_types.h"
 #include "node.h"
 #include "per_thread_bool_indicator.h"
@@ -83,11 +80,6 @@ public:
    * Send a secondary event remote.
    */
   void send_secondary( Node& source, SecondaryEvent& e );
-
-  /**
-   * Send event e to all targets of node source on thread t
-   */
-  void send_local( thread t, Node& source, Event& e );
 
   /**
    * Add node ID of event sender to the spike_register.
@@ -290,16 +282,6 @@ private:
     std::vector< SpikeDataT >& send_buffer ) const;
 
   /**
-   *
-   */
-  void deliver_event_to_node( const thread tid,
-    const synindex syn_id,
-    const index local_target_node_id,
-    const index local_target_connection_id,
-    const std::vector< ConnectorModel* >& cm,
-    SpikeEvent& se );
-
-  /**
    * Reads spikes from MPI buffers and delivers them to ringbuffer of nodes.
    */
   template < typename SpikeDataT >
@@ -353,9 +335,9 @@ private:
   /**
    * Sends event e to all targets of node source. Delivers events from devices directly to targets.
    */
-  template < class EventT >
+  template < typename EventT >
   void send_local_( Node& source, EventT& e, const long lag );
-  void send_local_( Node& source, SecondaryEvent& e, const long lag );
+  void send_local_( Node& source, SecondaryEvent& e );
 
   //--------------------------------------------------//
 

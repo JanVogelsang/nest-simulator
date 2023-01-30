@@ -33,7 +33,6 @@
 // Includes from nestkernel:
 #include "conn_builder.h"
 #include "connection_id.h"
-#include "connector_base.h"
 #include "nest_names.h"
 #include "nest_time.h"
 #include "nest_timeconverter.h"
@@ -158,7 +157,7 @@ public:
     size_t n,
     std::string syn_model );
 
-  index find_connection( const thread tid, const synindex syn_id, const index snode_id, const Node* target_node );
+  std::vector< index > find_connections( const synindex syn_id, const index snode_id, const Node* target_node );
 
   void disconnect( const thread tid, const synindex syn_id, const index snode_id, Node* target_node );
 
@@ -254,13 +253,14 @@ public:
   /**
    * Send event e to all device targets of source source_node_id
    */
-  void send_to_devices( const thread tid, const index source_node_id, Event& e );
-  void send_to_devices( const thread tid, const index source_node_id, SecondaryEvent& e );
+  template< typename EventT>
+  void send_to_devices( const thread tid, const index source_node_id, EventT& e );
 
   /**
    * Send event e to all targets of source device ldid (local device id)
    */
-  void send_from_device( const thread tid, const index ldid, Event& e );
+  template< typename EventT>
+  void send_from_device( const thread tid, const index ldid, EventT& e );
 
   /**
    * Send event e to all targets of node source on thread t
@@ -467,65 +467,12 @@ private:
    */
   void connect_( Node& source,
     Node& target,
-    const index s_node_id,
     const thread tid,
     const synindex syn_id,
     const DictionaryDatum& params,
+    const ConnectionType connection_type,
     const double delay = numerics::nan,
     const double weight = numerics::nan );
-
-  /**
-   * connect_to_device_ is used to establish a connection between a sender and
-   * receiving node if the sender has proxies, and the receiver does not.
-   *
-   * The parameters delay and weight have the default value NAN.
-   * NAN is a special value in cmath, which describes double values that
-   * are not a number. If delay or weight is omitted in an connect call,
-   * NAN indicates this and weight/delay are set only, if they are valid.
-   *
-   * \param source A reference to the sending Node.
-   * \param target A reference to the receiving Node.
-   * \param s_node_id The node ID of the sending Node.
-   * \param tid The thread of the target node.
-   * \param syn_id The synapse model to use.
-   * \param params The parameters for the connection.
-   * \param delay The delay of the connection (optional).
-   * \param weight The weight of the connection (optional).
-   */
-  void connect_to_device_( Node& source,
-    Node& target,
-    const index s_node_id,
-    const thread tid,
-    const synindex syn_id,
-    const DictionaryDatum& params,
-    const double delay = NAN,
-    const double weight = NAN );
-
-  /**
-   * connect_from_device_ is used to establish a connection between a sender and
-   * receiving node if the sender does not have proxies.
-   *
-   * The parameters delay and weight have the default value NAN.
-   * NAN is a special value in cmath, which describes double values that
-   * are not a number. If delay or weight is omitted in an connect call,
-   * NAN indicates this and weight/delay are set only, if they are valid.
-   *
-   * \param source A reference to the sending Node.
-   * \param target A reference to the receiving Node.
-   * \param s_node_id The node ID of the sending Node.
-   * \param tid The thread of the target node.
-   * \param syn_id The synapse model to use.
-   * \param params The parameters for the connection.
-   * \param delay The delay of the connection (optional).
-   * \param weight The weight of the connection (optional).
-   */
-  void connect_from_device_( Node& source,
-    Node& target,
-    const thread tid,
-    const synindex syn_id,
-    const DictionaryDatum& params,
-    const double delay = NAN,
-    const double weight = NAN );
 
   /**
    * Increases the connection count.
@@ -719,13 +666,11 @@ ConnectionManager::get_device_connected( const thread tid, const index lcid ) co
   return target_table_devices_.is_device_connected( tid, lcid );
 }
 
-
 inline const std::vector< SpikeData >&
 ConnectionManager::get_compressed_spike_data( const synindex syn_id, const index idx )
 {
   return compressed_spike_data_[ syn_id ][ idx ];
 }
-
 
 } // namespace nest
 

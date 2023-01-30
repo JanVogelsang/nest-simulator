@@ -22,9 +22,6 @@
 
 #include "connection_manager.h"
 
-// Generated includes:
-#include "config.h"
-
 // C++ includes:
 #include <algorithm>
 #include <cassert>
@@ -236,7 +233,7 @@ ConnectionManager::get_synapse_status( const index source_node_id,
   }
   else if ( source->has_proxies() and not target->has_proxies() and target->local_receiver() )
   {
-    target_table_devices_.get_synapse_status_to_device( tid, source_node_id, syn_id, dict, lcid );
+    target->get_connection_status( syn_id, lcid, dict );
   }
   else if ( not source->has_proxies() )
   {
@@ -276,7 +273,7 @@ ConnectionManager::set_synapse_status( const index source_node_id,
     }
     else if ( source->has_proxies() and not target->has_proxies() and target->local_receiver() )
     {
-      target_table_devices_.set_synapse_status_to_device( tid, source_node_id, syn_id, cm, dict, lcid );
+      target->set_connection_status( syn_id, lcid, dict, cm );
     }
     else if ( not source->has_proxies() )
     {
@@ -448,7 +445,7 @@ ConnectionManager::connect( TokenArray sources, TokenArray targets, const Dictio
     {
       auto target_node = kernel().node_manager.get_node_or_proxy( target );
       auto target_thread = target_node->get_thread();
-      connect_( *source_node, *target_node, source, target_thread, syn_id, syn_spec );
+      connect_( *source_node, *target_node, target_thread, syn_id, syn_spec, CONNECT );
     }
   }
 }
@@ -502,19 +499,9 @@ ConnectionManager::connect( const index snode_id,
 
   ConnectionType connection_type = connection_required( source, target, target_thread );
 
-  switch ( connection_type )
+  if ( connection_type != NO_CONNECTION)
   {
-  case CONNECT:
-    connect_( *source, *target, snode_id, target_thread, syn_id, params, delay, weight );
-    break;
-  case CONNECT_FROM_DEVICE:
-    connect_from_device_( *source, *target, target_thread, syn_id, params, delay, weight );
-    break;
-  case CONNECT_TO_DEVICE:
-    connect_to_device_( *source, *target, snode_id, target_thread, syn_id, params, delay, weight );
-    break;
-  case NO_CONNECTION:
-    return;
+    connect_( *source, *target, target_thread, syn_id, params, connection_type, delay, weight );
   }
 }
 
@@ -539,25 +526,14 @@ ConnectionManager::connect( const index snode_id,
   Node* source = kernel().node_manager.get_node_or_proxy( snode_id, target_thread );
 
   ConnectionType connection_type = connection_required( source, target, target_thread );
-  bool connected = true;
 
-  switch ( connection_type )
+  if ( connection_type != NO_CONNECTION)
   {
-  case CONNECT:
-    connect_( *source, *target, snode_id, target_thread, syn_id, params );
-    break;
-  case CONNECT_FROM_DEVICE:
-    connect_from_device_( *source, *target, target_thread, syn_id, params );
-    break;
-  case CONNECT_TO_DEVICE:
-    connect_to_device_( *source, *target, snode_id, target_thread, syn_id, params );
-    break;
-  case NO_CONNECTION:
-    connected = false;
-    break;
+    connect_( *source, *target, target_thread, syn_id, params, connection_type );
+    return true;
   }
 
-  return connected;
+  return false;
 }
 
 void
@@ -738,10 +714,10 @@ ConnectionManager::connect_arrays( long* sources,
 void
 ConnectionManager::connect_( Node& source,
   Node& target,
-  const index s_node_id,
   const thread tid,
   const synindex syn_id,
   const DictionaryDatum& params,
+  const ConnectionType connection_type,
   const double delay,
   const double weight )
 {
@@ -766,56 +742,41 @@ ConnectionManager::connect_( Node& source,
   }
 
   ConnectorModel& conn_model = kernel().model_manager.get_connection_model( syn_id, tid );
-  conn_model.add_connection( source, target, syn_id, params, delay, weight, is_primary );
-  kernel().source_manager.add_source( tid, source.get_node_id() );
-
-  increase_connection_count( tid, syn_id );
-
-  // We do not check has_primary_connections_ and secondary_connections_exist_
-  // directly as this led to worse performance on the supercomputer Piz Daint.
-  if ( check_primary_connections_[ tid ].is_false() and is_primary )
+  const index local_target_connection_id = conn_model.add_connection( source, target, syn_id, params, delay, weight, is_primary, connection_type == CONNECT_FROM_DEVICE );
+  switch ( connection_type )
   {
-#pragma omp atomic write
-    has_primary_connections_ = true;
-    check_primary_connections_[ tid ].set_true();
+  case CONNECT:
+    kernel().source_manager.add_source( tid, source.get_node_id() );
+    break;
+  case CONNECT_FROM_DEVICE:
+    target_table_devices_.add_connection_from_device( source, target, local_target_connection_id, tid, syn_id );
+    break;
+  case CONNECT_TO_DEVICE:
+    target_table_devices_.add_connection_to_device( source, target, local_target_connection_id, tid, syn_id );
+    break;
+  default:
+    break;
   }
-  else if ( check_secondary_connections_[ tid ].is_false() and not is_primary )
+
+  increase_connection_count( tid, syn_id );
+
+  if ( connection_type == CONNECT )
   {
+    // We do not check has_primary_connections_ and secondary_connections_exist_
+    // directly as this led to worse performance on the supercomputer Piz Daint.
+    if ( check_primary_connections_[ tid ].is_false() and is_primary )
+    {
 #pragma omp atomic write
-    secondary_connections_exist_ = true;
-    check_secondary_connections_[ tid ].set_true();
+      has_primary_connections_ = true;
+      check_primary_connections_[ tid ].set_true();
+    }
+    else if ( check_secondary_connections_[ tid ].is_false() and not is_primary )
+    {
+#pragma omp atomic write
+      secondary_connections_exist_ = true;
+      check_secondary_connections_[ tid ].set_true();
+    }
   }
-}
-
-void
-ConnectionManager::connect_to_device_( Node& source,
-  Node& target,
-  const index s_node_id,
-  const thread tid,
-  const synindex syn_id,
-  const DictionaryDatum& params,
-  const double delay,
-  const double weight )
-{
-  // create entries in connection structure for connections to devices
-  target_table_devices_.add_connection_to_device( source, target, s_node_id, tid, syn_id, params, delay, weight );
-
-  increase_connection_count( tid, syn_id );
-}
-
-void
-ConnectionManager::connect_from_device_( Node& source,
-  Node& target,
-  const thread tid,
-  const synindex syn_id,
-  const DictionaryDatum& params,
-  const double delay,
-  const double weight )
-{
-  // create entries in connections vector of devices
-  target_table_devices_.add_connection_from_device( source, target, tid, syn_id, params, delay, weight );
-
-  increase_connection_count( tid, syn_id );
 }
 
 void
@@ -835,14 +796,12 @@ ConnectionManager::increase_connection_count( const thread tid, const synindex s
   }
 }
 
-index
-ConnectionManager::find_connection( const thread tid,
-  const synindex syn_id,
+std::vector< index >
+ConnectionManager::find_connections( const synindex syn_id,
   const index snode_id,
   const Node* target_node )
 {
-  // lcid will hold the position of the /first/ connection from node snode_id to any local node, or be invalid
-  return target_node->get_connection_index( syn_id, snode_id );
+  return target_node->get_connection_indices( syn_id, snode_id );
 }
 
 void
@@ -850,16 +809,20 @@ ConnectionManager::disconnect( const thread tid, const synindex syn_id, const in
 {
   assert( syn_id != invalid_synindex );
 
-  const index local_target_connection_id = find_connection( tid, syn_id, snode_id, target_node );
+  const std::vector< index > connection_indices = find_connections( syn_id, snode_id, target_node );
 
-  if ( local_target_connection_id == invalid_index ) // this function should only be called with a valid connection
+  for ( const index local_target_connection_id : connection_indices)
   {
-    throw InexistentConnection();
+    // this function should only be called with at least one valid connection
+    if ( local_target_connection_id == invalid_index )
+    {
+      throw InexistentConnection();
+    }
+
+    target_node->disable_connection( syn_id, local_target_connection_id );
+
+    --num_connections_[ tid ][ syn_id ];
   }
-
-  target_node->disable_connection( syn_id, local_target_connection_id );
-
-  --num_connections_[ tid ][ syn_id ];
 }
 
 void
@@ -1045,11 +1008,10 @@ ConnectionManager::get_connections( std::deque< ConnectionID >& connectome,
   if ( is_source_table_cleared() )
   {
     throw KernelException(
-      "Invalid attempt to access connection information: source table was "
-      "cleared." );
+      "Invalid attempt to access connection information: source table was cleared." );
   }
 
-  assert( false ); // TODO JV (pt): Not required for benchmarking
+  assert( false ); // TODO JV (pt): Structural plasticity
   /*
   const size_t num_connections = get_num_connections( syn_id );
 
