@@ -1,0 +1,2 @@
+- Spike compression
+- Connection sorting (by source node id)
