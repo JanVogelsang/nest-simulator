@@ -362,8 +362,7 @@ stdp_facetshw_synapse_hom::weight_to_entry_( double weight, double weight_per_lu
 }
 
 inline double
-stdp_facetshw_synapse_hom::entry_to_weight_( unsigned int discrete_weight,
-  double weight_per_lut_entry )
+stdp_facetshw_synapse_hom::entry_to_weight_( unsigned int discrete_weight, double weight_per_lut_entry )
 {
   // returns the continuous weight
   return discrete_weight * weight_per_lut_entry;
@@ -383,10 +382,7 @@ stdp_facetshw_synapse_hom::lookup_( unsigned int discrete_weight_, std::vector< 
  * \param p The port under which this connection is stored in the Connector.
  */
 inline void
-stdp_facetshw_synapse_hom::send( Event& e,
-  thread t,
-  const STDPFACETSHWHomCommonProperties& cp,
-  Node* target )
+stdp_facetshw_synapse_hom::send( Event& e, thread t, const STDPFACETSHWHomCommonProperties& cp, Node* target )
 {
   // synapse STDP dynamics
 
@@ -398,8 +394,7 @@ stdp_facetshw_synapse_hom::send( Event& e,
   // generate wring results on distributed systems,
   // because the number of synapses counted is only
   // the number of synapses local to the current machine
-  STDPFACETSHWHomCommonProperties& cp_nonconst =
-    const_cast< STDPFACETSHWHomCommonProperties& >( cp );
+  STDPFACETSHWHomCommonProperties& cp_nonconst = const_cast< STDPFACETSHWHomCommonProperties& >( cp );
 
   // init the readout time
   if ( not init_flag_ )
@@ -503,9 +498,9 @@ stdp_facetshw_synapse_hom::send( Event& e,
     a_acausal_ += std::exp( minus_dt_acausal / cp.tau_minus_ );
   }
 
-    e.set_weight( weight_ );
+  e.set_weight( weight_ );
   e.set_delay_steps( get_delay_steps() );
-    e();
+  e();
 
   t_lastspike_ = t_spike;
 }

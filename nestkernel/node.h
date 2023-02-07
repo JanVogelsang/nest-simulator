@@ -480,7 +480,12 @@ public:
   std::vector< index >
   get_connection_indices( const synindex syn_id, const index source_node_id ) const
   {
-    return connections_[ syn_id ]->get_connection_indices( source_node_id );
+    assert( connections_[ syn_id ] ); // TODO JV: Remove this
+    if ( connections_[ syn_id ] )
+    {
+      return connections_[ syn_id ]->get_connection_indices( source_node_id );
+    }
+    return std::vector< index >();
   }
 
   /**
@@ -489,7 +494,11 @@ public:
   size_t
   get_num_conn_type_sources( const synindex syn_id ) const
   {
-    return connections_[ syn_id ]->size();
+    if ( connections_[ syn_id ] )
+    {
+      return connections_[ syn_id ]->size();
+    }
+    return 0;
   }
 
   /**
@@ -501,14 +510,27 @@ public:
     return std::accumulate( connections_.cbegin(),
       connections_.cend(),
       0,
-      []( size_t sum, auto sources_syn_id ) { return sum + sources_syn_id->size(); } );
+      []( size_t sum, auto sources_syn_id )
+      {
+        if ( sources_syn_id )
+        {
+          return sum + sources_syn_id->size();
+        }
+        else
+        {
+          return sum;
+        }
+      } );
   }
 
   /**
    * Get information about the source node of a specific connection.
    */
-  Source& get_source( const synindex syn_id, const index local_connection_id )
+  Source&
+  get_source( const synindex syn_id, const index local_connection_id )
   {
+    assert( connections_[ syn_id ] );
+
     return connections_[ syn_id ]->get_source( local_connection_id );
   }
 
@@ -518,9 +540,9 @@ public:
     const long synapse_label,
     std::deque< ConnectionID >& conns ) const
   {
-    for (index lcid : get_connection_indices( syn_id, source_node_id ))
+    for ( index lcid : get_connection_indices( syn_id, source_node_id ) )
     {
-      conns.push_back( ConnectionDatum( ConnectionID( source_node_id, get_node_id(), get_thread(), syn_id, lcid) ) );
+      conns.push_back( ConnectionDatum( ConnectionID( source_node_id, get_node_id(), get_thread(), syn_id, lcid ) ) );
     }
   }
 
@@ -532,29 +554,40 @@ public:
   {
     for ( auto connections_per_syn_type : connections_ )
     {
-      connections_per_syn_type->clear_sources();
+      if ( connections_per_syn_type )
+      {
+        connections_per_syn_type->clear_sources();
+      }
     }
   }
 
   /**
    * Reset all processed flags of all sources of this node.
    */
-  void reset_sources_processed_flags()
+  void
+  reset_sources_processed_flags()
   {
     for ( ConnectorBase* connections_per_syn_type : connections_ )
     {
-      connections_per_syn_type->reset_sources_processed_flags();
+      if ( connections_per_syn_type )
+      {
+        connections_per_syn_type->reset_sources_processed_flags();
+      }
     }
   }
 
   /**
    * Sort all connections and sources by the source node id, per connection type.
    */
-  void sort_connections_and_sources()
+  void
+  sort_connections_and_sources()
   {
     for ( ConnectorBase* connections_per_syn_type : connections_ )
     {
-      connections_per_syn_type->sort_connections_and_sources();
+      if ( connections_per_syn_type )
+      {
+        connections_per_syn_type->sort_connections_and_sources();
+      }
     }
   }
 
@@ -569,7 +602,7 @@ public:
   virtual void remove_disabled_connections();
 
   /**
-     * Completely removes a connection to this node.
+   * Completely removes a connection to this node.
    */
   void delete_connections();
 

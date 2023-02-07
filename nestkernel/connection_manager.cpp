@@ -56,7 +56,8 @@
 #include "token.h"
 #include "tokenutils.h"
 
-namespace nest {
+namespace nest
+{
 
 ConnectionManager::ConnectionManager()
   : connruledict_( new Dictionary() )
@@ -66,8 +67,8 @@ ConnectionManager::ConnectionManager()
   , keep_source_table_( true )
   , connections_have_changed_( false )
   , get_connections_has_been_called_( false )
-  , sort_connections_by_source_( true )
-  , use_compressed_spikes_( true )
+  , sort_connections_by_source_( false ) // TODO JV
+  , use_compressed_spikes_( false )      // TODO JV
   , has_primary_connections_( false )
   , check_primary_connections_()
   , secondary_connections_exist_( false )
@@ -499,7 +500,7 @@ ConnectionManager::connect( const index snode_id,
 
   ConnectionType connection_type = connection_required( source, target, target_thread );
 
-  if ( connection_type != NO_CONNECTION)
+  if ( connection_type != NO_CONNECTION )
   {
     connect_( *source, *target, target_thread, syn_id, params, connection_type, delay, weight );
   }
@@ -527,7 +528,7 @@ ConnectionManager::connect( const index snode_id,
 
   ConnectionType connection_type = connection_required( source, target, target_thread );
 
-  if ( connection_type != NO_CONNECTION)
+  if ( connection_type != NO_CONNECTION )
   {
     connect_( *source, *target, target_thread, syn_id, params, connection_type );
     return true;
@@ -742,7 +743,8 @@ ConnectionManager::connect_( Node& source,
   }
 
   ConnectorModel& conn_model = kernel().model_manager.get_connection_model( syn_id, tid );
-  const index local_target_connection_id = conn_model.add_connection( source, target, syn_id, params, delay, weight, is_primary, connection_type == CONNECT_FROM_DEVICE );
+  const index local_target_connection_id = conn_model.add_connection(
+    source, target, syn_id, params, delay, weight, is_primary, connection_type == CONNECT_FROM_DEVICE );
   switch ( connection_type )
   {
   case CONNECT:
@@ -797,9 +799,7 @@ ConnectionManager::increase_connection_count( const thread tid, const synindex s
 }
 
 std::vector< index >
-ConnectionManager::find_connections( const synindex syn_id,
-  const index snode_id,
-  const Node* target_node )
+ConnectionManager::find_connections( const synindex syn_id, const index snode_id, const Node* target_node )
 {
   return target_node->get_connection_indices( syn_id, snode_id );
 }
@@ -811,7 +811,7 @@ ConnectionManager::disconnect( const thread tid, const synindex syn_id, const in
 
   const std::vector< index > connection_indices = find_connections( syn_id, snode_id, target_node );
 
-  for ( const index local_target_connection_id : connection_indices)
+  for ( const index local_target_connection_id : connection_indices )
   {
     // this function should only be called with at least one valid connection
     if ( local_target_connection_id == invalid_index )
@@ -1007,8 +1007,7 @@ ConnectionManager::get_connections( std::deque< ConnectionID >& connectome,
 {
   if ( is_source_table_cleared() )
   {
-    throw KernelException(
-      "Invalid attempt to access connection information: source table was cleared." );
+    throw KernelException( "Invalid attempt to access connection information: source table was cleared." );
   }
 
   assert( false ); // TODO JV (pt): Structural plasticity
@@ -1554,9 +1553,8 @@ ConnectionManager::resize_connections()
     }
   }
 
-  // Resize data structures for connections between neurons and
-  // devices
-  target_table_devices_.resize_to_number_of_synapse_types();
+  // Resize data structures for connections between neurons and devices
+  // target_table_devices_.resize_to_number_of_synapse_types();
 }
 
 void
@@ -1597,11 +1595,11 @@ ConnectionManager::unset_connections_have_changed()
 void
 ConnectionManager::collect_compressed_spike_data( const thread tid )
 {
-  assert( false ); // TODO JV (pt): Compressed spikes
 
-  /*if ( use_compressed_spikes_ )
+  if ( use_compressed_spikes_ )
   {
-    assert( sort_connections_by_source_ );
+    assert( false ); // TODO JV (pt): Compressed spikes
+    /*assert( sort_connections_by_source_ );
 
 #pragma omp single
     {
@@ -1613,8 +1611,8 @@ ConnectionManager::collect_compressed_spike_data( const thread tid )
 #pragma omp single
     {
       source_table_.fill_compressed_spike_data( compressed_spike_data_ );
-    } // of omp single; implicit barrier
-  }*/
+    } // of omp single; implicit barrier*/
+  }
 }
 
 void

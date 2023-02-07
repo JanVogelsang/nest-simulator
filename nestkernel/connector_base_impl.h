@@ -34,7 +34,8 @@ namespace nest
 
 template < typename ConnectionT >
 void
-Connector< ConnectionT >::send_weight_event( const index local_target_connection_id,
+Connector< ConnectionT >::send_weight_event( const thread tid,
+  const index local_target_connection_id,
   Event& e,
   const CommonSynapseProperties& cp,
   Node* target )
@@ -56,7 +57,9 @@ Connector< ConnectionT >::send_weight_event( const index local_target_connection
     // Node* wr_node = kernel().node_manager.get_node_or_proxy( wr_node_id, tid );
     // Put the node_id of the postsynaptic node as receiver node ID
     wr_e.set_receiver_node_id( target->get_node_id() );
-    wr_e();
+    DeviceNode* wr_node =
+      static_cast< DeviceNode* >( kernel().node_manager.get_node_or_proxy( cp.get_wr_node_id(), tid ) );
+    wr_node->handle( wr_e );
   }
 }
 
@@ -71,7 +74,8 @@ Connector< ConnectionT >::correct_synapse_stdp_ax_delay( const index local_targe
   typename ConnectionT::CommonPropertiesType const& cp = static_cast< GenericConnectorModel< ConnectionT >* >(
     kernel().model_manager.get_connection_models( target->get_thread() )[ syn_id_ ] )
                                                            ->get_common_properties();
-  C_[ local_target_connection_id ].correct_synapse_stdp_ax_delay( t_last_pre_spike, weight_revert, t_post_spike, cp, target );
+  C_[ local_target_connection_id ].correct_synapse_stdp_ax_delay(
+    t_last_pre_spike, weight_revert, t_post_spike, cp, target );
 }
 
 } // of namespace nest

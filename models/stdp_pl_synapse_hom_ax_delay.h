@@ -262,10 +262,7 @@ private:
  * \param p The port under which this connection is stored in the Connector.
  */
 inline void
-stdp_pl_synapse_hom_ax_delay::send( Event& e,
-  thread t,
-  const STDPPLHomAxDelayCommonProperties& cp,
-  Node* target )
+stdp_pl_synapse_hom_ax_delay::send( Event& e, thread t, const STDPPLHomAxDelayCommonProperties& cp, Node* target )
 {
   // synapse STDP depressing/facilitation dynamics
 
@@ -309,9 +306,9 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e,
   // std::cout << std::setprecision( 17 ) << "Pre " << t_spike + cp.axonal_delay_ << " " << K_minus << " " << weight_ <<
   // std::endl;
 
-    e.set_weight( weight_ );
+  e.set_weight( weight_ );
   e.set_delay_steps( get_delay_steps() );
-    e();
+  e();
 
   if ( ( cp.axonal_delay_ - dendritic_delay ) > kernel().connection_manager.get_stdp_eps() )
   {
@@ -329,7 +326,7 @@ stdp_pl_synapse_hom_ax_delay::correct_synapse_stdp_ax_delay( const double t_last
   double* weight_revert,
   const double t_post_spike,
   const STDPPLHomAxDelayCommonProperties& cp,
-  Node* target)
+  Node* target )
 {
   const double t_spike = t_lastspike_; // no new pre-synaptic spike since last send()
   const double wrong_weight = weight_; // incorrectly transmitted weight
@@ -366,9 +363,9 @@ stdp_pl_synapse_hom_ax_delay::correct_synapse_stdp_ax_delay( const double t_last
 
   // send a correcting event to the target neuron
   SpikeEvent e;
-    e.set_weight( weight_ - wrong_weight );
+  e.set_weight( weight_ - wrong_weight );
   e.set_delay_steps( get_delay_steps() );
-    e.set_stamp( Time::ms_stamp( t_spike ) );
+  e.set_stamp( Time::ms_stamp( t_spike ) );
   e();
 }
 

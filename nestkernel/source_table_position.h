@@ -59,10 +59,9 @@ struct SourceTablePosition
   void increase();
 
   /**
-   * Returns true if the indices point outside the SourceTable, e.g.,
-   * to signal that the end was reached.
+   * Returns true if the indices point outside the SourceTable to signal that the end was reached.
    */
-  bool is_invalid() const;
+  bool reached_end() const;
 };
 
 inline SourceTablePosition::SourceTablePosition()
@@ -85,7 +84,7 @@ inline SourceTablePosition::SourceTablePosition( const long tid,
 }
 
 inline bool
-SourceTablePosition::is_invalid() const
+SourceTablePosition::reached_end() const
 {
   return ( tid == -1 and syn_id == -1 and local_target_node_id == -1 and local_target_connection_id == -1 );
 }

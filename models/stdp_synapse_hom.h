@@ -295,9 +295,9 @@ stdp_synapse_hom::send( Event& e, thread t, const STDPHomCommonProperties& cp, N
   // depression due to new pre-synaptic spike
   weight_ = depress_( weight_, target->get_K_value( t_spike - dendritic_delay ), cp );
 
-    e.set_weight( weight_ );
+  e.set_weight( weight_ );
   e.set_delay_steps( get_delay_steps() );
-    e();
+  e();
 
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) / cp.tau_plus_ ) + 1.0;
 

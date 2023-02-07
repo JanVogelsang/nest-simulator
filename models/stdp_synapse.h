@@ -152,7 +152,7 @@ public:
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target  );
+  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -224,7 +224,7 @@ stdp_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* ta
   // synapse STDP depressing/facilitation dynamics
   const double t_spike = e.get_stamp().get_ms();
 
-  // use accessor functions (inherited from Connection< >) to obtain delay and target
+  // use accessor functions (inherited from Connection< >) to obtain delay
   double dendritic_delay = get_delay();
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
@@ -251,11 +251,10 @@ stdp_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* ta
   const double _K_value = target->get_K_value( t_spike - dendritic_delay );
   weight_ = depress_( weight_, _K_value );
 
-    e.set_weight( weight_ );
-  // use accessor functions (inherited from Connection< >) to obtain delay in
-  // steps and rport
+  e.set_weight( weight_ );
+  // use accessor functions (inherited from Connection< >) to obtain delay in steps
   e.set_delay_steps( get_delay_steps() );
-    e();
+  e();
 
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) / tau_plus_ ) + 1.0;
 

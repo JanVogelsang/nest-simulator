@@ -160,7 +160,7 @@ public:
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target  );
+  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -226,7 +226,7 @@ private:
  * \param cp Common properties object, containing the stdp parameters.
  */
 inline void
-stdp_nn_restr_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target  )
+stdp_nn_restr_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
 {
   // synapse STDP depressing/facilitation dynamics
   double t_spike = e.get_stamp().get_ms();
@@ -280,11 +280,11 @@ stdp_nn_restr_synapse::send( Event& e, thread t, const CommonSynapseProperties&,
     weight_ = depress_( weight_, nearest_neighbor_Kminus );
   }
 
-    e.set_weight( weight_ );
+  e.set_weight( weight_ );
   // use accessor functions (inherited from Connection< >) to obtain delay in
   // steps and rport
   e.set_delay_steps( get_delay_steps() );
-    e();
+  e();
 
   t_lastspike_ = t_spike;
 }

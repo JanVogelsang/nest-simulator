@@ -123,7 +123,9 @@ public:
   Connection( const Connection& rhs ) = default;
   Connection& operator=( const Connection& rhs ) = default;
 
-  class ConnTestDummyNode : public ConnTestDummyNodeBase { };
+  class ConnTestDummyNode : public ConnTestDummyNodeBase
+  {
+  };
 
   /**
    * Get all properties of this connection and put them into a dictionary.
@@ -164,15 +166,15 @@ public:
     double* weight_revert,
     const double t_post_spike,
     const CommonSynapseProperties&,
-    Node* target);
+    Node* target );
 
   /**
    * Return the delay of the connection in ms
    */
-   double
+  double
   get_delay() const
   {
-   return Time::delay_steps_to_ms( delay_ );
+    return Time::delay_steps_to_ms( delay_ );
   }
 
   /**
@@ -221,7 +223,7 @@ public:
    *
    * @see is_disabled
    */
-   void
+  void
   disable()
   {
     // syn_id_delay_.disable();
@@ -285,11 +287,7 @@ Connection::calibrate( const TimeConverter& tc )
 }
 
 inline void
-Connection::correct_synapse_stdp_ax_delay( const double,
-  double*,
-  const double,
-  const CommonSynapseProperties&,
-  Node* )
+Connection::correct_synapse_stdp_ax_delay( const double, double*, const double, const CommonSynapseProperties&, Node* )
 {
   throw IllegalConnection( "Connection does not support correction in case of STDP with predominantly axonal delays." );
 }

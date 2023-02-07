@@ -179,7 +179,7 @@ public:
    * \param e The event to send
    * \param cp Common properties to all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target  );
+  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -198,7 +198,7 @@ public:
   check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-      }
+  }
 
   void
   set_weight( double w )
@@ -225,11 +225,10 @@ private:
  * \param p The port under which this connection is stored in the Connector.
  */
 inline void
-tsodyks_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target  )
+tsodyks_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
 {
   const double t_spike = e.get_stamp().get_ms();
   const double h = t_spike - t_lastspike_;
-
 
 
   // t_lastspike_ = 0 initially
@@ -265,9 +264,9 @@ tsodyks_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node*
   y_ += delta_y_tsp;
 
 
-    e.set_weight( delta_y_tsp * weight_ );
+  e.set_weight( delta_y_tsp * weight_ );
   e.set_delay_steps( get_delay_steps() );
-    e();
+  e();
 
   t_lastspike_ = t_spike;
 }

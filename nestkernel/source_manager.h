@@ -63,6 +63,7 @@ private:
   //! Needed during readout of sources_.
   std::vector< SourceTablePosition > saved_positions_;
 
+  // TODO JV (pt): This needs some proper thoughts, as this might cause high memory utilization with many threads
   //! Flag for each possible source neuron, if it has a target on this thread
   std::vector< std::vector< bool > > has_source_;
 
@@ -227,6 +228,7 @@ public:
   {
     if ( has_source_[ tid ].size() <= snode_id )
     {
+      // Adds as many entries as required to cover all sources up until
       has_source_[ tid ].resize( snode_id + 1 ); // default initialized to false
     }
 

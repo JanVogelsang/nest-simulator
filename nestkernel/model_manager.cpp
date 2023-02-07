@@ -35,9 +35,9 @@
 #include "genericmodel_impl.h"
 #include "kernel_manager.h"
 #include "model_manager_impl.h"
+#include "node.h"
 #include "proxynode.h"
 #include "vp_manager_impl.h"
-#include "node.h"
 
 
 namespace nest
@@ -80,6 +80,29 @@ ModelManager::~ModelManager()
 void
 ModelManager::initialize()
 {
+  synapsedict_->clear();
+
+  // one list of prototypes per thread
+  std::vector< std::vector< ConnectorModel* > > tmp_proto( kernel().vp_manager.get_num_threads() );
+  connection_models_.swap( tmp_proto );
+
+  // (re-)append all synapse prototypes
+  for ( auto&& connection_model : builtin_connection_models_ )
+  {
+    if ( connection_model )
+    {
+      std::string name = connection_model->get_name();
+      const synindex syn_id = connection_models_[ 0 ].size();
+
+      for ( thread t = 0; t < static_cast< thread >( kernel().vp_manager.get_num_threads() ); ++t )
+      {
+        connection_models_[ t ].push_back( connection_model->clone( name, syn_id ) );
+      }
+
+      synapsedict_->insert( name, syn_id );
+    }
+  }
+
   if ( not proxynode_model_ )
   {
     proxynode_model_ = new GenericModel< proxynode >( "proxynode", "" );
@@ -109,29 +132,6 @@ ModelManager::initialize()
     {
       const int model_id = builtin_node_model->get_model_id();
       proxy_nodes_[ t ].push_back( create_proxynode_( t, model_id ) );
-    }
-  }
-
-  synapsedict_->clear();
-
-  // one list of prototypes per thread
-  std::vector< std::vector< ConnectorModel* > > tmp_proto( kernel().vp_manager.get_num_threads() );
-  connection_models_.swap( tmp_proto );
-
-  // (re-)append all synapse prototypes
-  for ( auto&& connection_model : builtin_connection_models_ )
-  {
-    if ( connection_model )
-    {
-      std::string name = connection_model->get_name();
-      const synindex syn_id = connection_models_[ 0 ].size();
-
-      for ( thread t = 0; t < static_cast< thread >( kernel().vp_manager.get_num_threads() ); ++t )
-      {
-        connection_models_[ t ].push_back( connection_model->clone( name, syn_id ) );
-      }
-
-      synapsedict_->insert( name, syn_id );
     }
   }
 }

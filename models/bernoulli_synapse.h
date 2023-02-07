@@ -139,7 +139,7 @@ public:
   }
 
   void
-  send( Event& e, thread t, const CommonSynapseProperties&, Node* target  )
+  send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
   {
     SpikeEvent e_spike = static_cast< SpikeEvent& >( e );
 
@@ -159,7 +159,7 @@ public:
       e_spike.set_multiplicity( n_spikes_out );
       e.set_weight( weight_ );
       e.set_delay_steps( get_delay_steps() );
-                  e();
+      e();
     }
 
     // Resets multiplicity for consistency

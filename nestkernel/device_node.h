@@ -51,8 +51,13 @@ public:
   void set_local_device_id( const index ldid ) override;
   index get_local_device_id() const override;
 
-  template< typename EventT >
-  void deliver_event( const thread tid,
+  // TODO JV (pt): The regular deliver_event function has to be empty for devices, so "remote" spikes won't be sent to
+  //  devices again, after they have been sent explicitly to local devices when the event was initially emitted.
+  //  A cleaner way would be to move devices out of NodeCollections entirely and have explicit containers for devices
+  //  which are separate from regular nodes.
+  template < typename EventT >
+  void
+  deliver_event_to_device( const thread tid,
     const synindex syn_id,
     const index local_target_connection_id,
     const std::vector< ConnectorModel* >& cm,
@@ -66,6 +71,12 @@ public:
     //  handle, or just handing the entire local connection id to the handle function.
 
     handle( e );
+  }
+
+  void
+  deliver_event( const thread, const synindex, const index, const std::vector< ConnectorModel* >&, SpikeEvent& )
+    override
+  {
   }
 
 protected:

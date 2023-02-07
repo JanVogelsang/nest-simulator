@@ -45,7 +45,7 @@ EventDeliveryManager::send_local_( Node& source, EventT& e, const long lag )
 }
 
 inline void
-EventDeliveryManager::send_local_( Node& source, SecondaryEvent& e)
+EventDeliveryManager::send_local_( Node& source, SecondaryEvent& e )
 {
   assert( not source.has_proxies() );
   e.set_stamp( kernel().simulation_manager.get_slice_origin() + Time::step( 1 ) );
@@ -111,7 +111,7 @@ EventDeliveryManager::send_remote( thread tid, SpikeEvent& e, const long lag )
     const thread assigned_tid = ( *it ).get_rank() / kernel().vp_manager.get_num_assigned_ranks_per_thread();
 
     // Unroll spike multiplicity as plastic synapses only handle individual spikes.
-    for ( int i = 0; i < e.get_multiplicity(); ++i ) // JV: Why unroll before communication?
+    for ( int i = 0; i < e.get_multiplicity(); ++i ) // TODO JV (pt): Remove multiplicity
     {
       emitted_spikes_register_[ tid ][ assigned_tid ][ lag ].push_back( *it );
     }

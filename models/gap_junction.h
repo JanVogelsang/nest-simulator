@@ -116,10 +116,10 @@ public:
    * \param p The port under which this connection is stored in the Connector.
    */
   void
-  send( Event& e, thread t, const CommonSynapseProperties&, Node* target  )
+  send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
   {
     e.set_weight( weight_ );
-            e();
+    e();
   }
 
   void get_status( DictionaryDatum& d ) const;

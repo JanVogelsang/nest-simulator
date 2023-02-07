@@ -159,6 +159,15 @@ public:
   iaf_psc_alpha_ax_delay( const iaf_psc_alpha_ax_delay& );
 
   /**
+   * This neuron type supports postponing the delivery of spikes with predominant axonal delays.
+   */
+  bool
+  supports_postponed_delivery() const override
+  {
+    return true;
+  }
+
+  /**
    * Import sets of overloaded virtual functions.
    * @see Technical Issues / Virtual Functions: Overriding, Overloading, and
    * Hiding

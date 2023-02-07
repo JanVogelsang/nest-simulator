@@ -127,11 +127,11 @@ public:
    * \param p The port under which this connection is stored in the Connector.
    */
   void
-  send( Event& e, thread t, const CommonSynapseProperties&, Node* target  )
+  send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
   {
     e.set_drift_factor( drift_factor_ );
     e.set_diffusion_factor( diffusion_factor_ );
-            e();
+    e();
   }
 
   void get_status( DictionaryDatum& d ) const;

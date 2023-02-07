@@ -48,18 +48,18 @@ ConnectionManager::register_conn_builder( const std::string& name )
   connruledict_->insert( name, id );
 }
 
-template< typename EventT>
+template < typename EventT >
 inline void
 ConnectionManager::send_to_devices( const thread tid, const index source_node_lid, EventT& e )
 {
   target_table_devices_.send_to_devices( tid, source_node_lid, e );
 }
 
-template< typename EventT>
+template < typename EventT >
 inline void
 ConnectionManager::send_from_device( const thread tid, const index ldid, EventT& e )
 {
-  target_table_devices_.send_from_device( tid, ldid, e);
+  target_table_devices_.send_from_device( tid, ldid, e );
 }
 
 } // namespace nest

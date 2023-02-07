@@ -253,13 +253,13 @@ public:
   /**
    * Send event e to all device targets of source source_node_id
    */
-  template< typename EventT>
+  template < typename EventT >
   void send_to_devices( const thread tid, const index source_node_id, EventT& e );
 
   /**
    * Send event e to all targets of source device ldid (local device id)
    */
-  template< typename EventT>
+  template < typename EventT >
   void send_from_device( const thread tid, const index ldid, EventT& e );
 
   /**
@@ -298,7 +298,7 @@ public:
 
   void resize_target_table_devices_to_number_of_neurons();
 
-  void resize_target_table_devices_to_number_of_synapse_types();
+  // void resize_target_table_devices_to_number_of_synapse_types();
 
   bool get_next_target_data( const thread tid,
     const thread rank_start,
@@ -588,11 +588,11 @@ ConnectionManager::resize_target_table_devices_to_number_of_neurons()
   target_table_devices_.resize_to_number_of_neurons();
 }
 
-inline void
-ConnectionManager::resize_target_table_devices_to_number_of_synapse_types()
-{
-  target_table_devices_.resize_to_number_of_synapse_types();
-}
+// inline void
+// ConnectionManager::resize_target_table_devices_to_number_of_synapse_types()
+//{
+//   target_table_devices_.resize_to_number_of_synapse_types();
+// }
 
 inline void
 ConnectionManager::prepare_target_table( const thread tid )

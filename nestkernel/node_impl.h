@@ -1,24 +1,24 @@
 /*
-*  node_impl.h
-*
-*  This file is part of NEST.
-*
-*  Copyright (C) 2004 The NEST Initiative
-*
-*  NEST is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
-*  the Free Software Foundation, either version 2 of the License, or
-*  (at your option) any later version.
-*
-*  NEST is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  You should have received a copy of the GNU General Public License
-*  along with NEST.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ *  node_impl.h
+ *
+ *  This file is part of NEST.
+ *
+ *  Copyright (C) 2004 The NEST Initiative
+ *
+ *  NEST is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  NEST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with NEST.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
 #ifndef NEST_NODE_IMPL_H
 #define NEST_NODE_IMPL_H
@@ -32,7 +32,7 @@ namespace nest
 {
 
 template < typename ConnectionT >
-void
+inline void
 Node::check_connection( Node& source, const synindex syn_id, const rport receptor_type )
 {
   // 1. does this connection support the event type sent by source
@@ -97,7 +97,7 @@ Node::add_connection( Node& source_node,
 }
 
 template < typename EventT >
-void
+inline void
 Node::deliver_event_from_device( const thread tid,
   const synindex syn_id,
   const index local_target_connection_id,

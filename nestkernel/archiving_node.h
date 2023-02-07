@@ -230,7 +230,10 @@ private:
    */
   struct CorrectionEntrySTDPAxDelay
   {
-    CorrectionEntrySTDPAxDelay( const synindex syn_id, const index local_connection_id, const double t_last_pre_spike, const double weight_revert )
+    CorrectionEntrySTDPAxDelay( const synindex syn_id,
+      const index local_connection_id,
+      const double t_last_pre_spike,
+      const double weight_revert )
       : syn_id_( syn_id )
       , local_connection_id_( local_connection_id )
       , t_last_pre_spike_( t_last_pre_spike )
@@ -238,7 +241,7 @@ private:
     {
     }
 
-    synindex syn_id_;            //!< index of synapse type
+    synindex syn_id_;           //!< index of synapse type
     index local_connection_id_; //!< index of connection in node
     double t_last_pre_spike_;   //!< time of the last pre-synaptic spike before this spike
     double weight_revert_;      //!< synaptic weight to revert to (STDP depression needs to be undone)

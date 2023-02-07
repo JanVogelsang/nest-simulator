@@ -434,7 +434,7 @@ nest::UniversalDataLogger< HostNode >::DataLogger_::handle( HostNode& host, cons
   reply.set_port( request.get_port() );
 
   // send the reply back to the sender of the request
-  request.get_sender().handle(reply);
+  request.get_sender().handle( reply );
 }
 
 #endif // #ifndef UNIVERSAL_DATA_LOGGER_IMPL_H

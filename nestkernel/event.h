@@ -209,7 +209,11 @@ public:
   port get_port() const;
 
   // TODO JV (pt): Rport not needed anymore in event
-  port get_rport() const { return 0; }
+  port
+  get_rport() const
+  {
+    return 0;
+  }
 
   /**
    * Set the port number.
@@ -293,7 +297,7 @@ protected:
    * problem, we store sender as pointer and use references in the interface.
    * Thus, we can still ensure that the pointers are never nullptr.
    */
-  Node* sender_;   //!< Pointer to sender or nullptr.
+  Node* sender_; //!< Pointer to sender or nullptr.
 
 
   /**
@@ -354,7 +358,10 @@ class SpikeEvent : public Event
 {
 public:
   SpikeEvent();
-  void operator()() override {}
+  void
+  operator()() override
+  {
+  }
   SpikeEvent* clone() const override;
 
   void set_multiplicity( int );
@@ -396,7 +403,10 @@ class WeightRecorderEvent : public Event
 public:
   WeightRecorderEvent();
   WeightRecorderEvent* clone() const override;
-  void operator()() override {}
+  void
+  operator()() override
+  {
+  }
 
   /**
    * Return node ID of receiving Node.
@@ -471,7 +481,10 @@ class RateEvent : public Event
   double r_;
 
 public:
-  void operator()() override {}
+  void
+  operator()() override
+  {
+  }
   RateEvent* clone() const override;
 
   void set_rate( double );
@@ -505,7 +518,10 @@ class CurrentEvent : public Event
   double c_;
 
 public:
-  void operator()() override {}
+  void
+  operator()() override
+  {
+  }
   CurrentEvent* clone() const override;
 
   void set_current( double );
@@ -581,7 +597,10 @@ public:
 
   DataLoggingRequest* clone() const override;
 
-  void operator()() override {}
+  void
+  operator()() override
+  {
+  }
 
   /** Access to stored time interval.*/
   const Time& get_recording_interval() const;
@@ -700,7 +719,10 @@ public:
   //! Construct with reference to data and time stamps to transmit
   DataLoggingReply( const Container& );
 
-  void operator()() override {}
+  void
+  operator()() override
+  {
+  }
 
   //! Access referenced data
   const Container&
@@ -809,7 +831,10 @@ DataEvent< D >::get_pointer() const
 class DoubleDataEvent : public DataEvent< double >
 {
 public:
-  void operator()() override {}
+  void
+  operator()() override
+  {
+  }
   DoubleDataEvent* clone() const override;
 };
 

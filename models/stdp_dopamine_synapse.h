@@ -339,10 +339,7 @@ stdp_dopamine_synapse::update_dopamine_( const std::vector< spikecounter >& dopa
 }
 
 inline void
-stdp_dopamine_synapse::update_weight_( double c0,
-  double n0,
-  double minus_dt,
-  const STDPDopaCommonProperties& cp )
+stdp_dopamine_synapse::update_weight_( double c0, double n0, double minus_dt, const STDPDopaCommonProperties& cp )
 {
   const double taus_ = ( cp.tau_c_ + cp.tau_n_ ) / ( cp.tau_c_ * cp.tau_n_ );
   weight_ = weight_
@@ -472,9 +469,9 @@ stdp_dopamine_synapse::send( Event& e, thread t, const STDPDopaCommonProperties&
   process_dopa_spikes_( dopa_spikes, t0, t_spike, cp );
   depress_( target->get_K_value( t_spike - dendritic_delay ), cp );
 
-    e.set_weight( weight_ );
+  e.set_weight( weight_ );
   e.set_delay_steps( get_delay_steps() );
-    e();
+  e();
 
   Kplus_ = Kplus_ * std::exp( ( t_last_update_ - t_spike ) / cp.tau_plus_ ) + 1.0;
   t_last_update_ = t_spike;
@@ -498,7 +495,8 @@ stdp_dopamine_synapse::trigger_update_weight( thread t,
   // neuron
   std::deque< histentry >::iterator start;
   std::deque< histentry >::iterator finish;
-  // TODO JV (pt): get_target( t )->get_history( t_last_update_ - dendritic_delay, t_trig - dendritic_delay, &start, &finish );
+  // TODO JV (pt): get_target( t )->get_history( t_last_update_ - dendritic_delay, t_trig - dendritic_delay, &start,
+  // &finish );
 
   // facilitation due to postsyn. spikes since last update
   double t0 = t_last_update_;

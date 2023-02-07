@@ -49,16 +49,16 @@ class TargetTableDevices
 {
 private:
   /** 3d structure storing routing information from neurons to devices
-    * - first dim: threads
-    * - second dim: map of source node id to target devices
-    * - third dim: target devices
-    */
+   * - first dim: threads
+   * - second dim: map of source node id to target devices
+   * - third dim: target devices
+   */
   std::vector< std::map< index, std::vector< Target > > > targets_to_devices_;
 
   /** 3d structure storing routing information from devices to neurons
-    * - first dim: threads
-    * - second dim: local device id
-    * - third dim: target nodes
+   * - first dim: threads
+   * - second dim: local device id
+   * - third dim: target nodes
    */
   std::vector< std::vector< std::vector< Target > > > targets_from_devices_;
 
@@ -100,14 +100,14 @@ public:
   /**
    * Sends a spike event to all targets of the source neuron.
    */
-  template< typename EventT>
-  void send_to_devices( const thread tid, const index source_node_lid, EventT& e);
+  template < typename EventT >
+  void send_to_devices( const thread tid, const index source_node_lid, EventT& e );
 
   /**
    * Sends a spike event to all targets of the source device.
    */
-  template< typename EventT>
-  void send_from_device( const thread tid, const index ldid, EventT& e);
+  template < typename EventT >
+  void send_from_device( const thread tid, const index ldid, EventT& e );
 
   /**
    * Resizes vectors according to number of local nodes.
@@ -117,56 +117,56 @@ public:
   /**
    * Resizes vectors according to number of available synapse types.
    */
-  void resize_to_number_of_synapse_types();
+  // void resize_to_number_of_synapse_types();
 
   /**
    * Returns all connections from neurons to devices.
    */
-//  void get_connections_to_devices_( const index requested_source_node_id,
-//    const index requested_target_node_id,
-//    const thread tid,
-//    const synindex synapse_id,
-//    const long synapse_label,
-//    std::deque< ConnectionID >& conns ) const;
+  //  void get_connections_to_devices_( const index requested_source_node_id,
+  //    const index requested_target_node_id,
+  //    const thread tid,
+  //    const synindex synapse_id,
+  //    const long synapse_label,
+  //    std::deque< ConnectionID >& conns ) const;
 
   /**
    * Returns all connections from particular neuron to devices.
    */
-//  void get_connections_to_device_for_lid_( const index lid,
-//    const index requested_target_node_id,
-//    const thread tid,
-//    const synindex syn_id,
-//    const long synapse_label,
-//    std::deque< ConnectionID >& conns ) const;
+  //  void get_connections_to_device_for_lid_( const index lid,
+  //    const index requested_target_node_id,
+  //    const thread tid,
+  //    const synindex syn_id,
+  //    const long synapse_label,
+  //    std::deque< ConnectionID >& conns ) const;
 
   /**
    * Returns all connections from devices to neurons.
    */
-//  void get_connections_from_devices_( const index requested_source_node_id,
-//    const index requested_target_node_id,
-//    const thread tid,
-//    const synindex synapse_id,
-//    const long synapse_label,
-//    std::deque< ConnectionID >& conns ) const;
+  //  void get_connections_from_devices_( const index requested_source_node_id,
+  //    const index requested_target_node_id,
+  //    const thread tid,
+  //    const synindex synapse_id,
+  //    const long synapse_label,
+  //    std::deque< ConnectionID >& conns ) const;
 
   /**
    * Returns all connections between neurons and devices.
    */
-//  void get_connections( const index requested_source_node_id,
-//    const index requested_target_node_id,
-//    const thread tid,
-//    const synindex synapse_id,
-//    const long synapse_label,
-//    std::deque< ConnectionID >& conns ) const;
+  //  void get_connections( const index requested_source_node_id,
+  //    const index requested_target_node_id,
+  //    const thread tid,
+  //    const synindex synapse_id,
+  //    const long synapse_label,
+  //    std::deque< ConnectionID >& conns ) const;
 
   /**
    * Returns synapse status of connection from neuron to device.
    */
-//  void get_synapse_status_to_device( const thread tid,
-//    const index source_node_id,
-//    const synindex syn_id,
-//    DictionaryDatum& dict,
-//    const index lcid ) const;
+  //  void get_synapse_status_to_device( const thread tid,
+  //    const index source_node_id,
+  //    const synindex syn_id,
+  //    DictionaryDatum& dict,
+  //    const index lcid ) const;
 
   /**
    * Returns synapse status of connection from device to neuron.
@@ -180,12 +180,12 @@ public:
   /**
    * Sets synapse status of connection from neuron to device.
    */
-//  void set_synapse_status_to_device( const thread tid,
-//    const index source_node_id,
-//    const synindex syn_id,
-//    ConnectorModel& cm,
-//    const DictionaryDatum& dict,
-//    const index lcid );
+  //  void set_synapse_status_to_device( const thread tid,
+  //    const index source_node_id,
+  //    const synindex syn_id,
+  //    ConnectorModel& cm,
+  //    const DictionaryDatum& dict,
+  //    const index lcid );
 
   /**
    * Sets synapse status of connection from device to neuron.

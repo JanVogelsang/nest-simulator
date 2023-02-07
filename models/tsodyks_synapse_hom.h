@@ -231,7 +231,7 @@ public:
   check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-      }
+  }
 
   void
   set_weight( double )
@@ -294,9 +294,9 @@ tsodyks_synapse_hom::send( Event& e, thread t, const TsodyksHomCommonProperties&
   y_ += delta_y_tsp;
 
 
-    e.set_weight( delta_y_tsp * cp.get_weight() );
+  e.set_weight( delta_y_tsp * cp.get_weight() );
   e.set_delay_steps( get_delay_steps() );
-    e();
+  e();
 
   t_lastspike_ = t_spike;
 }

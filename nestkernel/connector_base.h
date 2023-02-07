@@ -119,16 +119,15 @@ public:
     std::deque< ConnectionID >& conns ) const = 0;
 
   /**
-   * Send the event e to all connections of this Connector.
-   */
-  virtual void send_to_all( const thread tid, const std::vector< ConnectorModel* >& cm, Event& e ) = 0;
-
-  /**
    * Send the event e to the connection at position lcid. Return bool
    * indicating whether the following connection belongs to the same
    * source.
    */
-  virtual void send( const thread tid, const index local_target_connection_id, const std::vector< ConnectorModel* >& cm, Event& e, Node* target ) = 0;
+  virtual void send( const thread tid,
+    const index local_target_connection_id,
+    const std::vector< ConnectorModel* >& cm,
+    Event& e,
+    Node* target ) = 0;
 
   virtual void correct_synapse_stdp_ax_delay( const index local_target_connection_id,
     const double t_last_pre_spike,
@@ -136,8 +135,11 @@ public:
     const double t_post_spike,
     Node* target ) = 0;
 
-  virtual void
-  send_weight_event( const index local_target_connection_id, Event& e, const CommonSynapseProperties& cp, Node* target ) = 0;
+  virtual void send_weight_event( const thread tid,
+    const index local_target_connection_id,
+    Event& e,
+    const CommonSynapseProperties& cp,
+    Node* target ) = 0;
 
   /**
    * Update weights of dopamine modulated STDP connections.
@@ -151,7 +153,7 @@ public:
   /**
    * Sort connections according to source node IDs.
    */
-  virtual void sort_connections_and_sources( ) = 0;
+  virtual void sort_connections_and_sources() = 0;
 
   /**
    * Disable the transfer of events through the connection at position
@@ -167,15 +169,15 @@ public:
 
 protected:
   /**
-  * This data structure stores the node IDs of presynaptic neurons connected to this neuron. If structural plasticity
-  * is disabled, it is only relevant during postsynaptic connection creation, before the connection information has
-  * been transferred to the presynaptic side.
-  * Arranged in a 2d array:
-  * 1st dimension: synapse types
-  * 2nd dimension: source node IDs
-  * After all connections have been created, the information stored in this structure is transferred to the presynaptic
-  * side and the sources vector can be cleared, unless further required for structural plasticity.
-  */
+   * This data structure stores the node IDs of presynaptic neurons connected to this neuron. If structural plasticity
+   * is disabled, it is only relevant during postsynaptic connection creation, before the connection information has
+   * been transferred to the presynaptic side.
+   * Arranged in a 2d array:
+   * 1st dimension: synapse types
+   * 2nd dimension: source node IDs
+   * After all connections have been created, the information stored in this structure is transferred to the presynaptic
+   * side and the sources vector can be cleared, unless further required for structural plasticity.
+   */
   // TODO JV: This should be converted from type Source to index once the simulation starts
   std::vector< Source > sources_;
 };
@@ -269,6 +271,8 @@ public:
 
     index connection_index = it - begin;
 
+    // assert( kernel().connection_manager.get_sort_connections_by_source() );
+    assert( false );
     // TODO JV: This assumes the sources and connections are sorted by source node id
     while ( it != end && it->get_node_id() == source_node_id )
     {
@@ -291,7 +295,7 @@ public:
     const long synapse_label,
     std::deque< ConnectionID >& conns ) const override
   {
-    assert( false );  // TODO JV (pt): Structural plasticity
+    assert( false ); // TODO JV (pt): Structural plasticity
 
     /*if ( not C_[ lcid ].is_disabled() )
     {
@@ -315,7 +319,8 @@ public:
     sources_.clear();
   }
 
-  void reset_sources_processed_flags() override
+  void
+  reset_sources_processed_flags() override
   {
     for ( std::vector< Source >::iterator source = sources_.begin(); source != sources_.end(); ++source )
     {
@@ -324,21 +329,11 @@ public:
   }
 
   void
-  send_to_all( const thread tid, const std::vector< ConnectorModel* >& cm, Event& e ) override
-  {
-    typename ConnectionT::CommonPropertiesType const& cp =
-      static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties();
-
-    for ( size_t lcid = 0; lcid < C_.size(); ++lcid )
-    {
-      e.set_port( lcid );
-      assert( not C_[ lcid ].is_disabled() );
-      C_[ lcid ].send( e, tid, cp, nullptr );  // TODO JV: Fix devices
-    }
-  }
-
-  void
-  send( const thread tid, const index local_target_connection_id, const std::vector< ConnectorModel* >& cm, Event& e, Node* target ) override
+  send( const thread tid,
+    const index local_target_connection_id,
+    const std::vector< ConnectorModel* >& cm,
+    Event& e,
+    Node* target ) override
   {
     typename ConnectionT::CommonPropertiesType const& cp =
       static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties();
@@ -347,12 +342,15 @@ public:
     if ( not C_[ local_target_connection_id ].is_disabled() )
     {
       C_[ local_target_connection_id ].send( e, tid, cp, target );
-      send_weight_event( local_target_connection_id, e, cp, target );
+      send_weight_event( tid, local_target_connection_id, e, cp, target );
     }
   }
 
-  void
-  send_weight_event( const index local_target_connection_id, Event& e, const CommonSynapseProperties& cp, Node* target ) override;
+  void send_weight_event( const thread tid,
+    const index local_target_connection_id,
+    Event& e,
+    const CommonSynapseProperties& cp,
+    Node* target ) override;
 
   void
   trigger_update_weight( const long vt_node_id,
@@ -383,7 +381,7 @@ public:
     Node* target ) override;
 
   void
-  sort_connections_and_sources( ) override
+  sort_connections_and_sources() override
   {
     nest::sort( sources_, C_ );
   }
@@ -391,7 +389,7 @@ public:
   void
   disable_connection( const index lcid ) override
   {
-    assert( false );  // TODO JV (pt): Structural plasticity
+    assert( false ); // TODO JV (pt): Structural plasticity
 
     /*assert( not C_[ lcid ].is_disabled() );
     C_[ lcid ].disable();
@@ -401,7 +399,7 @@ public:
   void
   remove_disabled_connections( const index first_disabled_index ) override
   {
-    assert( false );  // TODO JV (pt): Structural plasticity
+    assert( false ); // TODO JV (pt): Structural plasticity
 
     /*assert( C_[ first_disabled_index ].is_disabled() );
     C_.erase( C_.begin() + first_disabled_index, C_.end() );*/

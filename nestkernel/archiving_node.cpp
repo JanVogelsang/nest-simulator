@@ -90,7 +90,7 @@ ArchivingNode::register_stdp_connection( double t_first_read, double delay )
   // connections afterwards without leaving spikes in the history.
   // For details see bug #218. MH 08-04-22
 
-  // JV: Remove this block
+  // TODO JV: Remove this block
   for ( std::deque< histentry >::iterator runner = history_.begin();
         runner != history_.end() and ( t_first_read - runner->t_ > -1.0 * kernel().connection_manager.get_stdp_eps() );
         ++runner )
@@ -166,7 +166,6 @@ ArchivingNode::get_K_values( double t, double& K_value, double& nearest_neighbor
   K_value = 0.0;
 }
 
-// JV: Remove this method
 void
 ArchivingNode::get_history( double t1,
   double t2,
@@ -202,7 +201,7 @@ ArchivingNode::deliver_event( const thread tid,
   const std::vector< ConnectorModel* >& cm,
   SpikeEvent& se )
 {
-  // TODO JV: Think about removing access to connections_ in derived classes of node
+  // TODO JV (pt): Think about removing access to connections_ in derived classes of node
   ConnectorBase* conn = connections_[ syn_id ];
 
   // STDP synapses need to make sure all post-synaptic spikes are known when delivering the spike to the synapse.
@@ -232,7 +231,7 @@ ArchivingNode::set_spiketime( Time const& t_sp, double offset )
 
   const double t_sp_ms = t_sp.get_ms() - offset;
 
-  if ( n_incoming_ ) // JV: Remove this whole block, but still update the K value
+  if ( n_incoming_ )
   {
     // prune all spikes from history which are no longer needed
     // only remove a spike if:
@@ -255,9 +254,14 @@ ArchivingNode::set_spiketime( Time const& t_sp, double offset )
       }
     }
     // update spiking history
-    Kminus_ *= std::exp( ( last_spike_ - t_sp_ms ) * tau_minus_inv_ ) + 1.0;
-    Kminus_triplet_ *= std::exp( ( last_spike_ - t_sp_ms ) * tau_minus_triplet_inv_ ) + 1.0;
+    Kminus_ = Kminus_ * std::exp( ( last_spike_ - t_sp_ms ) * tau_minus_inv_ ) + 1.0;
+    Kminus_triplet_ = Kminus_triplet_ * std::exp( ( last_spike_ - t_sp_ms ) * tau_minus_triplet_inv_ ) + 1.0;
+    last_spike_ = t_sp_ms;
     history_.push_back( histentry( t_sp_ms, Kminus_, Kminus_triplet_, 0 ) );
+  }
+  else
+  {
+    last_spike_ = t_sp_ms;
   }
 
   correct_synapses_stdp_ax_delay_( t_sp );
@@ -346,7 +350,10 @@ ArchivingNode::add_correction_entry_stdp_ax_delay( SpikeEvent& spike_event,
   assert( static_cast< size_t >( idx ) < correction_entries_stdp_ax_delay_.size() );
 
   correction_entries_stdp_ax_delay_[ idx ].push_back(
-    CorrectionEntrySTDPAxDelay( spike_event.get_sender_spike_data().get_syn_id(), spike_event.get_sender_spike_data().get_local_target_connection_id(), t_last_pre_spike, weight_revert ) );
+    CorrectionEntrySTDPAxDelay( spike_event.get_sender_spike_data().get_syn_id(),
+      spike_event.get_sender_spike_data().get_local_target_connection_id(),
+      t_last_pre_spike,
+      weight_revert ) );
 }
 
 void
@@ -388,12 +395,11 @@ ArchivingNode::correct_synapses_stdp_ax_delay_( const Time& t_spike )
             it_corr_entry < correction_entries_stdp_ax_delay_[ idx ].end();
             ++it_corr_entry )
       {
-        connections_[ it_corr_entry->syn_id_ ]
-          ->correct_synapse_stdp_ax_delay( it_corr_entry->local_connection_id_,
-            it_corr_entry->t_last_pre_spike_,
-            &it_corr_entry->weight_revert_,
-            t_spike.get_ms(),
-            this );
+        connections_[ it_corr_entry->syn_id_ ]->correct_synapse_stdp_ax_delay( it_corr_entry->local_connection_id_,
+          it_corr_entry->t_last_pre_spike_,
+          &it_corr_entry->weight_revert_,
+          t_spike.get_ms(),
+          this );
       }
       // indicate that the new spike was processed by these STDP synapses
       history_.back().access_counter_ += correction_entries_stdp_ax_delay_[ idx ].size();

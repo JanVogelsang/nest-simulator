@@ -129,7 +129,7 @@ public:
    * \param t_lastspike Point in time of last spike sent.
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target  );
+  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -195,7 +195,7 @@ private:
  * \param cp Common properties object, containing the stdp parameters.
  */
 inline void
-vogels_sprekeler_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target  )
+vogels_sprekeler_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
 {
   // synapse STDP depressing/facilitation dynamics
   double t_spike = e.get_stamp().get_ms();
@@ -232,11 +232,11 @@ vogels_sprekeler_synapse::send( Event& e, thread t, const CommonSynapsePropertie
   weight_ = facilitate_( weight_, target->get_K_value( t_spike - dendritic_delay ) );
   weight_ = depress_( weight_ );
 
-    e.set_weight( weight_ );
+  e.set_weight( weight_ );
   // use accessor functions (inherited from Connection< >) to obtain delay in
   // steps and rport
   e.set_delay_steps( get_delay_steps() );
-    e();
+  e();
 
   // exponential part for the decay, addition of one for each spike
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) / tau_ ) + 1.0;

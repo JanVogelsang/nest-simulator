@@ -49,7 +49,11 @@ Node::Node()
   , frozen_( false )
   , initialized_( false )
   , node_uses_wfr_( false )
+  , connections_( kernel().model_manager.get_num_connection_models() )
+  , connections_from_devices_( kernel().model_manager.get_num_connection_models() )
 {
+
+  // connections_ = std::vector< ConnectorBase* >( kernel().model_manager.get_num_connection_models() );
 }
 
 Node::Node( const Node& n )
@@ -60,9 +64,11 @@ Node::Node( const Node& n )
   , thread_( n.thread_ )
   , vp_( n.vp_ )
   , frozen_( n.frozen_ )
-  // copy must always initialized its own buffers
+  // copy must always initialize its own buffers
   , initialized_( false )
   , node_uses_wfr_( n.node_uses_wfr_ )
+  , connections_( kernel().model_manager.get_num_connection_models() )
+  , connections_from_devices_( kernel().model_manager.get_num_connection_models() )
 {
 }
 
@@ -82,8 +88,6 @@ Node::init()
   {
     return;
   }
-
-  connections_ = std::vector< ConnectorBase* >( kernel().model_manager.get_num_connection_models() );
 
   init_state_();
   init_buffers_();
@@ -257,7 +261,10 @@ Node::delete_connections()
 {
   for ( auto syn_type_connections : connections_ )
   {
-    delete syn_type_connections;
+    if ( syn_type_connections )
+    {
+      delete syn_type_connections;
+    }
   }
 }
 
@@ -270,7 +277,7 @@ Node::disable_connection( const synindex syn_id, const index local_connection_id
 void
 Node::remove_disabled_connections()
 {
-  assert( false );  // TODO JV (pt): Structural plasticity
+  assert( false ); // TODO JV (pt): Structural plasticity
 
   /*for ( synindex syn_id = 0; syn_id < connections_.size(); ++syn_id )
   {
@@ -281,6 +288,25 @@ Node::remove_disabled_connections()
 
     connections_[ syn_id ]->remove_disabled_connections();
   }*/
+}
+
+template <>
+void
+Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
+  const synindex syn_id,
+  const index local_target_connection_id,
+  const std::vector< ConnectorModel* >& cm,
+  DSSpikeEvent& e )
+{
+  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, cm, e, this );
+
+  // TODO JV: Make this cleaner, as only needed for poisson generators probably
+  if ( not e.get_multiplicity() )
+  {
+    return;
+  }
+
+  handle( e );
 }
 
 void

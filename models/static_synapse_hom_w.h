@@ -130,7 +130,7 @@ public:
   check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-      }
+  }
 
   /**
    * Checks to see if weight is given in syn_spec.

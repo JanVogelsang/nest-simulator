@@ -45,9 +45,9 @@ namespace nest
  * Calculates the median of three elements.
  * See http://algs4.cs.princeton.edu/23quicksort/QuickX.java.html.
  */
-template < template < typename, typename... > typename V, typename ...T >
+template < template < typename, typename... > typename V, typename... T >
 inline size_t
-median3_( const V<T...>& vec, const size_t i, const size_t j, const size_t k )
+median3_( const V< T... >& vec, const size_t i, const size_t j, const size_t k )
 {
   return ( ( vec[ i ] < vec[ j ] ) ? ( ( vec[ j ] < vec[ k ] ) ? j
                : ( vec[ i ] < vec[ k ] )                       ? k
@@ -64,7 +64,11 @@ median3_( const V<T...>& vec, const size_t i, const size_t j, const size_t k )
  * entries in vec_sort and applying the same exchanges to
  * vec_perm.
  */
-template < template < typename, typename... > typename V1, template < typename, typename... > typename V2, typename ...T1, typename ...T2 >
+template < template < typename, typename... > typename V1,
+  template < typename, typename... >
+  typename V2,
+  typename... T1,
+  typename... T2 >
 void
 insertion_sort( V1< T1... >& vec_sort, V2< T2... >& vec_perm, const size_t lo, const size_t hi )
 {
@@ -87,7 +91,13 @@ insertion_sort( V1< T1... >& vec_sort, V2< T2... >& vec_perm, const size_t lo, c
  * sorting the entries in vec_sort and applying the same exchanges
  * to vec_perm.
  */
-template < template < typename, typename... > typename V1, template < typename, typename... > typename V2, typename T1, typename T2, typename ...A1, typename ...A2 >
+template < template < typename, typename... > typename V1,
+  template < typename, typename... >
+  typename V2,
+  typename T1,
+  typename T2,
+  typename... A1,
+  typename... A2 >
 void
 quicksort3way( V1< T1, A1... >& vec_sort, V2< T2, A2... >& vec_perm, const size_t lo, const size_t hi )
 {
@@ -170,7 +180,11 @@ quicksort3way( V1< T1, A1... >& vec_sort, V2< T2, A2... >& vec_perm, const size_
 /**
  * Sorts two vectors according to elements in first vector. Convenience function.
  */
-template < template < typename, typename... > typename V1, template < typename, typename... > typename V2, typename ...T1, typename ...T2 >
+template < template < typename, typename... > typename V1,
+  template < typename, typename... >
+  typename V2,
+  typename... T1,
+  typename... T2 >
 void
 sort( V1< T1... >& vec_sort, V2< T2... >& vec_perm )
 {

@@ -247,7 +247,7 @@ public:
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e, thread t, const JonkeCommonProperties& cp, Node* target  );
+  void send( Event& e, thread t, const JonkeCommonProperties& cp, Node* target );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -327,7 +327,7 @@ private:
  * \param cp Common properties object, containing the stdp parameters.
  */
 inline void
-jonke_synapse::send( Event& e, thread t, const JonkeCommonProperties& cp, Node* target  )
+jonke_synapse::send( Event& e, thread t, const JonkeCommonProperties& cp, Node* target )
 {
   // synapse STDP depressing/facilitation dynamics
   const double t_spike = e.get_stamp().get_ms();
@@ -364,11 +364,11 @@ jonke_synapse::send( Event& e, thread t, const JonkeCommonProperties& cp, Node* 
   const double _K_value = target->get_K_value( t_spike - dendritic_delay );
   weight_ = depress_( weight_, _K_value, cp );
 
-    e.set_weight( weight_ );
+  e.set_weight( weight_ );
   // use accessor functions (inherited from Connection< >) to obtain delay in
   // steps and rport
   e.set_delay_steps( get_delay_steps() );
-    e();
+  e();
 
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) / cp.tau_plus_ ) + 1.0;
 

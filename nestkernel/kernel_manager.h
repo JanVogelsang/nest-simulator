@@ -245,13 +245,13 @@ public:
   RandomManager random_manager;
   SimulationManager simulation_manager;
   ModelRangeManager modelrange_manager;
-  ConnectionManager connection_manager;
-  SourceManager source_manager;
   SPManager sp_manager;
   EventDeliveryManager event_delivery_manager;
   ModelManager model_manager;
   MUSICManager music_manager;
   NodeManager node_manager;
+  ConnectionManager connection_manager;
+  SourceManager source_manager;
   IOManager io_manager;
 
 private:

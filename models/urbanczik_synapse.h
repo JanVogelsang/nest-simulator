@@ -146,7 +146,7 @@ public:
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target  );
+  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -201,7 +201,7 @@ private:
  * \param cp Common properties object, containing the stdp parameters.
  */
 inline void
-urbanczik_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target  )
+urbanczik_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
 {
   double t_spike = e.get_stamp().get_ms();
   // use accessor functions (inherited from Connection< >) to obtain delay and target
@@ -248,10 +248,10 @@ urbanczik_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Nod
     weight_ = Wmin_;
   }
 
-    e.set_weight( weight_ );
+  e.set_weight( weight_ );
   // use accessor functions (inherited from Connection< >) to obtain delay in steps and rport
   e.set_delay_steps( get_delay_steps() );
-    e();
+  e();
 
   // compute the trace of the presynaptic spike train
   tau_L_trace_ = tau_L_trace_ * std::exp( ( t_lastspike_ - t_spike ) / tau_L ) + 1.0;

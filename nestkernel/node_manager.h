@@ -230,12 +230,6 @@ public:
   void set_have_nodes_changed( const bool changed );
 
 private:
-  /**
-   * Initialize the network data structures.
-   * init_() is used by the constructor and by reset().
-   * @see reset()
-   */
-  void init_();
   void destruct_nodes_();
 
   /**
@@ -296,12 +290,13 @@ private:
    */
   std::vector< SparseNodeArray > local_nodes_;
 
-  std::vector< std::vector< Node* > > wfr_nodes_vec_; //!< Nodelists for unfrozen nodes that
-                                                      //!< use the waveform relaxation method
-  bool wfr_is_used_;                                  //!< there is at least one node that uses
-                                                      //!< waveform relaxation
+  //!< Nodelists for unfrozen nodes that use the waveform relaxation method
+  std::vector< std::vector< Node* > > wfr_nodes_vec_;
+  //!< there is at least one node that uses waveform relaxation
+  bool wfr_is_used_;
   //! Network size when wfr_nodes_vec_ was last updated
   index wfr_network_size_;
+
   size_t num_active_nodes_; //!< number of nodes created by prepare_nodes
 
   std::vector< index > num_thread_local_devices_; //!< stores number of thread local devices

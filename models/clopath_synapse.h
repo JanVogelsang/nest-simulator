@@ -151,7 +151,7 @@ public:
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target  );
+  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -215,7 +215,7 @@ private:
  * \param cp Common properties object, containing the stdp parameters.
  */
 inline void
-clopath_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target  )
+clopath_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
 {
   double t_spike = e.get_stamp().get_ms();
   // use accessor functions (inherited from Connection< >) to obtain delay and
@@ -246,11 +246,11 @@ clopath_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node*
   // depression due to new pre-synaptic spike
   weight_ = depress_( weight_, target->get_LTD_value( t_spike - dendritic_delay ) );
 
-    e.set_weight( weight_ );
+  e.set_weight( weight_ );
   // use accessor functions (inherited from Connection< >) to obtain delay in
   // steps and rport
   e.set_delay_steps( get_delay_steps() );
-    e();
+  e();
 
   // compute the trace of the presynaptic spike train
   x_bar_ = x_bar_ * std::exp( ( t_lastspike_ - t_spike ) / tau_x_ ) + 1.0 / tau_x_;

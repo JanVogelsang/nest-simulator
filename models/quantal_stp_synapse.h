@@ -142,7 +142,7 @@ public:
    * \param e The event to send
    * \param cp Common properties to all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target  );
+  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -161,7 +161,7 @@ public:
   check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-      }
+  }
 
   void
   set_weight( double w )
@@ -188,7 +188,7 @@ private:
  * \param cp Common properties object, containing the quantal_stp parameters.
  */
 inline void
-quantal_stp_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target  )
+quantal_stp_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
 {
   const double t_spike = e.get_stamp().get_ms();
   const double h = t_spike - t_lastspike_;
@@ -209,9 +209,9 @@ quantal_stp_synapse::send( Event& e, thread t, const CommonSynapseProperties&, N
 
   if ( n_release > 0 )
   {
-        e.set_weight( n_release * weight_ );
+    e.set_weight( n_release * weight_ );
     e.set_delay_steps( get_delay_steps() );
-        e();
+    e();
     a_ -= n_release;
   }
 

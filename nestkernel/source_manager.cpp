@@ -25,8 +25,8 @@
 // Includes from nestkernel:
 #include "kernel_manager.h"
 #include "mpi_manager_impl.h"
-#include "vp_manager_impl.h"
 #include "target_data.h"
+#include "vp_manager_impl.h"
 
 namespace nest
 {
@@ -42,13 +42,11 @@ SourceManager::~SourceManager()
 void
 SourceManager::set_status( const DictionaryDatum& )
 {
-  assert( false ); // TODO JV
 }
 
 void
 SourceManager::get_status( DictionaryDatum& )
 {
-  assert( false ); // TODO JV
 }
 
 void
@@ -68,6 +66,7 @@ SourceManager::initialize()
   saved_positions_.resize( num_threads );
   compressible_sources_.resize( num_threads );
   compressed_spike_data_map_.resize( num_threads );
+  has_source_.resize( num_threads );
 
 #pragma omp parallel
   {
@@ -94,6 +93,7 @@ SourceManager::finalize()
   saved_positions_.clear();
   compressible_sources_.clear();
   compressed_spike_data_map_.clear();
+  has_source_.clear();
 }
 
 bool
@@ -119,6 +119,8 @@ SourceManager::find_maximal_position() const
 void
 SourceManager::clean( const thread tid )
 {
+  has_source_.clear();
+
   // Find maximal position in source table among threads to make sure
   // unprocessed entries are not removed. Given this maximal position,
   // we can safely delete all larger entries since they will not be
@@ -201,7 +203,7 @@ SourceManager::reset_entry_point( const thread tid )
   // Since we read the source table backwards, we need to set saved values to the biggest possible value. These will be
   // used to initialize current_positions_ correctly upon calling restore_entry_point. However, this can only be done if
   // other values have valid values.
-  
+
   const thread num_threads = kernel().vp_manager.get_num_threads();
   const size_t num_connection_models = kernel().model_manager.get_num_connection_models();
   if ( num_threads > 0 )
@@ -213,6 +215,9 @@ SourceManager::reset_entry_point( const thread tid )
       kernel().node_manager.get_local_nodes( tid ).get_node_by_index( saved_positions_[ tid ].local_target_node_id );
     saved_positions_[ tid ].local_target_connection_id =
       last_local_node->get_num_conn_type_sources( num_connection_models - 1 );
+    // The saved position is explicitly set one local_target_connection index too high, so the decrease call
+    // correctly finds the next valid position, which could also be at a much lower position.
+    saved_positions_[ tid ].decrease();
   }
   else
   {
@@ -228,7 +233,7 @@ SourceManager::clear( const thread tid )
 {
   // TODO JV: Make sure iteration over all nodes is efficient
   const SparseNodeArray& thread_local_nodes = kernel().node_manager.get_local_nodes( tid );
-  
+
   for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
   {
     n->get_node()->remove_disabled_connections();
@@ -249,6 +254,7 @@ SourceManager::reject_last_target_data( const thread tid )
     ->get_source( current_positions_[ tid ].syn_id, current_positions_[ tid ].local_target_connection_id )
     .set_processed( false );
 }
+
 void
 SourceManager::reset_processed_flags( const thread tid )
 {
@@ -459,19 +465,10 @@ SourceManager::get_next_target_data( const thread tid,
 {
   SourceTablePosition& current_position = current_positions_[ tid ];
 
-  if ( current_position.is_invalid() )
-  {
-    return false; // nothing to do here
-  }
-
   // we stay in this loop either until we can return a valid TargetData object or we have reached the end of all
   // sources tables
-  while ( true )
+  while ( not current_position.reached_end() )
   {
-    if ( current_position.is_invalid() )
-    {
-      return false; // reached the end of all sources tables
-    }
 
     // the current position contains an entry, so we retrieve it
     Source& current_source = kernel()
@@ -502,6 +499,7 @@ SourceManager::get_next_target_data( const thread tid,
     current_position.decrease();
     return true; // found a valid entry
   }
+  return false; // reached the end of all sources tables
 }
 
 void

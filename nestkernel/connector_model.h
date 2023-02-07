@@ -309,8 +309,7 @@ public:
   }
 
 
-  ConnectorModel*
-  clone( std::string name, synindex syn_id ) const;
+  ConnectorModel* clone( std::string name, synindex syn_id ) const;
 
   SecondaryEvent*
   create_event() const

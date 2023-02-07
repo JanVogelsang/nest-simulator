@@ -173,7 +173,7 @@ NodeManager::add_node( index model_id, long n )
   // sure the first dimension matches the number of local nodes and
   // the second dimension matches number of synapse types
   kernel().connection_manager.resize_target_table_devices_to_number_of_neurons();
-  kernel().connection_manager.resize_target_table_devices_to_number_of_synapse_types();
+  // kernel().connection_manager.resize_target_table_devices_to_number_of_synapse_types();
 
   sw_construction_create_.stop();
 
