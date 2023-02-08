@@ -481,7 +481,7 @@ nest::SimulationManager::prepare()
   prepared_ = true;
 
   // check whether waveform relaxation is used on any MPI process;
-  // needs to be called before update_connection_intrastructure_since
+  // needs to be called before update_connection_infrastructure_since
   // it resizes coefficient arrays for secondary events
   kernel().node_manager.check_wfr_use();
 
@@ -717,8 +717,7 @@ nest::SimulationManager::update_connection_infrastructure( const thread tid )
   }
 #endif
 
-  // communicate connection information from postsynaptic to
-  // presynaptic side
+  // communicate connection information from postsynaptic to presynaptic side
   kernel().event_delivery_manager.gather_target_data( tid );
 
 #ifdef TIMER_DETAILED

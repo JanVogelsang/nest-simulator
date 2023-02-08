@@ -79,14 +79,18 @@ SourceManager::initialize()
 void
 SourceManager::finalize()
 {
-  for ( thread tid = 0; tid < kernel().vp_manager.get_num_threads(); ++tid )
+  // only clear sources when there were nodes added to the simulation already
+  if ( kernel().node_manager.size() > 0 ){
+#pragma omp parallel
   {
+    const thread tid = kernel().vp_manager.get_thread_id();
     if ( is_cleared_[ tid ].is_false() )
     {
       clear( tid );
       compressible_sources_[ tid ].clear();
       compressed_spike_data_map_[ tid ].clear();
     }
+  }
   }
 
   current_positions_.clear();
@@ -205,18 +209,14 @@ SourceManager::reset_entry_point( const thread tid )
   // other values have valid values.
 
   const thread num_threads = kernel().vp_manager.get_num_threads();
-  const size_t num_connection_models = kernel().model_manager.get_num_connection_models();
   if ( num_threads > 0 )
   {
-    saved_positions_[ tid ].tid = num_threads - 1;
-    saved_positions_[ tid ].syn_id = num_connection_models - 1;
-    saved_positions_[ tid ].local_target_node_id = kernel().node_manager.get_local_nodes( tid ).size() - 1;
-    const Node* last_local_node =
-      kernel().node_manager.get_local_nodes( tid ).get_node_by_index( saved_positions_[ tid ].local_target_node_id );
-    saved_positions_[ tid ].local_target_connection_id =
-      last_local_node->get_num_conn_type_sources( num_connection_models - 1 );
-    // The saved position is explicitly set one local_target_connection index too high, so the decrease call
-    // correctly finds the next valid position, which could also be at a much lower position.
+    // The saved position is explicitly set to an invalid position with the thread id being set one value too high, so
+    // the decrease call looks for the next valid position
+    saved_positions_[ tid ].tid = num_threads;
+    saved_positions_[ tid ].syn_id = -1;
+    saved_positions_[ tid ].local_target_node_id = -1;
+    saved_positions_[ tid ].local_target_connection_id = -1;
     saved_positions_[ tid ].decrease();
   }
   else
@@ -472,7 +472,7 @@ SourceManager::get_next_target_data( const thread tid,
 
     // the current position contains an entry, so we retrieve it
     Source& current_source = kernel()
-                               .node_manager.get_local_nodes( tid )
+                               .node_manager.get_local_nodes( current_position.tid )
                                .get_node_by_index( current_position.local_target_node_id )
                                ->get_source( current_position.syn_id, current_position.local_target_connection_id );
 

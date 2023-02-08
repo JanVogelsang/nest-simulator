@@ -32,26 +32,23 @@ namespace nest
 void
 SourceTablePosition::decrease()
 {
-  // keep decreasing until a valid index is found
-  do
-  {
-    // first try finding a valid index by only decreasing target-local connection id
-    --local_target_connection_id;
-    if ( local_target_connection_id < 0 )
-    {
-      // then try finding a valid index by decreasing synapse index
-      --syn_id;
-      if ( syn_id < 0 )
-      {
-        Node* node;
-        // then try finding a valid index by decreasing target node id
-        do
-        {
-          --local_target_node_id;
-          node = kernel().node_manager.get_local_nodes( tid ).get_node_by_index( local_target_node_id );
-        } while ( not node->has_proxies() ); // skip devices
+  // first try finding a valid index by only decreasing target-local connection id
+  --local_target_connection_id;
 
-        if ( local_target_node_id < 0 )
+  // keep decreasing until a valid index is found
+  while ( local_target_connection_id < 0 )
+  {
+    // then try finding a valid index by decreasing synapse index
+    --syn_id;
+    if ( syn_id < 0 )
+    {
+      Node* node;
+      // then try finding a valid index by decreasing target node id
+      do
+      {
+        --local_target_node_id;
+
+        while ( local_target_node_id < 0 )
         {
           // then try finding a valid index by decreasing thread index
           --tid;
@@ -67,26 +64,32 @@ SourceTablePosition::decrease()
           local_target_node_id = kernel().node_manager.get_local_nodes( tid ).size() - 1;
         }
 
-        syn_id = kernel().model_manager.get_num_connection_models() - 1;
-      }
+        node = kernel().node_manager.get_local_nodes( tid ).get_node_by_index( local_target_node_id );
+      } while ( not node->has_proxies() ); // skip devices
 
-      local_target_connection_id = kernel()
-                                     .node_manager.get_local_nodes( tid )
-                                     .get_node_by_index( local_target_node_id )
-                                     ->get_num_conn_type_sources( syn_id )
-        - 1;
+      syn_id = kernel().model_manager.get_num_connection_models() - 1;
     }
-  } while ( local_target_connection_id < 0 );
+
+    local_target_connection_id = kernel()
+                                   .node_manager.get_local_nodes( tid )
+                                   .get_node_by_index( local_target_node_id )
+                                   ->get_num_conn_type_sources( syn_id ) - 1;
+  }
 }
 
 void
 SourceTablePosition::increase()
 {
+  // first try finding a valid index by only increasing target-local connection id
+  ++local_target_connection_id;
+
   // keep increasing until a valid index is found
-  do
+  while ( local_target_connection_id
+    == static_cast< long >( kernel()
+                              .node_manager.get_local_nodes( tid )
+                              .get_node_by_index( local_target_node_id )
+                              ->get_num_conn_type_sources( syn_id ) ) )
   {
-    // first try finding a valid index by only increasing target-local connection id
-    ++local_target_connection_id;
     if ( local_target_connection_id
       == static_cast< long >( kernel()
                                 .node_manager.get_local_nodes( tid )
@@ -102,34 +105,32 @@ SourceTablePosition::increase()
         do
         {
           ++local_target_node_id;
-          node = kernel().node_manager.get_local_nodes( tid ).get_node_by_index( local_target_node_id );
-        } while ( not node->has_proxies() ); // skip devices
-        if ( local_target_node_id == static_cast< long >( kernel().node_manager.get_local_nodes( tid ).size() ) )
-        {
-          // then try finding a valid index by increasing thread index
-          ++tid;
-          if ( tid == static_cast< long >( kernel().vp_manager.get_num_threads() ) )
+
+          while ( local_target_node_id == static_cast< long >( kernel().node_manager.get_local_nodes( tid ).size() ) )
           {
-            tid = -1;
-            local_target_node_id = -1;
-            syn_id = -1;
-            local_target_connection_id = -1;
-            return; // reached the end without finding a valid entry
+            // then try finding a valid index by increasing thread index
+            ++tid;
+            if ( tid == static_cast< long >( kernel().vp_manager.get_num_threads() ) )
+            {
+              tid = -1;
+              local_target_node_id = -1;
+              syn_id = -1;
+              local_target_connection_id = -1;
+              return; // reached the end without finding a valid entry
+            }
+
+            local_target_node_id = 0;
           }
 
-          local_target_node_id = 0;
-        }
+          node = kernel().node_manager.get_local_nodes( tid ).get_node_by_index( local_target_node_id );
+        } while ( not node->has_proxies() ); // skip devices
 
         syn_id = 0;
       }
 
       local_target_connection_id = 0;
     }
-  } while ( local_target_connection_id
-    == static_cast< long >( kernel()
-                              .node_manager.get_local_nodes( tid )
-                              .get_node_by_index( local_target_node_id )
-                              ->get_num_conn_type_sources( syn_id ) ) );
+  }
 }
 
 }
