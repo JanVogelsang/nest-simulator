@@ -67,7 +67,6 @@ ConnectionManager::ConnectionManager()
   , keep_source_table_( true )
   , connections_have_changed_( false )
   , get_connections_has_been_called_( false )
-  , sort_connections_by_source_( false ) // TODO JV
   , use_compressed_spikes_( false )      // TODO JV
   , has_primary_connections_( false )
   , check_primary_connections_()
@@ -92,7 +91,6 @@ ConnectionManager::initialize()
 {
   const thread num_threads = kernel().vp_manager.get_num_threads();
   secondary_recv_buffer_pos_.resize( num_threads );
-  sort_connections_by_source_ = true;
   connections_have_changed_ = false;
 
   compressed_spike_data_.resize( 0 );
@@ -156,20 +154,6 @@ ConnectionManager::set_status( const DictionaryDatum& d )
       "to false." );
   }
 
-  updateValue< bool >( d, names::sort_connections_by_source, sort_connections_by_source_ );
-  if ( not sort_connections_by_source_ and kernel().sp_manager.is_structural_plasticity_enabled() )
-  {
-    throw KernelException(
-      "If structural plasticity is enabled, sort_connections_by_source can not "
-      "be set to false." );
-  }
-
-  updateValue< bool >( d, names::use_compressed_spikes, use_compressed_spikes_ );
-  if ( use_compressed_spikes_ and not sort_connections_by_source_ )
-  {
-    throw KernelException( "Spike compression requires sort_connections_by_source to be true." );
-  }
-
   //  Need to update the saved values if we have changed the delay bounds.
   if ( d->known( names::min_delay ) or d->known( names::max_delay ) )
   {
@@ -193,7 +177,6 @@ ConnectionManager::get_status( DictionaryDatum& dict )
   const size_t n = get_num_connections();
   def< long >( dict, names::num_connections, n );
   def< bool >( dict, names::keep_source_table, keep_source_table_ );
-  def< bool >( dict, names::sort_connections_by_source, sort_connections_by_source_ );
   def< bool >( dict, names::use_compressed_spikes, use_compressed_spikes_ );
 
   def< double >( dict, names::time_construction_connect, sw_construction_connect.elapsed() );
@@ -798,10 +781,10 @@ ConnectionManager::increase_connection_count( const thread tid, const synindex s
   }
 }
 
-std::vector< index >
-ConnectionManager::find_connections( const synindex syn_id, const index snode_id, const Node* target_node )
+std::pair< index, index >
+ConnectionManager::find_connections( const synindex syn_id, const index snode_id, const Node* target_node, const bool primary )
 {
-  return target_node->get_connection_indices( syn_id, snode_id );
+  return target_node->get_connection_indices( syn_id, snode_id, primary );
 }
 
 void
@@ -809,9 +792,10 @@ ConnectionManager::disconnect( const thread tid, const synindex syn_id, const in
 {
   assert( syn_id != invalid_synindex );
 
-  const std::vector< index > connection_indices = find_connections( syn_id, snode_id, target_node );
+  const ConnectorModel* cm = kernel().model_manager.get_connection_models( tid )[ syn_id ];
+  const std::pair< index, index > connection_indices = find_connections( syn_id, snode_id, target_node, cm->is_primary() );
 
-  for ( const index local_target_connection_id : connection_indices )
+  for ( index local_target_connection_id = connection_indices.first; local_target_connection_id < connection_indices.second; ++local_target_connection_id )
   {
     // this function should only be called with at least one valid connection
     if ( local_target_connection_id == invalid_index )
@@ -1599,8 +1583,8 @@ ConnectionManager::collect_compressed_spike_data( const thread tid )
   if ( use_compressed_spikes_ )
   {
     assert( false ); // TODO JV (pt): Compressed spikes
-    /*assert( sort_connections_by_source_ );
 
+    /*
 #pragma omp single
     {
       source_table_.resize_compressible_sources();

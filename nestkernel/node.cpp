@@ -298,7 +298,7 @@ Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
   const std::vector< ConnectorModel* >& cm,
   DSSpikeEvent& e )
 {
-  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, cm, e, this );
+  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, cm[ syn_id ], e, this );
 
   // TODO JV: Make this cleaner, as only needed for poisson generators probably
   if ( not e.get_multiplicity() )
@@ -312,18 +312,19 @@ Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
 void
 Node::deliver_event( const thread tid,
   const synindex syn_id,
-  const index local_target_connection_id,
   const std::vector< ConnectorModel* >& cm,
   SpikeEvent& se )
 {
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight and optionally updates its internal state as well.
-  connections_[ syn_id ]->send( tid, local_target_connection_id, cm, se, this );
+  se.set_syn_id( syn_id );
+  if ( connections_[ syn_id ]->try_send( tid, cm[ syn_id ], se, this  ) )
+  {
+    // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
+    //  handle, or just handing the entire local connection id to the handle function.
 
-  // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
-  //  handle, or just handing the entire local connection id to the handle function.
-
-  handle( se );
+    handle( se );
+  }
 }
 
 /**

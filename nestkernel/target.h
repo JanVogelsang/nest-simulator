@@ -64,13 +64,146 @@ namespace nest
  * The processed flag must always use one bit.
  */
 
-enum enum_status_target_id
-{
-  TARGET_ID_PROCESSED,
-  TARGET_ID_UNPROCESSED
+//enum enum_status_target_id
+//{
+//  TARGET_ID_PROCESSED,
+//  TARGET_ID_UNPROCESSED
+//};
+
+class Target {
+protected:
+  unsigned int rank_ : NUM_BITS_RANK;         //!< target rank
+  unsigned int tid_ : NUM_BITS_TID;           //!< thread index
+  unsigned int syn_id_ : NUM_BITS_SYN_ID;     //!< synapse id
+
+public:
+  Target();
+  Target( const Target& rhs );
+  Target( const thread rank,
+    const thread tid,
+    const synindex syn_id );
+
+  Target& operator=( const Target& rhs );
+
+//  void set( const thread rank,
+//    const thread tid,
+//    const synindex syn_id );
+
+  /**
+   * Returns target rank.
+   */
+  thread get_rank() const;
+
+  /**
+   * Returns target thread index.
+   */
+  thread get_tid() const;
+
+  /**
+   * Returns synapse-type index.
+   */
+  synindex get_syn_id() const;
+
+//  /**
+//   * Set target rank.
+//   */
+//  void set_rank( const thread rank);
+//
+//  /**
+//   * Set target thread index.
+//   */
+//  void set_tid( const thread tid );
+//
+//  /**
+//   * Set synapse-type index.
+//   */
+//  void set_syn_id( const synindex syn_id );
 };
 
-class Target
+//! check legal size
+using success_spike_data_size = StaticAssert< sizeof( Target ) == 4 >::success;
+
+inline Target::Target()
+  : rank_( 0 )
+  , tid_( 0 )
+  , syn_id_( 0 )
+{
+}
+
+inline Target::Target( const Target& rhs )
+  : rank_( rhs.rank_ )
+  , tid_( rhs.tid_ )
+  , syn_id_( rhs.syn_id_ )
+{
+}
+
+inline Target::Target( const thread rank,
+  const thread tid,
+  const synindex syn_id )
+  : rank_( rank )
+  , tid_( tid )
+  , syn_id_( syn_id )
+{
+
+}
+
+inline Target& Target::operator=( const Target& rhs ){
+  rank_ = rhs.rank_;
+  tid_ = rhs.tid_;
+  syn_id_ = rhs.syn_id_;
+  return *this;
+}
+//
+//void Target::set( const thread rank,
+//  const thread tid,
+//  const synindex syn_id )
+//  {
+//  assert( 0 <= rank );
+//  assert( rank <= MAX_RANK );
+//  assert( 0 <= tid );
+//  assert( tid <= MAX_TID );
+//  assert( syn_id <= MAX_SYN_ID );
+//
+//  rank_ = rank;
+//  tid_ = tid;
+//  syn_id_ = syn_id;
+//}
+
+inline thread
+Target::get_rank() const
+{
+  return rank_;
+}
+
+inline thread
+Target::get_tid() const
+{
+  return tid_;
+}
+
+inline synindex
+Target::get_syn_id() const
+{
+  return syn_id_;
+}
+
+//void Target::set_rank( const thread rank)
+//{
+//  rank_ = rank;
+//}
+//
+//void Target::set_tid( const thread tid )
+//{
+//  tid_ = tid;
+//}
+//
+//void Target::set_syn_id( const synindex syn_id )
+//{
+//  syn_id_ = syn_id;
+//}
+
+// TODO JV (pt): This has been reused for local devices, but can be written much cleaner
+class LocalTarget
 {
 private:
   uint64_t remote_target_id_;
@@ -80,10 +213,6 @@ private:
   static constexpr uint8_t BITPOS_RANK = BITPOS_LOCAL_TARGET_CONNECTION_ID + NUM_BITS_LOCAL_CONNECTION_ID;
   static constexpr uint8_t BITPOS_TID = BITPOS_RANK + NUM_BITS_RANK;
   static constexpr uint8_t BITPOS_SYN_ID = BITPOS_TID + NUM_BITS_TID;
-  static constexpr uint8_t BITPOS_PROCESSED_FLAG = BITPOS_SYN_ID + NUM_BITS_SYN_ID;
-
-  using bits_for_processed_flag = StaticAssert< NUM_BITS_PROCESSED_FLAG == 1U >::success;
-  using position_of_processed_flag = StaticAssert< BITPOS_PROCESSED_FLAG == 63U >::success;
 
   // generate bit-masks used in bit-operations
   static constexpr uint64_t MASK_LOCAL_TARGET_NODE_ID =
@@ -93,18 +222,17 @@ private:
   static constexpr uint64_t MASK_RANK = generate_bit_mask( NUM_BITS_RANK, BITPOS_RANK );
   static constexpr uint64_t MASK_TID = generate_bit_mask( NUM_BITS_TID, BITPOS_TID );
   static constexpr uint64_t MASK_SYN_ID = generate_bit_mask( NUM_BITS_SYN_ID, BITPOS_SYN_ID );
-  static constexpr uint64_t MASK_PROCESSED_FLAG = generate_bit_mask( NUM_BITS_PROCESSED_FLAG, BITPOS_PROCESSED_FLAG );
 
 public:
-  Target();
-  Target( const Target& target );
-  Target( const thread tid,
+  LocalTarget();
+  LocalTarget( const LocalTarget& target );
+  LocalTarget( const thread tid,
     const thread rank,
     const synindex syn_id,
     const index local_target_node_id,
     const index local_target_connection_id );
 
-  Target& operator=( const Target& );
+  LocalTarget& operator=( const LocalTarget& );
 
   /**
    * Set thread-local target neuron ID.
@@ -157,54 +285,33 @@ public:
   synindex get_syn_id() const;
 
   /**
-   * Set the status of the target identifier: processed or unprocessed.
-   */
-  void set_status( enum_status_target_id status );
-
-  /**
-   * Get the status of the target identifier: processed or unprocessed.
-   */
-  enum_status_target_id get_status() const;
-
-  /**
-   * Return the status od the target identifier: processed or unprocessed.
-   */
-  bool is_processed() const;
-
-  /**
    * Return offset.
    */
   double get_offset() const;
 
-  /**
-   *  Set the status of the target identifier to processed
-   */
-  void mark_for_removal();
 };
 
 //!< check legal size
-using success_target_size = StaticAssert< sizeof( Target ) == 8 >::success;
+using success_target_size = StaticAssert< sizeof( LocalTarget ) == 8 >::success;
 
-inline Target::Target()
+inline LocalTarget::LocalTarget()
   : remote_target_id_( 0 )
 {
 }
 
-inline Target::Target( const Target& target )
+inline LocalTarget::LocalTarget( const LocalTarget& target )
   : remote_target_id_( target.remote_target_id_ )
 {
-  set_status( TARGET_ID_UNPROCESSED ); // initialize
 }
 
-inline Target&
-Target::operator=( const Target& other )
+inline LocalTarget&
+LocalTarget::operator=( const LocalTarget& other )
 {
   remote_target_id_ = other.remote_target_id_;
-  set_status( TARGET_ID_UNPROCESSED );
   return *this;
 }
 
-inline Target::Target( const thread tid,
+inline LocalTarget::LocalTarget( const thread tid,
   const thread rank,
   const synindex syn_id,
   const index local_target_node_id,
@@ -222,11 +329,10 @@ inline Target::Target( const thread tid,
   set_rank( rank );
   set_tid( tid );
   set_syn_id( syn_id );
-  set_status( TARGET_ID_UNPROCESSED ); // initialize
 }
 
 inline void
-Target::set_local_target_node_id( const index local_target_node_id )
+LocalTarget::set_local_target_node_id( const index local_target_node_id )
 {
   assert( local_target_node_id <= MAX_LOCAL_NODE_ID );
   remote_target_id_ = ( remote_target_id_ & ( ~MASK_LOCAL_TARGET_NODE_ID ) )
@@ -234,13 +340,13 @@ Target::set_local_target_node_id( const index local_target_node_id )
 }
 
 inline index
-Target::get_local_target_node_id() const
+LocalTarget::get_local_target_node_id() const
 {
   return ( ( remote_target_id_ & MASK_LOCAL_TARGET_NODE_ID ) >> BITPOS_LOCAL_TARGET_NODE_ID );
 }
 
 inline void
-Target::set_local_target_connection_id( const index local_target_connection_id )
+LocalTarget::set_local_target_connection_id( const index local_target_connection_id )
 {
   assert( local_target_connection_id <= MAX_LOCAL_CONNECTION_ID );
   remote_target_id_ = ( remote_target_id_ & ( ~MASK_LOCAL_TARGET_CONNECTION_ID ) )
@@ -248,92 +354,54 @@ Target::set_local_target_connection_id( const index local_target_connection_id )
 }
 
 inline index
-Target::get_local_target_connection_id() const
+LocalTarget::get_local_target_connection_id() const
 {
   return ( ( remote_target_id_ & MASK_LOCAL_TARGET_CONNECTION_ID ) >> BITPOS_LOCAL_TARGET_CONNECTION_ID );
 }
 
 inline void
-Target::set_rank( const thread rank )
+LocalTarget::set_rank( const thread rank )
 {
   assert( rank <= MAX_RANK );
   remote_target_id_ = ( remote_target_id_ & ( ~MASK_RANK ) ) | ( static_cast< uint64_t >( rank ) << BITPOS_RANK );
 }
 
 inline thread
-Target::get_rank() const
+LocalTarget::get_rank() const
 {
   return ( ( remote_target_id_ & MASK_RANK ) >> BITPOS_RANK );
 }
 
 inline void
-Target::set_tid( const thread tid )
+LocalTarget::set_tid( const thread tid )
 {
   assert( tid <= MAX_TID );
   remote_target_id_ = ( remote_target_id_ & ( ~MASK_TID ) ) | ( static_cast< uint64_t >( tid ) << BITPOS_TID );
 }
 
 inline thread
-Target::get_tid() const
+LocalTarget::get_tid() const
 {
   return ( ( remote_target_id_ & MASK_TID ) >> BITPOS_TID );
 }
 
 inline void
-Target::set_syn_id( const synindex syn_id )
+LocalTarget::set_syn_id( const synindex syn_id )
 {
   assert( syn_id <= MAX_SYN_ID );
   remote_target_id_ = ( remote_target_id_ & ( ~MASK_SYN_ID ) ) | ( static_cast< uint64_t >( syn_id ) << BITPOS_SYN_ID );
 }
 
 inline synindex
-Target::get_syn_id() const
+LocalTarget::get_syn_id() const
 {
   return ( ( remote_target_id_ & MASK_SYN_ID ) >> BITPOS_SYN_ID );
 }
 
-inline void
-Target::set_status( enum_status_target_id set_status_to )
-{
-  switch ( set_status_to )
-  {
-  case TARGET_ID_PROCESSED:
-    remote_target_id_ = remote_target_id_ | MASK_PROCESSED_FLAG; // set single bit
-    break;
-  case TARGET_ID_UNPROCESSED:
-    remote_target_id_ = remote_target_id_ & ~MASK_PROCESSED_FLAG; // clear single bit
-    break;
-  default:
-    throw InternalError( "Invalid remote target id status." );
-  }
-}
-
-inline enum_status_target_id
-Target::get_status() const
-{
-  if ( ( remote_target_id_ & MASK_PROCESSED_FLAG ) >> BITPOS_PROCESSED_FLAG ) // test single bit
-  {
-    return ( TARGET_ID_PROCESSED );
-  }
-  return ( TARGET_ID_UNPROCESSED );
-}
-
-inline bool
-Target::is_processed() const
-{
-  return ( get_status() == TARGET_ID_PROCESSED );
-}
-
 inline double
-Target::get_offset() const
+LocalTarget::get_offset() const
 {
   return 0;
-}
-
-inline void
-Target::mark_for_removal()
-{
-  set_status( TARGET_ID_PROCESSED );
 }
 
 

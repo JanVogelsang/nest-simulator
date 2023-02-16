@@ -60,8 +60,8 @@ TargetTableDevices::finalize()
   //    }
   //  }
 
-  std::vector< std::map< index, std::vector< Target > > >().swap( targets_to_devices_ );
-  std::vector< std::vector< std::vector< Target > > >().swap( targets_from_devices_ );
+  std::vector< std::map< index, std::vector< LocalTarget > > >().swap( targets_to_devices_ );
+  std::vector< std::vector< std::vector< LocalTarget > > >().swap( targets_from_devices_ );
   std::vector< std::vector< index > >().swap( sending_devices_node_ids_ );
 }
 

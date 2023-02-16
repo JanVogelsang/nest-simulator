@@ -54,6 +54,8 @@ class ConnectorBase
 {
 
 public:
+  ConnectorBase() : last_visited_connection( 0 ) {}
+
   // Destructor needs to be declared virtual to avoid undefined
   // behavior, avoid possible memory leak and needs to be defined to
   // avoid linker error, see, e.g., Meyers, S. (2005) p40ff
@@ -92,9 +94,14 @@ public:
   virtual Source& get_source( const index local_target_connection_id ) = 0;
 
   /**
-   * Get the indices of all connection corresponding to a specific source node.
+   * Get the first and last index of all connections corresponding to a specific source node.
    */
-  virtual std::vector< index > get_connection_indices( const index source_node_id ) const = 0;
+  virtual std::pair< index, index > get_connection_indices( const index source_node_id, const bool primary ) const = 0;
+
+  /**
+   * Get the first index of all connections corresponding to a specific source node.
+   */
+  virtual index get_first_connection_index( const index source_node_id, const bool primary ) const = 0;
 
   /**
    * Remove source information of all connections in this container.
@@ -125,7 +132,12 @@ public:
    */
   virtual void send( const thread tid,
     const index local_target_connection_id,
-    const std::vector< ConnectorModel* >& cm,
+    const ConnectorModel* cm,
+    Event& e,
+    Node* target ) = 0;
+
+  virtual bool try_send ( const thread tid,
+    const ConnectorModel* cm,
     Event& e,
     Node* target ) = 0;
 
@@ -166,6 +178,10 @@ public:
    */
   virtual void remove_disabled_connections( const index first_disabled_index ) = 0;
 
+  void reset_last_visited_connection()
+  {
+    last_visited_connection = 0;
+  }
 
 protected:
   /**
@@ -180,6 +196,8 @@ protected:
    */
   // TODO JV: This should be converted from type Source to index once the simulation starts
   std::vector< Source > sources_;
+
+  size_t last_visited_connection;
 };
 
 /**
@@ -194,7 +212,8 @@ private:
 
 public:
   explicit Connector( const synindex syn_id )
-    : syn_id_( syn_id )
+    : ConnectorBase()
+    , syn_id_( syn_id )
   {
   }
 
@@ -258,33 +277,30 @@ public:
     return sources_[ local_target_connection_id ];
   }
 
-  std::vector< index >
-  get_connection_indices( const index source_node_id ) const override
+  std::pair< index, index >
+  get_connection_indices( const index source_node_id, const bool primary ) const override
   {
     // binary search in sorted sources
     const std::vector< Source >::const_iterator begin = sources_.begin();
     const std::vector< Source >::const_iterator end = sources_.end();
-    // TODO JV (pt): Secondary events: Is primary really always the case? (Adapted from master though)
-    std::vector< Source >::const_iterator it = std::lower_bound( begin, end, Source( source_node_id, true ) );
+    auto first_last_source = std::equal_range( begin, end, Source( source_node_id, primary, true ) );
 
-    std::vector< index > indices;
+    // TODO JV: Sorting connections by source has to be triggered somewhere
 
-    index connection_index = it - begin;
+    return { first_last_source.first - begin, first_last_source.second - begin };
+  }
 
-    // assert( kernel().connection_manager.get_sort_connections_by_source() );
-    assert( false );
-    // TODO JV: This assumes the sources and connections are sorted by source node id
-    while ( it != end && it->get_node_id() == source_node_id )
-    {
-      // Connection is disabled
-      if ( not C_[ connection_index ].is_disabled() )
-      {
-        indices.push_back( it - begin );
-      }
-      ++it;
-    }
+  index
+  get_first_connection_index( const index source_node_id, const bool primary ) const override
+  {
+    // TODO JV: Sorting connections by source has to be triggered somewhere
 
-    return indices;
+    // binary search in sorted sources
+    const std::vector< Source >::const_iterator begin = sources_.begin() + last_visited_connection;
+    const std::vector< Source >::const_iterator end = sources_.end();
+    auto first_source = std::lower_bound( begin, end, Source( source_node_id, primary, true ) );
+
+    return first_source - begin;
   }
 
   void
@@ -328,15 +344,36 @@ public:
     }
   }
 
+  bool try_send ( const thread tid,
+    const ConnectorModel* cm,
+    Event& e,
+    Node* target ) override
+  {
+    // TODO JV (pt): This should actually send the event to all connection to the target node from this source node.
+    //  For performance reasons this is ignored here, as multapses are not the regular case and need to be optimized
+    //  somehow to not influence performance of the regular synapse case.
+    // TODO JV: Verify that multapses are not required in the benchmarks.
+    index first_index = get_first_connection_index( e.get_sender_node_id(), cm->is_primary() );
+    last_visited_connection = first_index;
+
+    if ( first_index != C_.size() )  // TODO JV: Verify this
+    {
+      e.set_local_connection_id( first_index );
+      send( tid, first_index, cm, e, target );
+      return true;
+    }
+    return false;
+  }
+
   void
   send( const thread tid,
     const index local_target_connection_id,
-    const std::vector< ConnectorModel* >& cm,
+    const ConnectorModel* cm,
     Event& e,
     Node* target ) override
   {
     typename ConnectionT::CommonPropertiesType const& cp =
-      static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties();
+      static_cast< const GenericConnectorModel< ConnectionT >* >( cm )->get_common_properties();
 
     e.set_port( local_target_connection_id );
     if ( not C_[ local_target_connection_id ].is_disabled() )

@@ -144,7 +144,6 @@ public:
    */
   void deliver_event( const thread tid,
     const synindex syn_id,
-    const index local_target_connection_id,
     const std::vector< ConnectorModel* >& cm,
     SpikeEvent& se ) override;
 

@@ -78,18 +78,18 @@ generate_max_value( const uint8_t num_bits )
 /*
  * Sizes of bitfields used in various classes in the kernel.
  */
-#if TARGET_BITS_SPLIT == TARGET_BITS_SPLIT_STANDARD
-constexpr uint8_t NUM_BITS_RANK = 18U;
+//#if TARGET_BITS_SPLIT == TARGET_BITS_SPLIT_STANDARD
+constexpr uint8_t NUM_BITS_RANK = 16U;
 constexpr uint8_t NUM_BITS_TID = 9U;
-constexpr uint8_t NUM_BITS_SYN_ID = 9U;
-#elif TARGET_BITS_SPLIT == TARGET_BITS_SPLIT_HPC
-constexpr uint8_t NUM_BITS_RANK = 20U;
-constexpr uint8_t NUM_BITS_TID = 10U;
-constexpr uint8_t NUM_BITS_SYN_ID = 6U;
-#endif
+constexpr uint8_t NUM_BITS_SYN_ID = 7U;
+//#elif TARGET_BITS_SPLIT == TARGET_BITS_SPLIT_HPC
+//constexpr uint8_t NUM_BITS_RANK = 20U;
+//constexpr uint8_t NUM_BITS_TID = 10U;
+//constexpr uint8_t NUM_BITS_SYN_ID = 6U;
+//#endif
 constexpr uint8_t NUM_BITS_LOCAL_NODE_ID = 13U;
 constexpr uint8_t NUM_BITS_LOCAL_CONNECTION_ID = 14U;
-constexpr uint8_t NUM_BITS_PROCESSED_FLAG = 1U;
+//constexpr uint8_t NUM_BITS_PROCESSED_FLAG = 1U;
 constexpr uint8_t NUM_BITS_MARKER_SPIKE_DATA = 2U;
 constexpr uint8_t NUM_BITS_LAG = 14U;
 constexpr uint8_t NUM_BITS_DELAY = 21U;

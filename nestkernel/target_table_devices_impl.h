@@ -48,7 +48,7 @@ TargetTableDevices::add_connection_from_device( Node& source,
   assert( ldid != invalid_index );
   assert( ldid < targets_from_devices_[ tid ].size() );
 
-  targets_from_devices_[ tid ][ ldid ].push_back( Target(
+  targets_from_devices_[ tid ][ ldid ].push_back( LocalTarget(
     target.get_thread(), kernel().vp_manager.get_vp(), syn_id, target.get_thread_lid(), local_target_connection_id ) );
 
   // store node ID of sending device
@@ -69,10 +69,10 @@ TargetTableDevices::add_connection_to_device( Node& source,
   // Check if the source node has not been registered as source to devices yet
   if ( not targets_to_devices_[ tid ].count( source_lid ) )
   {
-    targets_to_devices_[ tid ].emplace( source_lid, std::vector< Target >() );
+    targets_to_devices_[ tid ].emplace( source_lid, std::vector< LocalTarget >() );
   }
 
-  targets_to_devices_[ tid ][ source_lid ].push_back( Target(
+  targets_to_devices_[ tid ][ source_lid ].push_back( LocalTarget(
     target.get_thread(), kernel().vp_manager.get_vp(), syn_id, target.get_thread_lid(), local_target_connection_id ) );
 }
 
@@ -110,7 +110,7 @@ inline void
 TargetTableDevices::send_from_device( const thread tid, const index ldid, EventT& e )
 {
   const std::vector< ConnectorModel* > cm = kernel().model_manager.get_connection_models( tid );
-  for ( std::vector< Target >::iterator it = targets_from_devices_[ tid ][ ldid ].begin();
+  for ( std::vector< LocalTarget >::iterator it = targets_from_devices_[ tid ][ ldid ].begin();
         it != targets_from_devices_[ tid ][ ldid ].end();
         ++it )
   {
@@ -124,7 +124,7 @@ inline void
 TargetTableDevices::send_to_devices( const thread tid, const index source_node_lid, EventT& e )
 {
   const std::vector< ConnectorModel* > cm = kernel().model_manager.get_connection_models( tid );
-  for ( std::vector< Target >::iterator it = targets_to_devices_[ tid ][ source_node_lid ].begin();
+  for ( std::vector< LocalTarget >::iterator it = targets_to_devices_[ tid ][ source_node_lid ].begin();
         it != targets_to_devices_[ tid ][ source_node_lid ].end();
         ++it )
   {

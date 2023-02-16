@@ -475,17 +475,17 @@ public:
   }
 
   /**
-   * Get all connection indices by source node id.
+   * Get first and last connection index for source node id.
    */
-  std::vector< index >
-  get_connection_indices( const synindex syn_id, const index source_node_id ) const
+  std::pair< index, index >
+  get_connection_indices( const synindex syn_id, const index source_node_id, const bool primary ) const
   {
     assert( connections_[ syn_id ] ); // TODO JV: Remove this
     if ( connections_[ syn_id ] )
     {
-      return connections_[ syn_id ]->get_connection_indices( source_node_id );
+      return connections_[ syn_id ]->get_connection_indices( source_node_id, primary );
     }
-    return std::vector< index >();
+    return {};
   }
 
   /**
@@ -540,7 +540,13 @@ public:
     const long synapse_label,
     std::deque< ConnectionID >& conns ) const
   {
-    for ( index lcid : get_connection_indices( syn_id, source_node_id ) )
+    auto first_last_index = get_connection_indices( syn_id, source_node_id, true );
+    for ( index lcid = first_last_index.first; lcid < first_last_index.second; ++lcid  )
+    {
+      conns.push_back( ConnectionDatum( ConnectionID( source_node_id, get_node_id(), get_thread(), syn_id, lcid ) ) );
+    }
+    first_last_index = get_connection_indices( syn_id, source_node_id, false );
+    for ( index lcid = first_last_index.first; lcid < first_last_index.second; ++lcid  )
     {
       conns.push_back( ConnectionDatum( ConnectionID( source_node_id, get_node_id(), get_thread(), syn_id, lcid ) ) );
     }
@@ -557,6 +563,20 @@ public:
       if ( connections_per_syn_type )
       {
         connections_per_syn_type->clear_sources();
+      }
+    }
+  }
+
+  /**
+   * Reset the starting positions at which a source is searched in the source table.
+   */
+  void reset_last_visited_connections()
+  {
+    for ( auto connections_per_syn_type : connections_ )
+    {
+      if ( connections_per_syn_type )
+      {
+        connections_per_syn_type->reset_last_visited_connection();
       }
     }
   }
@@ -640,12 +660,11 @@ public:
     EventT& e );
 
   /**
-   * When receiving an incoming spike event, forward it to the corresponding connection and handle the event previously
-   * updated by the connection.
+   * When receiving an incoming spike event, forward it to the corresponding connection and then handle the event
+   * just updated by the connection. If there is no connection for the
    */
   virtual void deliver_event( const thread tid,
     const synindex syn_id,
-    const index local_target_connection_id,
     const std::vector< ConnectorModel* >& cm,
     SpikeEvent& se );
 

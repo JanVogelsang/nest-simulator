@@ -69,6 +69,13 @@ VPManager::thread_to_vp( const thread tid ) const
   return tid * kernel().mpi_manager.get_num_processes() + kernel().mpi_manager.get_rank();
 }
 
+inline index
+VPManager::get_remote_node_id( const thread source_rank, const thread source_thread, const index lid ) const
+{
+  const thread vp = source_thread * kernel().mpi_manager.get_num_processes() + source_rank;
+  return ( lid + static_cast< index >( vp == 0 ) ) * get_num_virtual_processes() + vp;
+}
+
 inline bool
 VPManager::is_node_id_vp_local( const index node_id ) const
 {

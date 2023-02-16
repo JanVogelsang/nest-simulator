@@ -122,6 +122,11 @@ public:
    */
   thread thread_to_vp( const thread tid ) const;
 
+  /*
+   * Convert a given source rank, thread ID and local node index to global node ID.
+   */
+  index get_remote_node_id( const thread source_rank, const thread source_thread, const index lid ) const;
+
   /**
    * Return true, if the given VP is on the local machine
    */

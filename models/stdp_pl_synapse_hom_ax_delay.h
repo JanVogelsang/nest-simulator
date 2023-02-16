@@ -27,6 +27,7 @@
 #include <cmath>
 
 // Includes from nestkernel:
+#include "archiving_node.h"
 #include "connection.h"
 
 namespace nest
@@ -312,8 +313,8 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e, thread t, const STDPPLHomAxDelayCo
 
   if ( ( cp.axonal_delay_ - dendritic_delay ) > kernel().connection_manager.get_stdp_eps() )
   {
-    target->add_correction_entry_stdp_ax_delay(
-      dynamic_cast< SpikeEvent& >( e ), t_lastspike_, weight_revert, dendritic_delay );
+    static_cast< ArchivingNode* >(target)->add_correction_entry_stdp_ax_delay(
+      static_cast< SpikeEvent& >( e ), t_lastspike_, weight_revert, dendritic_delay );
   }
 
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) * cp.tau_plus_inv_ ) + 1.0;

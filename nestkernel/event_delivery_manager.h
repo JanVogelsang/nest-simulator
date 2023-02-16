@@ -51,6 +51,23 @@ typedef MPIManager::OffGridSpike OffGridSpike;
 class TargetData;
 class SendBufferPosition;
 
+struct SpikeDataSendBufferPosition {
+  std::vector< size_t > positions_for_rank;
+  thread write_thread_index;
+  index write_thread_pos;
+  thread start_rank;
+  thread end_rank;
+
+  SpikeDataSendBufferPosition( thread start_rank, thread end_rank )
+  : positions_for_rank( end_rank - start_rank, 0 )
+  , write_thread_index( 0 )
+  , write_thread_pos( 0 )
+  , start_rank( start_rank )
+  , end_rank( end_rank )
+  {
+  }
+};
+
 class EventDeliveryManager : public ManagerInterface
 {
 public:
@@ -197,13 +214,6 @@ public:
    */
   void gather_target_data( const thread tid );
 
-  /**
-   * Collocates presynaptic connection information for secondary events (MPI
-   * buffer offsets), communicates via MPI and create presynaptic connection
-   * infrastructure for secondary events.
-   */
-  void gather_secondary_target_data();
-
   void write_done_marker_secondary_events_( const bool done );
 
   void gather_secondary_events( const bool done );
@@ -238,30 +248,27 @@ public:
   virtual void reset_timers_for_dynamics();
 
 private:
-  template < typename SpikeDataT >
+  //template < typename SpikeDataT >
   void gather_spike_data_( const thread tid,
-    std::vector< SpikeDataT >& send_buffer,
-    std::vector< SpikeDataT >& recv_buffer );
+    std::vector< SpikeData >& send_buffer,
+    std::vector< SpikeData >& recv_buffer );
 
   void resize_send_recv_buffers_spike_data_();
 
   /**
-   * Moves spikes from on grid and off grid spike registers to correct
-   * locations in MPI buffers.
+   * Moves spikes from on grid and off grid spike registers to correct locations in MPI buffers.
    */
-  template < typename TargetT, typename SpikeDataT >
+  // template < typename SpikeDataT >
   bool collocate_spike_data_buffers_( const thread tid,
-    const AssignedRanks& assigned_ranks,
-    SendBufferPosition& send_buffer_position,
-    std::vector< std::vector< std::vector< std::vector< TargetT > > > >& spike_register,
-    std::vector< SpikeDataT >& send_buffer );
+    SpikeDataSendBufferPosition& send_buffer_position,
+    std::vector< std::vector< std::vector< SpikeData > > >& spike_register,
+    std::vector< SpikeData >& send_buffer );
 
   /**
    * Marks end of valid regions in MPI buffers.
    */
   template < typename SpikeDataT >
-  void set_end_and_invalid_markers_( const AssignedRanks& assigned_ranks,
-    const SendBufferPosition& send_buffer_position,
+  void set_end_and_invalid_markers_( const SpikeDataSendBufferPosition& send_buffer_position,
     std::vector< SpikeDataT >& send_buffer );
 
   /**
@@ -269,16 +276,14 @@ private:
    * across MPI ranks.
    */
   template < typename SpikeDataT >
-  void reset_complete_marker_spike_data_( const AssignedRanks& assigned_ranks,
-    const SendBufferPosition& send_buffer_position,
+  void reset_complete_marker_spike_data_( const SpikeDataSendBufferPosition& send_buffer_position,
     std::vector< SpikeDataT >& send_buffer ) const;
 
   /**
    * Sets marker in MPI buffer that signals end of communication across MPI ranks.
    */
   template < typename SpikeDataT >
-  void set_complete_marker_spike_data_( const AssignedRanks& assigned_ranks,
-    const SendBufferPosition& send_buffer_position,
+  void set_complete_marker_spike_data_( const SpikeDataSendBufferPosition& send_buffer_position,
     std::vector< SpikeDataT >& send_buffer ) const;
 
   /**
@@ -291,25 +296,6 @@ private:
    * Deletes all spikes from spike registers and resets spike counters.
    */
   void reset_spike_register_( const thread tid );
-
-  /**
-   * Resizes spike registers according minimal delay so it can accommodate all possible lags.
-   */
-  void resize_spike_register_( const thread tid );
-
-  /**
-   * Returns true if spike has been moved to MPI buffer, such that it
-   * can be removed by clean_spike_register. Required static function
-   * by std::remove_if.
-   */
-  static bool is_marked_for_removal_( const Target& target );
-
-  /**
-   * Removes spikes that were successfully moved to MPI buffers from
-   * spike register, such that they are not considered in (potential)
-   * next communication round.
-   */
-  void clean_spike_register_( const thread tid );
 
   /**
    * Fills MPI buffer for communication of connection information from
@@ -366,28 +352,23 @@ private:
   std::vector< delay > slice_moduli_;
 
   /**
-   * Register for node IDs of neurons that spiked. This is a 4-dim
-   * structure. While spikes are written to the buffer they are
-   * immediately sorted by the thread that will later move the spikes to the
-   * MPI buffers.
+   * Register for node IDs of neurons that spiked. This is a 3-dim structure. While spikes are written to the buffer
+   * they are immediately sorted by the target rank required to write to the corresponding MPI buffer position.
    * - First dim: write threads (from node to register)
-   * - Second dim: read threads (from register to MPI buffer)
-   * - Third dim: lag
-   * - Fourth dim: Target (will be converted in SpikeData)
+   * - Second dim: Target rank
+   * - Third dim: SpikeData
    */
-  std::vector< std::vector< std::vector< std::vector< Target > > > > emitted_spikes_register_;
+  std::vector< std::vector< std::vector< SpikeData > > > emitted_spikes_register_;
 
   /**
-   * Register for node IDs of precise neurons that spiked. This is a 4-dim
-   * structure. While spikes are written to the buffer they are
-   * immediately sorted by the thread that will later move the spikes to the
+   * Register for node IDs of preicse neurons that spiked. This is a 3-dim structure. While spikes are written to the
+   * buffer they are immediately sorted by the target rank required to write to the corresponding MPI buffer position.
    * MPI buffers.
    * - First dim: write threads (from node to register)
-   * - Second dim: read threads (from register to MPI buffer)
-   * - Third dim: lag
-   * - Fourth dim: OffGridTarget (will be converted in OffGridSpikeData)
+   * - Second dim: Target rank
+   * - Third dim: OffGridSpikeData
    */
-  std::vector< std::vector< std::vector< std::vector< OffGridTarget > > > > off_grid_emitted_spike_register_;
+  std::vector< std::vector< std::vector< OffGridSpikeData > > > off_grid_emitted_spike_register_;
 
   /**
    * Buffer to collect the secondary events after serialization.
@@ -429,59 +410,20 @@ private:
 inline void
 EventDeliveryManager::reset_spike_register_( const thread tid )
 {
-  for ( std::vector< std::vector< std::vector< Target > > >::iterator it = emitted_spikes_register_[ tid ].begin();
+  for ( std::vector< std::vector< SpikeData > >::iterator it = emitted_spikes_register_[ tid ].begin();
         it < emitted_spikes_register_[ tid ].end();
         ++it )
   {
-    for ( std::vector< std::vector< Target > >::iterator iit = it->begin(); iit < it->end(); ++iit )
-    {
-      ( *iit ).clear();
-    }
+    it->clear();
   }
 
-  for ( std::vector< std::vector< std::vector< OffGridTarget > > >::iterator it =
+  /*for ( std::vector< std::vector< OffGridSpikeData > >::iterator it =
           off_grid_emitted_spike_register_[ tid ].begin();
         it < off_grid_emitted_spike_register_[ tid ].end();
         ++it )
   {
-    for ( std::vector< std::vector< OffGridTarget > >::iterator iit = it->begin(); iit < it->end(); ++iit )
-    {
-      iit->clear();
-    }
-  }
-}
-
-inline bool
-EventDeliveryManager::is_marked_for_removal_( const Target& target )
-{
-  return target.is_processed();
-}
-
-inline void
-EventDeliveryManager::clean_spike_register_( const thread tid )
-{
-  for ( std::vector< std::vector< std::vector< Target > > >::iterator it = emitted_spikes_register_[ tid ].begin();
-        it < emitted_spikes_register_[ tid ].end();
-        ++it )
-  {
-    for ( std::vector< std::vector< Target > >::iterator iit = it->begin(); iit < it->end(); ++iit )
-    {
-      std::vector< Target >::iterator new_end = std::remove_if( iit->begin(), iit->end(), is_marked_for_removal_ );
-      iit->erase( new_end, iit->end() );
-    }
-  }
-  for ( std::vector< std::vector< std::vector< OffGridTarget > > >::iterator it =
-          off_grid_emitted_spike_register_[ tid ].begin();
-        it < off_grid_emitted_spike_register_[ tid ].end();
-        ++it )
-  {
-    for ( std::vector< std::vector< OffGridTarget > >::iterator iit = it->begin(); iit < it->end(); ++iit )
-    {
-      std::vector< OffGridTarget >::iterator new_end =
-        std::remove_if( iit->begin(), iit->end(), is_marked_for_removal_ );
-      iit->erase( new_end, iit->end() );
-    }
-  }
+    it->clear();
+  }*/  // TODO JV (pt): Fix offgrid spiking
 }
 
 inline void

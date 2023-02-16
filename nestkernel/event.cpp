@@ -36,10 +36,8 @@
 namespace nest
 {
 Event::Event()
-  : sender_node_id_( 0 ) // initializing to 0 as this is an unsigned type
-                         // node ID 0 is network, can never send an event, so
-                         // this is safe
-  , sender_spike_data_()
+  : sender_node_id_( 0 ) // initializing to 0 as this is an unsigned type node ID 0 is network, can never send an event,
+                         // so this is safe
   , sender_( nullptr )
   , p_( -1 )
   , d_( 1 )
@@ -48,23 +46,6 @@ Event::Event()
   , offset_( 0.0 )
   , w_( 0.0 )
 {
-}
-
-index
-Event::retrieve_sender_node_id_from_source_table() const
-{
-  if ( sender_node_id_ > 0 )
-  {
-    return sender_node_id_;
-  }
-  else
-  {
-    const index node_id = kernel().connection_manager.get_source_node_id( sender_spike_data_.get_tid(),
-      sender_spike_data_.get_syn_id(),
-      sender_spike_data_.get_local_target_node_id(),
-      sender_spike_data_.get_local_target_connection_id() );
-    return node_id;
-  }
 }
 
 void

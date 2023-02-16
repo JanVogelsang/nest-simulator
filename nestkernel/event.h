@@ -142,23 +142,29 @@ public:
   index get_sender_node_id() const;
 
   /**
-   * Sender is not local. Retrieve node ID of sending Node from SourceTable and return it.
-   */
-  index retrieve_sender_node_id_from_source_table() const;
-
-  /**
    * Change node ID of sending Node.
    */
   void set_sender_node_id( const index );
 
-  /**
-   * Set tid, syn_id, lcid of spike_data_.
-   * These are required to retrieve the Node ID of a non-local sender from the SourceTable.
-   */
-  void set_sender_node_id_info( const thread tid,
-    const synindex syn_id,
-    const index local_target_node_id,
-    const index local_target_connection_id );
+  index get_local_connection_id() const
+  {
+    return local_connection_id_;
+  }
+
+  void set_local_connection_id( const index local_connection_id )
+  {
+    local_connection_id_ = local_connection_id;
+  }
+
+  synindex get_syn_id() const
+  {
+    return syn_id_;
+  }
+
+  void set_syn_id( const synindex syn_id )
+  {
+    syn_id_ = syn_id;
+  }
 
   /**
    * Return time stamp of the event.
@@ -283,15 +289,8 @@ public:
    */
   void set_stamp( Time const& );
 
-  /**
-   * Returns the sender_spike_data_
-   * The sender_spike_data_ is a SpikeData object
-   */
-  SpikeData get_sender_spike_data() const;
-
 protected:
   index sender_node_id_;        //!< node ID of sender or 0
-  SpikeData sender_spike_data_; //!< spike data of sender node, in some cases required to retrieve node ID
   /*
    * The original formulation used references to Nodes as members, however, in order to avoid the reference of reference
    * problem, we store sender as pointer and use references in the interface.
@@ -299,6 +298,15 @@ protected:
    */
   Node* sender_; //!< Pointer to sender or nullptr.
 
+  /**
+   * Target-Neuron-local index of connection.
+   */
+   index local_connection_id_;
+
+   /**
+    * Synapse id over which the Event is sent.
+    */
+   synindex syn_id_;
 
   /**
    * Sender port number.
@@ -763,7 +771,7 @@ class ConductanceEvent : public Event
   double g_;
 
 public:
-  void operator()() override;
+  void operator()() override {};
   ConductanceEvent* clone() const override;
 
   void set_conductance( double );
@@ -871,16 +879,6 @@ Event::set_sender_node_id( const index node_id )
   sender_node_id_ = node_id;
 }
 
-inline void
-Event::set_sender_node_id_info( const thread tid,
-  const synindex syn_id,
-  const index local_target_node_id,
-  const index local_target_connection_id )
-{
-  // lag and offset of SpikeData are not used here
-  sender_spike_data_.set( tid, syn_id, local_target_node_id, local_target_connection_id, 0, 0.0 );
-}
-
 inline Node&
 Event::get_sender() const
 {
@@ -968,11 +966,6 @@ Event::set_port( port p )
   p_ = p;
 }
 
-inline SpikeData
-Event::get_sender_spike_data() const
-{
-  return sender_spike_data_;
-}
 }
 
 #endif // EVENT_H

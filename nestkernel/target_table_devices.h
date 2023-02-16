@@ -53,14 +53,14 @@ private:
    * - second dim: map of source node id to target devices
    * - third dim: target devices
    */
-  std::vector< std::map< index, std::vector< Target > > > targets_to_devices_;
+  std::vector< std::map< index, std::vector< LocalTarget > > > targets_to_devices_;
 
   /** 3d structure storing routing information from devices to neurons
    * - first dim: threads
    * - second dim: local device id
    * - third dim: target nodes
    */
-  std::vector< std::vector< std::vector< Target > > > targets_from_devices_;
+  std::vector< std::vector< std::vector< LocalTarget > > > targets_from_devices_;
 
   //! 2d structure storing node IDs of sending devices (necessary for get_connections)
   std::vector< std::vector< index > > sending_devices_node_ids_;

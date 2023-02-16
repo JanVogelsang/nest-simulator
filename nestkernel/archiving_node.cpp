@@ -197,7 +197,6 @@ ArchivingNode::get_history( double t1,
 void
 ArchivingNode::deliver_event( const thread tid,
   const synindex syn_id,
-  const index local_target_connection_id,
   const std::vector< ConnectorModel* >& cm,
   SpikeEvent& se )
 {
@@ -219,9 +218,11 @@ ArchivingNode::deliver_event( const thread tid,
 
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight.
-  conn->send( tid, local_target_connection_id, cm, se, this );
-
-  handle( se );
+  se.set_syn_id( syn_id );
+  if ( conn->try_send( tid, cm[ syn_id ], se, this ) )
+  {
+    handle( se );
+  }
 }
 
 void
@@ -350,8 +351,8 @@ ArchivingNode::add_correction_entry_stdp_ax_delay( SpikeEvent& spike_event,
   assert( static_cast< size_t >( idx ) < correction_entries_stdp_ax_delay_.size() );
 
   correction_entries_stdp_ax_delay_[ idx ].push_back(
-    CorrectionEntrySTDPAxDelay( spike_event.get_sender_spike_data().get_syn_id(),
-      spike_event.get_sender_spike_data().get_local_target_connection_id(),
+    CorrectionEntrySTDPAxDelay( spike_event.get_syn_id(),
+      spike_event.get_local_connection_id(),
       t_last_pre_spike,
       weight_revert ) );
 }

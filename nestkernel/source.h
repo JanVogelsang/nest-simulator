@@ -49,6 +49,8 @@ public:
   Source();
   explicit Source( const uint64_t node_id, const bool primary );
 
+  explicit Source( const uint64_t node_id, const bool primary, const bool processed );
+
   /**
    * Sets node_id_ to the specified value.
    */
@@ -97,6 +99,14 @@ inline Source::Source()
 inline Source::Source( const uint64_t node_id, const bool is_primary )
   : node_id_( node_id )
   , processed_( false )
+  , primary_( is_primary )
+{
+  assert( node_id <= MAX_NODE_ID );
+}
+
+inline Source::Source( const uint64_t node_id, const bool is_primary, const bool processed )
+  : node_id_( node_id )
+  , processed_( processed )
   , primary_( is_primary )
 {
   assert( node_id <= MAX_NODE_ID );

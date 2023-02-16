@@ -27,7 +27,6 @@
 #include <numeric>   // accumulate
 
 // Includes from nestkernel:
-#include "connection_manager.h"
 #include "kernel_manager.h"
 #include "send_buffer_position.h"
 #include "source.h"
@@ -76,7 +75,7 @@ EventDeliveryManager::initialize()
   reset_timers_for_preparation();
   reset_timers_for_dynamics();
   emitted_spikes_register_.resize( num_threads );
-  off_grid_emitted_spike_register_.resize( num_threads );
+  // off_grid_emitted_spike_register_.resize( num_threads );  // TODO JV (pt): Fix offgrid spiking
   gather_completed_checker_.initialize( num_threads, false );
   // Ensures that ResetKernel resets off_grid_spiking_
   off_grid_spiking_ = false;
@@ -87,12 +86,8 @@ EventDeliveryManager::initialize()
 #pragma omp parallel
   {
     const thread tid = kernel().vp_manager.get_thread_id();
-    emitted_spikes_register_[ tid ].resize( num_threads,
-      std::vector< std::vector< Target > >( kernel().connection_manager.get_min_delay(), std::vector< Target >() ) );
-
-    off_grid_emitted_spike_register_[ tid ].resize( num_threads,
-      std::vector< std::vector< OffGridTarget > >(
-        kernel().connection_manager.get_min_delay(), std::vector< OffGridTarget >() ) );
+    emitted_spikes_register_[ tid ].resize( kernel().mpi_manager.get_num_processes() );
+    // off_grid_emitted_spike_register_[ tid ].resize( kernel().mpi_manager.get_num_processes() );  // TODO JV (pt): Fix offgrid spiking
   } // of omp parallel
 }
 
@@ -100,15 +95,15 @@ void
 EventDeliveryManager::finalize()
 {
   // clear the spike buffers
-  std::vector< std::vector< std::vector< std::vector< Target > > > >().swap( emitted_spikes_register_ );
-  std::vector< std::vector< std::vector< std::vector< OffGridTarget > > > >().swap( off_grid_emitted_spike_register_ );
+  std::vector< std::vector< std::vector< SpikeData > > >().swap( emitted_spikes_register_ );
+  // std::vector< std::vector< std::vector< OffGridSpikeData > > >().swap( off_grid_emitted_spike_register_ );  // TODO JV (pt): Fix offgrid spiking
 
   send_buffer_secondary_events_.clear();
   recv_buffer_secondary_events_.clear();
   send_buffer_spike_data_.clear();
   recv_buffer_spike_data_.clear();
-  send_buffer_off_grid_spike_data_.clear();
-  recv_buffer_off_grid_spike_data_.clear();
+  // send_buffer_off_grid_spike_data_.clear();  // TODO JV (pt): Fix offgrid spiking
+  // recv_buffer_off_grid_spike_data_.clear();  // TODO JV (pt): Fix offgrid spiking
 }
 
 void
@@ -154,8 +149,8 @@ EventDeliveryManager::resize_send_recv_buffers_spike_data_()
   {
     send_buffer_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );
     recv_buffer_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );
-    send_buffer_off_grid_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );
-    recv_buffer_off_grid_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );
+    // send_buffer_off_grid_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );  // TODO JV (pt): Fix offgrid spiking
+    // recv_buffer_off_grid_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );
   }
 }
 
@@ -167,7 +162,7 @@ EventDeliveryManager::configure_spike_data_buffers()
   configure_spike_register();
 
   send_buffer_spike_data_.clear();
-  send_buffer_off_grid_spike_data_.clear();
+  // send_buffer_off_grid_spike_data_.clear();  // TODO JV (pt): Fix offgrid spiking
 
   resize_send_recv_buffers_spike_data_();
 }
@@ -175,11 +170,13 @@ EventDeliveryManager::configure_spike_data_buffers()
 void
 EventDeliveryManager::configure_spike_register()
 {
-  for ( thread tid = 0; tid < kernel().vp_manager.get_num_threads(); ++tid )
+#pragma omp parallel
   {
+    const thread tid = kernel().vp_manager.get_thread_id();
     reset_spike_register_( tid );
-    resize_spike_register_( tid );
-  }
+    emitted_spikes_register_[ tid ].resize( kernel().mpi_manager.get_num_processes() );
+    // off_grid_emitted_spike_register_[ tid ].resize( kernel().mpi_manager.get_num_processes() );  // TODO JV (pt): Fix offgrid spiking
+  } // of omp parallel
 }
 
 void
@@ -317,7 +314,7 @@ EventDeliveryManager::gather_spike_data( const thread tid )
 {
   if ( off_grid_spiking_ )
   {
-    gather_spike_data_( tid, send_buffer_off_grid_spike_data_, recv_buffer_off_grid_spike_data_ );
+    // gather_spike_data_( tid, send_buffer_off_grid_spike_data_, recv_buffer_off_grid_spike_data_ );
   }
   else
   {
@@ -325,11 +322,11 @@ EventDeliveryManager::gather_spike_data( const thread tid )
   }
 }
 
-template < typename SpikeDataT >
+//template < typename SpikeDataT >  // TODO JV (pt): Fix template for offgrid spikes
 void
 EventDeliveryManager::gather_spike_data_( const thread tid,
-  std::vector< SpikeDataT >& send_buffer,
-  std::vector< SpikeDataT >& recv_buffer )
+  std::vector< SpikeData >& send_buffer,
+  std::vector< SpikeData >& recv_buffer )
 {
   // Assume all threads have some work to do
   gather_completed_checker_[ tid ].set_false();
@@ -365,33 +362,32 @@ EventDeliveryManager::gather_spike_data_( const thread tid,
 #endif
 
     // Need to get new positions in case buffer size has changed
-    SendBufferPosition send_buffer_position(
-      assigned_ranks, kernel().mpi_manager.get_send_recv_count_spike_data_per_rank() );
+    SpikeDataSendBufferPosition send_buffer_position( assigned_ranks.begin, assigned_ranks.end );
 
     // Collocate spikes to send buffer
     const bool collocate_completed =
-      collocate_spike_data_buffers_( tid, assigned_ranks, send_buffer_position, emitted_spikes_register_, send_buffer );
+      collocate_spike_data_buffers_( tid,send_buffer_position, emitted_spikes_register_, send_buffer );
     gather_completed_checker_[ tid ].logical_and( collocate_completed );
 
     if ( off_grid_spiking_ )
     {
-      const bool collocate_completed_off_grid = collocate_spike_data_buffers_(
-        tid, assigned_ranks, send_buffer_position, off_grid_emitted_spike_register_, send_buffer );
-      gather_completed_checker_[ tid ].logical_and( collocate_completed_off_grid );
+      assert( false );  // TODO JV (pt): Fix offgrid spiking
+//      const bool collocate_completed_off_grid = collocate_spike_data_buffers_(
+//        tid, assigned_ranks, send_buffer_position, off_grid_emitted_spike_register_, send_buffer );
+//      gather_completed_checker_[ tid ].logical_and( collocate_completed_off_grid );
     }
 
 #pragma omp barrier
     // Set markers to signal end of valid spikes, and remove spikes
     // from register that have been collected in send buffer.
-    set_end_and_invalid_markers_( assigned_ranks, send_buffer_position, send_buffer );
-    clean_spike_register_( tid );
+    set_end_and_invalid_markers_( send_buffer_position, send_buffer );
 
     // If we do not have any spikes left, set corresponding marker in
     // send buffer.
     if ( gather_completed_checker_.all_true() )
     {
       // Needs to be called /after/ set_end_and_invalid_markers_.
-      set_complete_marker_spike_data_( assigned_ranks, send_buffer_position, send_buffer );
+      set_complete_marker_spike_data_( send_buffer_position, send_buffer );
 #pragma omp barrier
     }
 
@@ -404,7 +400,7 @@ EventDeliveryManager::gather_spike_data_( const thread tid,
 #endif
 
 // Communicate spikes using a single thread.
-#pragma omp single
+#pragma omp single  // TODO JV (pt): Does it matter which thread owns the MPI buffer?
     {
       if ( off_grid_spiking_ )
       {
@@ -435,6 +431,8 @@ EventDeliveryManager::gather_spike_data_( const thread tid,
     }
 #endif
 
+    reset_complete_marker_spike_data_( send_buffer_position, send_buffer );
+
     // Resize mpi buffers, if necessary and allowed.
     if ( gather_completed_checker_.any_false() and kernel().mpi_manager.adaptive_spike_buffers() )
     {
@@ -458,49 +456,47 @@ EventDeliveryManager::gather_spike_data_( const thread tid,
   reset_spike_register_( tid );
 }
 
-template < typename TargetT, typename SpikeDataT >
+// template < typename SpikeDataT >  // TODO JV (pt): Fix template for offgrid spikes
 bool
-EventDeliveryManager::collocate_spike_data_buffers_( const thread tid,
-  const AssignedRanks& assigned_ranks,
-  SendBufferPosition& send_buffer_position,
-  std::vector< std::vector< std::vector< std::vector< TargetT > > > >& emitted_spikes_register,
-  std::vector< SpikeDataT >& send_buffer )
+EventDeliveryManager::collocate_spike_data_buffers_( const thread,
+  SpikeDataSendBufferPosition& send_buffer_position,
+  std::vector< std::vector< std::vector< SpikeData > > >& emitted_spikes_register,
+  std::vector< SpikeData >& send_buffer )
 {
-  reset_complete_marker_spike_data_( assigned_ranks, send_buffer_position, send_buffer );
-
-  // Assume register is empty, will change to false if any entry can
-  // not be fit into the MPI buffer.
+  // Assume register is empty, will change to false if any entry can not be fit into the MPI buffer.
   bool is_spike_register_empty = true;
 
   // First dimension: loop over writing thread
-  for ( auto& emitted_spikes_per_thread : emitted_spikes_register )
+  for ( auto emitted_spikes_per_thread = emitted_spikes_register.begin() + send_buffer_position.write_thread_index; emitted_spikes_per_thread < emitted_spikes_register.end(); ++emitted_spikes_per_thread)
   {
-    // Second dimension: Set the reading thread to the current running thread
-
-    // Third dimension: loop over lags
-    for ( unsigned int lag = 0; lag < ( emitted_spikes_per_thread )[ tid ].size(); ++lag )
+    // Second dimension: loop over target ranks
+    for ( thread rank = send_buffer_position.start_rank; rank < send_buffer_position.end_rank; ++rank )
     {
-      // Fourth dimension: loop over entries
-      for ( auto& emitted_spike : ( emitted_spikes_per_thread )[ tid ][ lag ] )
+      const index send_buffer_rank_pos = rank * kernel().mpi_manager.get_send_recv_count_spike_data_per_rank() + send_buffer_position.positions_for_rank[ rank ];
+
+      size_t num_spike_data = (*emitted_spikes_per_thread)[ rank ].size() - send_buffer_position.write_thread_pos;
+
+      // Check if the whole vector can be fit into the remaining space of the send buffer or if it has to be split into
+      // two pieces, to send the latter one in the next communication round
+      if ( send_buffer_position.positions_for_rank[ rank ] + num_spike_data > kernel().mpi_manager.get_send_recv_count_spike_data_per_rank() )
       {
-        assert( not emitted_spike.is_processed() );
+        num_spike_data = kernel().mpi_manager.get_send_recv_count_spike_data_per_rank() - send_buffer_position.positions_for_rank[ rank ];
+      }
 
-        const thread rank = emitted_spike.get_rank();
+      auto begin = (*emitted_spikes_per_thread)[ rank ].begin() + send_buffer_position.write_thread_pos;
+      std::copy(begin, begin + num_spike_data, send_buffer.begin() + send_buffer_rank_pos );
+      send_buffer_position.write_thread_pos += num_spike_data;
 
-        if ( send_buffer_position.is_chunk_filled( rank ) )
-        {
-          is_spike_register_empty = false;
-          if ( send_buffer_position.are_all_chunks_filled() )
-          {
-            return is_spike_register_empty;
-          }
-        }
-        else
-        {
-          send_buffer[ send_buffer_position.idx( rank ) ].set( emitted_spike, lag );
-          emitted_spike.mark_for_removal();
-          send_buffer_position.increase( rank );
-        }
+      if ( num_spike_data == (*emitted_spikes_per_thread)[ rank ].size() )
+      {
+        // If we sent all data from this write thread to the target rank, free the space again and set position to next
+        // write thread
+        (*emitted_spikes_per_thread)[ rank ].clear();
+        ++send_buffer_position.write_thread_index;
+      }
+      else {
+        is_spike_register_empty = false;
+        break;
       }
     }
   }
@@ -510,14 +506,13 @@ EventDeliveryManager::collocate_spike_data_buffers_( const thread tid,
 
 template < typename SpikeDataT >
 void
-EventDeliveryManager::set_end_and_invalid_markers_( const AssignedRanks& assigned_ranks,
-  const SendBufferPosition& send_buffer_position,
+EventDeliveryManager::set_end_and_invalid_markers_( const SpikeDataSendBufferPosition& send_buffer_position,
   std::vector< SpikeDataT >& send_buffer )
 {
-  for ( thread rank = assigned_ranks.begin; rank < assigned_ranks.end; ++rank )
+  for ( thread rank = send_buffer_position.start_rank; rank < send_buffer_position.end_rank; ++rank )
   {
     // thread-local index of (global) rank
-    if ( send_buffer_position.idx( rank ) > send_buffer_position.begin( rank ) )
+    if ( send_buffer_position.positions_for_rank[ rank ] > 0 )
     {
       // Set end marker at last position that contains a valid
       // entry. This could possibly be the last entry in this
@@ -527,42 +522,38 @@ EventDeliveryManager::set_end_and_invalid_markers_( const AssignedRanks& assigne
       // marker /at the last position in a chunk/ leads effectively
       // to the same behavior: after this entry, the first entry of
       // the next chunk is read, i.e., the next element in the buffer.
-      assert( send_buffer_position.idx( rank ) - 1 < send_buffer_position.end( rank ) );
-      send_buffer[ send_buffer_position.idx( rank ) - 1 ].set_end_marker();
+      send_buffer[ kernel().mpi_manager.get_send_recv_count_spike_data_per_rank() * rank + send_buffer_position.positions_for_rank[ rank ] - 1 ].set_end_marker();
     }
     else
     {
-      assert( send_buffer_position.idx( rank ) == send_buffer_position.begin( rank ) );
-      send_buffer[ send_buffer_position.begin( rank ) ].set_invalid_marker();
+      assert( send_buffer_position.positions_for_rank[ rank ] == 0 );
+      send_buffer[ kernel().mpi_manager.get_send_recv_count_spike_data_per_rank() * rank ] = SpikeDataT();
+      send_buffer[ kernel().mpi_manager.get_send_recv_count_spike_data_per_rank() * rank ].set_invalid_marker();
     }
   }
 }
 
 template < typename SpikeDataT >
 void
-EventDeliveryManager::reset_complete_marker_spike_data_( const AssignedRanks& assigned_ranks,
-  const SendBufferPosition& send_buffer_position,
+EventDeliveryManager::reset_complete_marker_spike_data_( const SpikeDataSendBufferPosition& send_buffer_position,
   std::vector< SpikeDataT >& send_buffer ) const
 {
-  for ( thread rank = assigned_ranks.begin; rank < assigned_ranks.end; ++rank )
+  for ( thread rank = send_buffer_position.start_rank; rank < send_buffer_position.end_rank; ++rank )
   {
-    const thread idx = send_buffer_position.end( rank ) - 1;
-    send_buffer[ idx ].reset_marker();
+    send_buffer[ send_buffer_position.positions_for_rank[rank] - 1 ].reset_marker();
   }
 }
 
 template < typename SpikeDataT >
 void
-EventDeliveryManager::set_complete_marker_spike_data_( const AssignedRanks& assigned_ranks,
-  const SendBufferPosition& send_buffer_position,
+EventDeliveryManager::set_complete_marker_spike_data_( const SpikeDataSendBufferPosition& send_buffer_position,
   std::vector< SpikeDataT >& send_buffer ) const
 {
-  for ( thread target_rank = assigned_ranks.begin; target_rank < assigned_ranks.end; ++target_rank )
+  for ( thread target_rank = send_buffer_position.start_rank; target_rank < send_buffer_position.end_rank; ++target_rank )
   {
-    // Use last entry for completion marker. For possible collision
-    // with end marker, see comment in set_end_and_invalid_markers_.
-    const thread idx = send_buffer_position.end( target_rank ) - 1;
-    send_buffer[ idx ].set_complete_marker();
+    // Use last entry for completion marker. For possible collision with end marker, see comment in
+    // set_end_and_invalid_markers_.
+    send_buffer[ send_buffer_position.positions_for_rank[ target_rank ] - 1 ].set_complete_marker();
   }
 }
 
@@ -603,60 +594,61 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
       continue;
     }
 
-    for ( unsigned int i = 0; i < send_recv_count_spike_data_per_rank; ++i )
+    const SparseNodeArray& local_nodes = kernel().node_manager.get_local_nodes( tid );
+    SparseNodeArray::const_iterator target_node;
+    for ( target_node = local_nodes.begin(); target_node != local_nodes.end(); ++target_node )
     {
-      const SpikeDataT& spike_data = recv_buffer[ rank * send_recv_count_spike_data_per_rank + i ];
-
-      se.set_stamp( prepared_timestamps[ spike_data.get_lag() ] );
-      se.set_offset( spike_data.get_offset() );
-
-      if ( not kernel().connection_manager.use_compressed_spikes() )
+      for ( unsigned int i = 0; i < send_recv_count_spike_data_per_rank; ++i )
       {
-        if ( spike_data.get_tid() == tid )
+        const SpikeDataT& spike_data = recv_buffer[ rank * send_recv_count_spike_data_per_rank + i ];
+
+        se.set_stamp( prepared_timestamps[ spike_data.get_lag() ] );
+        se.set_offset( spike_data.get_offset() );
+
+        if ( not kernel().connection_manager.use_compressed_spikes() )
         {
-          const index syn_id = spike_data.get_syn_id();
+          if ( spike_data.get_target_tid() == tid )
+          {
+            // Here it is important that all incoming spikes are sorted by source node id, as the node can utilize this
+            // to optimize its internal search for the correct source
+            const index source_node_id = kernel().vp_manager.get_remote_node_id( rank, spike_data.get_source_tid(), spike_data.get_source_lid() );
+            se.set_sender_node_id( source_node_id );
+            target_node->get_node()->deliver_event( tid, spike_data.get_syn_id(), cm, se );
+          }
+        }
+        else
+        {
+          assert( false ); // TODO JV: Spike compression
+
+          /*const index syn_id = spike_data.get_syn_id();
+          // for compressed spikes lcid holds the index in the
+          // compressed_spike_data structure
           const index local_target_node_id = spike_data.get_local_target_node_id();
           const index local_target_connection_id = spike_data.get_local_target_connection_id();
+          const std::vector< SpikeData >& compressed_spike_data =
+            kernel().connection_manager.get_compressed_spike_data( syn_id, idx );
+          for ( auto it = compressed_spike_data.cbegin(); it != compressed_spike_data.cend(); ++it )
+          {
+            if ( it->get_tid() == tid )
+            {
+              const index lcid = it->get_lcid();
 
-          // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
-          // only if needed, as this is computationally costly
-          se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id );
-          Node* target_node = kernel().node_manager.thread_lid_to_node( tid, local_target_node_id );
-          target_node->deliver_event( tid, syn_id, local_target_connection_id, cm, se );
+              // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
+              // only if needed, as this is computationally costly
+              se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id );
+              deliver_event_to_node( tid, syn_id, local_target_node_id, local_target_connection_id, cm, se
+          );
+            }
+          }*/
+        }
+
+        // break if this was the last valid entry from this rank
+        if ( spike_data.is_end_marker() )
+        {
+          break;
         }
       }
-      else
-      {
-        assert( false ); // TODO JV: Spike compression
-
-        /*const index syn_id = spike_data.get_syn_id();
-        // for compressed spikes lcid holds the index in the
-        // compressed_spike_data structure
-        // TODO JV: Replace two indices by a single one in target data when using compression (union maybe)
-        const index local_target_node_id = spike_data.get_local_target_node_id();
-        const index local_target_connection_id = spike_data.get_local_target_connection_id();
-        const std::vector< SpikeData >& compressed_spike_data =
-          kernel().connection_manager.get_compressed_spike_data( syn_id, idx );
-        for ( auto it = compressed_spike_data.cbegin(); it != compressed_spike_data.cend(); ++it )
-        {
-          if ( it->get_tid() == tid )
-          {
-            const index lcid = it->get_lcid();
-
-            // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
-            // only if needed, as this is computationally costly
-            se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id ); // TODO JV:
-        What is this for? deliver_event_to_node( tid, syn_id, local_target_node_id, local_target_connection_id, cm, se
-        );
-          }
-        }*/
-      }
-
-      // break if this was the last valid entry from this rank
-      if ( spike_data.is_end_marker() )
-      {
-        break;
-      }
+      target_node->get_node()->reset_last_visited_connections();
     }
   }
 
@@ -859,21 +851,6 @@ nest::EventDeliveryManager::distribute_target_data_buffers_( const thread tid )
   }
 
   return are_others_completed;
-}
-
-void
-EventDeliveryManager::resize_spike_register_( const thread tid )
-{
-  for ( auto& emitted_spikes_for_current_thread : emitted_spikes_register_[ tid ] )
-  {
-    emitted_spikes_for_current_thread.resize( kernel().connection_manager.get_min_delay(), std::vector< Target >() );
-  }
-
-  for ( auto& off_grid_emitted_spike_for_current_thread : off_grid_emitted_spike_register_[ tid ] )
-  {
-    off_grid_emitted_spike_for_current_thread.resize(
-      kernel().connection_manager.get_min_delay(), std::vector< OffGridTarget >() );
-  }
 }
 
 } // of namespace nest

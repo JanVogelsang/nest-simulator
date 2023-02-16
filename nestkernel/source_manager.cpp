@@ -24,7 +24,6 @@
 
 // Includes from nestkernel:
 #include "kernel_manager.h"
-#include "mpi_manager_impl.h"
 #include "target_data.h"
 #include "vp_manager_impl.h"
 
@@ -433,8 +432,6 @@ SourceManager::populate_target_data_fields_( const SourceTablePosition& current_
     {
       // we store the thread index of the source table, not our own tid!
       target_fields.set_tid( current_position.tid );
-      target_fields.set_local_target_node_id( current_position.local_target_node_id );
-      target_fields.set_local_target_connection_id( current_position.local_target_connection_id );
     }
   }
   else // secondary connection, e.g., gap junctions
