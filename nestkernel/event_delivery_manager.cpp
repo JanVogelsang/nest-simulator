@@ -147,6 +147,7 @@ EventDeliveryManager::resize_send_recv_buffers_spike_data_()
 {
   if ( kernel().mpi_manager.get_buffer_size_spike_data() > send_buffer_spike_data_.size() )
   {
+    const size_t cap = send_buffer_spike_data_.capacity();
     send_buffer_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );
     recv_buffer_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );
     // send_buffer_off_grid_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );  // TODO JV (pt): Fix offgrid spiking

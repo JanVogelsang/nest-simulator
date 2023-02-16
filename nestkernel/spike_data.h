@@ -60,6 +60,7 @@ class SpikeData
 
 public:
   SpikeData() = default;
+  ~SpikeData() = default;
   SpikeData( const thread target_tid,
     const synindex syn_id,
     const unsigned int lag,
@@ -276,6 +277,7 @@ private:
 
 public:
   OffGridSpikeData() = default;
+  ~OffGridSpikeData() = default;
   OffGridSpikeData( const thread target_tid,
     const synindex syn_id,
     const unsigned int lag,
