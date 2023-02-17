@@ -138,7 +138,7 @@ SourceManager::clean( const thread tid )
   // thread, we can delete all sources; otherwise we do nothing.
   if ( max_position.tid == tid )
   {
-    // clear all sources all visited nodes
+    // clear all sources of all visited nodes
     for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin() + max_position.local_target_node_id + 1;
           n != thread_local_nodes.end();
           ++n )
@@ -236,7 +236,7 @@ SourceManager::clear( const thread tid )
 
   for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
   {
-    n->get_node()->remove_disabled_connections();
+    n->get_node()->clear_sources();
   }
 
   is_cleared_[ tid ].set_true();
