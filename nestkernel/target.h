@@ -28,6 +28,7 @@
 
 // Includes from nestkernel:
 #include "exceptions.h"
+#include "kernel_manager.h"
 #include "nest_types.h"
 #include "static_assert.h"
 
@@ -81,6 +82,7 @@ private:
   static constexpr uint8_t BITPOS_TID = BITPOS_RANK + NUM_BITS_RANK;
   static constexpr uint8_t BITPOS_SYN_ID = BITPOS_TID + NUM_BITS_TID;
   static constexpr uint8_t BITPOS_PROCESSED_FLAG = BITPOS_SYN_ID + NUM_BITS_SYN_ID;
+  static constexpr uint8_t BITPOS_ADJACENCY_LIST_INDEX = 0U;
 
   using bits_for_processed_flag = StaticAssert< NUM_BITS_PROCESSED_FLAG == 1U >::success;
   using position_of_processed_flag = StaticAssert< BITPOS_PROCESSED_FLAG == 63U >::success;
@@ -94,6 +96,7 @@ private:
   static constexpr uint64_t MASK_TID = generate_bit_mask( NUM_BITS_TID, BITPOS_TID );
   static constexpr uint64_t MASK_SYN_ID = generate_bit_mask( NUM_BITS_SYN_ID, BITPOS_SYN_ID );
   static constexpr uint64_t MASK_PROCESSED_FLAG = generate_bit_mask( NUM_BITS_PROCESSED_FLAG, BITPOS_PROCESSED_FLAG );
+  static constexpr uint64_t MASK_ADJACENCY_LIST_INDEX = generate_bit_mask( NUM_BITS_LOCAL_NODE_ID + NUM_BITS_LOCAL_CONNECTION_ID, BITPOS_ADJACENCY_LIST_INDEX );
 
 public:
   Target();
@@ -107,24 +110,34 @@ public:
   Target& operator=( const Target& );
 
   /**
-   * Set thread-local target neuron ID.
+   * Set thread-local target neuron ID. Only valid when not using adjacency lists.
    */
   void set_local_target_node_id( const index local_target_node_id );
 
   /**
-   * Set node-local target connection ID.
+   * Set node-local target connection ID. Only valid when not using adjacency lists.
    */
   void set_local_target_connection_id( const index local_target_connection_id );
 
   /**
-   * Returns thread-local target neuron ID.
+   * Returns thread-local target neuron ID. Only valid when not using adjacency lists.
    */
   index get_local_target_node_id() const;
 
   /**
-   * Returns node-local target connection ID.
+   * Returns node-local target connection ID. Only valid when not using adjacency lists.
    */
   index get_local_target_connection_id() const;
+
+  /**
+   * Set target adjacency list entry index. Only valid when using adjacency lists.
+   */
+  void set_adjacency_list_index( const index adjacency_list_index );
+
+  /**
+   * Returns target adjacency list entry index. Only valid when using adjacency lists.
+   */
+  index get_adjacency_list_index() const;
 
   /**
    * Set rank.
@@ -228,6 +241,8 @@ inline Target::Target( const thread tid,
 inline void
 Target::set_local_target_node_id( const index local_target_node_id )
 {
+  assert( not kernel().connection_manager.get_use_adjancency_list_delivery() );
+
   assert( local_target_node_id <= MAX_LOCAL_NODE_ID );
   remote_target_id_ = ( remote_target_id_ & ( ~MASK_LOCAL_TARGET_NODE_ID ) )
     | ( static_cast< uint64_t >( local_target_node_id ) << BITPOS_LOCAL_TARGET_NODE_ID );
@@ -236,12 +251,16 @@ Target::set_local_target_node_id( const index local_target_node_id )
 inline index
 Target::get_local_target_node_id() const
 {
+  assert( not kernel().connection_manager.get_use_adjancency_list_delivery() );
+
   return ( ( remote_target_id_ & MASK_LOCAL_TARGET_NODE_ID ) >> BITPOS_LOCAL_TARGET_NODE_ID );
 }
 
 inline void
 Target::set_local_target_connection_id( const index local_target_connection_id )
 {
+  assert( not kernel().connection_manager.get_use_adjancency_list_delivery() );
+
   assert( local_target_connection_id <= MAX_LOCAL_CONNECTION_ID );
   remote_target_id_ = ( remote_target_id_ & ( ~MASK_LOCAL_TARGET_CONNECTION_ID ) )
     | ( static_cast< uint64_t >( local_target_connection_id ) << BITPOS_LOCAL_TARGET_CONNECTION_ID );
@@ -250,7 +269,27 @@ Target::set_local_target_connection_id( const index local_target_connection_id )
 inline index
 Target::get_local_target_connection_id() const
 {
+  assert( not kernel().connection_manager.get_use_adjancency_list_delivery() );
+
   return ( ( remote_target_id_ & MASK_LOCAL_TARGET_CONNECTION_ID ) >> BITPOS_LOCAL_TARGET_CONNECTION_ID );
+}
+
+inline void
+Target::set_adjacency_list_index( const index adjacency_list_index )
+{
+    assert( kernel().connection_manager.get_use_adjancency_list_delivery() );
+
+    assert( adjacency_list_index <= MAX_ADJACENCY_LIST_INDEX );
+    remote_target_id_ = ( remote_target_id_ & ( ~MASK_ADJACENCY_LIST_INDEX ) )
+      | ( static_cast< uint64_t >( adjacency_list_index ) << BITPOS_ADJACENCY_LIST_INDEX );
+}
+
+inline index
+Target::get_adjacency_list_index() const
+{
+  assert( kernel().connection_manager.get_use_adjancency_list_delivery() );
+
+  return ( ( remote_target_id_ & MASK_ADJACENCY_LIST_INDEX ) >> BITPOS_ADJACENCY_LIST_INDEX );
 }
 
 inline void

@@ -306,7 +306,7 @@ class BasicsTestCase(unittest.TestCase):
         sdict = {'synapse_model': 'stdp_synapse'}
         nest.ResetKernel()
         # For co-dependent properties, we use `set()` instead of kernel attributes
-        nest.set(use_compressed_spikes=False, sort_connections_by_source=False)
+        nest.set(use_compressed_spikes=False, use_adjancency_list_delivery=False)
 
         layer = nest.Create('iaf_psc_alpha',
                             positions=nest.spatial.grid(shape=[3, 3],
@@ -354,7 +354,7 @@ class BasicsTestCase(unittest.TestCase):
         sdict = {'synapse_model': 'stdp_synapse'}
         nest.ResetKernel()
         # For co-dependent properties, we use `set()` instead of kernel attributes
-        nest.set(use_compressed_spikes=False, sort_connections_by_source=False)
+        nest.set(use_compressed_spikes=False, use_adjancency_list_delivery=False)
 
         layer = nest.Create('iaf_psc_alpha',
                             positions=nest.spatial.grid(shape=[3, 3],
@@ -401,7 +401,7 @@ class BasicsTestCase(unittest.TestCase):
         sdict = {'synapse_model': 'stdp_synapse'}
 
         # For co-dependent properties, we use `set()` instead of kernel attributes
-        nest.set(use_compressed_spikes=False, sort_connections_by_source=False)
+        nest.set(use_compressed_spikes=False, use_adjancency_list_delivery=False)
 
         layer = nest.Create('iaf_psc_alpha',
                             positions=nest.spatial.grid(shape=[1, 1],
@@ -416,7 +416,7 @@ class BasicsTestCase(unittest.TestCase):
         # Test positions on a grid, we can calculate what they should be
         nest.ResetKernel()
         # For co-dependent properties, we use `set()` instead of kernel attributes
-        nest.set(use_compressed_spikes=False, sort_connections_by_source=False)
+        nest.set(use_compressed_spikes=False, use_adjancency_list_delivery=False)
 
         x_extent = 1.
         y_extent = 1.
@@ -453,7 +453,7 @@ class BasicsTestCase(unittest.TestCase):
         # when creating the layer
         nest.ResetKernel()
         # For co-dependent properties, we use `set()` instead of kernel attributes
-        nest.set(use_compressed_spikes=False, sort_connections_by_source=False)
+        nest.set(use_compressed_spikes=False, use_adjancency_list_delivery=False)
 
         positions = [(np.random.uniform(-0.5, 0.5),
                       np.random.uniform(-0.5, 0.5)) for _ in range(50)]
@@ -477,7 +477,7 @@ class BasicsTestCase(unittest.TestCase):
         sdict = {'synapse_model': 'stdp_synapse'}
 
         # For co-dependent properties, we use `set()` instead of kernel attributes
-        nest.set(use_compressed_spikes=False, sort_connections_by_source=False)
+        nest.set(use_compressed_spikes=False, use_adjancency_list_delivery=False)
 
         layer = nest.Create('iaf_psc_alpha',
                             positions=nest.spatial.grid(shape=[1, 1],
@@ -492,7 +492,7 @@ class BasicsTestCase(unittest.TestCase):
         # Test positions on a grid, we can calculate what they should be
         nest.ResetKernel()
         # For co-dependent properties, we use `set()` instead of kernel attributes
-        nest.set(use_compressed_spikes=False, sort_connections_by_source=False)
+        nest.set(use_compressed_spikes=False, use_adjancency_list_delivery=False)
 
         x_extent = 1.
         y_extent = 1.
@@ -529,7 +529,7 @@ class BasicsTestCase(unittest.TestCase):
         # when creating the layer
         nest.ResetKernel()
         # For co-dependent properties, we use `set()` instead of kernel attributes
-        nest.set(use_compressed_spikes=False, sort_connections_by_source=False)
+        nest.set(use_compressed_spikes=False, use_adjancency_list_delivery=False)
 
         positions = [(np.random.uniform(-0.5, 0.5),
                       np.random.uniform(-0.5, 0.5)) for _ in range(50)]

@@ -67,7 +67,7 @@ ConnectionManager::ConnectionManager()
   , keep_source_table_( true )
   , connections_have_changed_( false )
   , get_connections_has_been_called_( false )
-  , sort_connections_by_source_( false ) // TODO JV
+  , use_adjancency_list_delivery_( false )
   , use_compressed_spikes_( false )      // TODO JV
   , has_primary_connections_( false )
   , check_primary_connections_()
@@ -92,7 +92,7 @@ ConnectionManager::initialize()
 {
   const thread num_threads = kernel().vp_manager.get_num_threads();
   secondary_recv_buffer_pos_.resize( num_threads );
-  sort_connections_by_source_ = true;
+  use_adjancency_list_delivery_ = true;
   connections_have_changed_ = false;
 
   compressed_spike_data_.resize( 0 );
@@ -156,18 +156,18 @@ ConnectionManager::set_status( const DictionaryDatum& d )
       "to false." );
   }
 
-  updateValue< bool >( d, names::sort_connections_by_source, sort_connections_by_source_ );
-  if ( not sort_connections_by_source_ and kernel().sp_manager.is_structural_plasticity_enabled() )
+  updateValue< bool >( d, names::use_adjancency_list_delivery, use_adjancency_list_delivery_ );
+  if ( not use_adjancency_list_delivery_ and kernel().sp_manager.is_structural_plasticity_enabled() )
   {
     throw KernelException(
-      "If structural plasticity is enabled, sort_connections_by_source can not "
+      "If structural plasticity is enabled, use_adjancency_list_delivery can not "
       "be set to false." );
   }
 
   updateValue< bool >( d, names::use_compressed_spikes, use_compressed_spikes_ );
-  if ( use_compressed_spikes_ and not sort_connections_by_source_ )
+  if ( use_compressed_spikes_ and not use_adjancency_list_delivery_ )
   {
-    throw KernelException( "Spike compression requires sort_connections_by_source to be true." );
+    throw KernelException( "Spike compression requires use_adjancency_list_delivery to be true." );
   }
 
   //  Need to update the saved values if we have changed the delay bounds.
@@ -193,7 +193,7 @@ ConnectionManager::get_status( DictionaryDatum& dict )
   const size_t n = get_num_connections();
   def< long >( dict, names::num_connections, n );
   def< bool >( dict, names::keep_source_table, keep_source_table_ );
-  def< bool >( dict, names::sort_connections_by_source, sort_connections_by_source_ );
+  def< bool >( dict, names::use_adjancency_list_delivery, use_adjancency_list_delivery_ );
   def< bool >( dict, names::use_compressed_spikes, use_compressed_spikes_ );
 
   def< double >( dict, names::time_construction_connect, sw_construction_connect.elapsed() );

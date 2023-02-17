@@ -31,6 +31,7 @@
 #include "manager_interface.h"
 
 // Includes from nestkernel:
+#include "adjacency_list.h"
 #include "event.h"
 #include "mpi_manager.h" // OffGridSpike
 #include "nest_types.h"
@@ -415,6 +416,11 @@ private:
   bool decrease_buffer_size_spike_data_;
 
   PerThreadBoolIndicator gather_completed_checker_;
+
+  /**
+   * Adjacency list to route spikes from source nodes to all corresponding local target nodes per thread.
+   */
+   AdjacencyList adjacency_list;
 
 #ifdef TIMER_DETAILED
   // private stop watches for benchmarking purposes

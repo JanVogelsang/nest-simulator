@@ -271,7 +271,7 @@ public:
 
     index connection_index = it - begin;
 
-    // assert( kernel().connection_manager.get_sort_connections_by_source() );
+    // assert( kernel().connection_manager.get_use_adjancency_list_delivery() );
     assert( false );
     // TODO JV: This assumes the sources and connections are sorted by source node id
     while ( it != end && it->get_node_id() == source_node_id )

@@ -750,10 +750,10 @@ nest::SPManager::enable_structural_plasticity()
       "Structural plasticity can not be enabled if keep_source_table has been "
       "set to false." );
   }
-  if ( not kernel().connection_manager.get_sort_connections_by_source() )
+  if ( not kernel().connection_manager.get_use_adjancency_list_delivery() )
   {
     throw KernelException(
-      "Structural plasticity can not be enabled if sort_connections_by_source "
+      "Structural plasticity can not be enabled if use_adjancency_list_delivery "
       "has been set to false." );
   }
   structural_plasticity_enabled_ = true;

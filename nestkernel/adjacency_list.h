@@ -32,6 +32,7 @@
 // Includes from nestkernel:
 #include "nest_time.h"
 #include "nest_types.h"
+#include "static_assert.h"
 
 namespace nest
 {
@@ -41,12 +42,15 @@ class Event;
 /**
  *
  */
-class AdjacencyListTarget
+struct AdjacencyListTarget
 {
-  unsigned short neuron_index_;
-  unsigned short synapse_index_;
+  unsigned short neuron_index;
+  unsigned short synapse_index;
   // delay needs 21 bits
 };
+
+//! check legal size
+using success_syn_id_delay_data_size = StaticAssert< sizeof( AdjacencyListTarget ) == 4 >::success;
 
 /**
  * Maps incoming spikes to thread-local target neurons and the corresponding node-local synapse over which the spike

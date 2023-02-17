@@ -439,7 +439,7 @@ extern const Name size_of;
 extern const Name soma_curr;
 extern const Name soma_exc;
 extern const Name soma_inh;
-extern const Name sort_connections_by_source;
+extern const Name use_adjancency_list_delivery;
 extern const Name source;
 extern const Name spherical;
 extern const Name spike_dependent_threshold;

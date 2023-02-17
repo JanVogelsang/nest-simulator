@@ -286,7 +286,7 @@ class NestModule(types.ModuleType):
     max_num_syn_models = KernelAttribute(
         "int", "Maximal number of synapse models supported", readonly=True
     )
-    sort_connections_by_source = KernelAttribute(
+    use_adjancency_list_delivery = KernelAttribute(
         "bool",
         (
             "Whether to sort connections by their source; increases"
@@ -326,7 +326,7 @@ class NestModule(types.ModuleType):
             + " multiple threads of a process, this switch makes sure that only"
             + " a single packet is sent to the process instead of one packet"
             + " per target thread; requires"
-            + " ``nest.sort_connections_by_source = True``"
+            + " ``nest.use_adjancency_list_delivery = True``"
         ),
         default=True,
     )
