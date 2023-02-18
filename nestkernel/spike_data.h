@@ -77,29 +77,35 @@ protected:
 public:
   SpikeData();
   SpikeData( const SpikeData& rhs );
+#ifndef USE_ADJACENCY_LIST
   SpikeData( const thread tid,
     const synindex syn_id,
     const index local_target_node_id,
     const index local_target_connection_id,
     const unsigned int lag );
+#else
   SpikeData( const thread tid,
     const synindex syn_id,
     const index adjacency_list_index,
     const unsigned int lag );
 
   SpikeData& operator=( const SpikeData& rhs );
+#endif
 
+#ifndef USE_ADJACENCY_LIST
   void set( const thread tid,
     const synindex syn_id,
     const index local_target_node_id,
     const index local_target_connection_id,
     const unsigned int lag,
     const double offset );
+#else
   void set( const thread tid,
     const synindex syn_id,
     const index adjacency_list_index,
     const unsigned int lag,
     const double offset );
+#endif
 
   template < class TargetT >
   void set( const TargetT& target, const unsigned int lag );
@@ -113,6 +119,11 @@ public:
    * Returns node-local target connection ID.
    */
   index get_local_target_connection_id() const;
+
+  /**
+   *
+   */
+   index get_adjacency_list_index() const;
 
   /**
    * Returns lag in min-delay interval.
@@ -187,6 +198,7 @@ inline SpikeData::SpikeData( const SpikeData& rhs )
 {
 }
 
+#ifndef USE_ADJACENCY_LIST
 inline SpikeData::SpikeData( const thread tid,
   const synindex syn_id,
   const index local_target_node_id,
@@ -200,9 +212,8 @@ inline SpikeData::SpikeData( const thread tid,
     tid,
     syn_id }
 {
-  assert( not kernel().connection_manager.get_use_adjancency_list_delivery() );
 }
-
+#else
 inline SpikeData::SpikeData( const thread tid,
   const synindex syn_id,
   const index adjacency_list_index,
@@ -214,8 +225,8 @@ inline SpikeData::SpikeData( const thread tid,
     tid,
     syn_id }
 {
-  assert( kernel().connection_manager.get_use_adjancency_list_delivery() );
 }
+#endif
 
 inline SpikeData&
 SpikeData::operator=( const SpikeData& rhs )
@@ -228,6 +239,7 @@ SpikeData::operator=( const SpikeData& rhs )
   return *this;
 }
 
+#ifndef USE_ADJACENCY_LIST
 inline void
 SpikeData::set( const thread tid,
   const synindex syn_id,
@@ -236,8 +248,6 @@ SpikeData::set( const thread tid,
   const unsigned int lag,
   const double )
 {
-  assert( not kernel().connection_manager.get_use_adjancency_list_delivery() );
-
   assert( 0 <= tid );
   assert( tid <= MAX_TID );
   assert( syn_id <= MAX_SYN_ID );
@@ -252,7 +262,7 @@ SpikeData::set( const thread tid,
   adjacency_list_data_.tid = tid;
   adjacency_list_data_.syn_id = syn_id;
 }
-
+#else
 inline void
 SpikeData::set( const thread tid,
   const synindex syn_id,
@@ -260,8 +270,6 @@ SpikeData::set( const thread tid,
   const unsigned int lag,
   const double )
 {
-  assert( kernel().connection_manager.get_use_adjancency_list_delivery() );
-
   assert( 0 <= tid );
   assert( tid <= MAX_TID );
   assert( syn_id <= MAX_SYN_ID );
@@ -274,6 +282,7 @@ SpikeData::set( const thread tid,
   adjacency_list_data_.tid = tid;
   adjacency_list_data_.syn_id = syn_id;
 }
+#endif
 
 template < class TargetT >
 inline void
@@ -290,6 +299,7 @@ SpikeData::set( const TargetT& target, const unsigned int lag )
   //  adjacency_list_data_.syn_id = target.get_syn_id();
 }
 
+#ifndef USE_ADJACENCY_LIST
 inline index
 SpikeData::get_local_target_node_id() const
 {
@@ -301,6 +311,13 @@ SpikeData::get_local_target_connection_id() const
 {
   return single_target_data_.local_target_connection_id;
 }
+#else
+inline index
+  SpikeData::get_adjacency_list_index() const
+{
+  return adjacency_list_data_.adjacency_list_index;
+}
+#endif
 
 inline unsigned int
 SpikeData::get_lag() const
@@ -375,6 +392,7 @@ private:
 
 public:
   OffGridSpikeData();
+#ifndef USE_ADJACENCY_LIST
   OffGridSpikeData( const thread tid,
     const synindex syn_id,
     const index local_target_node_id,
@@ -387,11 +405,13 @@ public:
     const index local_target_connection_id,
     const unsigned int lag,
     const double offset );
+#else
   void set( const thread tid,
     const synindex syn_id,
     const index adjacency_list_index,
     const unsigned int lag,
     const double offset );
+#endif
 
   template < class TargetT >
   void set( const TargetT& target, const unsigned int lag );
@@ -407,6 +427,7 @@ inline OffGridSpikeData::OffGridSpikeData()
 {
 }
 
+#ifndef USE_ADJACENCY_LIST
 inline OffGridSpikeData::OffGridSpikeData( const thread tid,
   const synindex syn_id,
   const index local_target_node_id,
@@ -418,7 +439,6 @@ inline OffGridSpikeData::OffGridSpikeData( const thread tid,
 {
 }
 
-
 inline void
 OffGridSpikeData::set( const thread tid,
   const synindex syn_id,
@@ -427,8 +447,6 @@ OffGridSpikeData::set( const thread tid,
   const unsigned int lag,
   const double offset )
 {
-  assert( not kernel().connection_manager.get_use_adjancency_list_delivery() );
-
   assert( tid <= MAX_TID );
   assert( syn_id <= MAX_SYN_ID );
   assert( local_target_node_id <= MAX_LOCAL_NODE_ID );
@@ -443,7 +461,7 @@ OffGridSpikeData::set( const thread tid,
   adjacency_list_data_.syn_id = syn_id;
   offset_ = offset;
 }
-
+#else
 inline void
 OffGridSpikeData::set( const thread tid,
   const synindex syn_id,
@@ -451,8 +469,6 @@ OffGridSpikeData::set( const thread tid,
   const unsigned int lag,
   const double offset )
 {
-  assert( not kernel().connection_manager.get_use_adjancency_list_delivery() );
-
   assert( tid <= MAX_TID );
   assert( syn_id <= MAX_SYN_ID );
   assert( adjacency_list_index <= MAX_ADJACENCY_LIST_INDEX );
@@ -465,6 +481,7 @@ OffGridSpikeData::set( const thread tid,
   adjacency_list_data_.syn_id = syn_id;
   offset_ = offset;
 }
+#endif
 
 template < class TargetT >
 inline void

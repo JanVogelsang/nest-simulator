@@ -355,7 +355,7 @@ def
 
 ResetKernel
 
-<< /use_adjancency_list_delivery false /use_compressed_spikes false >> SetKernelStatus
+<< /use_compressed_spikes false >> SetKernelStatus
 
 /sources src_layer CreateLayer def
 /targets tgt_layer CreateLayer def

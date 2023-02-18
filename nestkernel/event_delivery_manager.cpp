@@ -876,4 +876,11 @@ EventDeliveryManager::resize_spike_register_( const thread tid )
   }
 }
 
+void
+EventDeliveryManager::add_connection( const thread tid, const index source_node_id, const index target_node_id, const index target_connection_id )
+{
+  adjacency_list.add_target( tid, source_node_id, target_node_id, target_connection_id );
+}
+
+
 } // of namespace nest

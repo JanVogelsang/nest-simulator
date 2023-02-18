@@ -238,6 +238,11 @@ public:
    */
   virtual void reset_timers_for_dynamics();
 
+  /**
+   * TODO JV
+   */
+   void add_connection( const thread tid, const index source_node_id, const index target_node_id, const index target_connection_id );
+
 private:
   template < typename SpikeDataT >
   void gather_spike_data_( const thread tid,

@@ -415,7 +415,6 @@ const Name size_of( "sizeof" );
 const Name soma_curr( "soma_curr" );
 const Name soma_exc( "soma_exc" );
 const Name soma_inh( "soma_inh" );
-const Name use_adjancency_list_delivery( "use_adjancency_list_delivery" );
 const Name source( "source" );
 const Name spherical( "spherical" );
 const Name spike_dependent_threshold( "spike_dependent_threshold" );

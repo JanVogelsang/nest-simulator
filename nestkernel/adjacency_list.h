@@ -24,6 +24,7 @@
 #define NEST_ADJACENCY_LIST_H
 
 // C++ includes:
+#include <map>
 #include <vector>
 
 // Includes from libnestutil:
@@ -44,9 +45,11 @@ class Event;
  */
 struct AdjacencyListTarget
 {
-  unsigned short neuron_index;
-  unsigned short synapse_index;
-  // delay needs 21 bits
+  unsigned short local_target_node_id;  // : NUM_BITS_LOCAL_NODE_ID;
+  unsigned short local_target_connection_id;  // : NUM_BITS_LOCAL_CONNECTION_ID;
+  // delay needs 21 bits, if more than 4 bytes are needed here, change from unsigned int to size_t
+
+  AdjacencyListTarget(const index local_target_node_id, const index local_target_connection_id) : local_target_node_id(local_target_node_id), local_target_connection_id(local_target_connection_id) {}
 };
 
 //! check legal size
@@ -59,12 +62,27 @@ using success_syn_id_delay_data_size = StaticAssert< sizeof( AdjacencyListTarget
 class AdjacencyList
 {
   /**
+   * Intermediate structure to map source neurons to the corresponding index in the adjacency_list for each thread.
+   * Deleted after communication of targets to pre-synaptic processes.
+   */
+  std::vector< std::map< index, index > > sources_;
+
+  /**
    * Stores all targets for each source neuron with targets on this process.
    * Two dimensional object:
    *   - first dim: threads
-   *   - second dim: targets of source neuron
+   *   - second dim: source neuron
+   *   - third dim: targets of source neuron
    */
-  std::vector< std::vector< AdjacencyListTarget > > adjacency_list_;
+  std::vector< std::vector< std::vector < AdjacencyListTarget > > > adjacency_list_;
+
+public:
+  void add_target( const thread tid, const index source_node_id, const index target_node_id, const index target_connection_id );
+
+  void clear_sources()
+  {
+    std::vector< std::map< index, index > >().swap( sources_ );
+  }
 };
 
 } // nest

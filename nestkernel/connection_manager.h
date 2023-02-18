@@ -316,13 +316,6 @@ public:
 
   void add_target( const thread tid, const thread target_rank, const TargetData& target_data );
 
-  /**
-   * Return use_adjancency_list_delivery_, which indicates whether
-   * connections_ and source_table_ should be sorted according to
-   * source node ID.
-   */
-  bool get_use_adjancency_list_delivery() const;
-
   bool use_compressed_spikes() const;
 
   /**
@@ -529,14 +522,10 @@ private:
   //! true if GetConnections has been called.
   bool get_connections_has_been_called_;
 
-  //! Whether to sort connections by source node ID.
-  bool use_adjancency_list_delivery_;
-
   //! Whether to use spike compression; if a neuron has targets on
   //! multiple threads of a process, this switch makes sure that only
   //! a single packet is sent to the process instead of one packet per
-  //! target thread; requires use_adjancency_list_delivery_ = true; for
-  //! more details see the discussion and sketch in
+  //! target thread; for more details see the discussion and sketch in
   //! https://github.com/nest/nest-simulator/pull/1338
   bool use_compressed_spikes_;
 
@@ -640,12 +629,6 @@ inline bool
 ConnectionManager::secondary_connections_exist() const
 {
   return secondary_connections_exist_;
-}
-
-inline bool
-ConnectionManager::get_use_adjancency_list_delivery() const
-{
-  return use_adjancency_list_delivery_;
 }
 
 inline bool
