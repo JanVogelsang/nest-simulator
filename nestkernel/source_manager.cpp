@@ -416,13 +416,11 @@ SourceManager::populate_target_data_fields_( const SourceTablePosition& current_
                       .find( current_source.get_node_id() );
       if ( it_idx != compressed_spike_data_map_.at( current_position.tid ).at( current_position.syn_id ).end() )
       {
-        // WARNING: no matter how tempting, do not try to remove this
-        // entry from the compressed_spike_data_map_; if the MPI buffer
-        // is already full, this entry will need to be communicated the
-        // next MPI comm round, which, naturally, is not possible if it
-        // has been removed
+        // WARNING: no matter how tempting, do not try to remove this entry from the compressed_spike_data_map_; if the
+        // MPI buffer is already full, this entry will need to be communicated the next MPI comm round, which,
+        // naturally, is not possible if it has been removed
         // TODO JV: Spike compression
-        // target_fields.set_lcid( it_idx->second );
+        // target_fields.set_compressed_index( it_idx->second );
       }
       else // another thread is responsible for communicating this compressed source
       {

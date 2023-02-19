@@ -67,8 +67,8 @@ ConnectionManager::ConnectionManager()
   , keep_source_table_( true )
   , connections_have_changed_( false )
   , get_connections_has_been_called_( false )
-  , sort_connections_by_source_( false ) // TODO JV
-  , use_compressed_spikes_( false )      // TODO JV
+  , sort_connections_by_source_( false )
+  , use_compressed_spikes_( false )
   , has_primary_connections_( false )
   , check_primary_connections_()
   , secondary_connections_exist_( false )
@@ -1598,8 +1598,7 @@ ConnectionManager::collect_compressed_spike_data( const thread tid )
 
   if ( use_compressed_spikes_ )
   {
-    assert( false ); // TODO JV (pt): Compressed spikes
-    /*assert( sort_connections_by_source_ );
+    assert( sort_connections_by_source_ );
 
 #pragma omp single
     {
@@ -1611,7 +1610,7 @@ ConnectionManager::collect_compressed_spike_data( const thread tid )
 #pragma omp single
     {
       source_table_.fill_compressed_spike_data( compressed_spike_data_ );
-    } // of omp single; implicit barrier*/
+    } // of omp single; implicit barrier
   }
 }
 

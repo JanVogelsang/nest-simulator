@@ -33,11 +33,20 @@
 
 namespace nest
 {
+
+struct SingleTargetData {
+  unsigned int local_target_node_id : NUM_BITS_LOCAL_NODE_ID;
+  unsigned int local_target_connection_id : NUM_BITS_LOCAL_CONNECTION_ID;
+};
+
 class TargetDataFields
 {
 private:
-  unsigned int local_target_node_id_ : NUM_BITS_LOCAL_NODE_ID;
-  unsigned int local_target_connection_id_ : NUM_BITS_LOCAL_CONNECTION_ID;
+  union {
+    SingleTargetData single_data_;
+    unsigned int compressed_index_ : NUM_BITS_COMPRESSED_ID;
+  };
+
   unsigned int tid_ : NUM_BITS_TID;
   unsigned int syn_id_ : NUM_BITS_SYN_ID;
 
@@ -64,6 +73,15 @@ public:
    */
   index get_local_target_connection_id() const;
 
+  /**
+   * Set index in compressed spike data structure.
+   */
+  void set_compressed_index( const index compressed_index );
+
+  /**
+   * Returns index in compressed spike data structure.
+   */
+  index get_compressed_index() const;
 
   /**
    * Sets the target ID.
@@ -92,25 +110,35 @@ using success_target_data_fields_size = StaticAssert< sizeof( TargetDataFields )
 inline void
 TargetDataFields::set_local_target_node_id( const index local_target_node_id )
 {
-  local_target_node_id_ = local_target_node_id;
+  single_data_.local_target_node_id = local_target_node_id;
 }
 
 inline index
 TargetDataFields::get_local_target_node_id() const
 {
-  return local_target_node_id_;
+  return single_data_.local_target_node_id;
 }
 
 inline void
 TargetDataFields::set_local_target_connection_id( const index local_target_connection_id )
 {
-  local_target_connection_id_ = local_target_connection_id;
+  single_data_.local_target_connection_id = local_target_connection_id;
 }
 
 inline index
 TargetDataFields::get_local_target_connection_id() const
 {
-  return local_target_connection_id_;
+  return single_data_.local_target_connection_id;
+}
+
+inline void TargetDataFields::set_compressed_index( const index compressed_index )
+{
+  compressed_index_ = compressed_index;
+}
+
+inline index TargetDataFields::get_compressed_index() const
+{
+  return compressed_index_;
 }
 
 inline void

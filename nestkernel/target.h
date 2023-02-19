@@ -77,6 +77,7 @@ private:
 
   static constexpr uint8_t BITPOS_LOCAL_TARGET_NODE_ID = 0U;
   static constexpr uint8_t BITPOS_LOCAL_TARGET_CONNECTION_ID = NUM_BITS_LOCAL_NODE_ID;
+  static constexpr uint8_t BITPOS_COMPRESSED_INDEX = 0U;
   static constexpr uint8_t BITPOS_RANK = BITPOS_LOCAL_TARGET_CONNECTION_ID + NUM_BITS_LOCAL_CONNECTION_ID;
   static constexpr uint8_t BITPOS_TID = BITPOS_RANK + NUM_BITS_RANK;
   static constexpr uint8_t BITPOS_SYN_ID = BITPOS_TID + NUM_BITS_TID;
@@ -90,6 +91,7 @@ private:
     generate_bit_mask( NUM_BITS_LOCAL_NODE_ID, BITPOS_LOCAL_TARGET_NODE_ID );
   static constexpr uint64_t MASK_LOCAL_TARGET_CONNECTION_ID =
     generate_bit_mask( NUM_BITS_LOCAL_CONNECTION_ID, BITPOS_LOCAL_TARGET_CONNECTION_ID );
+  static constexpr uint64_t MASK_COMPRESSED_INDEX = generate_bit_mask( NUM_BITS_LOCAL_NODE_ID + NUM_BITS_LOCAL_CONNECTION_ID, BITPOS_COMPRESSED_INDEX );
   static constexpr uint64_t MASK_RANK = generate_bit_mask( NUM_BITS_RANK, BITPOS_RANK );
   static constexpr uint64_t MASK_TID = generate_bit_mask( NUM_BITS_TID, BITPOS_TID );
   static constexpr uint64_t MASK_SYN_ID = generate_bit_mask( NUM_BITS_SYN_ID, BITPOS_SYN_ID );
@@ -103,6 +105,10 @@ public:
     const synindex syn_id,
     const index local_target_node_id,
     const index local_target_connection_id );
+  Target( const thread tid,
+    const thread rank,
+    const synindex syn_id,
+    const index compressed_index );
 
   Target& operator=( const Target& );
 
@@ -125,6 +131,16 @@ public:
    * Returns node-local target connection ID.
    */
   index get_local_target_connection_id() const;
+
+  /**
+   * Set index in compressed spike data structure.
+   */
+  void set_compressed_index( const index compressed_index );
+
+  /**
+   * Returns index in compressed spike data structure.
+   */
+  index get_compressed_index() const;
 
   /**
    * Set rank.
@@ -225,6 +241,24 @@ inline Target::Target( const thread tid,
   set_status( TARGET_ID_UNPROCESSED ); // initialize
 }
 
+inline Target::Target( const thread tid,
+  const thread rank,
+  const synindex syn_id,
+  const index compressed_index )
+  : remote_target_id_( 0 )
+{
+  assert( tid <= MAX_TID );
+  assert( rank <= MAX_RANK );
+  assert( syn_id <= MAX_SYN_ID );
+  assert( compressed_index <= MAX_COMPRESSED_ID );
+
+  set_compressed_index( compressed_index );
+  set_rank( rank );
+  set_tid( tid );
+  set_syn_id( syn_id );
+  set_status( TARGET_ID_UNPROCESSED ); // initialize
+}
+
 inline void
 Target::set_local_target_node_id( const index local_target_node_id )
 {
@@ -251,6 +285,20 @@ inline index
 Target::get_local_target_connection_id() const
 {
   return ( ( remote_target_id_ & MASK_LOCAL_TARGET_CONNECTION_ID ) >> BITPOS_LOCAL_TARGET_CONNECTION_ID );
+}
+
+inline void
+Target::set_compressed_index( const index compressed_index )
+{
+  assert( compressed_index <= MAX_COMPRESSED_ID );
+  remote_target_id_ = ( remote_target_id_ & ( ~MASK_COMPRESSED_INDEX ) )
+    | ( static_cast< uint64_t >( compressed_index ) << BITPOS_COMPRESSED_INDEX );
+}
+
+inline index
+Target::get_compressed_index() const
+{
+  return ( ( remote_target_id_ & MASK_COMPRESSED_INDEX ) >> BITPOS_COMPRESSED_INDEX );
 }
 
 inline void

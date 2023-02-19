@@ -27,7 +27,6 @@
 #include <numeric>   // accumulate
 
 // Includes from nestkernel:
-#include "connection_manager.h"
 #include "kernel_manager.h"
 #include "send_buffer_position.h"
 #include "source.h"
@@ -627,29 +626,23 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
       }
       else
       {
-        assert( false ); // TODO JV: Spike compression
-
-        /*const index syn_id = spike_data.get_syn_id();
-        // for compressed spikes lcid holds the index in the
-        // compressed_spike_data structure
-        // TODO JV: Replace two indices by a single one in target data when using compression (union maybe)
-        const index local_target_node_id = spike_data.get_local_target_node_id();
-        const index local_target_connection_id = spike_data.get_local_target_connection_id();
+        const index syn_id = spike_data.get_syn_id();
         const std::vector< SpikeData >& compressed_spike_data =
-          kernel().connection_manager.get_compressed_spike_data( syn_id, idx );
+          kernel().connection_manager.get_compressed_spike_data( syn_id, spike_data.get_compressed_index() );
         for ( auto it = compressed_spike_data.cbegin(); it != compressed_spike_data.cend(); ++it )
         {
           if ( it->get_tid() == tid )
           {
-            const index lcid = it->get_lcid();
+            const index local_target_node_id = it->get_local_target_node_id();
+            const index local_target_connection_id = it->get_local_target_connection_id();
 
             // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
             // only if needed, as this is computationally costly
-            se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id ); // TODO JV:
-        What is this for? deliver_event_to_node( tid, syn_id, local_target_node_id, local_target_connection_id, cm, se
-        );
+            se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id ); // TODO JV: What is this for?
+            Node* target_node = kernel().node_manager.thread_lid_to_node( tid, local_target_node_id );
+            target_node->deliver_event( tid, syn_id, local_target_connection_id, cm, se );
           }
-        }*/
+        }
       }
 
       // break if this was the last valid entry from this rank

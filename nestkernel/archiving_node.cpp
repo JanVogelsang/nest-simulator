@@ -90,7 +90,6 @@ ArchivingNode::register_stdp_connection( double t_first_read, double delay )
   // connections afterwards without leaving spikes in the history.
   // For details see bug #218. MH 08-04-22
 
-  // TODO JV: Remove this block
   for ( std::deque< histentry >::iterator runner = history_.begin();
         runner != history_.end() and ( t_first_read - runner->t_ > -1.0 * kernel().connection_manager.get_stdp_eps() );
         ++runner )
