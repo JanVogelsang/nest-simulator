@@ -257,10 +257,10 @@ SpikeData::set( const thread tid,
 
   single_target_data_.local_target_node_id = local_target_node_id;
   single_target_data_.local_target_connection_id = local_target_connection_id;
-  adjacency_list_data_.marker = SPIKE_DATA_ID_DEFAULT;
-  adjacency_list_data_.lag = lag;
-  adjacency_list_data_.tid = tid;
-  adjacency_list_data_.syn_id = syn_id;
+  single_target_data_.marker = SPIKE_DATA_ID_DEFAULT;
+  single_target_data_.lag = lag;
+  single_target_data_.tid = tid;
+  single_target_data_.syn_id = syn_id;
 }
 #else
 inline void
@@ -293,10 +293,10 @@ SpikeData::set( const TargetT& target, const unsigned int lag )
   //  assert( lag < MAX_LAG );
   //  single_target_data_.node_id = target.get_local_target_node_id();
   //  single_target_data_.connection_id = target.get_local_target_connection_id();
-  //  adjacency_list_data_.marker = SPIKE_DATA_ID_DEFAULT;
-  //  adjacency_list_data_.lag = lag;
-  //  adjacency_list_data_.tid = target.get_tid();
-  //  adjacency_list_data_.syn_id = target.get_syn_id();
+  //  single_target_data_.marker = SPIKE_DATA_ID_DEFAULT;
+  //  single_target_data_.lag = lag;
+  //  single_target_data_.tid = target.get_tid();
+  //  single_target_data_.syn_id = target.get_syn_id();
 }
 
 #ifndef USE_ADJACENCY_LIST

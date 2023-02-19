@@ -36,14 +36,19 @@ namespace nest
 class TargetDataFields
 {
 private:
+#ifndef USE_ADJACENCY_LIST
   unsigned int local_target_node_id_ : NUM_BITS_LOCAL_NODE_ID;
   unsigned int local_target_connection_id_ : NUM_BITS_LOCAL_CONNECTION_ID;
+#else
+  unsigned int adjacency_list_index_ : NUM_BITS_ADJACENCY_INDEX;
+#endif
   unsigned int tid_ : NUM_BITS_TID;
   unsigned int syn_id_ : NUM_BITS_SYN_ID;
 
 public:
   // Members must be set explicitly -- no defaults
 
+#ifndef USE_ADJACENCY_LIST
   /**
    * Set thread-local target neuron ID.
    */
@@ -63,7 +68,17 @@ public:
    * Returns node-local target connection ID.
    */
   index get_local_target_connection_id() const;
+#else
+  /**
+   * Set node-local target connection ID.
+   */
+  void set_adjacency_list_index( const index adjacency_list_index );
 
+  /**
+   * Returns thread-local target neuron ID.
+   */
+  index get_adjacency_list_index() const;
+#endif
 
   /**
    * Sets the target ID.
@@ -89,6 +104,7 @@ public:
 //! check legal size
 using success_target_data_fields_size = StaticAssert< sizeof( TargetDataFields ) == 8 >::success;
 
+#ifndef USE_ADJACENCY_LIST
 inline void
 TargetDataFields::set_local_target_node_id( const index local_target_node_id )
 {
@@ -112,6 +128,19 @@ TargetDataFields::get_local_target_connection_id() const
 {
   return local_target_connection_id_;
 }
+#else
+inline index
+TargetDataFields::get_adjacency_list_index() const
+{
+  return adjacency_list_index_;
+}
+
+inline void
+TargetDataFields::set_adjacency_list_index( const index adjacency_list_index )
+{
+  adjacency_list_index_ = adjacency_list_index;
+}
+#endif
 
 inline void
 TargetDataFields::set_tid( const thread tid )
