@@ -617,6 +617,13 @@ function( NEST_PROCESS_TARGET_BITS_SPLIT )
   endif()
 endfunction()
 
+function( NEST_PROCESS_USE_ADJACENCY_LIST )
+  set( USE_ADJACENCY_LIST OFF PARENT_SCOPE )
+  if ( ${use-adjacency-list} STREQUAL "ON" )
+    set( USE_ADJACENCY_LIST ON PARENT_SCOPE )
+  endif ()
+endfunction()
+
 function( NEST_DEFAULT_MODULES )
     # requires HAVE_LIBNEUROSIM set
     # Static modules

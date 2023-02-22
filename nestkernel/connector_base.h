@@ -314,7 +314,6 @@ public:
   void
   clear_sources() override
   {
-    // TODO JV: Is this actually safe? Or is swap the better way of clearing 2D vectors?
     sources_.clear();
   }
 

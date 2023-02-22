@@ -31,7 +31,6 @@
 #include "manager_interface.h"
 
 // Includes from nestkernel:
-#include "adjacency_list.h"
 #include "event.h"
 #include "mpi_manager.h" // OffGridSpike
 #include "nest_types.h"
@@ -39,6 +38,7 @@
 #include "per_thread_bool_indicator.h"
 #include "secondary_event.h"
 #include "spike_data.h"
+#include "target.h"
 #include "target_table.h"
 #include "vp_manager.h"
 
@@ -165,7 +165,7 @@ public:
 
   /**
    * Index to slice-based buffer.
-   * Return ((T+d)/min_delay) % ceil(max_delay/min_delay).
+   * Return ((T+d)/min_delay) mod ceil(max_delay/min_delay).
    */
   delay get_slice_modulo( delay d );
 
@@ -203,7 +203,7 @@ public:
    * buffer offsets), communicates via MPI and create presynaptic connection
    * infrastructure for secondary events.
    */
-  void gather_secondary_target_data();
+  // void gather_secondary_target_data();
 
   void write_done_marker_secondary_events_( const bool done );
 
@@ -238,11 +238,6 @@ public:
    */
   virtual void reset_timers_for_dynamics();
 
-  /**
-   * TODO JV
-   */
-   void add_connection( const thread tid, const index source_node_id, const index target_node_id, const index target_connection_id );
-
 private:
   template < typename SpikeDataT >
   void gather_spike_data_( const thread tid,
@@ -252,8 +247,7 @@ private:
   void resize_send_recv_buffers_spike_data_();
 
   /**
-   * Moves spikes from on grid and off grid spike registers to correct
-   * locations in MPI buffers.
+   * Moves spikes from on grid and off grid spike registers to correct locations in MPI buffers.
    */
   template < typename TargetT, typename SpikeDataT >
   bool collocate_spike_data_buffers_( const thread tid,
@@ -271,8 +265,7 @@ private:
     std::vector< SpikeDataT >& send_buffer );
 
   /**
-   * Resets marker in MPI buffer that signals end of communication
-   * across MPI ranks.
+   * Resets marker in MPI buffer that signals end of communication across MPI ranks.
    */
   template < typename SpikeDataT >
   void reset_complete_marker_spike_data_( const AssignedRanks& assigned_ranks,
@@ -292,6 +285,14 @@ private:
    */
   template < typename SpikeDataT >
   bool deliver_events_( const thread tid, const std::vector< SpikeDataT >& recv_buffer );
+
+
+#ifdef USE_ADJACENCY_LIST
+  /**
+   * Deliver event to all entries in adjacency list for a specific source node id.
+   */
+  void deliver_to_adjacency_list( const thread tid, const index adjacency_list_index, SpikeEvent& se, const std::vector< ConnectorModel* >& cm );
+#endif
 
   /**
    * Deletes all spikes from spike registers and resets spike counters.
@@ -421,11 +422,6 @@ private:
   bool decrease_buffer_size_spike_data_;
 
   PerThreadBoolIndicator gather_completed_checker_;
-
-  /**
-   * Adjacency list to route spikes from source nodes to all corresponding local target nodes per thread.
-   */
-   AdjacencyList adjacency_list;
 
 #ifdef TIMER_DETAILED
   // private stop watches for benchmarking purposes

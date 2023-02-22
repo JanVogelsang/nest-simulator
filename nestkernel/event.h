@@ -42,6 +42,13 @@ namespace nest
 
 class Node;
 
+struct EventTargetData {
+  thread tid;
+  synindex syn_id;
+  index local_node_id;
+  index local_connection_id;
+};
+
 /**
  * Encapsulate information sent between nodes.
  *
@@ -285,13 +292,12 @@ public:
 
   /**
    * Returns the sender_spike_data_
-   * The sender_spike_data_ is a SpikeData object
    */
-  SpikeData get_sender_spike_data() const;
+  EventTargetData get_sender_spike_data() const;
 
 protected:
   index sender_node_id_;        //!< node ID of sender or 0
-  SpikeData sender_spike_data_; //!< spike data of sender node, in some cases required to retrieve node ID
+  EventTargetData sender_spike_data_; //!< spike data of sender node, in some cases required to retrieve node ID
   /*
    * The original formulation used references to Nodes as members, however, in order to avoid the reference of reference
    * problem, we store sender as pointer and use references in the interface.
@@ -877,8 +883,7 @@ Event::set_sender_node_id_info( const thread tid,
   const index local_target_node_id,
   const index local_target_connection_id )
 {
-  // lag and offset of SpikeData are not used here
-  sender_spike_data_.set( tid, syn_id, local_target_node_id, local_target_connection_id, 0, 0.0 );
+  sender_spike_data_ = { tid, syn_id, local_target_node_id, local_target_connection_id };
 }
 
 inline Node&
@@ -968,7 +973,7 @@ Event::set_port( port p )
   p_ = p;
 }
 
-inline SpikeData
+inline EventTargetData
 Event::get_sender_spike_data() const
 {
   return sender_spike_data_;

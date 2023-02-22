@@ -69,6 +69,7 @@ set( tics_per_step "100" CACHE STRING "Specify resolution [default=100 tics per 
 set( external-modules OFF CACHE STRING "External NEST modules to be linked in, separated by ';', [default=OFF]." )
 set( with-detailed-timers OFF CACHE STRING "Build with detailed internal time measurements [default=OFF]. Detailed timers can affect the performance." )
 set( target-bits-split "standard" CACHE STRING "Split of the 64-bit target neuron identifier type [default='standard']. 'standard' is recommended for most users. If running on more than 262144 MPI processes or more than 512 threads, change to 'hpc'." )
+set( use-adjacency-list OFF CACHE STRING "Build with adjacency-list-based delivery. [default=OFF]." )
 
 # generic build configuration
 option( static-libraries "Build static executable and libraries [default=OFF]" OFF )
@@ -150,6 +151,7 @@ nest_process_with_sionlib()
 nest_process_with_mpi4py()
 nest_process_with_boost()
 nest_process_target_bits_split()
+nest_process_use_adjacency_list()
 nest_process_version_suffix()
 nest_process_userdoc()
 nest_process_devdoc()

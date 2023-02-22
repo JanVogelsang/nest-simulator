@@ -27,7 +27,7 @@
 #include <numeric>   // accumulate
 
 // Includes from nestkernel:
-#include "connection_manager.h"
+#include "event_delivery_manager_impl.h"
 #include "kernel_manager.h"
 #include "send_buffer_position.h"
 #include "source.h"
@@ -610,47 +610,39 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
       se.set_stamp( prepared_timestamps[ spike_data.get_lag() ] );
       se.set_offset( spike_data.get_offset() );
 
-      if ( not kernel().connection_manager.use_compressed_spikes() )
+#ifndef USE_ADJACENCY_LIST
+      // simple node-to-node delivery without any indirections in between
+      if ( spike_data.get_tid() == tid )
       {
-        if ( spike_data.get_tid() == tid )
-        {
-          const index syn_id = spike_data.get_syn_id();
-          const index local_target_node_id = spike_data.get_local_target_node_id();
-          const index local_target_connection_id = spike_data.get_local_target_connection_id();
-
-          // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
-          // only if needed, as this is computationally costly
-          se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id );
-          Node* target_node = kernel().node_manager.thread_lid_to_node( tid, local_target_node_id );
-          target_node->deliver_event( tid, syn_id, local_target_connection_id, cm, se );
-        }
-      }
-      else
-      {
-        assert( false ); // TODO JV: Spike compression
-
-        /*const index syn_id = spike_data.get_syn_id();
-        // for compressed spikes lcid holds the index in the
-        // compressed_spike_data structure
-        // TODO JV: Replace two indices by a single one in target data when using compression (union maybe)
+        const index syn_id = spike_data.get_syn_id();
         const index local_target_node_id = spike_data.get_local_target_node_id();
         const index local_target_connection_id = spike_data.get_local_target_connection_id();
-        const std::vector< SpikeData >& compressed_spike_data =
-          kernel().connection_manager.get_compressed_spike_data( syn_id, idx );
-        for ( auto it = compressed_spike_data.cbegin(); it != compressed_spike_data.cend(); ++it )
-        {
-          if ( it->get_tid() == tid )
-          {
-            const index lcid = it->get_lcid();
 
-            // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
-            // only if needed, as this is computationally costly
-            se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id ); // TODO JV:
-        What is this for? deliver_event_to_node( tid, syn_id, local_target_node_id, local_target_connection_id, cm, se
-        );
-          }
-        }*/
+        // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
+        // only if needed, as this is computationally costly
+        se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id );
+        Node* target_node = kernel().node_manager.thread_lid_to_node( tid, local_target_node_id );
+        target_node->deliver_event( tid, syn_id, local_target_connection_id, cm, se );
       }
+#else
+      if ( kernel().connection_manager.use_compressed_spikes() )
+      {
+        // Compressed spikes use the adjacency list index of SpikeData to transmit the index in the compressed spike
+        // data structure.
+        const index compressed_index = spike_data.get_adjacency_list_index();
+        const std::map< thread, index >& compressed_spike_data =
+          kernel().connection_manager.get_compressed_spike_data( compressed_index );
+        const auto compressed_spike_data_it = compressed_spike_data.find( tid );
+        if ( compressed_spike_data_it != compressed_spike_data.end() )
+        {
+          deliver_to_adjacency_list( tid, compressed_spike_data_it->second, se, cm );
+        }
+      }
+      else // Delivery to single adjacency list entry (uncompressed spike)
+      {
+        deliver_to_adjacency_list( tid, spike_data.get_adjacency_list_index(), se, cm );
+      }
+#endif
 
       // break if this was the last valid entry from this rank
       if ( spike_data.is_end_marker() )
@@ -733,6 +725,9 @@ EventDeliveryManager::gather_target_data( const thread tid )
   } // of while
 
   kernel().connection_manager.clear_source_table( tid );
+#ifdef USE_ADJACENCY_LIST
+  kernel().connection_manager.clear_adjacency_list_sources( tid );
+#endif
 }
 
 bool
@@ -875,12 +870,5 @@ EventDeliveryManager::resize_spike_register_( const thread tid )
       kernel().connection_manager.get_min_delay(), std::vector< OffGridTarget >() );
   }
 }
-
-void
-EventDeliveryManager::add_connection( const thread tid, const index source_node_id, const index target_node_id, const index target_connection_id )
-{
-  adjacency_list.add_target( tid, source_node_id, target_node_id, target_connection_id );
-}
-
 
 } // of namespace nest

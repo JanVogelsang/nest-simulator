@@ -34,7 +34,6 @@
 #include "numerics.h"
 
 // Includes from nestkernel:
-#include "event_delivery_manager.h"
 #include "kernel_manager.h"
 
 // Includes from sli:
@@ -734,10 +733,15 @@ nest::SimulationManager::update_connection_infrastructure( const thread tid )
   }
 
 #pragma omp barrier
-  if ( kernel().connection_manager.use_compressed_spikes() )
+#ifdef USE_ADJACENCY_LIST
+#pragma omp master
   {
-    kernel().connection_manager.clear_compressed_spike_data_map( tid );
+    if ( kernel().connection_manager.use_compressed_spikes() )
+    {
+      kernel().connection_manager.clear_compressed_indices();
+    }
   }
+#endif
 
 #pragma omp single
   {

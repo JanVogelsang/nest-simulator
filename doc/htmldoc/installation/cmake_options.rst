@@ -107,6 +107,8 @@ NEST properties
 |                                               | If running on more than 262144 MPI processes or more than 512  |
 |                                               | threads, change to 'hpc'.                                      |
 +-----------------------------------------------+----------------------------------------------------------------+
+| ``-Duse-adjacency-list=[OFF|ON]``             | Build with adjacency-list-based delivery [default=OFF].        |
++-----------------------------------------------+----------------------------------------------------------------+
 
 Generic build configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

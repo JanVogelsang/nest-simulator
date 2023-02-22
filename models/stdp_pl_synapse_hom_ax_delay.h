@@ -262,7 +262,7 @@ private:
  * \param p The port under which this connection is stored in the Connector.
  */
 inline void
-stdp_pl_synapse_hom_ax_delay::send( Event& e, thread t, const STDPPLHomAxDelayCommonProperties& cp, Node* target )
+stdp_pl_synapse_hom_ax_delay::send( Event& e, thread, const STDPPLHomAxDelayCommonProperties& cp, Node* target )
 {
   // synapse STDP depressing/facilitation dynamics
 

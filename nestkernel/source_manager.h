@@ -65,7 +65,7 @@ private:
 
   // TODO JV (pt): This needs some proper thoughts, as this might cause high memory utilization with many threads
   //! Flag for each possible source neuron, if it has a target on this thread
-  std::vector< std::vector< bool > > has_source_;
+  // std::vector< std::vector< bool > > has_source_;
 
   /**
    * Returns whether this Source object should be considered when
@@ -89,23 +89,20 @@ private:
   /**
    * A structure to temporarily hold information about all process
    * local targets will be addressed by incoming spikes. Data from
-   * this structure is transferred to the compressed_spike_data_
+   * this structure is transferred to the compressed_indices_
    * structure of ConnectionManager during construction of the
    * postsynaptic connection infrastructure. Arranged as a two
    * dimensional vector (thread|synapse) with an inner map (source
    * node id -> spike data).
    */
-  std::vector< std::vector< std::map< index, SpikeData > > > compressible_sources_;
+  // std::vector< std::vector< std::map< index, SpikeData > > > compressible_sources_;
 
   /**
-   * A structure to temporarily store locations of "unpacked spikes"
-   * in the compressed_spike_data_ structure of
-   * ConnectionManager. Data from this structure is transferred to the
-   * presynaptic side during construction of the presynaptic
-   * connection infrastructure. Arranged as a two dimensional vector
-   * (thread|synapse) with an inner map (source node id -> index).
+   * A structure to temporarily store locations of "unpacked spikes" in the compressed_indices_ structure of
+   * ConnectionManager. Data from this structure is transferred to the presynaptic side during construction of the
+   * presynaptic connection infrastructure. Map of (source node id -> index) for each thread.
    */
-  std::vector< std::vector< std::map< index, size_t > > > compressed_spike_data_map_;
+  // std::vector< std::map< index, size_t > > compressed_spike_data_map_;
 
 public:
   SourceManager();
@@ -127,6 +124,7 @@ public:
    */
   bool is_cleared() const;
 
+#ifndef USE_ADJACENCY_LIST
   /**
    * Returns the next target data, according to the current_positions_.
    */
@@ -153,9 +151,21 @@ public:
   void restore_entry_point( const thread tid );
 
   /**
+   * Sets current_positions_ for this thread to minimal values so that
+   * these are not considered in find_maximal_position().
+   */
+  void no_targets_to_process( const thread tid );
+
+  /**
    * Resets saved_positions_ to end of sources_.
    */
   void reset_entry_point( const thread tid );
+
+  /**
+   * Resets all processed flags. Needed for restructuring connection tables, e.g., during structural plasticity update.
+   */
+  void reset_processed_flags( const thread tid );
+#endif
 
   /**
    * Returns the source node ID corresponding to the connection ID of target node.
@@ -172,21 +182,9 @@ public:
   SourceTablePosition find_maximal_position() const;
 
   /**
-   * Resets all processed flags. Needed for restructuring connection
-   * tables, e.g., during structural plasticity update.
-   */
-  void reset_processed_flags( const thread tid );
-
-  /**
    * Removes all entries marked as processed.
    */
   void clean( const thread tid );
-
-  /**
-   * Sets current_positions_ for this thread to minimal values so that
-   * these are not considered in find_maximal_position().
-   */
-  void no_targets_to_process( const thread tid );
 
   /**
    * Computes MPI buffer positions for unique combination of source
@@ -218,39 +216,31 @@ public:
    * of targets that need to be communicated during construction of
    * the presynaptic connection infrastructure.
    */
-  size_t num_unique_sources( const thread tid, const synindex syn_id ) const;
+  // size_t num_unique_sources( const thread tid, const synindex syn_id ) const;
 
   /**
    * Marks that this thread has at least one target from the given source.
    */
-  void
-  add_source( const thread tid, const index snode_id )
-  {
-    if ( has_source_[ tid ].size() <= snode_id )
-    {
-      // Adds as many entries as required to cover all sources up until
-      has_source_[ tid ].resize( snode_id + 1 ); // default initialized to false
-    }
-
-    has_source_[ tid ][ snode_id ] = true;
-  }
+//  void
+//  add_source( const thread tid, const index snode_id )
+//  {
+//    if ( has_source_[ tid ].size() <= snode_id )
+//    {
+//      // Adds as many entries as required to cover all sources up until
+//      has_source_[ tid ].resize( snode_id + 1 ); // default initialized to false
+//    }
+//
+//    has_source_[ tid ][ snode_id ] = true;
+//  }
 
   /**
    * Encodes combination of node ID and synapse types as single
    * long number.
    */
   index pack_source_node_id_and_syn_id( const index source_node_id, const synindex syn_id ) const;
-
-  void resize_compressible_sources();
-
-  // creates maps of sources with more than one thread-local target
-  void collect_compressible_sources( const thread tid );
-  // fills the compressed_spike_data structure in ConnectionManager
-  void fill_compressed_spike_data( std::vector< std::vector< std::vector< SpikeData > > >& compressed_spike_data );
-
-  void clear_compressed_spike_data_map( const thread tid );
 };
 
+#ifndef USE_ADJACENCY_LIST
 inline void
 SourceManager::save_entry_point( const thread tid )
 {
@@ -271,6 +261,7 @@ SourceManager::no_targets_to_process( const thread tid )
   current_positions_[ tid ].local_target_node_id = -1;
   current_positions_[ tid ].local_target_connection_id = -1;
 }
+#endif
 
 inline index
 SourceManager::find_first_source( const thread tid, const synindex syn_id, const index snode_id ) const
@@ -307,11 +298,11 @@ SourceManager::disable_connection( const thread tid, const synindex syn_id, cons
   sources_[ tid ][ syn_id ][ lcid ].disable();*/
 }
 
-inline size_t
-SourceManager::num_unique_sources( const thread tid, const synindex syn_id ) const
-{
-  return std::count( has_source_[ tid ].begin(), has_source_[ tid ].end(), true );
-}
+//inline size_t
+//SourceManager::num_unique_sources( const thread tid, const synindex syn_id ) const
+//{
+//  return std::count( has_source_[ tid ].begin(), has_source_[ tid ].end(), true );
+//}
 
 inline index
 SourceManager::pack_source_node_id_and_syn_id( const index source_node_id, const synindex syn_id ) const
@@ -321,15 +312,6 @@ SourceManager::pack_source_node_id_and_syn_id( const index source_node_id, const
   // syn_id is maximally 256, so shifting node ID by 8 bits and storing
   // syn_id in the lowest 8 leads to a unique number
   return ( source_node_id << 8 ) + syn_id;
-}
-
-inline void
-SourceManager::clear_compressed_spike_data_map( const thread tid )
-{
-  for ( synindex syn_id = 0; syn_id < compressed_spike_data_map_[ tid ].size(); ++syn_id )
-  {
-    compressed_spike_data_map_[ tid ][ syn_id ].clear();
-  }
 }
 
 } // namespace nest

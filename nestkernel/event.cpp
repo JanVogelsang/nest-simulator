@@ -59,10 +59,10 @@ Event::retrieve_sender_node_id_from_source_table() const
   }
   else
   {
-    const index node_id = kernel().connection_manager.get_source_node_id( sender_spike_data_.get_tid(),
-      sender_spike_data_.get_syn_id(),
-      sender_spike_data_.get_local_target_node_id(),
-      sender_spike_data_.get_local_target_connection_id() );
+    const index node_id = kernel().connection_manager.get_source_node_id( sender_spike_data_.tid,
+      sender_spike_data_.syn_id,
+      sender_spike_data_.local_node_id,
+      sender_spike_data_.local_connection_id );
     return node_id;
   }
 }

@@ -31,6 +31,7 @@
 #include "stopwatch.h"
 
 // Includes from nestkernel:
+#include "adjacency_list.h"
 #include "conn_builder.h"
 #include "connection_id.h"
 #include "nest_names.h"
@@ -88,7 +89,6 @@ public:
   void compute_target_data_buffer_size();
   void compute_compressed_secondary_recv_buffer_positions( const thread tid );
   void collect_compressed_spike_data( const thread tid );
-  void clear_compressed_spike_data_map( const thread tid );
 
   /**
    * Add a connectivity rule, i.e. the respective ConnBuilderFactory.
@@ -298,8 +298,6 @@ public:
 
   void resize_target_table_devices_to_number_of_neurons();
 
-  // void resize_target_table_devices_to_number_of_synapse_types();
-
   bool get_next_target_data( const thread tid,
     const thread rank_start,
     const thread rank_end,
@@ -313,6 +311,8 @@ public:
   void reset_source_table_entry_point( const thread tid );
 
   void restore_source_table_entry_point( const thread tid );
+
+  void no_targets_to_process( const thread tid );
 
   void add_target( const thread tid, const thread target_rank, const TargetData& target_data );
 
@@ -356,8 +356,6 @@ public:
    */
   void restructure_connection_tables( const thread tid );
 
-  void no_targets_to_process( const thread tid );
-
   const std::vector< size_t >&
   get_secondary_send_buffer_positions( const thread tid, const index lid, const synindex syn_id ) const;
 
@@ -387,6 +385,33 @@ public:
     const index local_target_node_id,
     const index local_connection_id );
 
+#ifdef USE_ADJACENCY_LIST
+  /**
+   * Returns start and end iterator to get targets for the given adjacency list index.
+   */
+  std::pair < std::vector< AdjacencyListTarget >::const_iterator, std::vector< AdjacencyListTarget >::const_iterator > get_targets( const thread tid, const index adjacency_list_index ) const
+  {
+    return adjacency_list_.get_iterators( tid, adjacency_list_index );
+  }
+
+  //! Clears all intermediate source information in the adjacency list
+  void clear_adjacency_list_sources( const thread tid )
+  {
+    adjacency_list_.clear_sources( tid );
+  }
+
+  //! Clears all intermediate compressed information in the adjacency list
+  void clear_compressed_indices()
+  {
+    adjacency_list_.clear_compressed_indices();
+  }
+
+  const std::map< thread, index >& get_compressed_spike_data( const index idx ) const
+  {
+    return adjacency_list_.get_compressed_spike_data( idx );
+  }
+#endif
+
   double get_stdp_eps() const;
 
   void set_stdp_eps( const double stdp_eps );
@@ -394,8 +419,6 @@ public:
   // public stop watch for benchmarking purposes
   // start and stop in high-level connect functions in nestmodule.cpp and nest.cpp
   Stopwatch sw_construction_connect;
-
-  const std::vector< SpikeData >& get_compressed_spike_data( const synindex syn_id, const index idx );
 
 private:
   size_t get_num_target_data( const thread tid ) const;
@@ -472,12 +495,12 @@ private:
    */
   void increase_connection_count( const thread tid, const synindex syn_id );
 
+  #ifdef USE_ADJACENCY_LIST
   /**
-   * A structure to hold "unpacked" spikes on the postsynaptic side if
-   * spike compression is enabled. Internally arranged in a 3d
-   * structure: synapses|sources|spike data
+   * Adjacency list to route spikes from source nodes to all corresponding local target nodes per thread.
    */
-  std::vector< std::vector< std::vector< SpikeData > > > compressed_spike_data_;
+  AdjacencyList adjacency_list_;
+  #endif
 
   /**
    * Stores absolute position in receive buffer of secondary events.
@@ -647,12 +670,6 @@ inline bool
 ConnectionManager::get_device_connected( const thread tid, const index lcid ) const
 {
   return target_table_devices_.is_device_connected( tid, lcid );
-}
-
-inline const std::vector< SpikeData >&
-ConnectionManager::get_compressed_spike_data( const synindex syn_id, const index idx )
-{
-  return compressed_spike_data_[ syn_id ][ idx ];
 }
 
 } // namespace nest

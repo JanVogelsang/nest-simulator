@@ -73,7 +73,7 @@ nest::SparseNodeArray::add_local_node( Node& node )
   // ensure increasing order
   assert( node_id > local_max_node_id_ );
 
-  node.set_thread_lid( nodes_.size() ); // TODO JV: Check if this makes sense
+  node.set_thread_lid( nodes_.size() ); // TODO JV (help): Check if this makes sense
   nodes_.push_back( NodeEntry( node, node_id ) );
   local_max_node_id_ = node_id;
 

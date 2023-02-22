@@ -40,7 +40,6 @@
 #include "conn_builder.h"
 #include "conn_builder_factory.h"
 #include "connection_label.h"
-#include "connector_base.h"
 #include "connector_model.h"
 #include "delay_checker.h"
 #include "exceptions.h"
@@ -93,7 +92,10 @@ ConnectionManager::initialize()
   secondary_recv_buffer_pos_.resize( num_threads );
   connections_have_changed_ = false;
 
-  compressed_spike_data_.resize( 0 );
+#ifdef USE_ADJACENCY_LIST
+  adjacency_list_.resize( num_threads );
+#endif
+
   check_primary_connections_.initialize( num_threads, false );
   check_secondary_connections_.initialize( num_threads, false );
 
@@ -128,7 +130,6 @@ ConnectionManager::finalize()
   target_table_devices_.finalize();
   delete_connections_();
   std::vector< std::vector< std::vector< size_t > > >().swap( secondary_recv_buffer_pos_ );
-  compressed_spike_data_.clear();
 }
 
 void
@@ -153,6 +154,14 @@ ConnectionManager::set_status( const DictionaryDatum& d )
       "If structural plasticity is enabled, keep_source_table can not be set "
       "to false." );
   }
+
+  updateValue< bool >( d, names::use_compressed_spikes, use_compressed_spikes_ );
+#ifndef USE_ADJACENCY_LIST
+  if ( use_compressed_spikes_ )
+  {
+    throw KernelException( "Spike compression requires NEST to be compiled with adjacency list support." );
+  }
+#endif
 
   //  Need to update the saved values if we have changed the delay bounds.
   if ( d->known( names::min_delay ) or d->known( names::max_delay ) )
@@ -730,13 +739,12 @@ ConnectionManager::connect_( Node& source,
     source, target, syn_id, params, delay, weight, is_primary, connection_type == CONNECT_FROM_DEVICE );
   switch ( connection_type )
   {
-  case CONNECT:
-    kernel().source_manager.add_source( tid, source.get_node_id() );
-
 #ifdef USE_ADJACENCY_LIST
-    kernel().event_delivery_manager.add_connection( tid, source.get_node_id() );
-#endif
+  case CONNECT:
+    // if two nodes (no devices) are connected to each other, we have to add an entry to the adjacency list
+    adjacency_list_.add_target( tid, syn_id, source.get_node_id(), target.get_node_id(), local_target_connection_id, 0, use_compressed_spikes_ );
     break;
+#endif
   case CONNECT_FROM_DEVICE:
     target_table_devices_.add_connection_from_device( source, target, local_target_connection_id, tid, syn_id );
     break;
@@ -835,12 +843,13 @@ ConnectionManager::trigger_update_weight( const long vt_id,
 size_t
 ConnectionManager::get_num_target_data( const thread tid ) const
 {
-  size_t num = 0;
-  for ( synindex syn_id = 0; syn_id < kernel().model_manager.get_num_connection_models(); ++syn_id )
-  {
-    num += kernel().source_manager.num_unique_sources( tid, syn_id );
-  }
-  return num;
+#ifdef USE_ADJACENCY_LIST
+  // if an adjacency list is used, one only has to send one target per entry in the list
+  return adjacency_list_.num_unique_sources( tid );
+#else
+  // if no adjacency list is used, every single connection has to be known on the presynaptic side
+  return get_num_connections();
+#endif
 }
 
 size_t
@@ -1253,6 +1262,8 @@ ConnectionManager::compute_target_data_buffer_size()
   {
     num_target_data += get_num_target_data( tid );
   }
+  // TODO JV (help): Why is the sendrecv-buffersize divided by number of processes again, right after counting the number of
+  //  sources of all source processes combined? Is this just an approximation of a feasible buffer size?
 
   // Determine maximum number of target data across all ranks, because all ranks need identically sized buffers.
   std::vector< long > global_num_target_data( kernel().mpi_manager.get_num_processes() );
@@ -1411,7 +1422,7 @@ ConnectionManager::connection_required( Node*& source, Node*& target, thread tid
 void
 ConnectionManager::set_stdp_eps( const double stdp_eps )
 {
-  if ( not( stdp_eps < Time::get_resolution().get_ms() ) )
+  if ( stdp_eps >= Time::get_resolution().get_ms() )
   {
     throw KernelException(
       "The epsilon used for spike-time comparison in STDP must be less "
@@ -1597,7 +1608,7 @@ ConnectionManager::collect_compressed_spike_data( const thread tid )
 #pragma omp barrier
 #pragma omp single
     {
-      source_table_.fill_compressed_spike_data( compressed_spike_data_ );
+      source_table_.fill_compressed_spike_data( compressed_indices_ );
     } // of omp single; implicit barrier*/
   }
 }
@@ -1620,6 +1631,73 @@ ConnectionManager::clear_source_table( const thread tid )
   }
 }
 
+#ifdef USE_ADJACENCY_LIST
+// Implementations when using adjacency list
+void
+ConnectionManager::reject_last_target_data( const thread tid )
+{
+
+}
+
+void
+ConnectionManager::save_source_table_entry_point( const thread tid )
+{
+
+}
+
+void
+ConnectionManager::reset_source_table_entry_point( const thread tid )
+{
+  adjacency_list_.reset_entry_point( kernel().vp_manager.get_num_threads() );
+}
+
+void
+ConnectionManager::restore_source_table_entry_point( const thread tid )
+{
+
+}
+
+void
+ConnectionManager::no_targets_to_process( const thread tid )
+{
+}
+
+bool
+ConnectionManager::get_next_target_data( const thread tid,
+  const thread rank_start,
+  const thread rank_end,
+  thread& target_rank,
+  TargetData& next_target_data )
+{
+  std::pair< index, size_t > next_target;
+  thread target_thread = 0;
+  bool valid;
+  if ( use_compressed_spikes_ )
+  {
+    std::tie( next_target, valid ) = adjacency_list_.get_next_compressed_target( tid );
+  }
+  else
+  {
+    std::tie( next_target, target_thread, valid ) = adjacency_list_.get_next_target( tid );
+  }
+  target_rank = kernel().mpi_manager.get_process_id_of_node_id( next_target.first );
+
+  if ( not valid )  // TODO JV (pt): Too much branching here
+  {
+    return false;
+  }
+
+  next_target_data.set_is_primary( true );  // TODO JV (pt): Secondary events
+  next_target_data.set_source_lid( kernel().vp_manager.node_id_to_lid( next_target.first ) );
+  next_target_data.set_source_tid( kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( next_target.first ) ) );
+  next_target_data.reset_marker();
+  next_target_data.target_data.set_tid( target_thread );
+  next_target_data.target_data.set_adjacency_list_index( next_target.second );
+
+  return true;
+}
+#else
+// Implementations when communicating every single connection
 void
 ConnectionManager::reject_last_target_data( const thread tid )
 {
@@ -1630,12 +1708,6 @@ void
 ConnectionManager::save_source_table_entry_point( const thread tid )
 {
   kernel().source_manager.save_entry_point( tid );
-}
-
-void
-ConnectionManager::no_targets_to_process( const thread tid )
-{
-  kernel().source_manager.no_targets_to_process( tid );
 }
 
 void
@@ -1650,6 +1722,12 @@ ConnectionManager::restore_source_table_entry_point( const thread tid )
   kernel().source_manager.restore_entry_point( tid );
 }
 
+void
+ConnectionManager::no_targets_to_process( const thread tid )
+{
+  kernel().source_manager.no_targets_to_process( tid );
+}
+
 bool
 ConnectionManager::get_next_target_data( const thread tid,
   const thread rank_start,
@@ -1659,6 +1737,7 @@ ConnectionManager::get_next_target_data( const thread tid,
 {
   return kernel().source_manager.get_next_target_data( tid, rank_start, rank_end, target_rank, next_target_data );
 }
+#endif
 
 index
 ConnectionManager::get_source_node_id( const thread tid,
@@ -1674,13 +1753,7 @@ ConnectionManager::restructure_connection_tables( const thread tid )
 {
   assert( not kernel().source_manager.is_cleared() );
   target_table_.clear( tid );
-  kernel().source_manager.reset_processed_flags( tid );
-}
-
-void
-ConnectionManager::clear_compressed_spike_data_map( const thread tid )
-{
-  kernel().source_manager.clear_compressed_spike_data_map( tid );
+  // kernel().source_manager.reset_processed_flags( tid );  // TODO JV (pt): Structural plasticity
 }
 
 bool

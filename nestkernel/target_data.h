@@ -40,10 +40,10 @@ private:
   unsigned int local_target_node_id_ : NUM_BITS_LOCAL_NODE_ID;
   unsigned int local_target_connection_id_ : NUM_BITS_LOCAL_CONNECTION_ID;
 #else
-  unsigned int adjacency_list_index_ : NUM_BITS_ADJACENCY_INDEX;
+  unsigned int adjacency_list_index_ : NUM_BITS_ADJACENCY_LIST_INDEX;
 #endif
-  unsigned int tid_ : NUM_BITS_TID;
-  unsigned int syn_id_ : NUM_BITS_SYN_ID;
+  thread tid_ : NUM_BITS_TID;
+  synindex syn_id_ : NUM_BITS_SYN_ID;
 
 public:
   // Members must be set explicitly -- no defaults
