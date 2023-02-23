@@ -24,8 +24,8 @@
 
 // Includes from nestkernel:
 #include "kernel_manager.h"
-#include "mpi_manager_impl.h"
-#include "vp_manager_impl.h"
+// #include "mpi_manager_impl.h"
+// #include "vp_manager_impl.h"
 
 namespace nest
 {
@@ -58,7 +58,6 @@ SourceManager::change_number_of_threads()
 void
 SourceManager::initialize()
 {
-  assert( sizeof( Source ) == 8 );
   const thread num_threads = kernel().vp_manager.get_num_threads();
   is_cleared_.initialize( num_threads, false );
   current_positions_.resize( num_threads );
@@ -70,15 +69,16 @@ void
 SourceManager::finalize()
 {
   // only clear sources when there were nodes added to the simulation already
-  if ( kernel().node_manager.size() > 0 ){
-#pragma omp parallel
+  if ( kernel().node_manager.size() > 0 )
   {
-    const thread tid = kernel().vp_manager.get_thread_id();
-    if ( is_cleared_[ tid ].is_false() )
+#pragma omp parallel
     {
-      clear( tid );
+      const thread tid = kernel().vp_manager.get_thread_id();
+      if ( is_cleared_[ tid ].is_false() )
+      {
+        clear( tid );
+      }
     }
-  }
   }
 
   current_positions_.clear();
@@ -160,8 +160,7 @@ SourceManager::get_node_id( const thread tid,
 
   return kernel()
     .node_manager.thread_lid_to_node( tid, local_target_node_id )
-    ->get_source( syn_id, local_connection_id )
-    .get_node_id();
+    ->get_source( syn_id, local_connection_id );
 }
 
 #ifndef USE_ADJACENCY_LIST
@@ -198,23 +197,11 @@ SourceManager::reject_last_target_data( const thread tid )
   // The last target data returned by get_next_target_data() could not be inserted into MPI buffer due to overflow.
   // We hence need to correct the processed flag of the last entry
   current_positions_[ tid ].increase();
-  kernel()
-    .node_manager.get_local_nodes( current_positions_[ tid ].tid )
-    .get_node_by_index( current_positions_[ tid ].local_target_node_id )
-    ->get_source( current_positions_[ tid ].syn_id, current_positions_[ tid ].local_target_connection_id )
-    .set_processed( false );
-}
-
-void
-SourceManager::reset_processed_flags( const thread tid )
-{
-  // TODO JV: Make sure iteration over all nodes is efficient
-  const SparseNodeArray& thread_local_nodes = kernel().node_manager.get_local_nodes( tid );
-
-  for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
-  {
-    n->get_node()->reset_sources_processed_flags();
-  }
+  //  kernel()
+  //    .node_manager.get_local_nodes( current_positions_[ tid ].tid )
+  //    .get_node_by_index( current_positions_[ tid ].local_target_node_id )
+  //    ->get_source( current_positions_[ tid ].syn_id, current_positions_[ tid ].local_target_connection_id )
+  //    .set_processed( false );
 }
 
 bool
@@ -232,13 +219,12 @@ SourceManager::get_next_target_data( const thread tid,
   {
 
     // the current position contains an entry, so we retrieve it
-    Source& current_source = kernel()
-                               .node_manager.get_local_nodes( current_position.tid )
-                               .get_node_by_index( current_position.local_target_node_id )
-                               ->get_source( current_position.syn_id, current_position.local_target_connection_id );
+    index source_node_id = kernel()
+                             .node_manager.get_local_nodes( current_position.tid )
+                             .get_node_by_index( current_position.local_target_node_id )
+                             ->get_source( current_position.syn_id, current_position.local_target_connection_id );
 
-    // if ( not source_should_be_processed_( rank_start, rank_end, current_source ) )
-    if ( source_rank < rank_start or rank_end <= source_rank )
+    if ( source_rank < rank_start or rank_end <= source_rank or source_node_id == DISABLED_NODE_ID )
     {
       current_position.decrease();
       continue;
@@ -246,7 +232,6 @@ SourceManager::get_next_target_data( const thread tid,
 
     // reaching this means we found an entry that should be communicated via MPI, so we prepare to return the relevant
     // data
-    index source_node_id = current_source.get_node_id();
     // set the source rank
     source_rank = kernel().mpi_manager.get_process_id_of_node_id( source_node_id );
 
@@ -254,7 +239,8 @@ SourceManager::get_next_target_data( const thread tid,
     // we store the thread index of the source table, not our own tid!
     next_target_data.set_is_primary( true );
     next_target_data.set_source_lid( kernel().vp_manager.node_id_to_lid( source_node_id ) );
-    next_target_data.set_source_tid( kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( source_node_id ) ) );
+    next_target_data.set_source_tid(
+      kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( source_node_id ) ) );
     next_target_data.reset_marker();
     next_target_data.target_data.set_tid( current_position.tid );
     next_target_data.target_data.set_local_target_node_id( current_position.local_target_node_id );
@@ -278,10 +264,6 @@ SourceManager::get_next_target_data( const thread tid,
     secondary_fields.set_recv_buffer_pos( relative_recv_buffer_pos );
     secondary_fields.set_syn_id( current_position.syn_id );
      }*/
-
-
-    // we are about to return a valid entry, so mark it as processed
-    current_source.set_processed( true );
 
     current_position.decrease();
     return true; // found a valid entry
@@ -410,17 +392,6 @@ SourceManager::compute_buffer_pos_for_unique_secondary_sources( const thread tid
     delete unique_secondary_source_node_id_syn_id;
   } // of omp single
    */
-}
-
-bool
-SourceManager::source_should_be_processed_( const thread rank_start, const thread rank_end, const Source& source ) const
-{
-  const thread source_rank = kernel().mpi_manager.get_process_id_of_node_id( source.get_node_id() );
-
-  return not( source.is_processed()
-    or source.is_disabled()
-    // is this thread responsible for this part of the MPI buffer?
-    or source_rank < rank_start or rank_end <= source_rank );
 }
 
 }

@@ -49,7 +49,7 @@ Connector< ConnectionT >::send_weight_event( const thread tid,
     wr_e.set_port( e.get_port() );
     wr_e.set_stamp( e.get_stamp() );
     wr_e.set_sender( e.get_sender() );
-    wr_e.set_sender_node_id( sources_[ local_target_connection_id ].get_node_id() );
+    wr_e.set_sender_node_id( sources_[ local_target_connection_id ] );
     wr_e.set_weight( e.get_weight() );
     wr_e.set_delay_steps( e.get_delay_steps() );
     // Set weight_recorder as receiver

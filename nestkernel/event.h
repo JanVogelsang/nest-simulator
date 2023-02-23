@@ -42,7 +42,8 @@ namespace nest
 
 class Node;
 
-struct EventTargetData {
+struct EventTargetData
+{
   thread tid;
   synindex syn_id;
   index local_node_id;
@@ -296,7 +297,7 @@ public:
   EventTargetData get_sender_spike_data() const;
 
 protected:
-  index sender_node_id_;        //!< node ID of sender or 0
+  index sender_node_id_;              //!< node ID of sender or 0
   EventTargetData sender_spike_data_; //!< spike data of sender node, in some cases required to retrieve node ID
   /*
    * The original formulation used references to Nodes as members, however, in order to avoid the reference of reference

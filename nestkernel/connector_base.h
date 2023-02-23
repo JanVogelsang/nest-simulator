@@ -33,7 +33,6 @@
 #include "common_synapse_properties.h"
 #include "nest_datums.h"
 #include "nest_names.h"
-#include "source.h"
 #include "spikecounter.h"
 
 // Includes from sli:
@@ -87,9 +86,9 @@ public:
   virtual double get_connection_delay( const index lcid, ConnectorModel& cm ) = 0;
 
   /**
-   * Get information about the source node of a specific connection.
+   * Get source node id of a specific connection.
    */
-  virtual Source& get_source( const index local_target_connection_id ) = 0;
+  virtual index get_source( const index local_target_connection_id ) = 0;
 
   /**
    * Get the indices of all connection corresponding to a specific source node.
@@ -100,11 +99,6 @@ public:
    * Remove source information of all connections in this container.
    */
   virtual void clear_sources() = 0;
-
-  /**
-   * Reset all processed flags of all sources in this container.
-   */
-  virtual void reset_sources_processed_flags() = 0;
 
   /**
    * Add ConnectionID with given source_node_id and lcid to conns. If
@@ -178,8 +172,7 @@ protected:
    * After all connections have been created, the information stored in this structure is transferred to the presynaptic
    * side and the sources vector can be cleared, unless further required for structural plasticity.
    */
-  // TODO JV: This should be converted from type Source to index once the simulation starts
-  std::vector< Source > sources_;
+  std::vector< index > sources_;
 };
 
 /**
@@ -244,15 +237,15 @@ public:
   }
 
   const index
-  add_connection( const ConnectionT& c, const Source src )
+  add_connection( const ConnectionT& c, const index source_node_id )
   {
     C_.push_back( c );
-    sources_.push_back( src );
+    sources_.push_back( source_node_id );
     // Return index of added item
     return C_.size() - 1;
   }
 
-  Source&
+  index
   get_source( const index local_target_connection_id ) override
   {
     return sources_[ local_target_connection_id ];
@@ -262,10 +255,10 @@ public:
   get_connection_indices( const index source_node_id ) const override
   {
     // binary search in sorted sources
-    const std::vector< Source >::const_iterator begin = sources_.begin();
-    const std::vector< Source >::const_iterator end = sources_.end();
+    const std::vector< index >::const_iterator begin = sources_.begin();
+    const std::vector< index >::const_iterator end = sources_.end();
     // TODO JV (pt): Secondary events: Is primary really always the case? (Adapted from master though)
-    std::vector< Source >::const_iterator it = std::lower_bound( begin, end, Source( source_node_id, true ) );
+    std::vector< index >::const_iterator it = std::lower_bound( begin, end, source_node_id );
 
     std::vector< index > indices;
 
@@ -273,7 +266,7 @@ public:
 
     assert( false );
     // TODO JV: This assumes the sources and connections are sorted by source node id
-    while ( it != end && it->get_node_id() == source_node_id )
+    while ( it != end && *it == source_node_id )
     {
       // Connection is disabled
       if ( not C_[ connection_index ].is_disabled() )
@@ -315,15 +308,6 @@ public:
   clear_sources() override
   {
     sources_.clear();
-  }
-
-  void
-  reset_sources_processed_flags() override
-  {
-    for ( std::vector< Source >::iterator source = sources_.begin(); source != sources_.end(); ++source )
-    {
-      source->set_processed( false );
-    }
   }
 
   void
@@ -391,7 +375,7 @@ public:
 
     /*assert( not C_[ lcid ].is_disabled() );
     C_[ lcid ].disable();
-    sources_[ lcid ].disable();*/
+    sources_[ lcid ] = DISABLED_NODE_ID;*/
   }
 
   void

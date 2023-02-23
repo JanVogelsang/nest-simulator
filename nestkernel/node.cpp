@@ -300,7 +300,7 @@ Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
 {
   connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, cm, e, this );
 
-  // TODO JV: Make this cleaner, as only needed for poisson generators probably
+  // TODO JV (help): Make this cleaner, as only needed for poisson generators probably
   if ( not e.get_multiplicity() )
   {
     return;

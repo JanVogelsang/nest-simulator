@@ -36,7 +36,6 @@
 #include "mpi_manager.h"
 #include "nest_types.h"
 #include "per_thread_bool_indicator.h"
-#include "source.h"
 #include "source_table_position.h"
 #include "spike_data.h"
 
@@ -66,25 +65,6 @@ private:
   // TODO JV (pt): This needs some proper thoughts, as this might cause high memory utilization with many threads
   //! Flag for each possible source neuron, if it has a target on this thread
   // std::vector< std::vector< bool > > has_source_;
-
-  /**
-   * Returns whether this Source object should be considered when
-   * constructing MPI buffers for communicating connections. Returns
-   * false if i) this entry was already processed, or ii) this entry
-   * is disabled (e.g., by structural plasticity) or iii) the reading
-   * thread is not responsible for the particular part of the MPI
-   * buffer where this entry would be written.
-   */
-  bool source_should_be_processed_( const thread rank_start, const thread rank_end, const Source& source ) const;
-
-  /**
-   * Fills the fields of a TargetData during construction of *
-   * presynaptic connection infrastructure.
-   */
-  bool populate_target_data_fields_( const SourceTablePosition& current_position,
-    const Source& current_source,
-    const thread source_rank,
-    TargetData& next_target_data ) const;
 
   /**
    * A structure to temporarily hold information about all process
@@ -160,11 +140,6 @@ public:
    * Resets saved_positions_ to end of sources_.
    */
   void reset_entry_point( const thread tid );
-
-  /**
-   * Resets all processed flags. Needed for restructuring connection tables, e.g., during structural plasticity update.
-   */
-  void reset_processed_flags( const thread tid );
 #endif
 
   /**
@@ -221,17 +196,17 @@ public:
   /**
    * Marks that this thread has at least one target from the given source.
    */
-//  void
-//  add_source( const thread tid, const index snode_id )
-//  {
-//    if ( has_source_[ tid ].size() <= snode_id )
-//    {
-//      // Adds as many entries as required to cover all sources up until
-//      has_source_[ tid ].resize( snode_id + 1 ); // default initialized to false
-//    }
-//
-//    has_source_[ tid ][ snode_id ] = true;
-//  }
+  //  void
+  //  add_source( const thread tid, const index snode_id )
+  //  {
+  //    if ( has_source_[ tid ].size() <= snode_id )
+  //    {
+  //      // Adds as many entries as required to cover all sources up until
+  //      has_source_[ tid ].resize( snode_id + 1 ); // default initialized to false
+  //    }
+  //
+  //    has_source_[ tid ][ snode_id ] = true;
+  //  }
 
   /**
    * Encodes combination of node ID and synapse types as single
@@ -298,11 +273,11 @@ SourceManager::disable_connection( const thread tid, const synindex syn_id, cons
   sources_[ tid ][ syn_id ][ lcid ].disable();*/
 }
 
-//inline size_t
-//SourceManager::num_unique_sources( const thread tid, const synindex syn_id ) const
+// inline size_t
+// SourceManager::num_unique_sources( const thread tid, const synindex syn_id ) const
 //{
-//  return std::count( has_source_[ tid ].begin(), has_source_[ tid ].end(), true );
-//}
+//   return std::count( has_source_[ tid ].begin(), has_source_[ tid ].end(), true );
+// }
 
 inline index
 SourceManager::pack_source_node_id_and_syn_id( const index source_node_id, const synindex syn_id ) const

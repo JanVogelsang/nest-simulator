@@ -176,9 +176,13 @@ EventDeliveryManager::write_toggle() const
 }
 
 #ifdef USE_ADJACENCY_LIST
-inline void EventDeliveryManager::deliver_to_adjacency_list( const thread tid, const index adjacency_list_index, SpikeEvent& se, const std::vector< ConnectorModel* >& cm )
+inline void
+EventDeliveryManager::deliver_to_adjacency_list( const thread tid,
+  const index adjacency_list_index,
+  SpikeEvent& se,
+  const std::vector< ConnectorModel* >& cm )
 {
-  auto [adjacency_list_it, adjacency_list_end] = kernel().connection_manager.get_targets( tid, adjacency_list_index );
+  auto [ adjacency_list_it, adjacency_list_end ] = kernel().connection_manager.get_targets( tid, adjacency_list_index );
   for ( ; adjacency_list_it != adjacency_list_end; ++adjacency_list_it )
   {
     const index local_target_node_id = adjacency_list_it->local_target_node_id;
@@ -187,7 +191,8 @@ inline void EventDeliveryManager::deliver_to_adjacency_list( const thread tid, c
     se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id );
     Node* target_node = kernel().node_manager.thread_lid_to_node( tid, local_target_node_id );
     target_node->deliver_event( tid, syn_id, local_target_connection_id, cm, se );
-    // TODO JV: Let node handle delivery differently when delay is already provided (needs a way to know if total or only axonal-dendritic delay is sent)
+    // TODO JV: Let node handle delivery differently when delay is already provided (needs a way to know if total or
+    //  only axonal-dendritic delay is sent)
   }
 }
 #endif

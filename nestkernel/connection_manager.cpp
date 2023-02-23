@@ -66,7 +66,7 @@ ConnectionManager::ConnectionManager()
   , keep_source_table_( true )
   , connections_have_changed_( false )
   , get_connections_has_been_called_( false )
-  , use_compressed_spikes_( false )      // TODO JV
+  , use_compressed_spikes_( false ) // TODO JV (pt): Check if compression should be default or not
   , has_primary_connections_( false )
   , check_primary_connections_()
   , secondary_connections_exist_( false )
@@ -128,6 +128,7 @@ ConnectionManager::finalize()
 {
   target_table_.finalize();
   target_table_devices_.finalize();
+  adjacency_list_.finalize();
   delete_connections_();
   std::vector< std::vector< std::vector< size_t > > >().swap( secondary_recv_buffer_pos_ );
 }
@@ -742,7 +743,8 @@ ConnectionManager::connect_( Node& source,
 #ifdef USE_ADJACENCY_LIST
   case CONNECT:
     // if two nodes (no devices) are connected to each other, we have to add an entry to the adjacency list
-    adjacency_list_.add_target( tid, syn_id, source.get_node_id(), target.get_node_id(), local_target_connection_id, 0, use_compressed_spikes_ );
+    adjacency_list_.add_target(
+      tid, syn_id, source.get_node_id(), target.get_thread_lid(), local_target_connection_id, 0, use_compressed_spikes_ );
     break;
 #endif
   case CONNECT_FROM_DEVICE:
@@ -1262,7 +1264,8 @@ ConnectionManager::compute_target_data_buffer_size()
   {
     num_target_data += get_num_target_data( tid );
   }
-  // TODO JV (help): Why is the sendrecv-buffersize divided by number of processes again, right after counting the number of
+  // TODO JV (help): Why is the sendrecv-buffersize divided by number of processes again, right after counting the
+  // number of
   //  sources of all source processes combined? Is this just an approximation of a feasible buffer size?
 
   // Determine maximum number of target data across all ranks, because all ranks need identically sized buffers.
@@ -1591,29 +1594,6 @@ ConnectionManager::unset_connections_have_changed()
 }
 
 void
-ConnectionManager::collect_compressed_spike_data( const thread tid )
-{
-
-  if ( use_compressed_spikes_ )
-  {
-    assert( false ); // TODO JV (pt): Compressed spikes
-    /*assert( sort_connections_by_source_ );
-
-#pragma omp single
-    {
-      source_table_.resize_compressible_sources();
-    } // of omp single; implicit barrier
-
-    source_table_.collect_compressible_sources( tid );
-#pragma omp barrier
-#pragma omp single
-    {
-      source_table_.fill_compressed_spike_data( compressed_indices_ );
-    } // of omp single; implicit barrier*/
-  }
-}
-
-void
 ConnectionManager::clean_source_table( const thread tid )
 {
   if ( not keep_source_table_ )
@@ -1636,30 +1616,29 @@ ConnectionManager::clear_source_table( const thread tid )
 void
 ConnectionManager::reject_last_target_data( const thread tid )
 {
-
+  adjacency_list_.reject_last_target_data( tid );
 }
 
 void
-ConnectionManager::save_source_table_entry_point( const thread tid )
+ConnectionManager::save_source_table_entry_point( const thread )
 {
-
 }
 
 void
-ConnectionManager::reset_source_table_entry_point( const thread tid )
+ConnectionManager::reset_source_table_entry_point( const thread )
 {
   adjacency_list_.reset_entry_point( kernel().vp_manager.get_num_threads() );
 }
 
 void
-ConnectionManager::restore_source_table_entry_point( const thread tid )
+ConnectionManager::restore_source_table_entry_point( const thread )
 {
-
 }
 
 void
 ConnectionManager::no_targets_to_process( const thread tid )
 {
+  adjacency_list_.no_targets_to_process( tid );
 }
 
 bool
@@ -1683,17 +1662,19 @@ ConnectionManager::get_next_target_data( const thread tid,
       std::tie( next_target, target_thread, valid ) = adjacency_list_.get_next_target( tid );
     }
 
-    if ( not valid )  // TODO JV (pt): Too much branching here
+    if ( not valid ) // TODO JV (pt): Too much branching here
     {
       return false;
     }
 
     source_rank = kernel().mpi_manager.get_process_id_of_node_id( next_target.first );
-  } while ( source_rank < rank_start or rank_end <= source_rank );  // get first source for which this thread is responsible
+  } while (
+    source_rank < rank_start or rank_end <= source_rank ); // get first source for which this thread is responsible
 
-  next_target_data.set_is_primary( true );  // TODO JV (pt): Secondary events
+  next_target_data.set_is_primary( true ); // TODO JV (pt): Secondary events
   next_target_data.set_source_lid( kernel().vp_manager.node_id_to_lid( next_target.first ) );
-  next_target_data.set_source_tid( kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( next_target.first ) ) );
+  next_target_data.set_source_tid(
+    kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( next_target.first ) ) );
   next_target_data.reset_marker();
   next_target_data.target_data.set_tid( target_thread );
   next_target_data.target_data.set_adjacency_list_index( next_target.second );

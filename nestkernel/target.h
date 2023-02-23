@@ -94,7 +94,8 @@ private:
   static constexpr uint64_t MASK_LOCAL_TARGET_CONNECTION_ID =
     generate_bit_mask( NUM_BITS_LOCAL_CONNECTION_ID, BITPOS_LOCAL_TARGET_CONNECTION_ID );
   static constexpr uint64_t MASK_SYN_ID = generate_bit_mask( NUM_BITS_SYN_ID, BITPOS_SYN_ID );
-  static constexpr uint64_t MASK_ADJACENCY_LIST_INDEX = generate_bit_mask( NUM_BITS_ADJACENCY_LIST_INDEX, BITPOS_ADJACENCY_LIST_INDEX );
+  static constexpr uint64_t MASK_ADJACENCY_LIST_INDEX =
+    generate_bit_mask( NUM_BITS_ADJACENCY_LIST_INDEX, BITPOS_ADJACENCY_LIST_INDEX );
   static constexpr uint64_t MASK_RANK = generate_bit_mask( NUM_BITS_RANK, BITPOS_RANK );
   static constexpr uint64_t MASK_TID = generate_bit_mask( NUM_BITS_TID, BITPOS_TID );
   static constexpr uint64_t MASK_PROCESSED_FLAG = generate_bit_mask( NUM_BITS_PROCESSED_FLAG, BITPOS_PROCESSED_FLAG );
@@ -107,9 +108,7 @@ public:
     const synindex syn_id,
     const index local_target_node_id,
     const index local_target_connection_id );
-  Target( const thread tid,
-    const thread rank,
-    const index adjacency_list_index );
+  Target( const thread tid, const thread rank, const index adjacency_list_index );
 
   Target& operator=( const Target& );
 
@@ -241,9 +240,7 @@ inline Target::Target( const thread tid,
   set_status( TARGET_ID_UNPROCESSED ); // initialize
 }
 
-inline Target::Target( const thread tid,
-  const thread rank,
-  const index adjacency_list_index )
+inline Target::Target( const thread tid, const thread rank, const index adjacency_list_index )
   : remote_target_id_( 0 )
 {
   assert( tid <= MAX_TID );
@@ -300,9 +297,9 @@ Target::get_syn_id() const
 inline void
 Target::set_adjacency_list_index( const index adjacency_list_index )
 {
-    assert( adjacency_list_index <= MAX_ADJACENCY_LIST_INDEX );
-    remote_target_id_ = ( remote_target_id_ & ( ~MASK_ADJACENCY_LIST_INDEX ) )
-      | ( static_cast< uint64_t >( adjacency_list_index ) << BITPOS_ADJACENCY_LIST_INDEX );
+  assert( adjacency_list_index <= MAX_ADJACENCY_LIST_INDEX );
+  remote_target_id_ = ( remote_target_id_ & ( ~MASK_ADJACENCY_LIST_INDEX ) )
+    | ( static_cast< uint64_t >( adjacency_list_index ) << BITPOS_ADJACENCY_LIST_INDEX );
 }
 
 inline index

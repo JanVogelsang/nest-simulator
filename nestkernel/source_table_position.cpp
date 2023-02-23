@@ -73,7 +73,8 @@ SourceTablePosition::decrease()
     local_target_connection_id = kernel()
                                    .node_manager.get_local_nodes( tid )
                                    .get_node_by_index( local_target_node_id )
-                                   ->get_num_conn_type_sources( syn_id ) - 1;
+                                   ->get_num_conn_type_sources( syn_id )
+      - 1;
   }
 }
 

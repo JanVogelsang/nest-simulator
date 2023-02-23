@@ -291,7 +291,10 @@ private:
   /**
    * Deliver event to all entries in adjacency list for a specific source node id.
    */
-  void deliver_to_adjacency_list( const thread tid, const index adjacency_list_index, SpikeEvent& se, const std::vector< ConnectorModel* >& cm );
+  void deliver_to_adjacency_list( const thread tid,
+    const index adjacency_list_index,
+    SpikeEvent& se,
+    const std::vector< ConnectorModel* >& cm );
 #endif
 
   /**

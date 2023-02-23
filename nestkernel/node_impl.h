@@ -91,9 +91,8 @@ Node::add_connection( Node& source_node,
   }
   assert( connector );
 
-  const Source src( source_node.get_node_id(), is_primary );
   Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connector );
-  return vc->add_connection( connection, src );
+  return vc->add_connection( connection, source_node.get_node_id() );
 }
 
 template < typename EventT >

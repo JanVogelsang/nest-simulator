@@ -96,9 +96,8 @@ nest::TargetTable::add_target( const thread tid, const thread target_rank, const
 
 
 #ifdef USE_ADJACENCY_LIST
-    targets_[ tid ][ lid ].push_back( Target( target_fields.get_tid(),
-      target_rank,
-      target_fields.get_adjacency_list_index() ) );
+    targets_[ tid ][ lid ].push_back(
+      Target( target_fields.get_tid(), target_rank, target_fields.get_adjacency_list_index() ) );
 #else
     targets_[ tid ][ lid ].push_back( Target( target_fields.get_tid(),
       target_rank,

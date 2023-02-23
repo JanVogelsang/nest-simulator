@@ -30,7 +30,6 @@
 #include "event_delivery_manager_impl.h"
 #include "kernel_manager.h"
 #include "send_buffer_position.h"
-#include "source.h"
 #include "vp_manager.h"
 #include "vp_manager_impl.h"
 
@@ -640,7 +639,10 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
       }
       else // Delivery to single adjacency list entry (uncompressed spike)
       {
-        deliver_to_adjacency_list( tid, spike_data.get_adjacency_list_index(), se, cm );
+        if ( spike_data.get_tid() == tid )
+        {
+          deliver_to_adjacency_list( tid, spike_data.get_adjacency_list_index(), se, cm );
+        }
       }
 #endif
 
@@ -756,7 +758,7 @@ EventDeliveryManager::collocate_target_data_buffers_( const thread tid,
     send_buffer_target_data_[ send_buffer_position.begin( rank ) ].set_invalid_marker();
   }
 
-  while ( true )
+  while ( true ) // TODO JV (pt): This loop design is not idea, refactoring needed (check first, then get target data)
   {
     valid_next_target_data = kernel().connection_manager.get_next_target_data(
       tid, assigned_ranks.begin, assigned_ranks.end, source_rank, next_target_data );

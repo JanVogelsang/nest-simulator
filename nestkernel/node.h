@@ -38,7 +38,6 @@
 #include "nest_types.h"
 #include "node_collection.h"
 #include "secondary_event.h"
-#include "source.h"
 
 // Includes from sli:
 #include "dictdatum.h"
@@ -526,7 +525,7 @@ public:
   /**
    * Get information about the source node of a specific connection.
    */
-  Source&
+  index
   get_source( const synindex syn_id, const index local_connection_id )
   {
     assert( connections_[ syn_id ] );
@@ -557,21 +556,6 @@ public:
       if ( connections_per_syn_type )
       {
         connections_per_syn_type->clear_sources();
-      }
-    }
-  }
-
-  /**
-   * Reset all processed flags of all sources of this node.
-   */
-  void
-  reset_sources_processed_flags()
-  {
-    for ( ConnectorBase* connections_per_syn_type : connections_ )
-    {
-      if ( connections_per_syn_type )
-      {
-        connections_per_syn_type->reset_sources_processed_flags();
       }
     }
   }

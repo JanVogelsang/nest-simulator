@@ -492,6 +492,17 @@ nest::SimulationManager::prepare()
       update_connection_infrastructure( tid );
     } // of omp parallel
   }
+
+#ifdef USE_ADJACENCY_LIST
+#pragma omp master
+  {
+    // TODO JV (pt): Where is the correct place to do this?
+    if ( kernel().connection_manager.use_compressed_spikes() )
+    {
+      kernel().connection_manager.clear_compressed_indices();
+    }
+  }
+#endif
 }
 
 void
@@ -682,7 +693,6 @@ nest::SimulationManager::update_connection_infrastructure( const thread tid )
 
   kernel().connection_manager.restructure_connection_tables( tid );
   kernel().connection_manager.sort_connections_and_sources( tid );
-  kernel().connection_manager.collect_compressed_spike_data( tid );
 
 #pragma omp barrier // wait for all threads to finish sorting
 
@@ -733,15 +743,6 @@ nest::SimulationManager::update_connection_infrastructure( const thread tid )
   }
 
 #pragma omp barrier
-#ifdef USE_ADJACENCY_LIST
-#pragma omp master
-  {
-    if ( kernel().connection_manager.use_compressed_spikes() )
-    {
-      kernel().connection_manager.clear_compressed_indices();
-    }
-  }
-#endif
 
 #pragma omp single
   {

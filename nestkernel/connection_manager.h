@@ -88,7 +88,6 @@ public:
 
   void compute_target_data_buffer_size();
   void compute_compressed_secondary_recv_buffer_positions( const thread tid );
-  void collect_compressed_spike_data( const thread tid );
 
   /**
    * Add a connectivity rule, i.e. the respective ConnBuilderFactory.
@@ -389,24 +388,28 @@ public:
   /**
    * Returns start and end iterator to get targets for the given adjacency list index.
    */
-  std::pair < std::vector< AdjacencyListTarget >::const_iterator, std::vector< AdjacencyListTarget >::const_iterator > get_targets( const thread tid, const index adjacency_list_index ) const
+  std::pair< std::vector< AdjacencyListTarget >::const_iterator, std::vector< AdjacencyListTarget >::const_iterator >
+  get_targets( const thread tid, const index adjacency_list_index ) const
   {
     return adjacency_list_.get_iterators( tid, adjacency_list_index );
   }
 
   //! Clears all intermediate source information in the adjacency list
-  void clear_adjacency_list_sources( const thread tid )
+  void
+  clear_adjacency_list_sources( const thread tid )
   {
     adjacency_list_.clear_sources( tid );
   }
 
   //! Clears all intermediate compressed information in the adjacency list
-  void clear_compressed_indices()
+  void
+  clear_compressed_indices()
   {
     adjacency_list_.clear_compressed_indices();
   }
 
-  const std::map< thread, index >& get_compressed_spike_data( const index idx ) const
+  const std::map< thread, index >&
+  get_compressed_spike_data( const index idx ) const
   {
     return adjacency_list_.get_compressed_spike_data( idx );
   }
@@ -495,12 +498,12 @@ private:
    */
   void increase_connection_count( const thread tid, const synindex syn_id );
 
-  #ifdef USE_ADJACENCY_LIST
+#ifdef USE_ADJACENCY_LIST
   /**
    * Adjacency list to route spikes from source nodes to all corresponding local target nodes per thread.
    */
   AdjacencyList adjacency_list_;
-  #endif
+#endif
 
   /**
    * Stores absolute position in receive buffer of secondary events.
