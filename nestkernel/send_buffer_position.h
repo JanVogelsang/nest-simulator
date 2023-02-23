@@ -28,9 +28,6 @@
 #include <limits>
 #include <vector>
 
-// Includes from nestkernel:
-#include "vp_manager.h"
-
 namespace nest
 {
 

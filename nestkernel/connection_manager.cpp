@@ -1666,26 +1666,30 @@ bool
 ConnectionManager::get_next_target_data( const thread tid,
   const thread rank_start,
   const thread rank_end,
-  thread& target_rank,
+  thread& source_rank,
   TargetData& next_target_data )
 {
   std::pair< index, size_t > next_target;
   thread target_thread = 0;
   bool valid;
-  if ( use_compressed_spikes_ )
+  do
   {
-    std::tie( next_target, valid ) = adjacency_list_.get_next_compressed_target( tid );
-  }
-  else
-  {
-    std::tie( next_target, target_thread, valid ) = adjacency_list_.get_next_target( tid );
-  }
-  target_rank = kernel().mpi_manager.get_process_id_of_node_id( next_target.first );
+    if ( use_compressed_spikes_ )
+    {
+      std::tie( next_target, valid ) = adjacency_list_.get_next_compressed_target( tid );
+    }
+    else
+    {
+      std::tie( next_target, target_thread, valid ) = adjacency_list_.get_next_target( tid );
+    }
 
-  if ( not valid )  // TODO JV (pt): Too much branching here
-  {
-    return false;
-  }
+    if ( not valid )  // TODO JV (pt): Too much branching here
+    {
+      return false;
+    }
+
+    source_rank = kernel().mpi_manager.get_process_id_of_node_id( next_target.first );
+  } while ( source_rank < rank_start or rank_end <= source_rank );  // get first source for which this thread is responsible
 
   next_target_data.set_is_primary( true );  // TODO JV (pt): Secondary events
   next_target_data.set_source_lid( kernel().vp_manager.node_id_to_lid( next_target.first ) );

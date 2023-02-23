@@ -237,7 +237,8 @@ SourceManager::get_next_target_data( const thread tid,
                                .get_node_by_index( current_position.local_target_node_id )
                                ->get_source( current_position.syn_id, current_position.local_target_connection_id );
 
-    if ( not source_should_be_processed_( rank_start, rank_end, current_source ) )
+    // if ( not source_should_be_processed_( rank_start, rank_end, current_source ) )
+    if ( source_rank < rank_start or rank_end <= source_rank )
     {
       current_position.decrease();
       continue;

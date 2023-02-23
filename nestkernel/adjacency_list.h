@@ -245,16 +245,17 @@ inline std::tuple< std::pair< index, size_t >, thread, bool >
 AdjacencyList::get_next_target( const thread tid )
 {
   // ensure valid iterator
-  if ( next_source_index_[ tid ] == sources_[ next_source_index_thread_[ tid ] ].cend() )
+  while ( next_source_index_[ tid ] == sources_[ next_source_index_thread_[ tid ] ].cend() )
   {
     ++next_source_index_thread_[ tid ];
-    next_source_index_[ tid ] = sources_[ next_source_index_thread_[ tid ] ].cbegin();
-  }
 
-  // check if the last target has been reached already
-  if ( next_source_index_thread_[ tid ] == sources_.size() )
-  {
-    return { { 0, 0 }, -1, false };
+    // check if the last target has been reached already
+    if ( next_source_index_thread_[ tid ] == sources_.size() )
+    {
+      return { { 0, 0 }, -1, false };
+    }
+
+    next_source_index_[ tid ] = sources_[ next_source_index_thread_[ tid ] ].cbegin();
   }
 
   std::pair< index, index > next_target = *( next_source_index_[ tid ] );
