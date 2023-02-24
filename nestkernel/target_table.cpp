@@ -92,20 +92,18 @@ nest::TargetTable::add_target( const thread tid, const thread target_rank, const
 
   if ( target_data.is_primary() )
   {
-    const TargetDataFields& target_fields = target_data.target_data;
-
-    targets_[ tid ][ lid ].push_back( Target( target_fields.get_tid(),
+    targets_[ tid ][ lid ].push_back( Target( target_data.get_target_tid(),
       target_rank,
-      target_fields.get_syn_id() ) );
+      target_data.get_syn_id() ) );
   }
   else
   {
-    const SecondaryTargetDataFields& secondary_fields = target_data.secondary_data;
-    const size_t send_buffer_pos = secondary_fields.get_recv_buffer_pos()
-      + kernel().mpi_manager.get_send_displacement_secondary_events_in_int( target_rank );
-    const synindex syn_id = secondary_fields.get_syn_id();
-
-    assert( syn_id < secondary_send_buffer_pos_[ tid ][ lid ].size() );
-    secondary_send_buffer_pos_[ tid ][ lid ][ syn_id ].push_back( send_buffer_pos );
+    // TODO JV (pt): Secondary events
+//     const size_t send_buffer_pos = target_data.get_recv_buffer_pos()
+//       + kernel().mpi_manager.get_send_displacement_secondary_events_in_int( target_rank );
+//    const synindex syn_id = target_data.get_syn_id();
+//
+//    assert( syn_id < secondary_send_buffer_pos_[ tid ][ lid ].size() );
+//    secondary_send_buffer_pos_[ tid ][ lid ][ syn_id ].push_back( send_buffer_pos );
   }
 }

@@ -98,7 +98,6 @@ set ( nestkernel_sources
       target_table_devices.h target_table_devices.cpp target_table_devices_impl.h
       target.h target_data.h static_assert.h
       send_buffer_position.h
-      source.h
       source_manager.h source_manager.cpp
       source_table_position.h source_table_position.cpp
       spike_data.h

@@ -33,7 +33,6 @@
 #include "common_synapse_properties.h"
 #include "nest_datums.h"
 #include "nest_names.h"
-#include "source.h"
 #include "spikecounter.h"
 
 // Includes from sli:
@@ -89,29 +88,24 @@ public:
   virtual double get_connection_delay( const index lcid, ConnectorModel& cm ) = 0;
 
   /**
-   * Get information about the source node of a specific connection.
+   * Get the source node id of a specific connection.
    */
-  virtual Source& get_source( const index local_target_connection_id ) = 0;
+  virtual index& get_source( const index local_target_connection_id ) = 0;
 
   /**
    * Get the first and last index of all connections corresponding to a specific source node.
    */
-  virtual std::pair< index, index > get_connection_indices( const index source_node_id, const bool primary ) const = 0;
+  virtual std::pair< index, index > get_connection_indices( const index source_node_id ) const = 0;
 
   /**
    * Get the first index of all connections corresponding to a specific source node.
    */
-  virtual index get_first_connection_index( const index source_node_id, const bool primary ) const = 0;
+  virtual index get_first_connection_index( const index source_node_id ) const = 0;
 
   /**
    * Remove source information of all connections in this container.
    */
   virtual void clear_sources() = 0;
-
-  /**
-   * Reset all processed flags of all sources in this container.
-   */
-  virtual void reset_sources_processed_flags() = 0;
 
   /**
    * Add ConnectionID with given source_node_id and lcid to conns. If
@@ -194,8 +188,12 @@ protected:
    * After all connections have been created, the information stored in this structure is transferred to the presynaptic
    * side and the sources vector can be cleared, unless further required for structural plasticity.
    */
-  // TODO JV: This should be converted from type Source to index once the simulation starts
-  std::vector< Source > sources_;
+  // TODO JV (help): Would it would to precompute the start-indices per source rank after sorting to save time when searching?
+  //  What else could we do here to speed up the lookup? Most searching algorithms are quite fast when it comes to
+  //  finding an element in a sorted sequence, but is it also equally fast to guarantee an element is not in the list as
+  //  this will be the case which will occur much more often here. Some sort of pre-filtering might make sense here as
+  //  well, by somehow intelligently analyzing all sources and thus enabling faster lookup (but how?).
+  std::vector< index > sources_;
 
   size_t last_visited_connection;
 };
@@ -263,27 +261,27 @@ public:
   }
 
   const index
-  add_connection( const ConnectionT& c, const Source src )
+  add_connection( const ConnectionT& c, const index source_node_id )
   {
     C_.push_back( c );
-    sources_.push_back( src );
+    sources_.push_back( source_node_id );
     // Return index of added item
     return C_.size() - 1;
   }
 
-  Source&
+  index&
   get_source( const index local_target_connection_id ) override
   {
     return sources_[ local_target_connection_id ];
   }
 
   std::pair< index, index >
-  get_connection_indices( const index source_node_id, const bool primary ) const override
+  get_connection_indices( const index source_node_id ) const override
   {
     // binary search in sorted sources
-    const std::vector< Source >::const_iterator begin = sources_.begin();
-    const std::vector< Source >::const_iterator end = sources_.end();
-    auto first_last_source = std::equal_range( begin, end, Source( source_node_id, primary, true ) );
+    const std::vector< index >::const_iterator begin = sources_.begin();
+    const std::vector< index >::const_iterator end = sources_.end();
+    auto first_last_source = std::equal_range( begin, end, source_node_id );
 
     // TODO JV: Sorting connections by source has to be triggered somewhere
 
@@ -291,14 +289,17 @@ public:
   }
 
   index
-  get_first_connection_index( const index source_node_id, const bool primary ) const override
+  get_first_connection_index( const index source_node_id ) const override
   {
     // TODO JV: Sorting connections by source has to be triggered somewhere
 
     // binary search in sorted sources
-    const std::vector< Source >::const_iterator begin = sources_.begin() + last_visited_connection;
-    const std::vector< Source >::const_iterator end = sources_.end();
-    auto first_source = std::lower_bound( begin, end, Source( source_node_id, primary, true ) );
+    const std::vector< index >::const_iterator begin = sources_.begin() + last_visited_connection;
+    const std::vector< index >::const_iterator end = sources_.end();
+
+    assert( static_cast< size_t >(end - begin) == sources_.size() );  // TODO JV: Remove again, just for debugging
+
+    auto first_source = std::lower_bound( begin, end, source_node_id );
 
     return first_source - begin;
   }
@@ -335,15 +336,6 @@ public:
     sources_.clear();
   }
 
-  void
-  reset_sources_processed_flags() override
-  {
-    for ( std::vector< Source >::iterator source = sources_.begin(); source != sources_.end(); ++source )
-    {
-      source->set_processed( false );
-    }
-  }
-
   bool try_send ( const thread tid,
     const ConnectorModel* cm,
     Event& e,
@@ -352,8 +344,8 @@ public:
     // TODO JV (pt): This should actually send the event to all connection to the target node from this source node.
     //  For performance reasons this is ignored here, as multapses are not the regular case and need to be optimized
     //  somehow to not influence performance of the regular synapse case.
-    // TODO JV: Verify that multapses are not required in the benchmarks.
-    index first_index = get_first_connection_index( e.get_sender_node_id(), cm->is_primary() );
+    // TODO JV (help): Verify that multapses are not required in the benchmarks.
+    index first_index = get_first_connection_index( e.get_sender_node_id() );
     last_visited_connection = first_index;
 
     if ( first_index != C_.size() )  // TODO JV: Verify this

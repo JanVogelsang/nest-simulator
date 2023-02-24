@@ -23,11 +23,44 @@
 #ifndef SOURCE_TABLE_POSITION_H
 #define SOURCE_TABLE_POSITION_H
 
+// C++ includes:
+#include <map>
+#include <vector>
+
 // Includes from nestkernel:
-// #include "kernel_manager.h"
+#include "nest_types.h"
 
 namespace nest
 {
+
+struct SourcePosition
+{
+  thread tid;
+  synindex syn_id;
+  union
+  {
+    std::vector< bool >::const_iterator it;
+    std::map< index, size_t >::const_iterator c_it;
+  };
+  SourcePosition(){};
+  SourcePosition( const std::map< index, size_t >::const_iterator it );
+  SourcePosition( const std::vector< bool >::const_iterator it );
+};
+
+inline
+SourcePosition::SourcePosition( const std::map< index, size_t >::const_iterator it )
+: tid( 0 )
+, syn_id( 0 )
+, c_it( it )
+{}
+
+inline
+  SourcePosition::SourcePosition( const std::vector< bool >::const_iterator it )
+  : tid( 0 )
+  , syn_id( 0 )
+  , it( it )
+{}
+
 
 /**
  * Three-tuple to store position in 3d vector of sources.

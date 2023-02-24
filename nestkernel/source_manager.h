@@ -36,13 +36,13 @@
 #include "mpi_manager.h"
 #include "nest_types.h"
 #include "per_thread_bool_indicator.h"
-#include "source.h"
 #include "source_table_position.h"
 #include "spike_data.h"
 
 namespace nest
 {
 
+class ConnectorModel;
 class TargetData;
 
 /**
@@ -58,54 +58,25 @@ private:
    */
   PerThreadBoolIndicator is_cleared_;
 
-  //! Needed during readout of sources_.
-  std::vector< SourceTablePosition > current_positions_;
-  //! Needed during readout of sources_.
-  std::vector< SourceTablePosition > saved_positions_;
+  //! Needed during communication of target data.
+  std::vector< SourcePosition > current_positions_;
 
-  // TODO JV (pt): This needs some proper thoughts, as this might cause high memory utilization with many threads
-  //! Flag for each possible source neuron, if it has a target on this thread
-  std::vector< std::vector< bool > > has_source_;
+  // TODO JV (pt): This needs some proper thoughts, as this might cause high memory utilization with many threads.
+  //  This does also not scale well with the number of processes (i.e. the overall number of nodes in the network).
+  /**
+   * Flag for each possible source neuron, if it has a target on this thread.
+   * first dim: threads
+   * second dim: synapse types
+   * third dim: source node ids
+   */
+  std::vector< std::vector< std::vector< bool > > > has_source_;
 
   /**
-   * Returns whether this Source object should be considered when
-   * constructing MPI buffers for communicating connections. Returns
-   * false if i) this entry was already processed, or ii) this entry
-   * is disabled (e.g., by structural plasticity) or iii) the reading
-   * thread is not responsible for the particular part of the MPI
-   * buffer where this entry would be written.
+   * A structure to temporarily map source node ids to the corresponding entry in the compressed_spike_data_ structure
+   * of ConnectionManager. Data from this structure is transferred to the presynaptic side during construction of the
+   * presynaptic connection infrastructure. One map for each synapse type.
    */
-  bool source_should_be_processed_( const thread rank_start, const thread rank_end, const Source& source ) const;
-
-  /**
-   * Fills the fields of a TargetData during construction of *
-   * presynaptic connection infrastructure.
-   */
-  bool populate_target_data_fields_( const SourceTablePosition& current_position,
-    const Source& current_source,
-    const thread source_rank,
-    TargetData& next_target_data ) const;
-
-  /**
-   * A structure to temporarily hold information about all process
-   * local targets will be addressed by incoming spikes. Data from
-   * this structure is transferred to the compressed_spike_data_
-   * structure of ConnectionManager during construction of the
-   * postsynaptic connection infrastructure. Arranged as a two
-   * dimensional vector (thread|synapse) with an inner map (source
-   * node id -> spike data).
-   */
-  std::vector< std::vector< std::map< index, SpikeData > > > compressible_sources_;
-
-  /**
-   * A structure to temporarily store locations of "unpacked spikes"
-   * in the compressed_spike_data_ structure of
-   * ConnectionManager. Data from this structure is transferred to the
-   * presynaptic side during construction of the presynaptic
-   * connection infrastructure. Arranged as a two dimensional vector
-   * (thread|synapse) with an inner map (source node id -> index).
-   */
-  std::vector< std::vector< std::map< index, size_t > > > compressed_spike_data_map_;
+  std::vector < std::map< index, size_t > > compressed_spike_data_map_;
 
 public:
   SourceManager();
@@ -134,28 +105,17 @@ public:
     const thread rank_start,
     const thread rank_end,
     thread& source_rank,
+    const std::vector< ConnectorModel* >& cm,
     TargetData& next_target_data );
-
-  /**
-   * Rejects the last target data, and resets the current_positions_
-   * accordingly.
-   */
-  void reject_last_target_data( const thread tid );
-
-  /**
-   * Stores current_positions_ in saved_positions_.
-   */
-  void save_entry_point( const thread tid );
-
-  /**
-   * Restores current_positions_ from saved_positions_.
-   */
-  void restore_entry_point( const thread tid );
 
   /**
    * Resets saved_positions_ to end of sources_.
    */
   void reset_entry_point( const thread tid );
+
+  bool ensure_valid_source_position( const thread tid );
+  bool seek_next_possible_source_position( const thread tid );
+  void return_to_previous_valid_source_position( const thread tid );
 
   /**
    * Returns the source node ID corresponding to the connection ID of target node.
@@ -166,27 +126,14 @@ public:
     const index local_connection_id ) const;
 
   /**
-   * Determines maximal saved_positions_ after which it is safe to
-   * delete sources during clean().
+   * Determines minimal thread after which it is safe to delete sources during clean().
    */
-  SourceTablePosition find_maximal_position() const;
-
-  /**
-   * Resets all processed flags. Needed for restructuring connection
-   * tables, e.g., during structural plasticity update.
-   */
-  void reset_processed_flags( const thread tid );
+  thread find_minimal_position() const;
 
   /**
    * Removes all entries marked as processed.
    */
   void clean( const thread tid );
-
-  /**
-   * Sets current_positions_ for this thread to minimal values so that
-   * these are not considered in find_maximal_position().
-   */
-  void no_targets_to_process( const thread tid );
 
   /**
    * Computes MPI buffer positions for unique combination of source
@@ -224,16 +171,21 @@ public:
    * Marks that this thread has at least one target from the given source.
    */
   void
-  add_source( const thread tid, const index snode_id )
+  add_source( const thread tid, const synindex syn_id, const index snode_id )
   {
-    if ( has_source_[ tid ].size() <= snode_id )
+    if ( has_source_[ tid ][ syn_id ].size() <= snode_id )
     {
       // Adds as many entries as required to cover all sources up until
-      has_source_[ tid ].resize( snode_id + 1 ); // default initialized to false
+      has_source_[ tid ][ syn_id ].resize( snode_id + 1 ); // default initialized to false
     }
 
-    has_source_[ tid ][ snode_id ] = true;
+    has_source_[ tid ][ syn_id ][ snode_id ] = true;
   }
+
+  /**
+   * Resize all data structures when the number of connection models changed.
+   */
+  void resize_sources();
 
   /**
    * Encodes combination of node ID and synapse types as single
@@ -241,36 +193,13 @@ public:
    */
   index pack_source_node_id_and_syn_id( const index source_node_id, const synindex syn_id ) const;
 
-  void resize_compressible_sources();
-
-  // creates maps of sources with more than one thread-local target
-  void collect_compressible_sources( const thread tid );
   // fills the compressed_spike_data structure in ConnectionManager
-  void fill_compressed_spike_data( std::vector< std::vector< std::vector< SpikeData > > >& compressed_spike_data );
+  void fill_compressed_spike_data( std::vector < std::vector< std::vector< thread > > >& compressed_spike_data );
 
-  void clear_compressed_spike_data_map( const thread tid );
+  void clear_compressed_spike_data_map();
+
+  void clear_sources( const thread tid );
 };
-
-inline void
-SourceManager::save_entry_point( const thread tid )
-{
-  saved_positions_[ tid ] = current_positions_[ tid ];
-}
-
-inline void
-SourceManager::restore_entry_point( const thread tid )
-{
-  current_positions_[ tid ] = saved_positions_[ tid ];
-}
-
-inline void
-SourceManager::no_targets_to_process( const thread tid )
-{
-  current_positions_[ tid ].tid = -1;
-  current_positions_[ tid ].syn_id = -1;
-  current_positions_[ tid ].local_target_node_id = -1;
-  current_positions_[ tid ].local_target_connection_id = -1;
-}
 
 inline index
 SourceManager::find_first_source( const thread tid, const synindex syn_id, const index snode_id ) const
@@ -278,9 +207,9 @@ SourceManager::find_first_source( const thread tid, const synindex syn_id, const
   assert( false ); // TODO JV (pt): Structural plasticity
 
   /*// binary search in sorted sources
-  const std::vector< Source >::const_iterator begin = sources_[ tid ][ syn_id ].begin();
-  const std::vector< Source >::const_iterator end = sources_[ tid ][ syn_id ].end();
-  std::vector< Source >::const_iterator it = std::lower_bound( begin, end, Source( snode_id, true ) );
+  const std::vector< index >::const_iterator begin = sources_[ tid ][ syn_id ].begin();
+  const std::vector< index >::const_iterator end = sources_[ tid ][ syn_id ].end();
+  std::vector< index >::const_iterator it = std::lower_bound( begin, end, snode_id );
 
   // source found by binary search could be disabled, iterate through sources until a valid one is found
   while ( it != end )
@@ -310,7 +239,7 @@ SourceManager::disable_connection( const thread tid, const synindex syn_id, cons
 inline size_t
 SourceManager::num_unique_sources( const thread tid, const synindex syn_id ) const
 {
-  return std::count( has_source_[ tid ].begin(), has_source_[ tid ].end(), true );
+  return std::count( has_source_[ tid ][ syn_id ].begin(), has_source_[ tid ][ syn_id ].end(), true );
 }
 
 inline index
@@ -324,12 +253,15 @@ SourceManager::pack_source_node_id_and_syn_id( const index source_node_id, const
 }
 
 inline void
-SourceManager::clear_compressed_spike_data_map( const thread tid )
+SourceManager::clear_compressed_spike_data_map()
 {
-  for ( synindex syn_id = 0; syn_id < compressed_spike_data_map_[ tid ].size(); ++syn_id )
-  {
-    compressed_spike_data_map_[ tid ][ syn_id ].clear();
-  }
+  std::vector < std::map< index, size_t > >().swap( compressed_spike_data_map_ );
+}
+
+inline void
+SourceManager::clear_sources( const thread tid )
+{
+  std::vector< std::vector< bool > >().swap( has_source_[ tid ] );
 }
 
 } // namespace nest

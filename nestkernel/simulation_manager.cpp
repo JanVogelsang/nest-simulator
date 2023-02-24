@@ -683,9 +683,7 @@ nest::SimulationManager::update_connection_infrastructure( const thread tid )
 
   kernel().connection_manager.restructure_connection_tables( tid );
   kernel().connection_manager.sort_connections_and_sources( tid );
-  kernel().connection_manager.collect_compressed_spike_data( tid );
-
-#pragma omp barrier // wait for all threads to finish sorting
+  kernel().connection_manager.collect_compressed_spike_data( tid );  // implicit barrier
 
 #pragma omp single
   {
@@ -734,9 +732,12 @@ nest::SimulationManager::update_connection_infrastructure( const thread tid )
   }
 
 #pragma omp barrier
-  if ( kernel().connection_manager.use_compressed_spikes() )
+#pragma omp master
   {
-    kernel().connection_manager.clear_compressed_spike_data_map( tid );
+    if ( kernel().connection_manager.use_compressed_spikes() )
+    {
+      kernel().connection_manager.clear_compressed_spike_data_map();
+    }
   }
 
 #pragma omp single

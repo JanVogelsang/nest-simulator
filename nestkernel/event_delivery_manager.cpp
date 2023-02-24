@@ -29,7 +29,6 @@
 // Includes from nestkernel:
 #include "kernel_manager.h"
 #include "send_buffer_position.h"
-#include "source.h"
 #include "vp_manager.h"
 #include "vp_manager_impl.h"
 
@@ -147,7 +146,7 @@ EventDeliveryManager::resize_send_recv_buffers_spike_data_()
 {
   if ( kernel().mpi_manager.get_buffer_size_spike_data() > send_buffer_spike_data_.size() )
   {
-    const size_t cap = send_buffer_spike_data_.capacity();
+    // const size_t cap = send_buffer_spike_data_.capacity();
     send_buffer_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );
     recv_buffer_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );
     // send_buffer_off_grid_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );  // TODO JV (pt): Fix offgrid spiking
@@ -684,8 +683,6 @@ EventDeliveryManager::gather_target_data( const thread tid )
       }
     } // of omp single; implicit barrier
 
-    kernel().connection_manager.restore_source_table_entry_point( tid );
-
     SendBufferPosition send_buffer_position(
       assigned_ranks, kernel().mpi_manager.get_send_recv_count_target_data_per_rank() );
 
@@ -696,7 +693,6 @@ EventDeliveryManager::gather_target_data( const thread tid )
     {
       set_complete_marker_target_data_( assigned_ranks, send_buffer_position );
     }
-    kernel().connection_manager.save_source_table_entry_point( tid );
 #pragma omp barrier
     kernel().connection_manager.clean_source_table( tid );
 
@@ -737,11 +733,11 @@ EventDeliveryManager::collocate_target_data_buffers_( const thread tid,
   TargetData next_target_data;
   bool valid_next_target_data;
   bool is_source_table_read = true;
+  const std::vector< ConnectorModel* >& cm = kernel().model_manager.get_connection_models( tid );
 
   // no ranks to process for this thread
   if ( assigned_ranks.begin == assigned_ranks.end )
   {
-    kernel().connection_manager.no_targets_to_process( tid );
     return is_source_table_read;
   }
 
@@ -757,7 +753,7 @@ EventDeliveryManager::collocate_target_data_buffers_( const thread tid,
   while ( true )
   {
     valid_next_target_data = kernel().connection_manager.get_next_target_data(
-      tid, assigned_ranks.begin, assigned_ranks.end, source_rank, next_target_data );
+      tid, assigned_ranks.begin, assigned_ranks.end, source_rank, cm, next_target_data );
     if ( valid_next_target_data ) // add valid entry to MPI buffer
     {
       if ( send_buffer_position.is_chunk_filled( source_rank ) )
@@ -766,7 +762,6 @@ EventDeliveryManager::collocate_target_data_buffers_( const thread tid,
         kernel().connection_manager.reject_last_target_data( tid );
         // after rejecting the last target, we need to save the position to start at this point again next communication
         // round
-        kernel().connection_manager.save_source_table_entry_point( tid );
         // we have just rejected an entry, so source table can not be fully read
         is_source_table_read = false;
         if ( send_buffer_position.are_all_chunks_filled() ) // buffer is full

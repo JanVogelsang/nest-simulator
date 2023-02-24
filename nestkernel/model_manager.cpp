@@ -284,6 +284,7 @@ ModelManager::copy_connection_model_( index old_id, Name new_name )
   synapsedict_->insert( new_name, new_id );
 
   kernel().connection_manager.resize_connections();
+  kernel().source_manager.resize_sources();
   return new_id;
 }
 
@@ -575,6 +576,7 @@ ModelManager::register_connection_model_( ConnectorModel* cf )
   // Need to resize Connector vectors in case connection model is added after
   // ConnectionManager is initialised.
   kernel().connection_manager.resize_connections();
+  kernel().source_manager.resize_sources();
 
   return syn_id;
 }

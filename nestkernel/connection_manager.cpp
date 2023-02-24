@@ -128,7 +128,7 @@ ConnectionManager::finalize()
   target_table_devices_.finalize();
   delete_connections_();
   std::vector< std::vector< std::vector< size_t > > >().swap( secondary_recv_buffer_pos_ );
-  compressed_spike_data_.clear();
+  std::vector< std::vector< std::vector< thread > > >().swap( compressed_spike_data_ );
 }
 
 void
@@ -731,7 +731,7 @@ ConnectionManager::connect_( Node& source,
   switch ( connection_type )
   {
   case CONNECT:
-    kernel().source_manager.add_source( tid, source.get_node_id() );
+    kernel().source_manager.add_source( tid, syn_id, source.get_node_id() );
     break;
   case CONNECT_FROM_DEVICE:
     target_table_devices_.add_connection_from_device( source, target, local_target_connection_id, tid, syn_id );
@@ -782,9 +782,9 @@ ConnectionManager::increase_connection_count( const thread tid, const synindex s
 }
 
 std::pair< index, index >
-ConnectionManager::find_connections( const synindex syn_id, const index snode_id, const Node* target_node, const bool primary )
+ConnectionManager::find_connections( const synindex syn_id, const index snode_id, const Node* target_node )
 {
-  return target_node->get_connection_indices( syn_id, snode_id, primary );
+  return target_node->get_connection_indices( syn_id, snode_id );
 }
 
 void
@@ -792,8 +792,7 @@ ConnectionManager::disconnect( const thread tid, const synindex syn_id, const in
 {
   assert( syn_id != invalid_synindex );
 
-  const ConnectorModel* cm = kernel().model_manager.get_connection_models( tid )[ syn_id ];
-  const std::pair< index, index > connection_indices = find_connections( syn_id, snode_id, target_node, cm->is_primary() );
+  const std::pair< index, index > connection_indices = find_connections( syn_id, snode_id, target_node );
 
   for ( index local_target_connection_id = connection_indices.first; local_target_connection_id < connection_indices.second; ++local_target_connection_id )
   {
@@ -1408,7 +1407,7 @@ ConnectionManager::connection_required( Node*& source, Node*& target, thread tid
 void
 ConnectionManager::set_stdp_eps( const double stdp_eps )
 {
-  if ( not( stdp_eps < Time::get_resolution().get_ms() ) )
+  if ( stdp_eps >= Time::get_resolution().get_ms() )
   {
     throw KernelException(
       "The epsilon used for spike-time comparison in STDP must be less "
@@ -1579,24 +1578,14 @@ ConnectionManager::unset_connections_have_changed()
 void
 ConnectionManager::collect_compressed_spike_data( const thread tid )
 {
-
   if ( use_compressed_spikes_ )
   {
-    assert( false ); // TODO JV (pt): Compressed spikes
-
-    /*
 #pragma omp single
     {
-      source_table_.resize_compressible_sources();
-    } // of omp single; implicit barrier
-
-    source_table_.collect_compressible_sources( tid );
-#pragma omp barrier
-#pragma omp single
-    {
-      source_table_.fill_compressed_spike_data( compressed_spike_data_ );
-    } // of omp single; implicit barrier*/
-  }
+      kernel().source_manager.fill_compressed_spike_data( compressed_spike_data_ );
+    }
+    kernel().source_manager.clear_sources( tid );
+  }  // implicit barrier
 }
 
 void
@@ -1620,19 +1609,8 @@ ConnectionManager::clear_source_table( const thread tid )
 void
 ConnectionManager::reject_last_target_data( const thread tid )
 {
-  kernel().source_manager.reject_last_target_data( tid );
-}
-
-void
-ConnectionManager::save_source_table_entry_point( const thread tid )
-{
-  kernel().source_manager.save_entry_point( tid );
-}
-
-void
-ConnectionManager::no_targets_to_process( const thread tid )
-{
-  kernel().source_manager.no_targets_to_process( tid );
+  // The last target data returned by get_next_target_data() could not be inserted into MPI buffer due to overflow.
+  kernel().source_manager.return_to_previous_valid_source_position( tid );
 }
 
 void
@@ -1641,20 +1619,15 @@ ConnectionManager::reset_source_table_entry_point( const thread tid )
   kernel().source_manager.reset_entry_point( tid );
 }
 
-void
-ConnectionManager::restore_source_table_entry_point( const thread tid )
-{
-  kernel().source_manager.restore_entry_point( tid );
-}
-
 bool
 ConnectionManager::get_next_target_data( const thread tid,
   const thread rank_start,
   const thread rank_end,
   thread& target_rank,
+  const std::vector< ConnectorModel* >& cm,
   TargetData& next_target_data )
 {
-  return kernel().source_manager.get_next_target_data( tid, rank_start, rank_end, target_rank, next_target_data );
+  return kernel().source_manager.get_next_target_data( tid, rank_start, rank_end, target_rank, cm, next_target_data );
 }
 
 index
@@ -1671,13 +1644,12 @@ ConnectionManager::restructure_connection_tables( const thread tid )
 {
   assert( not kernel().source_manager.is_cleared() );
   target_table_.clear( tid );
-  kernel().source_manager.reset_processed_flags( tid );
 }
 
 void
-ConnectionManager::clear_compressed_spike_data_map( const thread tid )
+ConnectionManager::clear_compressed_spike_data_map()
 {
-  kernel().source_manager.clear_compressed_spike_data_map( tid );
+  kernel().source_manager.clear_compressed_spike_data_map();
 }
 
 bool

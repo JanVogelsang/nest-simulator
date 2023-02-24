@@ -88,7 +88,7 @@ public:
   void compute_target_data_buffer_size();
   void compute_compressed_secondary_recv_buffer_positions( const thread tid );
   void collect_compressed_spike_data( const thread tid );
-  void clear_compressed_spike_data_map( const thread tid );
+  void clear_compressed_spike_data_map();
 
   /**
    * Add a connectivity rule, i.e. the respective ConnBuilderFactory.
@@ -157,7 +157,7 @@ public:
     size_t n,
     std::string syn_model );
 
-  std::pair< index, index > find_connections( const synindex syn_id, const index snode_id, const Node* target_node, const bool primary );
+  std::pair< index, index > find_connections( const synindex syn_id, const index snode_id, const Node* target_node );
 
   void disconnect( const thread tid, const synindex syn_id, const index snode_id, Node* target_node );
 
@@ -304,15 +304,12 @@ public:
     const thread rank_start,
     const thread rank_end,
     thread& target_rank,
+    const std::vector< ConnectorModel* >& cm,
     TargetData& next_target_data );
 
   void reject_last_target_data( const thread tid );
 
-  void save_source_table_entry_point( const thread tid );
-
   void reset_source_table_entry_point( const thread tid );
-
-  void restore_source_table_entry_point( const thread tid );
 
   void add_target( const thread tid, const thread target_rank, const TargetData& target_data );
 
@@ -356,8 +353,6 @@ public:
    */
   void restructure_connection_tables( const thread tid );
 
-  void no_targets_to_process( const thread tid );
-
   const std::vector< size_t >&
   get_secondary_send_buffer_positions( const thread tid, const index lid, const synindex syn_id ) const;
 
@@ -395,7 +390,7 @@ public:
   // start and stop in high-level connect functions in nestmodule.cpp and nest.cpp
   Stopwatch sw_construction_connect;
 
-  const std::vector< SpikeData >& get_compressed_spike_data( const synindex syn_id, const index idx );
+  const std::vector< thread >& get_compressed_spike_data( const synindex syn_id, const index idx );
 
 private:
   size_t get_num_target_data( const thread tid ) const;
@@ -477,7 +472,7 @@ private:
    * spike compression is enabled. Internally arranged in a 3d
    * structure: synapses|sources|spike data
    */
-  std::vector< std::vector< std::vector< SpikeData > > > compressed_spike_data_;
+  std::vector< std::vector< std::vector< thread > > > compressed_spike_data_;
 
   /**
    * Stores absolute position in receive buffer of secondary events.
@@ -649,7 +644,7 @@ ConnectionManager::get_device_connected( const thread tid, const index lcid ) co
   return target_table_devices_.is_device_connected( tid, lcid );
 }
 
-inline const std::vector< SpikeData >&
+inline const std::vector< thread >&
 ConnectionManager::get_compressed_spike_data( const synindex syn_id, const index idx )
 {
   return compressed_spike_data_[ syn_id ][ idx ];

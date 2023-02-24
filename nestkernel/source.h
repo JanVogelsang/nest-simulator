@@ -43,13 +43,12 @@ private:
   uint64_t node_id_ : NUM_BITS_NODE_ID; //!< node ID of source
   bool processed_ : 1;                  //!< whether this target has already been moved
                                         //!< to the MPI buffer
-  bool primary_ : 1;
 
 public:
   Source();
-  explicit Source( const uint64_t node_id, const bool primary );
+  explicit Source( const uint64_t node_id);
 
-  explicit Source( const uint64_t node_id, const bool primary, const bool processed );
+  explicit Source( const uint64_t node_id, const bool processed );
 
   /**
    * Sets node_id_ to the specified value.
@@ -63,16 +62,6 @@ public:
 
   void set_processed( const bool processed );
   bool is_processed() const;
-
-  /**
-   * Sets whether Source is primary.
-   */
-  void set_primary( const bool primary );
-
-  /**
-   * Returns whether Source is primary.
-   */
-  bool is_primary() const;
 
   /**
    * Disables Source.
@@ -92,22 +81,19 @@ public:
 inline Source::Source()
   : node_id_( 0 )
   , processed_( false )
-  , primary_( true )
 {
 }
 
-inline Source::Source( const uint64_t node_id, const bool is_primary )
+inline Source::Source( const uint64_t node_id)
   : node_id_( node_id )
   , processed_( false )
-  , primary_( is_primary )
 {
   assert( node_id <= MAX_NODE_ID );
 }
 
-inline Source::Source( const uint64_t node_id, const bool is_primary, const bool processed )
+inline Source::Source( const uint64_t node_id,  const bool processed )
   : node_id_( node_id )
   , processed_( processed )
-  , primary_( is_primary )
 {
   assert( node_id <= MAX_NODE_ID );
 }
@@ -135,18 +121,6 @@ inline bool
 Source::is_processed() const
 {
   return processed_;
-}
-
-inline void
-Source::set_primary( const bool primary )
-{
-  primary_ = primary;
-}
-
-inline bool
-Source::is_primary() const
-{
-  return primary_;
 }
 
 inline void

@@ -23,6 +23,7 @@
 #include "source_manager.h"
 
 // Includes from nestkernel:
+#include "connector_model.h"
 #include "kernel_manager.h"
 #include "target_data.h"
 #include "vp_manager_impl.h"
@@ -58,21 +59,30 @@ SourceManager::change_number_of_threads()
 void
 SourceManager::initialize()
 {
-  assert( sizeof( Source ) == 8 );
   const thread num_threads = kernel().vp_manager.get_num_threads();
   is_cleared_.initialize( num_threads, false );
   current_positions_.resize( num_threads );
-  saved_positions_.resize( num_threads );
-  compressible_sources_.resize( num_threads );
-  compressed_spike_data_map_.resize( num_threads );
   has_source_.resize( num_threads );
 
-#pragma omp parallel
+  const size_t num_connection_models = kernel().model_manager.get_num_connection_models();
+  for( thread tid = 0; tid < num_threads; ++tid )
   {
-    const thread tid = kernel().vp_manager.get_thread_id();
-    compressible_sources_[ tid ].resize( 0 );
-    compressed_spike_data_map_[ tid ].resize( 0 );
-  } // of omp parallel
+    has_source_[ tid ].resize( num_connection_models );
+  }
+  compressed_spike_data_map_.resize( num_connection_models );
+
+  // TODO JV (help): All positions on master now, is there any way to change that?
+//  if ( kernel().connection_manager.use_compressed_spikes() )
+//  {
+//    current_positions_.resize( num_threads, compressed_spike_data_map_[ 0 ].cbegin() );
+//  }
+//  else
+//  {
+//    for( thread tid = 0; tid < num_threads; ++tid )
+//    {
+//      current_positions_.emplace_back( has_source_[ tid ][ 0 ].cbegin() );
+//    }
+//  }
 }
 
 void
@@ -86,17 +96,23 @@ SourceManager::finalize()
     if ( is_cleared_[ tid ].is_false() )
     {
       clear( tid );
-      compressible_sources_[ tid ].clear();
-      compressed_spike_data_map_[ tid ].clear();
     }
   }
   }
 
-  current_positions_.clear();
-  saved_positions_.clear();
-  compressible_sources_.clear();
-  compressed_spike_data_map_.clear();
-  has_source_.clear();
+  std::vector< SourcePosition >().swap( current_positions_ );
+  std::vector< std::map< index, size_t > >().swap( compressed_spike_data_map_ );
+  std::vector< std::vector < std::vector < bool > > >().swap( has_source_ );
+}
+
+void SourceManager::resize_sources()
+{
+  const size_t num_connection_models = kernel().model_manager.get_num_connection_models();
+  for ( thread tid = 0; tid < kernel().vp_manager.get_num_threads(); ++tid )
+  {
+    has_source_[ tid ].resize( num_connection_models );
+  }
+  compressed_spike_data_map_.resize( num_connection_models );
 }
 
 bool
@@ -105,80 +121,39 @@ SourceManager::is_cleared() const
   return is_cleared_.all_true();
 }
 
-SourceTablePosition
-SourceManager::find_maximal_position() const
+thread
+SourceManager::find_minimal_position() const
 {
-  SourceTablePosition max_position( -1, -1, -1, -1 );
-  for ( thread tid = 0; tid < kernel().vp_manager.get_num_threads(); ++tid )
+  const thread num_threads = kernel().vp_manager.get_num_threads();
+  thread min_thread = num_threads;
+  for ( thread tid = 0; tid < num_threads; ++tid )
   {
-    if ( max_position < saved_positions_[ tid ] )
+    if ( min_thread > current_positions_[ tid ].tid )
     {
-      max_position = saved_positions_[ tid ];
+      min_thread = current_positions_[ tid ].tid;
     }
   }
-  return max_position;
+  return min_thread;
 }
 
 void
 SourceManager::clean( const thread tid )
 {
-  has_source_.clear();
-
-  // Find maximal position in source table among threads to make sure
-  // unprocessed entries are not removed. Given this maximal position,
-  // we can safely delete all larger entries since they will not be
-  // touched anymore.
-  const SourceTablePosition max_position = find_maximal_position();
-  const SparseNodeArray& thread_local_nodes = kernel().node_manager.get_local_nodes( tid );
-
-  // If this thread corresponds to max_position's thread, we can only
-  // delete part of the sources table, with indices larger than those
-  // in max_position; if this thread is larger than max_positions's
-  // thread, we can delete all sources; otherwise we do nothing.
-  if ( max_position.tid == tid )
+  if ( kernel().connection_manager.use_compressed_spikes() )
   {
-    // clear all sources all visited nodes
-    for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin() + max_position.local_target_node_id + 1;
-          n != thread_local_nodes.end();
-          ++n )
+    // Find the minimal thread number for which all sources have been communicated already. We can safely delete the
+    // source information for threads smaller than the minimal thread
+    const thread min_thread = find_minimal_position();
+
+    if ( min_thread > tid )
     {
-      n->get_node()->clear_sources();
+      clear_sources( tid );
     }
-    // don't remove any sources of the current node yet, they can be removed at a later point in time
-
-    /*// for the node for which sources are currently transferred, only remove part of the sources yet
-    for ( synindex syn_id = max_position.syn_id; syn_id < kernel().model_manager.get_num_connection_models();
-          ++syn_id )
+    else
     {
-      const Node *current_node = kernel().node_manager.get_local_nodes( tid ).get_node_by_index(
-    max_position.local_target_node_id ); if ( max_position.syn_id == syn_id )
-      {
-        // we need to add 2 to max_position.lcid since
-        // max_position.lcid + 1 can contain a valid entry which we
-        // do not want to delete.
-        if ( max_position.local_target_connection_id + 2 < static_cast< long >( sources.size() ) )
-        {
-          current_node->erase_sources( max_position.local_target_connection_id + 2 );
-        }
-      }
-      else
-      {
-        assert( max_position.syn_id < syn_id );
-        current_node->clear_sources( syn_id );
-      }
-    }*/
-  }
-  else if ( max_position.tid < tid )
-  {
-    for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
-    {
-      n->get_node()->clear_sources();
+      // do nothing
+      assert( min_thread <= tid );
     }
-  }
-  else
-  {
-    // do nothing
-    assert( tid < max_position.tid );
   }
 }
 
@@ -195,35 +170,115 @@ SourceManager::get_node_id( const thread tid,
 
   return kernel()
     .node_manager.thread_lid_to_node( tid, local_target_node_id )
-    ->get_source( syn_id, local_connection_id )
-    .get_node_id();
+    ->get_source( syn_id, local_connection_id );
 }
-
 
 void
 SourceManager::reset_entry_point( const thread tid )
 {
-  // Since we read the source table backwards, we need to set saved values to the biggest possible value. These will be
-  // used to initialize current_positions_ correctly upon calling restore_entry_point. However, this can only be done if
-  // other values have valid values.
-
-  const thread num_threads = kernel().vp_manager.get_num_threads();
-  if ( num_threads > 0 )
+  current_positions_[ tid ].tid = 0;
+  current_positions_[ tid ].syn_id = 0;
+  if ( kernel().connection_manager.use_compressed_spikes() )
   {
-    // The saved position is explicitly set to an invalid position with the thread id being set one value too high, so
-    // the decrease call looks for the next valid position
-    saved_positions_[ tid ].tid = num_threads;
-    saved_positions_[ tid ].syn_id = -1;
-    saved_positions_[ tid ].local_target_node_id = -1;
-    saved_positions_[ tid ].local_target_connection_id = -1;
-    saved_positions_[ tid ].decrease();
+    current_positions_[ tid ].c_it = compressed_spike_data_map_[ 0 ].cbegin();
   }
   else
   {
-    saved_positions_[ tid ].tid = -1;
-    saved_positions_[ tid ].syn_id = -1;
-    saved_positions_[ tid ].local_target_node_id = -1;
-    saved_positions_[ tid ].local_target_connection_id = -1;
+    current_positions_[ tid ].it = has_source_[ 0 ][ 0 ].cbegin();
+  }
+  ensure_valid_source_position( tid );
+}
+
+bool
+SourceManager::ensure_valid_source_position( const thread tid )
+{
+  SourcePosition& source_position = current_positions_[ tid ];
+
+  if ( kernel().connection_manager.use_compressed_spikes() )
+  {
+    while ( source_position.c_it == compressed_spike_data_map_[ source_position.syn_id ].cend() )
+    {
+      ++source_position.syn_id;
+      if ( source_position.syn_id == kernel().model_manager.get_num_connection_models() )
+      {
+        return false;
+      }
+      source_position.c_it = compressed_spike_data_map_[ source_position.syn_id ].cbegin();
+    }
+  }
+  else
+  {
+    // TODO JV (pt): This is not ideal yet, refactor please
+    if ( not seek_next_possible_source_position( tid ) )
+    {
+      return false;
+    }
+    while ( not *source_position.it )
+    {
+      ++source_position.it;
+      // we just make sure the current position is potentially valid, but might still not result in a value of "true"
+      // for this source node id
+      if ( not seek_next_possible_source_position( tid ) )
+      {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+bool
+SourceManager::seek_next_possible_source_position( const thread tid )
+{
+  SourcePosition& source_position = current_positions_[ tid ];
+  while ( source_position.it == has_source_[ source_position.tid ][ source_position.syn_id ].cend() )
+  {
+    ++source_position.syn_id;
+    if ( source_position.syn_id == kernel().model_manager.get_num_connection_models() )
+    {
+      ++source_position.tid;
+      if ( source_position.tid == kernel().vp_manager.get_num_threads() )
+      {
+        return false;
+      }
+      source_position.syn_id = 0;
+    }
+    source_position.it = has_source_[ source_position.tid ][ source_position.syn_id ].cbegin();
+  }
+  return true;
+}
+
+void
+SourceManager::return_to_previous_valid_source_position( const thread tid )
+{
+  SourcePosition& source_position = current_positions_[ tid ];
+
+  if ( kernel().connection_manager.use_compressed_spikes() )
+  {
+    while ( ++source_position.c_it == compressed_spike_data_map_[ source_position.syn_id ].cbegin() )
+    {
+      --source_position.syn_id;
+      source_position.c_it = compressed_spike_data_map_[ source_position.syn_id ].cend();
+    }
+    --source_position.c_it;
+  }
+  else
+  {
+    do
+    {
+      while ( source_position.it == has_source_[ source_position.tid ][ source_position.syn_id ].cbegin() )
+      {
+        if ( source_position.syn_id == 0 )
+        {
+          --source_position.tid;
+          source_position.syn_id = kernel().model_manager.get_num_connection_models();
+        }
+        --source_position.syn_id;
+
+        source_position.it = has_source_[ source_position.tid ][ source_position.syn_id ].cend();
+      }
+      --source_position.it;
+    } while ( not *source_position.it );
   }
 }
 
@@ -239,31 +294,6 @@ SourceManager::clear( const thread tid )
   }
 
   is_cleared_[ tid ].set_true();
-}
-
-void
-SourceManager::reject_last_target_data( const thread tid )
-{
-  // The last target data returned by get_next_target_data() could not be inserted into MPI buffer due to overflow.
-  // We hence need to correct the processed flag of the last entry
-  current_positions_[ tid ].increase();
-  kernel()
-    .node_manager.get_local_nodes( current_positions_[ tid ].tid )
-    .get_node_by_index( current_positions_[ tid ].local_target_node_id )
-    ->get_source( current_positions_[ tid ].syn_id, current_positions_[ tid ].local_target_connection_id )
-    .set_processed( false );
-}
-
-void
-SourceManager::reset_processed_flags( const thread tid )
-{
-  // TODO JV: Make sure iteration over all nodes is efficient
-  const SparseNodeArray& thread_local_nodes = kernel().node_manager.get_local_nodes( tid );
-
-  for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
-  {
-    n->get_node()->reset_sources_processed_flags();
-  }
 }
 
 index
@@ -375,235 +405,94 @@ SourceManager::compute_buffer_pos_for_unique_secondary_sources( const thread tid
 }
 
 bool
-SourceManager::source_should_be_processed_( const thread rank_start, const thread rank_end, const Source& source ) const
-{
-  const thread source_rank = kernel().mpi_manager.get_process_id_of_node_id( source.get_node_id() );
-
-  return not( source.is_processed()
-    or source.is_disabled()
-    // is this thread responsible for this part of the MPI buffer?
-    or source_rank < rank_start or rank_end <= source_rank );
-}
-
-bool
-SourceManager::populate_target_data_fields_( const SourceTablePosition& current_position,
-  const Source& current_source,
-  const thread source_rank,
-  TargetData& next_target_data ) const
-{
-  const auto node_id = current_source.get_node_id();
-
-  // set values of next_target_data
-  next_target_data.set_source_lid( kernel().vp_manager.node_id_to_lid( node_id ) );
-  next_target_data.set_source_tid( kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( node_id ) ) );
-  next_target_data.reset_marker();
-
-  if ( current_source.is_primary() ) // primary connection, i.e., chemical synapses
-  {
-    next_target_data.set_is_primary( true );
-
-    TargetDataFields& target_fields = next_target_data.target_data;
-    target_fields.set_syn_id( current_position.syn_id );
-    if ( kernel().connection_manager.use_compressed_spikes() )
-    {
-      // WARNING: we set the tid field here to zero just to make sure
-      // it has a defined value; however, this value is _not_ used
-      // anywhere when using compressed spikes
-      target_fields.set_tid( 0 );
-      auto it_idx = compressed_spike_data_map_.at( current_position.tid )
-                      .at( current_position.syn_id )
-                      .find( current_source.get_node_id() );
-      if ( it_idx != compressed_spike_data_map_.at( current_position.tid ).at( current_position.syn_id ).end() )
-      {
-        // WARNING: no matter how tempting, do not try to remove this
-        // entry from the compressed_spike_data_map_; if the MPI buffer
-        // is already full, this entry will need to be communicated the
-        // next MPI comm round, which, naturally, is not possible if it
-        // has been removed
-        // TODO JV: Spike compression
-        // target_fields.set_lcid( it_idx->second );
-      }
-      else // another thread is responsible for communicating this compressed source
-      {
-        return false;
-      }
-    }
-    else
-    {
-      // we store the thread index of the source table, not our own tid!
-      target_fields.set_tid( current_position.tid );
-    }
-  }
-  else // secondary connection, e.g., gap junctions
-  {
-    assert( false ); // TODO JV (pt): Secondary events
-    /*next_target_data.set_is_primary( false );
-
-    // the source rank will write to the buffer position relative to the first position from the absolute position in
-    // the receive buffer
-    const size_t relative_recv_buffer_pos = kernel().connection_manager.get_secondary_recv_buffer_position(
-                                              current_position.tid, current_position.syn_id, current_position.lcid )
-      - kernel().mpi_manager.get_recv_displacement_secondary_events_in_int( source_rank );
-
-    SecondaryTargetDataFields& secondary_fields = next_target_data.secondary_data;
-    secondary_fields.set_recv_buffer_pos( relative_recv_buffer_pos );
-    secondary_fields.set_syn_id( current_position.syn_id );*/
-  }
-
-  return true;
-}
-
-bool
 SourceManager::get_next_target_data( const thread tid,
   const thread rank_start,
   const thread rank_end,
   thread& source_rank,
+  const std::vector< ConnectorModel* >& cm,
   TargetData& next_target_data )
 {
-  SourceTablePosition& current_position = current_positions_[ tid ];
+  ensure_valid_source_position( tid );
 
-  // we stay in this loop either until we can return a valid TargetData object or we have reached the end of all
-  // sources tables
-  while ( not current_position.reached_end() )
+  SourcePosition& current_position = current_positions_[ tid ];
+
+  const bool is_primary = cm[ current_position.syn_id ]->is_primary();
+  next_target_data.set_is_primary( is_primary );
+  next_target_data.set_syn_id( current_position.syn_id );
+  next_target_data.reset_marker();
+
+  index next_source;
+  if ( kernel().connection_manager.use_compressed_spikes() )
   {
-
-    // the current position contains an entry, so we retrieve it
-    Source& current_source = kernel()
-                               .node_manager.get_local_nodes( current_position.tid )
-                               .get_node_by_index( current_position.local_target_node_id )
-                               ->get_source( current_position.syn_id, current_position.local_target_connection_id );
-
-    if ( not source_should_be_processed_( rank_start, rank_end, current_source ) )
+    next_source = current_position.c_it->first;
+    source_rank = kernel().mpi_manager.get_process_id_of_node_id( next_source );
+    if ( rank_start <= source_rank and source_rank < rank_end )
     {
-      current_position.decrease();
-      continue;
-    }
-
-    // reaching this means we found an entry that should be communicated via MPI, so we prepare to return the relevant
-    // data
-    // set the source rank
-    source_rank = kernel().mpi_manager.get_process_id_of_node_id( current_source.get_node_id() );
-
-    if ( not populate_target_data_fields_( current_position, current_source, source_rank, next_target_data ) )
-    {
-      current_position.decrease();
-      continue;
-    }
-
-    // we are about to return a valid entry, so mark it as processed
-    current_source.set_processed( true );
-
-    current_position.decrease();
-    return true; // found a valid entry
-  }
-  return false; // reached the end of all sources tables
-}
-
-void
-SourceManager::resize_compressible_sources()
-{
-  for ( thread tid = 0; tid < static_cast< thread >( compressible_sources_.size() ); ++tid )
-  {
-    compressible_sources_[ tid ].clear();
-    compressible_sources_[ tid ].resize(
-      kernel().model_manager.get_num_connection_models(), std::map< index, SpikeData >() );
-  }
-}
-
-void
-SourceManager::collect_compressible_sources( const thread tid )
-{
-  assert( false ); // TODO JV: Spike compression
-  /*
-  for ( synindex syn_id = 0; syn_id < sources_[ tid ].size(); ++syn_id )
-  {
-    index local_target_connection_id = 0;
-    auto& syn_sources = sources_[ tid ][ syn_id ];
-
-    for ( auto node_id )
-      while ( lcid < syn_sources.size() )
+      if ( is_primary ) // primary connection, i.e., chemical synapses
       {
-        const index old_source_node_id = syn_sources[ lcid ].get_node_id();
-        const std::pair< index, SpikeData > source_node_id_to_spike_data =
-          std::make_pair( old_source_node_id, SpikeData( tid, syn_id, lcid, 0 ) );
-        compressible_sources_[ tid ][ syn_id ].insert( source_node_id_to_spike_data );
-
-        // find next source with different node_id (assumes sorted sources)
-        ++lcid;
-        while ( ( lcid < syn_sources.size() ) and ( syn_sources[ lcid ].get_node_id() == old_source_node_id ) )
-        {
-          ++lcid;
-        }
+        // target thread id us used to communicate index in compressed_spike_data
+        next_target_data.set_target_tid( current_position.c_it->second );
+        ++current_position.c_it;
       }
-  }*/
+      else // secondary connection, e.g., gap junctions
+      {
+        assert( false ); // TODO JV (pt): Secondary events
+        // the source rank will write to the buffer position relative to the first position from the absolute position in
+        // the receive buffer
+        /*const size_t relative_recv_buffer_pos = kernel().connection_manager.get_secondary_recv_buffer_position(
+                                                  current_position.tid, current_position.syn_id, current_position.lcid )
+          - kernel().mpi_manager.get_recv_displacement_secondary_events_in_int( source_rank );
+
+        SecondaryTargetDataFields& secondary_fields = next_target_data.secondary_data;
+        secondary_fields.set_recv_buffer_pos( relative_recv_buffer_pos );
+        secondary_fields.set_syn_id( current_position.syn_id );*/
+      }
+    }
+  }
+  else
+  {
+    next_source = current_position.it - has_source_[ current_position.tid ][ current_position.syn_id ].cbegin();
+    source_rank = kernel().mpi_manager.get_process_id_of_node_id( next_source );
+    next_target_data.set_target_tid( current_position.tid );
+    ++current_position.it;
+  }
+
+  // TODO JV (pt): Structural plasticity: Handle deactivation of sources
+  next_target_data.set_source_lid( kernel().vp_manager.node_id_to_lid( next_source ) );
+  next_target_data.set_source_tid( kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( next_source ) ) );
+
+  return false; // reached the end of all sources
 }
 
 void
-SourceManager::fill_compressed_spike_data(
-  std::vector< std::vector< std::vector< SpikeData > > >& compressed_spike_data )
+SourceManager::fill_compressed_spike_data( std::vector < std::vector< std::vector< thread > > >& compressed_spike_data )
 {
-  assert( false ); // TODO JV: Spike compression
-  /*
-  compressed_spike_data.clear();
-  compressed_spike_data.resize( kernel().model_manager.get_num_connection_models() );
-
-  for ( thread tid = 0; tid < static_cast< thread >( compressible_sources_.size() ); ++tid )
+  const thread num_threads = has_source_.size();
+  for ( thread tid = 0; tid < num_threads; ++tid )
   {
-    compressed_spike_data_map_[ tid ].clear();
-    compressed_spike_data_map_[ tid ].resize(
-      kernel().model_manager.get_num_connection_models(), std::map< index, size_t >() );
-  }
-
-  // pseudo-random thread selector to balance memory usage across
-  // threads of compressed_spike_data_map_
-  size_t thread_idx = 0;
-
-  // for each local thread and each synapse type we will populate this
-  // vector with spike data containing information about all process
-  // local targets
-  std::vector< SpikeData > spike_data;
-
-  for ( thread tid = 0; tid < static_cast< thread >( compressible_sources_.size() ); ++tid )
-  {
-    for ( synindex syn_id = 0; syn_id < compressible_sources_[ tid ].size(); ++syn_id )
+    for ( synindex syn_id = 0; syn_id < has_source_[ tid ].size(); ++syn_id )
     {
-      for ( auto it = compressible_sources_[ tid ][ syn_id ].begin();
-            it != compressible_sources_[ tid ][ syn_id ].end(); )
+      std::vector<bool>& sources_mask = has_source_[ tid ][ syn_id ];
+      for ( index source_node_id = 0; source_node_id < sources_mask.size(); ++source_node_id )
       {
-        spike_data.clear();
-
-        // add target position on this thread
-        spike_data.push_back( it->second );
-
-        // add target positions on all other threads
-        for ( thread other_tid = tid + 1; other_tid < static_cast< thread >( compressible_sources_.size() );
-              ++other_tid )
+        // TODO JV (pt): Somehow get rid of this branch-mania. This might not be as bad as it looks, though, as this could
+        //  potentially be predictable by the compiler.
+        if ( sources_mask[ source_node_id ] )
         {
-          auto other_it = compressible_sources_[ other_tid ][ syn_id ].find( it->first );
-          if ( other_it != compressible_sources_[ other_tid ][ syn_id ].end() )
+          const auto compressed_spike_data_index = compressed_spike_data_map_[ syn_id ].find( source_node_id );
+          if ( compressed_spike_data_index != compressed_spike_data_map_[ syn_id ].end() )
           {
-            spike_data.push_back( other_it->second );
-            compressible_sources_[ other_tid ][ syn_id ].erase( other_it );
+            compressed_spike_data[ syn_id ][ (*compressed_spike_data_index).second ].push_back( tid );
+          }
+          else
+          {
+            compressed_spike_data_map_[ syn_id ][ source_node_id ] = compressed_spike_data.size();
+            compressed_spike_data[ syn_id ].emplace_back( std::initializer_list< thread >{ tid } );
           }
         }
-
-        // WARNING: store source-node-id -> process-global-synapse
-        // association in compressed_spike_data_map on a
-        // pseudo-randomly selected thread which houses targets for
-        // this source; this tries to balance memory usage of this
-        // data structure across threads
-        const thread responsible_tid = spike_data[ thread_idx % spike_data.size() ].get_tid();
-        ++thread_idx;
-
-        compressed_spike_data_map_[ responsible_tid ][ syn_id ].insert(
-          std::make_pair( it->first, compressed_spike_data[ syn_id ].size() ) );
-        compressed_spike_data[ syn_id ].push_back( spike_data );
-
-        it = compressible_sources_[ tid ][ syn_id ].erase( it );
       }
-      compressible_sources_[ tid ][ syn_id ].clear();
     }
-  }*/
+  }
 }
 
 }

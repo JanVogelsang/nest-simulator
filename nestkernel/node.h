@@ -38,7 +38,6 @@
 #include "nest_types.h"
 #include "node_collection.h"
 #include "secondary_event.h"
-#include "source.h"
 
 // Includes from sli:
 #include "dictdatum.h"
@@ -478,12 +477,12 @@ public:
    * Get first and last connection index for source node id.
    */
   std::pair< index, index >
-  get_connection_indices( const synindex syn_id, const index source_node_id, const bool primary ) const
+  get_connection_indices( const synindex syn_id, const index source_node_id ) const
   {
     assert( connections_[ syn_id ] ); // TODO JV: Remove this
     if ( connections_[ syn_id ] )
     {
-      return connections_[ syn_id ]->get_connection_indices( source_node_id, primary );
+      return connections_[ syn_id ]->get_connection_indices( source_node_id );
     }
     return {};
   }
@@ -526,7 +525,7 @@ public:
   /**
    * Get information about the source node of a specific connection.
    */
-  Source&
+  index&
   get_source( const synindex syn_id, const index local_connection_id )
   {
     assert( connections_[ syn_id ] );
@@ -540,12 +539,7 @@ public:
     const long synapse_label,
     std::deque< ConnectionID >& conns ) const
   {
-    auto first_last_index = get_connection_indices( syn_id, source_node_id, true );
-    for ( index lcid = first_last_index.first; lcid < first_last_index.second; ++lcid  )
-    {
-      conns.push_back( ConnectionDatum( ConnectionID( source_node_id, get_node_id(), get_thread(), syn_id, lcid ) ) );
-    }
-    first_last_index = get_connection_indices( syn_id, source_node_id, false );
+    auto first_last_index = get_connection_indices( syn_id, source_node_id );
     for ( index lcid = first_last_index.first; lcid < first_last_index.second; ++lcid  )
     {
       conns.push_back( ConnectionDatum( ConnectionID( source_node_id, get_node_id(), get_thread(), syn_id, lcid ) ) );
@@ -577,21 +571,6 @@ public:
       if ( connections_per_syn_type )
       {
         connections_per_syn_type->reset_last_visited_connection();
-      }
-    }
-  }
-
-  /**
-   * Reset all processed flags of all sources of this node.
-   */
-  void
-  reset_sources_processed_flags()
-  {
-    for ( ConnectorBase* connections_per_syn_type : connections_ )
-    {
-      if ( connections_per_syn_type )
-      {
-        connections_per_syn_type->reset_sources_processed_flags();
       }
     }
   }

@@ -48,8 +48,7 @@ TargetTableDevices::add_connection_from_device( Node& source,
   assert( ldid != invalid_index );
   assert( ldid < targets_from_devices_[ tid ].size() );
 
-  targets_from_devices_[ tid ][ ldid ].push_back( LocalTarget(
-    target.get_thread(), kernel().vp_manager.get_vp(), syn_id, target.get_thread_lid(), local_target_connection_id ) );
+  targets_from_devices_[ tid ][ ldid ].push_back( LocalTarget( syn_id, target.get_thread_lid(), local_target_connection_id ) );
 
   // store node ID of sending device
   sending_devices_node_ids_[ tid ][ ldid ] = source.get_node_id();
@@ -72,8 +71,7 @@ TargetTableDevices::add_connection_to_device( Node& source,
     targets_to_devices_[ tid ].emplace( source_lid, std::vector< LocalTarget >() );
   }
 
-  targets_to_devices_[ tid ][ source_lid ].push_back( LocalTarget(
-    target.get_thread(), kernel().vp_manager.get_vp(), syn_id, target.get_thread_lid(), local_target_connection_id ) );
+  targets_to_devices_[ tid ][ source_lid ].push_back( LocalTarget( syn_id, target.get_thread_lid(), local_target_connection_id ) );
 }
 
 // inline void

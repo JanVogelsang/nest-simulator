@@ -33,128 +33,6 @@
 
 namespace nest
 {
-class TargetDataFields
-{
-private:
-  unsigned int local_target_node_id_ : NUM_BITS_LOCAL_NODE_ID;
-  unsigned int tid_ : NUM_BITS_TID;
-  unsigned int syn_id_ : NUM_BITS_SYN_ID;
-
-public:
-  // Members must be set explicitly -- no defaults
-
-  /**
-   * Set thread-local target neuron ID.
-   */
-  void set_local_target_node_id( const index local_target_node_id );
-
-  /**
-   * Returns thread-local target neuron ID.
-   */
-  index get_local_target_node_id() const;
-
-  /**
-   * Sets the target ID.
-   */
-  void set_tid( const thread tid );
-
-  /**
-   * Returns the target ID.
-   */
-  thread get_tid() const;
-
-  /**
-   * Sets the synapse-type ID.
-   */
-  void set_syn_id( const synindex syn_id );
-
-  /**
-   * Returns the synapse-type ID.
-   */
-  synindex get_syn_id() const;
-};
-
-//! check legal size
-using success_target_data_fields_size = StaticAssert< sizeof( TargetDataFields ) == 4 >::success;
-
-inline void
-TargetDataFields::set_local_target_node_id( const index local_target_node_id )
-{
-  local_target_node_id_ = local_target_node_id;
-}
-
-inline index
-TargetDataFields::get_local_target_node_id() const
-{
-  return local_target_node_id_;
-}
-
-inline void
-TargetDataFields::set_tid( const thread tid )
-{
-  tid_ = tid;
-}
-
-inline thread
-TargetDataFields::get_tid() const
-{
-  return tid_;
-}
-
-inline void
-TargetDataFields::set_syn_id( const synindex syn_id )
-{
-  syn_id_ = syn_id;
-}
-
-inline synindex
-TargetDataFields::get_syn_id() const
-{
-  return syn_id_;
-}
-
-class SecondaryTargetDataFields
-{
-private:
-  unsigned int recv_buffer_pos_;
-  unsigned char syn_id_;
-
-public:
-  // Members must be set explicitly -- no defaults
-  void set_recv_buffer_pos( const size_t pos );
-  size_t get_recv_buffer_pos() const;
-  void set_syn_id( const synindex syn_id );
-  synindex get_syn_id() const;
-};
-
-//! check legal size
-using success_secondary_target_data_fields_size = StaticAssert< sizeof( SecondaryTargetDataFields ) == 8 >::success;
-
-inline void
-SecondaryTargetDataFields::set_recv_buffer_pos( const size_t pos )
-{
-  assert( pos < std::numeric_limits< unsigned int >::max() );
-  recv_buffer_pos_ = pos;
-}
-
-inline size_t
-SecondaryTargetDataFields::get_recv_buffer_pos() const
-{
-  return recv_buffer_pos_;
-}
-
-inline void
-SecondaryTargetDataFields::set_syn_id( const synindex syn_id )
-{
-  assert( syn_id < std::numeric_limits< unsigned char >::max() );
-  syn_id_ = syn_id;
-}
-
-inline synindex
-SecondaryTargetDataFields::get_syn_id() const
-{
-  return syn_id_;
-}
 
 enum enum_status_target_data_id
 {
@@ -182,19 +60,19 @@ private:
   static constexpr int MAX_LID = generate_max_value( NUM_BITS_LID );
 
   unsigned int source_lid_ : NUM_BITS_LID; //!< local id of presynaptic neuron
-  //! thread index of presynaptic neuron
-  unsigned int source_tid_ : NUM_BITS_TID;
+  unsigned int source_tid_ : NUM_BITS_TID; //!< thread index of presynaptic neuron
   unsigned int marker_ : NUM_BITS_MARKER;
   //! TargetData has TargetDataFields else SecondaryTargetDataFields
   bool is_primary_ : NUM_BITS_IS_PRIMARY;
+  unsigned int syn_id_ : NUM_BITS_SYN_ID; //!< synapse type
+//  union
+//  {
+  thread target_tid_ : 25; //!< thread index of postsynaptic target neurons
+//    unsigned int compressed_index_ : 25;
+//    unsigned int secondary_recv_buffer_pos_ : 25;  // TODO JV (pt): Secondary events
+//  };
 
 public:
-  //! variant fields
-  union
-  {
-    TargetDataFields target_data;
-    SecondaryTargetDataFields secondary_data;
-  };
 
   void reset_marker();
   void set_complete_marker();
@@ -205,14 +83,20 @@ public:
   bool is_invalid_marker() const;
   void set_source_lid( const index source_lid );
   void set_source_tid( const thread source_tid );
+  void set_target_tid( const thread target_tid );
+  void set_syn_id( const synindex syn_id );
+  // void set_secondary_recv_buffer_pos( const size_t secondary_recv_buffer_pos );
   index get_source_lid() const;
   thread get_source_tid() const;
+  thread get_target_tid() const;
+  synindex get_syn_id() const;
+  // size_t get_secondary_recv_buffer_pos();
   void set_is_primary( const bool is_primary );
   bool is_primary() const;
 };
 
 //! check legal size
-using success_target_data_size = StaticAssert< sizeof( TargetData ) == 12 >::success;
+using success_target_data_size = StaticAssert< sizeof( TargetData ) == 8 >::success;
 
 inline void
 TargetData::reset_marker()
@@ -270,6 +154,20 @@ TargetData::set_source_tid( const thread source_tid )
   source_tid_ = source_tid;
 }
 
+inline void
+TargetData::set_target_tid( const thread target_tid )
+{
+  assert( target_tid < MAX_TID );
+  target_tid_ = target_tid;
+}
+
+inline void
+TargetData::set_syn_id( const synindex syn_id )
+{
+  assert( syn_id < MAX_SYN_ID );
+  syn_id_ = syn_id;
+}
+
 inline index
 TargetData::get_source_lid() const
 {
@@ -280,6 +178,18 @@ inline thread
 TargetData::get_source_tid() const
 {
   return source_tid_;
+}
+
+inline thread
+TargetData::get_target_tid() const
+{
+  return target_tid_;
+}
+
+inline synindex
+TargetData::get_syn_id() const
+{
+  return syn_id_;
 }
 
 inline void

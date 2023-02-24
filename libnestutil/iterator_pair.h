@@ -26,8 +26,6 @@
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/tuple/tuple.hpp>
 
-#include "source.h"
-
 namespace boost
 {
 namespace tuples
@@ -171,9 +169,9 @@ struct rightshift_iterator_pair
 
   template < typename T >
   inline int
-  operator()( boost::tuples::tuple< nest::Source&, T& > s, unsigned offset )
+  operator()( boost::tuples::tuple< size_t&, T& > s, unsigned offset )
   {
-    return boost::get< 0 >( s ).get_node_id() >> offset;
+    return boost::get< 0 >( s ) >> offset;
   }
 };
 
