@@ -98,10 +98,9 @@ class TestSTDPSynapse:
 
         # ``weight_by_nest`` contains only weight values at pre spike times, ``weight_reproduced_independently``
         # contains the weight at pre *and* post times: check that weights are equal for pre spike times
-        if len(weight_by_nest) > 0:
-            assert len(weight_by_nest) > 0
-            np.testing.assert_allclose(t_weight_by_nest, t_weight_reproduced_independently)
-            np.testing.assert_allclose(weight_by_nest, weight_reproduced_independently)
+        assert len(weight_by_nest) > 0
+        np.testing.assert_allclose(t_weight_by_nest, t_weight_reproduced_independently)
+        np.testing.assert_allclose(weight_by_nest, weight_reproduced_independently)
 
     def do_the_nest_simulation(self):
         """
@@ -111,7 +110,6 @@ class TestSTDPSynapse:
         nest.set_verbosity('M_WARNING')
         nest.ResetKernel()
         nest.SetKernelStatus({'resolution': self.resolution})
-        nest.local_num_threads = 2
 
         presynaptic_neuron, postsynaptic_neuron = nest.Create(
             self.nest_neuron_model,

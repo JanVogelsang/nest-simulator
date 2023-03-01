@@ -128,9 +128,12 @@ ConnectionManager::finalize()
 {
   target_table_.finalize();
   target_table_devices_.finalize();
-  adjacency_list_.finalize();
   delete_connections_();
   std::vector< std::vector< std::vector< size_t > > >().swap( secondary_recv_buffer_pos_ );
+
+#ifdef USE_ADJACENCY_LIST
+  adjacency_list_.finalize();
+#endif
 }
 
 void

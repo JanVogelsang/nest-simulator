@@ -609,21 +609,7 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
       se.set_stamp( prepared_timestamps[ spike_data.get_lag() ] );
       se.set_offset( spike_data.get_offset() );
 
-#ifndef USE_ADJACENCY_LIST
-      // simple node-to-node delivery without any indirections in between
-      if ( spike_data.get_tid() == tid )
-      {
-        const index syn_id = spike_data.get_syn_id();
-        const index local_target_node_id = spike_data.get_local_target_node_id();
-        const index local_target_connection_id = spike_data.get_local_target_connection_id();
-
-        // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
-        // only if needed, as this is computationally costly
-        se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id );
-        Node* target_node = kernel().node_manager.thread_lid_to_node( tid, local_target_node_id );
-        target_node->deliver_event( tid, syn_id, local_target_connection_id, cm, se );
-      }
-#else
+#ifdef USE_ADJACENCY_LIST
       if ( kernel().connection_manager.use_compressed_spikes() )
       {
         // Compressed spikes use the adjacency list index of SpikeData to transmit the index in the compressed spike
@@ -643,6 +629,20 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
         {
           deliver_to_adjacency_list( tid, spike_data.get_adjacency_list_index(), se, cm );
         }
+      }
+#else
+      // simple node-to-node delivery without any indirections in between
+      if ( spike_data.get_tid() == tid )
+      {
+        const index syn_id = spike_data.get_syn_id();
+        const index local_target_node_id = spike_data.get_local_target_node_id();
+        const index local_target_connection_id = spike_data.get_local_target_connection_id();
+
+        // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
+        // only if needed, as this is computationally costly
+        se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id );
+        Node* target_node = kernel().node_manager.thread_lid_to_node( tid, local_target_node_id );
+        target_node->deliver_event( tid, syn_id, local_target_connection_id, cm, se );
       }
 #endif
 
@@ -758,7 +758,7 @@ EventDeliveryManager::collocate_target_data_buffers_( const thread tid,
     send_buffer_target_data_[ send_buffer_position.begin( rank ) ].set_invalid_marker();
   }
 
-  while ( true ) // TODO JV (pt): This loop design is not idea, refactoring needed (check first, then get target data)
+  while ( true ) // TODO JV (pt): This loop design is not ideal, refactoring needed (check first, then get target data)
   {
     valid_next_target_data = kernel().connection_manager.get_next_target_data(
       tid, assigned_ranks.begin, assigned_ranks.end, source_rank, next_target_data );

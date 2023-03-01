@@ -24,8 +24,8 @@
 
 // Includes from nestkernel:
 #include "kernel_manager.h"
-// #include "mpi_manager_impl.h"
-// #include "vp_manager_impl.h"
+#include "mpi_manager_impl.h"
+#include "vp_manager_impl.h"
 
 namespace nest
 {
@@ -224,6 +224,9 @@ SourceManager::get_next_target_data( const thread tid,
                              .get_node_by_index( current_position.local_target_node_id )
                              ->get_source( current_position.syn_id, current_position.local_target_connection_id );
 
+    // set the source rank
+    source_rank = kernel().mpi_manager.get_process_id_of_node_id( source_node_id );
+
     if ( source_rank < rank_start or rank_end <= source_rank or source_node_id == DISABLED_NODE_ID )
     {
       current_position.decrease();
@@ -232,9 +235,6 @@ SourceManager::get_next_target_data( const thread tid,
 
     // reaching this means we found an entry that should be communicated via MPI, so we prepare to return the relevant
     // data
-    // set the source rank
-    source_rank = kernel().mpi_manager.get_process_id_of_node_id( source_node_id );
-
     // if ( primary ) {
     // we store the thread index of the source table, not our own tid!
     next_target_data.set_is_primary( true );
@@ -243,6 +243,7 @@ SourceManager::get_next_target_data( const thread tid,
       kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( source_node_id ) ) );
     next_target_data.reset_marker();
     next_target_data.target_data.set_tid( current_position.tid );
+    next_target_data.target_data.set_syn_id( current_position.syn_id );
     next_target_data.target_data.set_local_target_node_id( current_position.local_target_node_id );
     next_target_data.target_data.set_local_target_connection_id( current_position.local_target_connection_id );
     // TODO JV (pt): Secondary events. Secondary event can't be combined yet with the adjacency-list-based
