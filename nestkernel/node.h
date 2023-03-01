@@ -29,10 +29,10 @@
 #include <vector>
 
 // Includes from nestkernel:
+#include "archived_spike.h"
 #include "connector_base.h"
 #include "deprecation_warning.h"
 #include "event.h"
-#include "histentry.h"
 #include "nest_names.h"
 #include "nest_time.h"
 #include "nest_types.h"
@@ -388,7 +388,7 @@ public:
    * DS*Events when called with the dummy target, and *Events when called with
    * the real target, see #478.
    */
-  virtual port send_test_event( Node& receiving_node, rport receptor_type, synindex syn_id, bool dummy_target );
+  virtual port send_test_event( Node& receiving_node, const rport receptor_type, synindex syn_id, bool dummy_target );
 
   /**
    * Check if the node can handle a particular event and receptor type.
@@ -463,7 +463,7 @@ public:
    *
    * @throws IllegalConnection
    */
-  virtual void register_stdp_connection( double, double );
+  virtual void register_stdp_connection( const double, const synindex );
 
   /**
    * Change the number of different connection types to this node.
@@ -572,21 +572,6 @@ public:
       if ( connections_per_syn_type )
       {
         connections_per_syn_type->reset_sources_processed_flags();
-      }
-    }
-  }
-
-  /**
-   * Sort all connections and sources by the source node id, per connection type.
-   */
-  void
-  sort_connections_and_sources()
-  {
-    for ( ConnectorBase* connections_per_syn_type : connections_ )
-    {
-      if ( connections_per_syn_type )
-      {
-        connections_per_syn_type->sort_connections_and_sources();
       }
     }
   }
@@ -866,19 +851,19 @@ public:
    */
   virtual void get_history( double t1,
     double t2,
-    std::deque< histentry >::iterator* start,
-    std::deque< histentry >::iterator* finish );
+    std::deque< ArchivedSpikeTrace >::iterator* start,
+    std::deque< ArchivedSpikeTrace >::iterator* finish );
 
   // for Clopath synapse
   virtual void get_LTP_history( double t1,
     double t2,
-    std::deque< histentry_extended >::iterator* start,
-    std::deque< histentry_extended >::iterator* finish );
+    std::deque< ArchivedSpikeGeneric >::iterator* start,
+    std::deque< ArchivedSpikeGeneric >::iterator* finish );
   // for Urbanczik synapse
   virtual void get_urbanczik_history( double t1,
     double t2,
-    std::deque< histentry_extended >::iterator* start,
-    std::deque< histentry_extended >::iterator* finish,
+    std::deque< ArchivedSpikeGeneric >::iterator* start,
+    std::deque< ArchivedSpikeGeneric >::iterator* finish,
     int );
   // make neuron parameters accessible in Urbanczik synapse
   virtual double get_C_m( int comp );
@@ -963,7 +948,6 @@ public:
     return SPIKE;
   }
 
-
   /**
    *  Return a dictionary with the node's properties.
    *
@@ -1011,6 +995,16 @@ public:
    * @see set_local_device_id
    */
   virtual index get_local_device_id() const;
+
+  /**
+   * Return if the node has any incoming stdp connections.
+   */
+  virtual bool has_stdp_connections() const;
+
+  /**
+   * Sort all stdp connections by dendritic delay for better vectorization.
+   */
+  virtual void sort_stdp_connections_by_dendritic_delay();
 
   /**
    * Framework for STDP with predominantly axonal delays:

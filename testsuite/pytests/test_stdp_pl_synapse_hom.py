@@ -54,7 +54,6 @@ class TestSTDPPlSynapse:
         self.init_weight = .5
         self.dendritic_delay = self.delay - self.axonal_delay
         self.synapse_common_properties = {
-            "axonal_delay": self.axonal_delay,
             "lambda": 0.1,
             "alpha": 1.0,
             "mu": 0.4,
@@ -64,6 +63,7 @@ class TestSTDPPlSynapse:
             "synapse_model": self.synapse_model,
             "receptor_type": 0,
             "delay": self.delay,
+            "axonal_delay": self.axonal_delay,
             "weight": self.init_weight
         }
         self.neuron_parameters = {

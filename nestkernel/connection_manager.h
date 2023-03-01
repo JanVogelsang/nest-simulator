@@ -278,6 +278,11 @@ public:
   void calibrate( const TimeConverter& );
 
   /**
+   * Sort all STDP connections by dendritic delay for better vectorization.
+   */
+  void sort_stdp_connections_by_dendritic_delay( const thread tid );
+
+  /**
    * Returns the delay checker for the current thread.
    */
   DelayChecker& get_delay_checker();
@@ -316,20 +321,7 @@ public:
 
   void add_target( const thread tid, const thread target_rank, const TargetData& target_data );
 
-  /**
-   * Return sort_connections_by_source_, which indicates whether
-   * connections_ and source_table_ should be sorted according to
-   * source node ID.
-   */
-  bool get_sort_connections_by_source() const;
-
   bool use_compressed_spikes() const;
-
-  /**
-   * Sorts connections in the presynaptic infrastructure by increasing
-   * source node ID.
-   */
-  void sort_connections_and_sources( const thread tid );
 
   /**
    * Removes disabled connections (of structural plasticity)
@@ -529,14 +521,10 @@ private:
   //! true if GetConnections has been called.
   bool get_connections_has_been_called_;
 
-  //! Whether to sort connections by source node ID.
-  bool sort_connections_by_source_;
-
   //! Whether to use spike compression; if a neuron has targets on
   //! multiple threads of a process, this switch makes sure that only
   //! a single packet is sent to the process instead of one packet per
-  //! target thread; requires sort_connections_by_source_ = true; for
-  //! more details see the discussion and sketch in
+  //! target thread; for more details see the discussion and sketch in
   //! https://github.com/nest/nest-simulator/pull/1338
   bool use_compressed_spikes_;
 
@@ -640,12 +628,6 @@ inline bool
 ConnectionManager::secondary_connections_exist() const
 {
   return secondary_connections_exist_;
-}
-
-inline bool
-ConnectionManager::get_sort_connections_by_source() const
-{
-  return sort_connections_by_source_;
 }
 
 inline bool

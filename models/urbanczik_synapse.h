@@ -163,10 +163,9 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-
 
     t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
   }
@@ -208,8 +207,8 @@ urbanczik_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Nod
   double dendritic_delay = get_delay();
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
-  std::deque< histentry_extended >::iterator start;
-  std::deque< histentry_extended >::iterator finish;
+  std::deque< ArchivedSpikeGeneric >::iterator start;
+  std::deque< ArchivedSpikeGeneric >::iterator finish;
 
   // for now we only support two-compartment neurons
   // in this case the dendritic compartment has index 1
@@ -225,11 +224,11 @@ urbanczik_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Nod
 
   while ( start != finish )
   {
-    double const t_up = start->t_ + dendritic_delay;     // from t_lastspike to t_spike
+    double const t_up = start->t + dendritic_delay;     // from t_lastspike to t_spike
     double const minus_delta_t_up = t_lastspike_ - t_up; // from 0 to -delta t
     double const minus_t_down = t_up - t_spike;          // from -t_spike to 0
     double const PI =
-      ( tau_L_trace_ * exp( minus_delta_t_up / tau_L ) - tau_s_trace_ * exp( minus_delta_t_up / tau_s ) ) * start->dw_;
+      ( tau_L_trace_ * exp( minus_delta_t_up / tau_L ) - tau_s_trace_ * exp( minus_delta_t_up / tau_s ) ) * start->value;
     PI_integral_ += PI;
     dPI_exp_integral += exp( minus_t_down / tau_Delta_ ) * PI;
     ++start;

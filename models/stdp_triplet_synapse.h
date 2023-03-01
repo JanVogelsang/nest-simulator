@@ -49,7 +49,7 @@ Notes:
   ``Kplus`` and ``Kplus_triplet`` and decay with time-constants ``tau_plus`` and
   ``tau_plus_triplet``, respectively.
 - Postsynaptic traces ``o_1`` and ``o_2`` of [1]_ are acquired from the postsynaptic
-  neuron states ``Kminus_`` and ``triplet_Kminus_`` which decay on time-constants
+  neuron states ``Kminus`` and ``triplet_Kminus_`` which decay on time-constants
   ``tau_minus`` and ``tau_minus_triplet``, respectively. These two time-constants
   can be set as properties of the postsynaptic neuron.
 - This version implements the 'all-to-all' spike interaction of [1]_. The
@@ -191,10 +191,9 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-
 
     t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
   }
@@ -248,8 +247,8 @@ stdp_triplet_synapse::send( Event& e, thread t, const CommonSynapseProperties&, 
   double dendritic_delay = get_delay();
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
-  std::deque< histentry >::iterator start;
-  std::deque< histentry >::iterator finish;
+  std::deque< ArchivedSpikeTrace >::iterator start;
+  std::deque< ArchivedSpikeTrace >::iterator finish;
   target->get_history( t_lastspike_ - dendritic_delay, t_spike - dendritic_delay, &start, &finish );
 
   // facilitation due to postsynaptic spikes since last pre-synaptic spike
@@ -257,15 +256,15 @@ stdp_triplet_synapse::send( Event& e, thread t, const CommonSynapseProperties&, 
   {
     // postsynaptic spike is delayed by dendritic_delay so that
     // it is effectively late by that much at the synapse.
-    double minus_dt = t_lastspike_ - ( start->t_ + dendritic_delay );
+    double minus_dt = t_lastspike_ - ( start->t + dendritic_delay );
 
     // subtract 1.0 yields the Kminus_triplet value just prior to
     // the postsynaptic spike, implementing the t-epsilon in
     // Pfister et al, 2006
-    double ky = start->Kminus_triplet_ - 1.0;
+    double ky = start->Kminus_triplet - 1.0;
     ++start;
     // get_history() should make sure that
-    // start->t_ > t_lastspike - dendritic_delay, i.e. minus_dt < 0
+    // start->t > t_lastspike - dendritic_delay, i.e. minus_dt < 0
     assert( minus_dt < -1.0 * kernel().connection_manager.get_stdp_eps() );
     weight_ = facilitate_( weight_, Kplus_ * std::exp( minus_dt / tau_plus_ ), ky );
   }

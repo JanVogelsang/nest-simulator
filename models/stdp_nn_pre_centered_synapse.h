@@ -182,10 +182,9 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-
 
     t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
   }
@@ -242,8 +241,8 @@ stdp_nn_pre_centered_synapse::send( Event& e, thread t, const CommonSynapsePrope
   double dendritic_delay = get_delay();
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
-  std::deque< histentry >::iterator start;
-  std::deque< histentry >::iterator finish;
+  std::deque< ArchivedSpikeTrace >::iterator start;
+  std::deque< ArchivedSpikeTrace >::iterator finish;
 
   // For a new synapse, t_lastspike_ contains the point in time of the last
   // spike. So we initially read the
@@ -259,14 +258,14 @@ stdp_nn_pre_centered_synapse::send( Event& e, thread t, const CommonSynapsePrope
   // to account.
   if ( start != finish )
   {
-    // facilitation due to the first postsynaptic spike start->t_
+    // facilitation due to the first postsynaptic spike start->t
     // since the previous pre-synaptic spike t_lastspike_
 
     double minus_dt;
-    minus_dt = t_lastspike_ - ( start->t_ + dendritic_delay );
+    minus_dt = t_lastspike_ - ( start->t + dendritic_delay );
 
     // get_history() should make sure that
-    // start->t_ > t_lastspike_ - dendritic_delay, i.e. minus_dt < 0
+    // start->t > t_lastspike_ - dendritic_delay, i.e. minus_dt < 0
     assert( minus_dt < -1.0 * kernel().connection_manager.get_stdp_eps() );
 
     weight_ = facilitate_( weight_, Kplus_ * std::exp( minus_dt / tau_plus_ ) );
@@ -279,7 +278,7 @@ stdp_nn_pre_centered_synapse::send( Event& e, thread t, const CommonSynapsePrope
     Kplus_ = 0;
   }
 
-  // depression due to the latest postsynaptic spike finish->t_
+  // depression due to the latest postsynaptic spike finish->t
   // before the current pre-synaptic spike t_spike
   double nearest_neighbor_Kminus;
   double value_to_throw_away; // discard Kminus and Kminus_triplet here

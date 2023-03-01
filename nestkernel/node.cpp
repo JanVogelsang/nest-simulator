@@ -175,6 +175,18 @@ Node::get_local_device_id() const
   return invalid_index;
 }
 
+bool
+Node::has_stdp_connections() const
+{
+  throw UnexpectedEvent( "Node does not support STDP synapses." );
+}
+
+void
+Node::sort_stdp_connections_by_dendritic_delay()
+{
+  throw UnexpectedEvent( "Node does not support STDP synapses." );
+}
+
 void
 Node::add_correction_entry_stdp_ax_delay( SpikeEvent&, const double, const double, const double )
 {
@@ -251,7 +263,7 @@ Node::send_test_event( Node&, rport, synindex, bool )
  * throws IllegalConnection
  */
 void
-Node::register_stdp_connection( double, double )
+Node::register_stdp_connection( const double, const synindex )
 {
   throw IllegalConnection( "The target node does not support STDP synapses." );
 }
@@ -321,7 +333,8 @@ Node::deliver_event( const thread tid,
   connections_[ syn_id ]->send( tid, local_target_connection_id, cm, se, this );
 
   // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
-  //  handle, or just handing the entire local connection id to the handle function.
+  //  handle, or just handing the entire local connection id to the handle function (and storing an array of rports
+  //  which can be indexed by the local connection id).
 
   handle( se );
 }
@@ -534,7 +547,7 @@ Node::get_K_values( double, double&, double&, double& )
 }
 
 void
-nest::Node::get_history( double, double, std::deque< histentry >::iterator*, std::deque< histentry >::iterator* )
+nest::Node::get_history( double, double, std::deque< ArchivedSpikeTrace >::iterator*, std::deque< ArchivedSpikeTrace >::iterator* )
 {
   throw UnexpectedEvent();
 }
@@ -542,8 +555,8 @@ nest::Node::get_history( double, double, std::deque< histentry >::iterator*, std
 void
 nest::Node::get_LTP_history( double,
   double,
-  std::deque< histentry_extended >::iterator*,
-  std::deque< histentry_extended >::iterator* )
+  std::deque< ArchivedSpikeGeneric >::iterator*,
+  std::deque< ArchivedSpikeGeneric >::iterator* )
 {
   throw UnexpectedEvent();
 }
@@ -551,8 +564,8 @@ nest::Node::get_LTP_history( double,
 void
 nest::Node::get_urbanczik_history( double,
   double,
-  std::deque< histentry_extended >::iterator*,
-  std::deque< histentry_extended >::iterator*,
+  std::deque< ArchivedSpikeGeneric >::iterator*,
+  std::deque< ArchivedSpikeGeneric >::iterator*,
   int )
 {
   throw UnexpectedEvent();

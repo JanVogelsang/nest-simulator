@@ -27,8 +27,8 @@
 #include <deque>
 
 // Includes from nestkernel:
+#include "archived_spike.h"
 #include "archiving_node.h"
-#include "histentry.h"
 #include "nest_time.h"
 #include "nest_types.h"
 #include "synaptic_element.h"
@@ -46,6 +46,8 @@ namespace nest
  */
 class ClopathArchivingNode : public ArchivingNode
 {
+
+  using ArchivingNode::has_stdp_connections;
 
 public:
   /**
@@ -68,15 +70,15 @@ public:
 
   /**
    * \fn void get_LTP_history(long t1, long t2,
-   * std::deque<Archiver::histentry>::iterator* start,
-   * std::deque<Archiver::histentry>::iterator* finish)
+   * std::deque<Archiver::ArchivedSpikeTrace>::iterator* start,
+   * std::deque<Archiver::ArchivedSpikeTrace>::iterator* finish)
    * Sets pointer start (finish) to the first (last) entry in LTP_history
    * whose time argument is between t1 and t2
    */
   void get_LTP_history( double t1,
     double t2,
-    std::deque< histentry_extended >::iterator* start,
-    std::deque< histentry_extended >::iterator* finish ) override;
+    std::deque< ArchivedSpikeGeneric >::iterator* start,
+    std::deque< ArchivedSpikeGeneric >::iterator* finish ) override;
 
   /**
    * \fn double get_theta_plus()
@@ -121,8 +123,8 @@ protected:
   void set_status( const DictionaryDatum& d ) override;
 
 private:
-  std::vector< histentry_extended > ltd_history_;
-  std::deque< histentry_extended > ltp_history_;
+  std::vector< ArchivedSpikeGeneric > ltd_history_;
+  std::deque< ArchivedSpikeGeneric > ltp_history_;
 
   double A_LTD_;
 

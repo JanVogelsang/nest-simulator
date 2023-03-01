@@ -120,6 +120,7 @@ nest::DelayChecker::set_status( const DictionaryDatum& d )
 void
 nest::DelayChecker::assert_valid_delay_ms( double requested_new_delay )
 {
+  // TODO JV: Make this axonal-delay-aware
   const delay new_delay = Time::delay_ms_to_steps( requested_new_delay );
   const double new_delay_ms = Time::delay_steps_to_ms( new_delay );
 
@@ -137,8 +138,7 @@ nest::DelayChecker::assert_valid_delay_ms( double requested_new_delay )
     if ( bad_min_delay or bad_max_delay )
     {
       throw BadDelay( new_delay_ms,
-        "Minimum and maximum delay cannot be changed "
-        "after Simulate has been called." );
+        "Minimum and maximum delay cannot be changed after Simulate has been called." );
     }
   }
 

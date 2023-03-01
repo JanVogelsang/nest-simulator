@@ -168,10 +168,9 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-
 
     t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
   }
@@ -223,8 +222,8 @@ clopath_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node*
   double dendritic_delay = get_delay();
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
-  std::deque< histentry_extended >::iterator start;
-  std::deque< histentry_extended >::iterator finish;
+  std::deque< ArchivedSpikeGeneric >::iterator start;
+  std::deque< ArchivedSpikeGeneric >::iterator finish;
 
   // For a new synapse, t_lastspike_ contains the point in time of the last
   // spike. So we initially read the
@@ -238,8 +237,8 @@ clopath_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node*
   // facilitation due to postsynaptic activity since last pre-synaptic spike
   while ( start != finish )
   {
-    const double minus_dt = t_lastspike_ - ( start->t_ + dendritic_delay );
-    weight_ = facilitate_( weight_, start->dw_, x_bar_ * exp( minus_dt / tau_x_ ) );
+    const double minus_dt = t_lastspike_ - ( start->t + dendritic_delay );
+    weight_ = facilitate_( weight_, start->value, x_bar_ * exp( minus_dt / tau_x_ ) );
     ++start;
   }
 

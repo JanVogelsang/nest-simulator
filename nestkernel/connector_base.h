@@ -37,6 +37,7 @@
 #include "spikecounter.h"
 
 // Includes from sli:
+#include "archived_spike.h"
 #include "arraydatum.h"
 #include "dictutils.h"
 
@@ -82,9 +83,14 @@ public:
   virtual void set_synapse_status( const index lcid, const DictionaryDatum& dict, ConnectorModel& cm ) = 0;
 
   /**
-   * Get the proportion of the transmission delay attributed to the dendrite.
+   * Get the proportion of the transmission delay attributed to the dendrite of a connection.
    */
-  virtual double get_connection_delay( const index lcid, ConnectorModel& cm ) = 0;
+  virtual double get_dendritic_delay( const index lcid ) = 0;
+
+  /**
+   * Get the proportion of the transmission delay attributed to the axon of a connection.
+   */
+  virtual double get_axonal_delay( const index lcid ) = 0;
 
   /**
    * Get information about the source node of a specific connection.
@@ -141,6 +147,8 @@ public:
     const CommonSynapseProperties& cp,
     Node* target ) = 0;
 
+  virtual void update_stdp_connections( const ArchivedSpikeTrace &archived_spike, const double dendritic_delay ) = 0;
+
   /**
    * Update weights of dopamine modulated STDP connections.
    */
@@ -151,9 +159,9 @@ public:
     const std::vector< ConnectorModel* >& cm ) = 0;
 
   /**
-   * Sort connections according to source node IDs.
+   * Sort connections according to dendritic delay.
    */
-  virtual void sort_connections_and_sources() = 0;
+  virtual void sort_connections_by_dendritic_delay() = 0;
 
   /**
    * Disable the transfer of events through the connection at position
@@ -189,8 +197,9 @@ template < typename ConnectionT >
 class Connector : public ConnectorBase
 {
 private:
-  std::vector< ConnectionT > C_;
   const synindex syn_id_;
+  std::map< delay, std::pair< typename std::vector< ConnectionT >::iterator, typename std::vector< ConnectionT >::iterator > > dendritic_delay_regions_;
+  std::vector< ConnectionT > C_;
 
 public:
   explicit Connector( const synindex syn_id )
@@ -236,11 +245,19 @@ public:
   }
 
   double
-  get_connection_delay( const index lcid, ConnectorModel& cm ) override
+  get_dendritic_delay( const index lcid ) override
   {
     assert( lcid < C_.size() );
 
-    return C_[ lcid ].get_delay();
+    return C_[ lcid ].get_dendritic_delay();
+  }
+
+  double
+  get_axonal_delay( const index lcid ) override
+  {
+    assert( lcid < C_.size() );
+
+    return C_[ lcid ].get_axonal_delay();
   }
 
   const index
@@ -261,26 +278,13 @@ public:
   std::vector< index >
   get_connection_indices( const index source_node_id ) const override
   {
-    // binary search in sorted sources
-    const std::vector< Source >::const_iterator begin = sources_.begin();
-    const std::vector< Source >::const_iterator end = sources_.end();
-    // TODO JV (pt): Secondary events: Is primary really always the case? (Adapted from master though)
-    std::vector< Source >::const_iterator it = std::lower_bound( begin, end, Source( source_node_id, true ) );
-
     std::vector< index > indices;
 
-    index connection_index = it - begin;
-
-    // assert( kernel().connection_manager.get_sort_connections_by_source() );
-    assert( false );
-    // TODO JV: This assumes the sources and connections are sorted by source node id
-    while ( it != end && it->get_node_id() == source_node_id )
+    std::vector< Source >::const_iterator it = sources_.cbegin();
+    while ( ( it = std::find_if( it, sources_.cend(), [ source_node_id ]( const Source src ) { return src.get_node_id() == source_node_id; } ) ) != sources_.end() )
     {
-      // Connection is disabled
-      if ( not C_[ connection_index ].is_disabled() )
-      {
-        indices.push_back( it - begin );
-      }
+      // Do something with iter
+      indices.push_back( std::distance( sources_.begin(), it ));
       ++it;
     }
 
@@ -374,6 +378,22 @@ public:
     }
   }
 
+  void update_stdp_connections( const ArchivedSpikeTrace &archived_spike, const double dendritic_delay ) override
+  {
+    // TODO JV (pt): Verify for precise spike times
+    // TODO JV: Make sure double->long conversion yields the correct delay
+    auto group_it = dendritic_delay_regions_.find( Time::delay_ms_to_steps(dendritic_delay) );
+    if ( group_it != dendritic_delay_regions_.end() )  // check if there are connections with given dendritic delay
+    {
+      const auto end = group_it->second.second;
+      for ( auto it = group_it->second.first; it != end; ++it )
+      {
+        // TODO JV (help): How to only implement this function on some synapse types and still make this compile?
+        // it->process_post_synaptic_spike( archived_spike.t + dendritic_delay, cp );
+      }
+    }
+  }
+
   void correct_synapse_stdp_ax_delay( const index local_target_connection_id,
     const double t_last_pre_spike,
     double* weight_revert,
@@ -381,9 +401,22 @@ public:
     Node* target ) override;
 
   void
-  sort_connections_and_sources() override
+  sort_connections_by_dendritic_delay() override
   {
-    nest::sort( sources_, C_ );
+    std::sort( C_.begin(), C_.end(), []( const ConnectionT& lhs, const ConnectionT& rhs )
+      { return lhs.get_dendritic_delay() < rhs.get_dendritic_delay(); } );
+
+    auto start_it = C_.begin();
+    delay last_delay = start_it->get_dendritic_delay();
+    for ( auto it = C_.begin() + 1; it != C_.end(); ++it )
+    {
+      if ( it->get_dendritic_delay() != last_delay )  // detect switch to new dendritic delay region
+      {
+        dendritic_delay_regions_[ last_delay ] = { start_it, it };
+        start_it = it;
+        last_delay = it->get_dendritic_delay();
+      }
+    }
   }
 
   void

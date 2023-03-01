@@ -211,7 +211,7 @@ ConnectionCreator::pairwise_bernoulli_on_source_( Layer< D >& source,
       NodeCollection::const_iterator target_begin = target_nc->begin();
       NodeCollection::const_iterator target_end = target_nc->end();
 
-      for ( NodeCollection::const_iterator tgt_it = target_begin; tgt_it < target_end; ++tgt_it )
+      for ( NodeCollection::const_iterator tgt_it = target_begin; tgt_it != target_end; ++tgt_it )
       {
         Node* const tgt = kernel().node_manager.get_node_or_proxy( ( *tgt_it ).node_id, thread_id );
 
@@ -297,7 +297,7 @@ ConnectionCreator::pairwise_bernoulli_on_target_( Layer< D >& source,
       NodeCollection::const_iterator target_begin = target_nc->local_begin();
       NodeCollection::const_iterator target_end = target_nc->end();
 
-      for ( NodeCollection::const_iterator tgt_it = target_begin; tgt_it < target_end; ++tgt_it )
+      for ( NodeCollection::const_iterator tgt_it = target_begin; tgt_it != target_end; ++tgt_it )
       {
         Node* const tgt = kernel().node_manager.get_node_or_proxy( ( *tgt_it ).node_id, thread_id );
 
@@ -364,7 +364,7 @@ ConnectionCreator::fixed_indegree_( Layer< D >& source,
   // protect against connecting to devices without proxies
   // we need to do this before creating the first connection to leave
   // the network untouched if any target does not have proxies
-  for ( NodeCollection::const_iterator tgt_it = target_begin; tgt_it < target_end; ++tgt_it )
+  for ( NodeCollection::const_iterator tgt_it = target_begin; tgt_it != target_end; ++tgt_it )
   {
     Node* const tgt = kernel().node_manager.get_node_or_proxy( ( *tgt_it ).node_id );
 
@@ -378,7 +378,7 @@ ConnectionCreator::fixed_indegree_( Layer< D >& source,
 
     std::vector< std::pair< Position< D >, index > > positions;
 
-    for ( NodeCollection::const_iterator tgt_it = target_begin; tgt_it < target_end; ++tgt_it )
+    for ( NodeCollection::const_iterator tgt_it = target_begin; tgt_it != target_end; ++tgt_it )
     {
       index target_id = ( *tgt_it ).node_id;
       Node* const tgt = kernel().node_manager.get_node_or_proxy( target_id );
@@ -513,7 +513,7 @@ ConnectionCreator::fixed_indegree_( Layer< D >& source,
     // Get (position,node ID) pairs for all nodes in source layer
     std::vector< std::pair< Position< D >, index > >* positions = source.get_global_positions_vector( source_nc );
 
-    for ( NodeCollection::const_iterator tgt_it = target_begin; tgt_it < target_end; ++tgt_it )
+    for ( NodeCollection::const_iterator tgt_it = target_begin; tgt_it != target_end; ++tgt_it )
     {
       index target_id = ( *tgt_it ).node_id;
       Node* const tgt = kernel().node_manager.get_node_or_proxy( target_id );
@@ -656,7 +656,7 @@ ConnectionCreator::fixed_outdegree_( Layer< D >& source,
   NodeCollection::const_iterator target_begin = target_nc->MPI_local_begin();
   NodeCollection::const_iterator target_end = target_nc->end();
 
-  for ( NodeCollection::const_iterator tgt_it = target_begin; tgt_it < target_end; ++tgt_it )
+  for ( NodeCollection::const_iterator tgt_it = target_begin; tgt_it != target_end; ++tgt_it )
   {
     Node* const tgt = kernel().node_manager.get_node_or_proxy( ( *tgt_it ).node_id );
 

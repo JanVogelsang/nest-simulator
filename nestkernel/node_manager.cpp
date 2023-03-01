@@ -596,8 +596,7 @@ NodeManager::set_status_single_node_( Node& target, const DictionaryDatum& d, bo
 void
 NodeManager::prepare_node_( Node* n )
 {
-  // Frozen nodes are initialized and calibrated, so that they
-  // have ring buffers and can accept incoming spikes.
+  // Frozen nodes are initialized and calibrated, so that they have ring buffers and can accept incoming spikes.
   n->init();
   n->pre_run_hook();
 }

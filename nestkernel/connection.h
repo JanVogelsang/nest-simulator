@@ -93,7 +93,6 @@ class ConnTestDummyNodeBase : public Node
   }
 };
 
-
 /**
  * Base class for representing connections.
  * It provides the mandatory properties receiver port and target,
@@ -169,12 +168,38 @@ public:
     Node* target );
 
   /**
-   * Return the delay of the connection in ms
+   * Get the total transmission delay.
    */
   double
   get_delay() const
   {
+    // TODO JV (pt): Think about storing dendritic delay and assuming an axonal delay of 0. In derived connections
+    //  (AxonalDelayConnections), both the dendritic and axonal delay would be stored and the total delay would be the
+    //  sum instead of the other way around as it is the case right now.
     return Time::delay_steps_to_ms( delay_ );
+  }
+
+  /**
+   * Get the proportion of the transmission delay attributed to the dendrite.
+   */
+  double
+  get_dendritic_delay() const
+  {
+    return get_delay();
+  }
+
+  /**
+   * Get the proportion of the transmission delay attributed to the axon.
+   */
+  double
+  get_axonal_delay() const
+  {
+    throw IllegalConnection( "Connection does not support axonal delays." );
+  }
+
+  bool supports_axonal_delay() const
+  {
+    return false;
   }
 
   /**

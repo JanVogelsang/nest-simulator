@@ -286,16 +286,6 @@ class NestModule(types.ModuleType):
     max_num_syn_models = KernelAttribute(
         "int", "Maximal number of synapse models supported", readonly=True
     )
-    sort_connections_by_source = KernelAttribute(
-        "bool",
-        (
-            "Whether to sort connections by their source; increases"
-            + " construction time of presynaptic data structures, decreases"
-            + " simulation time if the average number of outgoing connections"
-            + " per neuron is smaller than the total number of threads"
-        ),
-        default=True,
-    )
     structural_plasticity_synapses = KernelAttribute(
         "dict",
         (
@@ -325,8 +315,7 @@ class NestModule(types.ModuleType):
             "Whether to use spike compression; if a neuron has targets on"
             + " multiple threads of a process, this switch makes sure that only"
             + " a single packet is sent to the process instead of one packet"
-            + " per target thread; requires"
-            + " ``nest.sort_connections_by_source = True``"
+            + " per target thread"
         ),
         default=True,
     )

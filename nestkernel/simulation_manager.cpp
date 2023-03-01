@@ -682,7 +682,7 @@ nest::SimulationManager::update_connection_infrastructure( const thread tid )
   }
 
   kernel().connection_manager.restructure_connection_tables( tid );
-  kernel().connection_manager.sort_connections_and_sources( tid );
+  kernel().connection_manager.sort_stdp_connections_by_dendritic_delay( tid );
   kernel().connection_manager.collect_compressed_spike_data( tid );
 
 #pragma omp barrier // wait for all threads to finish sorting

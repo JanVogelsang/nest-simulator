@@ -65,11 +65,11 @@ is used when calculating the weighted histogram.
 Both are arrays of :math:`2\cdot\tau_{max}/\delta_{\tau}+1` values containing the
 histogram counts in the following way:
 
-Let :math:`t_{1,i}` be the spike times of source 1,
-:math:`t_{2,j}` the spike times of source 2.
+Let :math:`t{1,i}` be the spike times of source 1,
+:math:`t{2,j}` the spike times of source 2.
 ``histogram[n]`` then contains the sum of products of the weight
 :math:`w_{1,i}\cdot w_{2,j}`, count_histogram[n] contains 1 summed over all events
-with :math:`t_{2,j}-t_{1,i}` in
+with :math:`t{2,j}-t{1,i}` in
 
 .. math::
 

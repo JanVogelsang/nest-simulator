@@ -67,7 +67,6 @@ ConnectionManager::ConnectionManager()
   , keep_source_table_( true )
   , connections_have_changed_( false )
   , get_connections_has_been_called_( false )
-  , sort_connections_by_source_( false ) // TODO JV
   , use_compressed_spikes_( false )      // TODO JV
   , has_primary_connections_( false )
   , check_primary_connections_()
@@ -92,7 +91,6 @@ ConnectionManager::initialize()
 {
   const thread num_threads = kernel().vp_manager.get_num_threads();
   secondary_recv_buffer_pos_.resize( num_threads );
-  sort_connections_by_source_ = true;
   connections_have_changed_ = false;
 
   compressed_spike_data_.resize( 0 );
@@ -156,19 +154,7 @@ ConnectionManager::set_status( const DictionaryDatum& d )
       "to false." );
   }
 
-  updateValue< bool >( d, names::sort_connections_by_source, sort_connections_by_source_ );
-  if ( not sort_connections_by_source_ and kernel().sp_manager.is_structural_plasticity_enabled() )
-  {
-    throw KernelException(
-      "If structural plasticity is enabled, sort_connections_by_source can not "
-      "be set to false." );
-  }
-
   updateValue< bool >( d, names::use_compressed_spikes, use_compressed_spikes_ );
-  if ( use_compressed_spikes_ and not sort_connections_by_source_ )
-  {
-    throw KernelException( "Spike compression requires sort_connections_by_source to be true." );
-  }
 
   //  Need to update the saved values if we have changed the delay bounds.
   if ( d->known( names::min_delay ) or d->known( names::max_delay ) )
@@ -193,7 +179,6 @@ ConnectionManager::get_status( DictionaryDatum& dict )
   const size_t n = get_num_connections();
   def< long >( dict, names::num_connections, n );
   def< bool >( dict, names::keep_source_table, keep_source_table_ );
-  def< bool >( dict, names::sort_connections_by_source, sort_connections_by_source_ );
   def< bool >( dict, names::use_compressed_spikes, use_compressed_spikes_ );
 
   def< double >( dict, names::time_construction_connect, sw_construction_connect.elapsed() );
@@ -371,6 +356,16 @@ ConnectionManager::calibrate( const TimeConverter& tc )
   for ( thread tid = 0; tid < kernel().vp_manager.get_num_threads(); ++tid )
   {
     delay_checkers_[ tid ].calibrate( tc );
+  }
+}
+
+void
+ConnectionManager::sort_stdp_connections_by_dendritic_delay( const thread tid )
+{
+  const SparseNodeArray& thread_local_nodes = kernel().node_manager.get_local_nodes( tid );
+  for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
+  {
+    n->get_node()->sort_stdp_connections_by_dendritic_delay();
   }
 }
 
@@ -1181,16 +1176,6 @@ ConnectionManager::get_connections( std::deque< ConnectionID >& connectome,
     } // of omp parallel
     return;
   } // else if*/
-}
-
-void
-ConnectionManager::sort_connections_and_sources( const thread tid )
-{
-  const SparseNodeArray& thread_local_nodes = kernel().node_manager.get_local_nodes( tid );
-  for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
-  {
-    n->get_node()->sort_connections_and_sources();
-  }
 }
 
 void

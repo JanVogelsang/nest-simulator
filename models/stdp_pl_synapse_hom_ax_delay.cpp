@@ -45,7 +45,6 @@ STDPPLHomAxDelayCommonProperties::STDPPLHomAxDelayCommonProperties()
   , lambda_( 0.1 )
   , alpha_( 1.0 )
   , mu_( 0.4 )
-  , axonal_delay_( 0.0 )
 {
 }
 
@@ -58,7 +57,6 @@ STDPPLHomAxDelayCommonProperties::get_status( DictionaryDatum& d ) const
   def< double >( d, names::lambda, lambda_ );
   def< double >( d, names::alpha, alpha_ );
   def< double >( d, names::mu, mu_ );
-  def< double >( d, names::axonal_delay, axonal_delay_ );
 }
 
 void
@@ -78,16 +76,11 @@ STDPPLHomAxDelayCommonProperties::set_status( const DictionaryDatum& d, Connecto
   updateValue< double >( d, names::lambda, lambda_ );
   updateValue< double >( d, names::alpha, alpha_ );
   updateValue< double >( d, names::mu, mu_ );
-  updateValue< double >( d, names::axonal_delay, axonal_delay_ );
-  if ( axonal_delay_ < 0.0 ) // consistency with overall delay is checked in check_connection()
-  {
-    throw BadProperty( "Axonal delay should not be negative." );
-  }
 }
 
 
 stdp_pl_synapse_hom_ax_delay::stdp_pl_synapse_hom_ax_delay()
-  : ConnectionBase()
+  : AxonalDelayConnection()
   , weight_( 1.0 )
   , Kplus_( 0.0 )
   , t_lastspike_( 0.0 )
@@ -99,7 +92,7 @@ stdp_pl_synapse_hom_ax_delay::get_status( DictionaryDatum& d ) const
 {
 
   // base class properties, different for individual synapse
-  ConnectionBase::get_status( d );
+  AxonalDelayConnection::get_status( d );
   def< double >( d, names::weight, weight_ );
 
   // own properties, different for individual synapse
@@ -111,7 +104,7 @@ void
 stdp_pl_synapse_hom_ax_delay::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 {
   // base class properties
-  ConnectionBase::set_status( d, cm );
+  AxonalDelayConnection::set_status( d, cm );
   updateValue< double >( d, names::weight, weight_ );
 
   updateValue< double >( d, names::Kplus, Kplus_ );

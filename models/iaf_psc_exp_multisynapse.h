@@ -316,7 +316,7 @@ iaf_psc_exp_multisynapse::Parameters_::n_receptors_() const
 }
 
 inline port
-iaf_psc_exp_multisynapse::send_test_event( Node& target, rport receptor_type, synindex, bool )
+iaf_psc_exp_multisynapse::send_test_event( Node& target, const rport receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

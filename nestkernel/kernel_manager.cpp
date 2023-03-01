@@ -57,8 +57,8 @@ nest::KernelManager::KernelManager()
   , model_manager()
   , music_manager()
   , node_manager()
-  , source_manager()
   , connection_manager()
+  , source_manager()
   , io_manager()
   , managers( { &logging_manager,
       &mpi_manager,

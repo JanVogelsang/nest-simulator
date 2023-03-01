@@ -28,8 +28,8 @@
 #include <deque>
 
 // Includes from nestkernel:
+#include "archived_spike.h"
 #include "connector_base_impl.h"
-#include "histentry.h"
 #include "nest_time.h"
 #include "nest_types.h"
 #include "node.h"
@@ -37,6 +37,18 @@
 
 // Includes from sli:
 #include "dictdatum.h"
+
+#ifdef HAVE_BOOST
+// TODO JV (pt): This is a fixed-size container now, but this will not work with offgrid spikes, as they can't be
+//  combined into a single slot for a simulation step and in theory multiple spikes could be emitted in a single
+//  simulation step. There is "circular_buffer_space_optimized" which is resizable, but is not iterable anymore.
+//  Maybe circular buffer is not the correct choice in general here.
+#include <boost/circular_buffer.hpp>
+template <typename T>
+using SpikeArchive = boost::circular_buffer<T, std::allocator<T>>;  // TODO JV (pt): Rethink allocator choice
+#else
+assert( false );  // TODO JV (pt): Make RingBuffer more general, so it could also be used here
+#endif
 
 #define DEBUG_ARCHIVER 1
 
@@ -103,22 +115,24 @@ public:
   }
 
   /**
-   * \fn double get_K_triplet_value(std::deque<histentry>::iterator &iter)
+   * \fn double get_K_triplet_value(std::deque<ArchivedSpikeTrace>::iterator &iter)
    * return the triplet Kminus value for the associated iterator.
    */
-  double get_K_triplet_value( const std::deque< histentry >::iterator& iter );
+  double get_K_triplet_value( const std::deque< ArchivedSpikeTrace >::iterator& iter );
 
   /**
    * \fn void get_history(long t1, long t2,
-   * std::deque<Archiver::histentry>::iterator* start,
-   * std::deque<Archiver::histentry>::iterator* finish)
+   * std::deque<Archiver::ArchivedSpikeTrace>::iterator* start,
+   * std::deque<Archiver::ArchivedSpikeTrace>::iterator* finish)
    * return the spike times (in steps) of spikes which occurred in the range
    * (t1,t2].
    */
-  void get_history( double t1,
-    double t2,
-    std::deque< histentry >::iterator* start,
-    std::deque< histentry >::iterator* finish ) override;
+   // TODO JV (pt): This function could still exist, as there is no reason why the history should not be accessed. This
+   //  function will be commented out for now to make sure no currently implemented model depends on it anymore.
+//  void get_history( double t1,
+//    double t2,
+//    std::deque< ArchivedSpikeTrace >::iterator* start,
+//    std::deque< ArchivedSpikeTrace >::iterator* finish ) override;
 
   /**
    * Register a new incoming STDP connection.
@@ -126,7 +140,7 @@ public:
    * t_first_read: The newly registered synapse will read the history entries
    * with t > t_first_read.
    */
-  void register_stdp_connection( double t_first_read, double delay ) override;
+  void register_stdp_connection( const double dendritic_delay, const synindex syn_id ) override;
 
   /**
    * Postponed delivery is required for STDP synapses with predominantly axonal delay. The archiving node supports this
@@ -174,20 +188,29 @@ protected:
    * \fn double get_spiketime()
    * return most recent spike time in ms
    */
-  inline double get_spiketime_ms() const;
+  double get_spiketime_ms() const;
 
   /**
-   * \fn void clear_history()
+   * Inform all incoming STDP connections of a post-synaptic spike to update the synaptic weight.
+   */
+  void update_stdp_connections( const double t );
+
+  /**
+   * Sort all stdp connections by dendritic delay for better vectorization.
+   */
+  void sort_stdp_connections_by_dendritic_delay() override;
+
+  /**
    * clear spike history
    */
   void clear_history();
 
   void reset_correction_entries_stdp_ax_delay_();
 
-  // number of incoming connections from stdp connectors.
-  // needed to determine, if every incoming connection has
-  // read the spikehistory for a given point in time
-  size_t n_incoming_;
+  /**
+   * Return if the node has any incoming stdp connections.
+   */
+  virtual bool has_stdp_connections() const;
 
 private:
   // sum exp(-(t-ti)/tau_minus)
@@ -203,14 +226,30 @@ private:
   double tau_minus_triplet_;
   double tau_minus_triplet_inv_;
 
-  double min_delay_;
-  double max_delay_;
   double trace_;
 
   double last_spike_;
 
+  /**
+   * Maximum dendritic delay of all incoming connections.
+   */
+  double max_dendritic_delay_;
+
+  /**
+   * Saves all synapse types registered to this node that need to get informed of post-synaptic spikes and support
+   * axonal delay.
+   * TODO JV (pt): There has to be a better (more object-oriented) way of handling specific connections differently.
+   */
+  std::set< synindex > stdp_synapse_types_;
+
   // spiking history needed by stdp synapses
-  std::deque< histentry > history_;
+  // TODO JV (pt): This has to be more generic somehow to support any synapse type, but without increasing memory usage
+  //  for nodes without these special synapse type which need to store other values than just Kminus. In add_connection
+  //  one will see which synapse type the neuron has to support and the synapses should actually manage the values in
+  //  the history themselves somehow as this value depends on the exact synapse type. Even for "regular" STDP synapses
+  //  the Kminus will be different for different pairing schemes.
+  // SpikeArchive<ArchivedSpikeTrace> history_;
+  std::deque<ArchivedSpikeTrace> history_;
 
   /**
    * Data structure to store incoming spikes sent over STDP synapses with predominantly axonal delay. If at time of
@@ -253,13 +292,12 @@ private:
    * (i.e., the actual arrival time at this neuron).
    */
   std::vector< std::vector< CorrectionEntrySTDPAxDelay > > correction_entries_stdp_ax_delay_;
-  bool has_stdp_ax_delay_; //!< false by default and set to true after the first entry was added to
-                           //!< correction_entries_stdp_ax_delay_
 
   /**
    * Framework for STDP with predominantly axonal delays:
    * Triggered when this neuron spikes, to correct all relevant incoming STDP synapses with predominantly axonal delays
-   * and corresponding received spikes. */
+   * and corresponding received spikes.
+   */
   void correct_synapses_stdp_ax_delay_( const Time& t_spike );
 };
 
@@ -267,6 +305,34 @@ inline double
 ArchivingNode::get_spiketime_ms() const
 {
   return last_spike_;
+}
+
+inline void
+ArchivingNode::update_stdp_connections( const double t )
+{
+  for ( auto archived_spike_it = history_.cbegin(); archived_spike_it < history_.cend(); ++archived_spike_it )
+  {
+    const double dendritic_delay = (*archived_spike_it).t - t;
+    for ( const synindex stdp_syn_id : stdp_synapse_types_ )
+    {
+      connections_[ stdp_syn_id ]->update_stdp_connections( *archived_spike_it, dendritic_delay );
+    }
+    if ( dendritic_delay >= max_dendritic_delay_ )  // TODO JV: Verify this
+    {
+      // This is guaranteed to always start erasing from the beginning of the history as entries are inserted into the
+      // history in chronological order. Thus, this will never create any holes.
+      history_.erase( archived_spike_it );
+    }
+  }
+}
+
+inline void ArchivingNode::sort_stdp_connections_by_dendritic_delay()
+{
+  // Sort all connections by dendritic delay for
+  for ( const synindex syn_id : stdp_synapse_types_)
+  {
+    connections_[ syn_id ]->sort_connections_by_dendritic_delay();
+  }
 }
 
 } // of namespace

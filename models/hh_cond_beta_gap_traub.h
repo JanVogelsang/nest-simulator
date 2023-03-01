@@ -111,8 +111,8 @@ Gap Junctions are implemented by a gap current of the form
 
    To avoid multiple spikes from occurring during the falling flank of a
    spike, it is essential to choose a sufficiently long refractory period.
-   Traub and Miles used :math:`t_{ref} = 3` ms ([1]_, p 118), while we used
-   :math:`t_{ref} = 2` ms in [1]_.
+   Traub and Miles used :math:`t{ref} = 3` ms ([1]_, p 118), while we used
+   :math:`t{ref} = 2` ms in [1]_.
 
 Parameters
 ++++++++++
@@ -190,7 +190,7 @@ public:
   using Node::handles_test_event;
   using Node::sends_secondary_event;
 
-  port send_test_event( Node& target, rport receptor_type, synindex, bool ) override;
+  port send_test_event( Node& target, const rport receptor_type, synindex, bool ) override;
 
   void handle( SpikeEvent& ) override;
   void handle( CurrentEvent& ) override;
@@ -415,7 +415,7 @@ hh_cond_beta_gap_traub::wfr_update( Time const& origin, const long from, const l
 }
 
 inline port
-hh_cond_beta_gap_traub::send_test_event( Node& target, rport receptor_type, synindex, bool )
+hh_cond_beta_gap_traub::send_test_event( Node& target, const rport receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

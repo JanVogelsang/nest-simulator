@@ -306,6 +306,9 @@ iaf_psc_alpha_ax_delay::update( Time const& origin, const long from, const long 
 
   for ( long lag = from; lag < to; ++lag )
   {
+    // let STDP connections process previous spikes of this neuron
+    update_stdp_connections( Time::delay_steps_to_ms( origin.get_steps() + lag ) );
+
     if ( S_.r_ == 0 )
     {
       // neuron not refractory

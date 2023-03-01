@@ -275,7 +275,7 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& cp )
+  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const CommonPropertiesType& cp )
   {
     if ( not cp.vt_ )
     {
@@ -283,7 +283,6 @@ public:
     }
 
     ConnTestDummyNode dummy_target;
-
     t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
   }
 
@@ -428,7 +427,6 @@ stdp_dopamine_synapse::depress_( double kminus, const STDPDopaCommonProperties& 
 /**
  * Send an event to the receiver of this connection.
  * \param e The event to send
- * \param p The port under which this connection is stored in the Connector.
  */
 inline void
 stdp_dopamine_synapse::send( Event& e, thread t, const STDPDopaCommonProperties& cp, Node* target )
@@ -444,8 +442,8 @@ stdp_dopamine_synapse::send( Event& e, thread t, const STDPDopaCommonProperties&
 
   // get spike history in relevant range (t_last_update, t_spike] from
   // postsynaptic neuron
-  std::deque< histentry >::iterator start;
-  std::deque< histentry >::iterator finish;
+  std::deque< ArchivedSpikeTrace >::iterator start;
+  std::deque< ArchivedSpikeTrace >::iterator finish;
   target->get_history( t_last_update_ - dendritic_delay, t_spike - dendritic_delay, &start, &finish );
 
   // facilitation due to postsynaptic spikes since last update
@@ -453,12 +451,12 @@ stdp_dopamine_synapse::send( Event& e, thread t, const STDPDopaCommonProperties&
   double minus_dt;
   while ( start != finish )
   {
-    process_dopa_spikes_( dopa_spikes, t0, start->t_ + dendritic_delay, cp );
-    t0 = start->t_ + dendritic_delay;
+    process_dopa_spikes_( dopa_spikes, t0, start->t + dendritic_delay, cp );
+    t0 = start->t + dendritic_delay;
     minus_dt = t_last_update_ - t0;
     // facilitate only in case of post- after presyn. spike
     // skip facilitation if pre- and postsyn. spike occur at the same time
-    if ( t_spike - start->t_ > kernel().connection_manager.get_stdp_eps() )
+    if ( t_spike - start->t > kernel().connection_manager.get_stdp_eps() )
     {
       facilitate_( Kplus_ * std::exp( minus_dt / cp.tau_plus_ ), cp );
     }
@@ -493,8 +491,8 @@ stdp_dopamine_synapse::trigger_update_weight( thread t,
 
   // get spike history in relevant range (t_last_update, t_trig] from postsyn.
   // neuron
-  std::deque< histentry >::iterator start;
-  std::deque< histentry >::iterator finish;
+  std::deque< ArchivedSpikeTrace >::iterator start;
+  std::deque< ArchivedSpikeTrace >::iterator finish;
   // TODO JV (pt): get_target( t )->get_history( t_last_update_ - dendritic_delay, t_trig - dendritic_delay, &start,
   // &finish );
 
@@ -503,8 +501,8 @@ stdp_dopamine_synapse::trigger_update_weight( thread t,
   double minus_dt;
   while ( start != finish )
   {
-    process_dopa_spikes_( dopa_spikes, t0, start->t_ + dendritic_delay, cp );
-    t0 = start->t_ + dendritic_delay;
+    process_dopa_spikes_( dopa_spikes, t0, start->t + dendritic_delay, cp );
+    t0 = start->t + dendritic_delay;
     minus_dt = t_last_update_ - t0;
     facilitate_( Kplus_ * std::exp( minus_dt / cp.tau_plus_ ), cp );
     ++start;

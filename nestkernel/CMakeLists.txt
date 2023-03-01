@@ -40,7 +40,7 @@ set ( nestkernel_sources
       genericmodel.h genericmodel_impl.h
       node_collection.h node_collection.cpp
       generic_factory.h
-      histentry.h histentry.cpp
+      archived_spike.h
       model.h model.cpp
       model_manager.h model_manager_impl.h model_manager.cpp
       nest_types.h
@@ -113,8 +113,7 @@ set ( nestkernel_sources
       position.h
       spatial.h spatial.cpp
       stimulation_backend.h
-      # adjacency_list.cpp adjacency_list.h
-      )
+      axonal_delay_connection.h )
 
 
 if ( HAVE_SIONLIB )

@@ -138,7 +138,7 @@ public:
   };
 
   void
-  check_connection( Node&, Node&, rport, const CommonPropertiesType& )
+  check_connection( Node&, Node&, rport, const synindex, const CommonPropertiesType& )
   {
   }
 
