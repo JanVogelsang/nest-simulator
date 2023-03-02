@@ -84,11 +84,13 @@ public:
   void set_source_lid( const index source_lid );
   void set_source_tid( const thread source_tid );
   void set_target_tid( const thread target_tid );
+  void set_compressed_index( const index compressed_index );
   void set_syn_id( const synindex syn_id );
   // void set_secondary_recv_buffer_pos( const size_t secondary_recv_buffer_pos );
   index get_source_lid() const;
   thread get_source_tid() const;
   thread get_target_tid() const;
+  index get_compressed_index() const;
   synindex get_syn_id() const;
   // size_t get_secondary_recv_buffer_pos();
   void set_is_primary( const bool is_primary );
@@ -162,6 +164,12 @@ TargetData::set_target_tid( const thread target_tid )
 }
 
 inline void
+TargetData::set_compressed_index( const index compressed_index )
+{
+  target_tid_ = compressed_index;
+}
+
+inline void
 TargetData::set_syn_id( const synindex syn_id )
 {
   assert( syn_id < MAX_SYN_ID );
@@ -182,6 +190,12 @@ TargetData::get_source_tid() const
 
 inline thread
 TargetData::get_target_tid() const
+{
+  return target_tid_;
+}
+
+inline index
+TargetData::get_compressed_index() const
 {
   return target_tid_;
 }

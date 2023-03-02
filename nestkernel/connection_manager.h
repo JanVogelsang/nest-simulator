@@ -470,7 +470,7 @@ private:
   /**
    * A structure to hold "unpacked" spikes on the postsynaptic side if
    * spike compression is enabled. Internally arranged in a 3d
-   * structure: synapses|sources|spike data
+   * structure: synapses|sources|target threads
    */
   std::vector< std::vector< std::vector< thread > > > compressed_spike_data_;
 

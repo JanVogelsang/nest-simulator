@@ -53,7 +53,7 @@ class ConnectorBase
 {
 
 public:
-  ConnectorBase() : last_visited_connection( 0 ) {}
+  ConnectorBase() : last_visited_connection_( 0 ) {}
 
   // Destructor needs to be declared virtual to avoid undefined
   // behavior, avoid possible memory leak and needs to be defined to
@@ -174,7 +174,7 @@ public:
 
   void reset_last_visited_connection()
   {
-    last_visited_connection = 0;
+    last_visited_connection_ = 0;
   }
 
 protected:
@@ -195,7 +195,7 @@ protected:
   //  well, by somehow intelligently analyzing all sources and thus enabling faster lookup (but how?).
   std::vector< index > sources_;
 
-  size_t last_visited_connection;
+  size_t last_visited_connection_;
 };
 
 /**
@@ -294,7 +294,7 @@ public:
     // TODO JV: Sorting connections by source has to be triggered somewhere
 
     // binary search in sorted sources
-    const std::vector< index >::const_iterator begin = sources_.begin() + last_visited_connection;
+    const std::vector< index >::const_iterator begin = sources_.begin() + last_visited_connection_;
     const std::vector< index >::const_iterator end = sources_.end();
 
     assert( static_cast< size_t >(end - begin) == sources_.size() );  // TODO JV: Remove again, just for debugging
@@ -341,15 +341,16 @@ public:
     Event& e,
     Node* target ) override
   {
+    assert( e.get_sender_node_id() >= C_[ last_visited_connection_ ] );
     // TODO JV (pt): This should actually send the event to all connection to the target node from this source node.
     //  For performance reasons this is ignored here, as multapses are not the regular case and need to be optimized
     //  somehow to not influence performance of the regular synapse case.
     // TODO JV (help): Verify that multapses are not required in the benchmarks.
     index first_index = get_first_connection_index( e.get_sender_node_id() );
-    last_visited_connection = first_index;
 
     if ( first_index != C_.size() )  // TODO JV: Verify this
     {
+      last_visited_connection_ = first_index;
       e.set_local_connection_id( first_index );
       send( tid, first_index, cm, e, target );
       return true;

@@ -561,6 +561,8 @@ template < typename SpikeDataT >
 bool
 EventDeliveryManager::deliver_events_( const thread tid, const std::vector< SpikeDataT >& recv_buffer )
 {
+  const bool use_compressed_spikes = kernel().connection_manager.use_compressed_spikes();
+
   const unsigned int send_recv_count_spike_data_per_rank =
     kernel().mpi_manager.get_send_recv_count_spike_data_per_rank();
   const std::vector< ConnectorModel* >& cm = kernel().model_manager.get_connection_models( tid );
@@ -605,41 +607,33 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
         se.set_stamp( prepared_timestamps[ spike_data.get_lag() ] );
         se.set_offset( spike_data.get_offset() );
 
-        if ( not kernel().connection_manager.use_compressed_spikes() )
+        const index syn_id = spike_data.get_syn_id();
+        const index source_node_id = kernel().vp_manager.get_remote_node_id( rank, spike_data.get_source_tid(), spike_data.get_source_lid() );
+        if ( not use_compressed_spikes )
         {
           if ( spike_data.get_target_tid() == tid )
           {
             // Here it is important that all incoming spikes are sorted by source node id, as the node can utilize this
             // to optimize its internal search for the correct source
-            const index source_node_id = kernel().vp_manager.get_remote_node_id( rank, spike_data.get_source_tid(), spike_data.get_source_lid() );
             se.set_sender_node_id( source_node_id );
-            target_node->get_node()->deliver_event( tid, spike_data.get_syn_id(), cm, se );
+            target_node->get_node()->deliver_event( tid, syn_id, cm, se );
           }
         }
         else
         {
-          assert( false ); // TODO JV: Spike compression
-
-          /*const index syn_id = spike_data.get_syn_id();
           // for compressed spikes lcid holds the index in the
           // compressed_spike_data structure
-          const index local_target_node_id = spike_data.get_local_target_node_id();
-          const index local_target_connection_id = spike_data.get_local_target_connection_id();
-          const std::vector< SpikeData >& compressed_spike_data =
-            kernel().connection_manager.get_compressed_spike_data( syn_id, idx );
+          const index compressed_index = spike_data.get_target_tid();
+          const std::vector< thread >& compressed_spike_data =
+            kernel().connection_manager.get_compressed_spike_data( syn_id, compressed_index );
           for ( auto it = compressed_spike_data.cbegin(); it != compressed_spike_data.cend(); ++it )
           {
-            if ( it->get_tid() == tid )
+            if ( *it == tid )
             {
-              const index lcid = it->get_lcid();
-
-              // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
-              // only if needed, as this is computationally costly
-              se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id );
-              deliver_event_to_node( tid, syn_id, local_target_node_id, local_target_connection_id, cm, se
-          );
+              se.set_sender_node_id( source_node_id );
+              target_node->get_node()->deliver_event( tid, syn_id, cm, se );
             }
-          }*/
+          }
         }
 
         // break if this was the last valid entry from this rank
