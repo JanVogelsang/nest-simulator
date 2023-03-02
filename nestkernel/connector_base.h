@@ -188,7 +188,7 @@ protected:
    * After all connections have been created, the information stored in this structure is transferred to the presynaptic
    * side and the sources vector can be cleared, unless further required for structural plasticity.
    */
-  // TODO JV (help): Would it would to precompute the start-indices per source rank after sorting to save time when searching?
+  // TODO JV (help): Would it work to precompute the start-indices per source rank after sorting to save time when searching?
   //  What else could we do here to speed up the lookup? Most searching algorithms are quite fast when it comes to
   //  finding an element in a sorted sequence, but is it also equally fast to guarantee an element is not in the list as
   //  this will be the case which will occur much more often here. Some sort of pre-filtering might make sense here as

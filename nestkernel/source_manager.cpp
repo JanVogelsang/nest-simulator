@@ -431,7 +431,7 @@ SourceManager::get_next_target_data( const thread tid,
       if ( is_primary ) // primary connection, i.e., chemical synapses
       {
         // target thread id us used to communicate index in compressed_spike_data
-        next_target_data.set_offgrid_index( current_position.c_it->second );
+        next_target_data.set_compressed_index( current_position.c_it->second );
         ++current_position.c_it;
       }
       else // secondary connection, e.g., gap junctions
