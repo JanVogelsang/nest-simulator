@@ -71,7 +71,6 @@ SourceManager::initialize()
   }
   compressed_spike_data_map_.resize( num_connection_models );
 
-  // TODO JV (help): All positions on master now, is there any way to change that?
 //  if ( kernel().connection_manager.use_compressed_spikes() )
 //  {
 //    current_positions_.resize( num_threads, compressed_spike_data_map_[ 0 ].cbegin() );
