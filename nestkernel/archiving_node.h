@@ -44,10 +44,10 @@
 //  simulation step. There is "circular_buffer_space_optimized" which is resizable, but is not iterable anymore.
 //  Maybe circular buffer is not the correct choice in general here.
 #include <boost/circular_buffer.hpp>
-template <typename T>
-using SpikeArchive = boost::circular_buffer<T, std::allocator<T>>;  // TODO JV (pt): Rethink allocator choice
+template < typename T >
+using SpikeArchive = boost::circular_buffer< T, std::allocator< T > >; // TODO JV (pt): Rethink allocator choice
 #else
-assert( false );  // TODO JV (pt): Make RingBuffer more general, so it could also be used here
+assert( false ); // TODO JV (pt): Make RingBuffer more general, so it could also be used here
 #endif
 
 #define DEBUG_ARCHIVER 1
@@ -82,7 +82,10 @@ public:
    * requested at the exact same time that the neuron emits a spike, the trace
    * value as it was just before the spike is returned.
    */
-  double get_K_value( double t ) override;
+  // double get_K_value( double t ) override;
+
+  std::pair< double, std::vector< double > >
+  get_stdp_history( const double last_pre_spike_time, const double pre_spike_time, const double dendritic_delay, const synindex syn_id ) override;
 
   /**
    * \fn void get_K_values( double t,
@@ -97,7 +100,7 @@ public:
    * values at t (in ms) to the provided locations.
    * @throws UnexpectedEvent
    */
-  void get_K_values( double t, double& Kminus, double& nearest_neighbor_Kminus, double& Kminus_triplet ) override;
+  // void get_K_values( double t, double& Kminus, double& nearest_neighbor_Kminus, double& Kminus_triplet ) override;
 
   /**
    * \fn void get_K_values( double t,
@@ -107,18 +110,18 @@ public:
    * after changing the function signature in PR #865.
    * @throws UnexpectedEvent
    */
-  void
-  get_K_values( double t, double& Kminus, double& Kminus_triplet )
-  {
-    double nearest_neighbor_Kminus_to_discard;
-    get_K_values( t, Kminus, nearest_neighbor_Kminus_to_discard, Kminus_triplet );
-  }
+  //  void
+  //  get_K_values( double t, double& Kminus, double& Kminus_triplet )
+  //  {
+  //    double nearest_neighbor_Kminus_to_discard;
+  //    get_K_values( t, Kminus, nearest_neighbor_Kminus_to_discard, Kminus_triplet );
+  //  }
 
   /**
    * \fn double get_K_triplet_value(std::deque<ArchivedSpikeTrace>::iterator &iter)
    * return the triplet Kminus value for the associated iterator.
    */
-  double get_K_triplet_value( const std::deque< ArchivedSpikeTrace >::iterator& iter );
+  // double get_K_triplet_value( const std::deque< ArchivedSpikeTrace >::iterator& iter );
 
   /**
    * \fn void get_history(long t1, long t2,
@@ -127,12 +130,12 @@ public:
    * return the spike times (in steps) of spikes which occurred in the range
    * (t1,t2].
    */
-   // TODO JV (pt): This function could still exist, as there is no reason why the history should not be accessed. This
-   //  function will be commented out for now to make sure no currently implemented model depends on it anymore.
-//  void get_history( double t1,
-//    double t2,
-//    std::deque< ArchivedSpikeTrace >::iterator* start,
-//    std::deque< ArchivedSpikeTrace >::iterator* finish ) override;
+  // TODO JV (pt): This function could still exist, as there is no reason why the history should not be accessed. This
+  //  function will be commented out for now to make sure no currently implemented model depends on it anymore.
+  //  void get_history( double t1,
+  //    double t2,
+  //    std::deque< ArchivedSpikeTrace >::iterator* start,
+  //    std::deque< ArchivedSpikeTrace >::iterator* finish ) override;
 
   /**
    * Register a new incoming STDP connection.
@@ -193,7 +196,7 @@ protected:
   /**
    * Inform all incoming STDP connections of a post-synaptic spike to update the synaptic weight.
    */
-  void update_stdp_connections( const double t );
+  void update_stdp_connections( Time const& origin, const long from, const long to ) override;
 
   /**
    * Sort all stdp connections by dendritic delay for better vectorization.
@@ -214,10 +217,10 @@ protected:
 
 private:
   // sum exp(-(t-ti)/tau_minus)
-  double Kminus_;
+  // double Kminus_;
 
   // sum exp(-(t-ti)/tau_minus_triplet)
-  double Kminus_triplet_;
+  // double Kminus_triplet_;
 
   double tau_minus_;
   double tau_minus_inv_;
@@ -226,9 +229,9 @@ private:
   double tau_minus_triplet_;
   double tau_minus_triplet_inv_;
 
-  double trace_;
+  // double trace_;
 
-  double last_spike_;
+  // double last_spike_;
 
   /**
    * Maximum dendritic delay of all incoming connections.
@@ -248,8 +251,8 @@ private:
   //  one will see which synapse type the neuron has to support and the synapses should actually manage the values in
   //  the history themselves somehow as this value depends on the exact synapse type. Even for "regular" STDP synapses
   //  the Kminus will be different for different pairing schemes.
-  // SpikeArchive<ArchivedSpikeTrace> history_;
-  std::deque<ArchivedSpikeTrace> history_;
+  // SpikeArchive< ArchivedSpikeTrace > history_;
+  std::deque< double > history_;  // TODO JV (pt): Implement custom data structure that uses less memory than deque
 
   /**
    * Data structure to store incoming spikes sent over STDP synapses with predominantly axonal delay. If at time of
@@ -304,35 +307,29 @@ private:
 inline double
 ArchivingNode::get_spiketime_ms() const
 {
-  return last_spike_;
+  // TODO JV (pt)
+  return 0;
+  // return last_spike_;
 }
 
 inline void
-ArchivingNode::update_stdp_connections( const double t )
-{
-  for ( auto archived_spike_it = history_.cbegin(); archived_spike_it < history_.cend(); ++archived_spike_it )
-  {
-    const double dendritic_delay = (*archived_spike_it).t - t;
-    for ( const synindex stdp_syn_id : stdp_synapse_types_ )
-    {
-      connections_[ stdp_syn_id ]->update_stdp_connections( *archived_spike_it, dendritic_delay );
-    }
-    if ( dendritic_delay >= max_dendritic_delay_ )  // TODO JV: Verify this
-    {
-      // This is guaranteed to always start erasing from the beginning of the history as entries are inserted into the
-      // history in chronological order. Thus, this will never create any holes.
-      history_.erase( archived_spike_it );
-    }
-  }
-}
-
-inline void ArchivingNode::sort_stdp_connections_by_dendritic_delay()
+ArchivingNode::sort_stdp_connections_by_dendritic_delay()
 {
   // Sort all connections by dendritic delay for
-  for ( const synindex syn_id : stdp_synapse_types_)
+  for ( const synindex syn_id : stdp_synapse_types_ )
   {
     connections_[ syn_id ]->sort_connections_by_dendritic_delay();
   }
+}
+
+inline std::pair< double, std::vector< double > >
+ArchivingNode::get_stdp_history( const double last_pre_spike_time,
+  const double pre_spike_time,
+  const double dendritic_delay,
+  const synindex syn_id )
+{
+  return connections_[ syn_id ]->get_stdp_history( last_pre_spike_time,
+    pre_spike_time, dendritic_delay, tau_minus_inv_, history_.cbegin(), history_.cend() );
 }
 
 } // of namespace

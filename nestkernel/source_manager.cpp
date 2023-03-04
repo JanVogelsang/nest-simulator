@@ -80,17 +80,18 @@ void
 SourceManager::finalize()
 {
   // only clear sources when there were nodes added to the simulation already
-  if ( kernel().node_manager.size() > 0 ){
-#pragma omp parallel
+  if ( kernel().node_manager.size() > 0 )
   {
-    const thread tid = kernel().vp_manager.get_thread_id();
-    if ( is_cleared_[ tid ].is_false() )
+#pragma omp parallel
     {
-      clear( tid );
-      compressible_sources_[ tid ].clear();
-      compressed_spike_data_map_[ tid ].clear();
+      const thread tid = kernel().vp_manager.get_thread_id();
+      if ( is_cleared_[ tid ].is_false() )
+      {
+        clear( tid );
+        compressible_sources_[ tid ].clear();
+        compressed_spike_data_map_[ tid ].clear();
+      }
     }
-  }
   }
 
   current_positions_.clear();

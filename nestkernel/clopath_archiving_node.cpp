@@ -133,26 +133,26 @@ nest::ClopathArchivingNode::set_status( const DictionaryDatum& d )
 double
 nest::ClopathArchivingNode::get_LTD_value( double t )
 {
-  assert( false );  // TODO JV (pt)
+  assert( false ); // TODO JV (pt)
 
-//  std::vector< ArchivedSpikeGeneric >::iterator runner;
-//  if ( ltd_history_.empty() or t < 0.0 )
-//  {
-//    return 0.0;
-//  }
-//  else
-//  {
-//    runner = ltd_history_.begin();
-//    while ( runner != ltd_history_.end() )
-//    {
-//      if ( fabs( t - runner->t ) < kernel().connection_manager.get_stdp_eps() )
-//      {
-//        return runner->value;
-//      }
-//      ( runner->access_counter_ )++;
-//      ++runner;
-//    }
-//  }
+  //  std::vector< ArchivedSpikeGeneric >::iterator runner;
+  //  if ( ltd_history_.empty() or t < 0.0 )
+  //  {
+  //    return 0.0;
+  //  }
+  //  else
+  //  {
+  //    runner = ltd_history_.begin();
+  //    while ( runner != ltd_history_.end() )
+  //    {
+  //      if ( fabs( t - runner->t ) < kernel().connection_manager.get_stdp_eps() )
+  //      {
+  //        return runner->value;
+  //      }
+  //      ( runner->access_counter_ )++;
+  //      ++runner;
+  //    }
+  //  }
   // Return zero if there is no entry at time t
   return 0.0;
 }
@@ -163,32 +163,32 @@ nest::ClopathArchivingNode::get_LTP_history( double t1,
   std::deque< ArchivedSpikeGeneric >::iterator* start,
   std::deque< ArchivedSpikeGeneric >::iterator* finish )
 {
-  assert( false );  // TODO JV (pt)
+  assert( false ); // TODO JV (pt)
 
-//  *finish = ltp_history_.end();
-//  if ( ltp_history_.empty() )
-//  {
-//    *start = *finish;
-//    return;
-//  }
-//  else
-//  {
-//    std::deque< ArchivedSpikeGeneric >::iterator runner = ltp_history_.begin();
-//    // To have a well defined discretization of the integral, we make sure
-//    // that we exclude the entry at t1 but include the one at t2 by subtracting
-//    // a small number so that runner->t is never equal to t1 or t2.
-//    while ( ( runner != ltp_history_.end() ) and runner->t - 1.0e-6 < t1 )
-//    {
-//      ++runner;
-//    }
-//    *start = runner;
-//    while ( ( runner != ltp_history_.end() ) and runner->t - 1.0e-6 < t2 )
-//    {
-//      ( runner->access_counter_ )++;
-//      ++runner;
-//    }
-//    *finish = runner;
-//  }
+  //  *finish = ltp_history_.end();
+  //  if ( ltp_history_.empty() )
+  //  {
+  //    *start = *finish;
+  //    return;
+  //  }
+  //  else
+  //  {
+  //    std::deque< ArchivedSpikeGeneric >::iterator runner = ltp_history_.begin();
+  //    // To have a well defined discretization of the integral, we make sure
+  //    // that we exclude the entry at t1 but include the one at t2 by subtracting
+  //    // a small number so that runner->t is never equal to t1 or t2.
+  //    while ( ( runner != ltp_history_.end() ) and runner->t - 1.0e-6 < t1 )
+  //    {
+  //      ++runner;
+  //    }
+  //    *start = runner;
+  //    while ( ( runner != ltp_history_.end() ) and runner->t - 1.0e-6 < t2 )
+  //    {
+  //      ( runner->access_counter_ )++;
+  //      ++runner;
+  //    }
+  //    *finish = runner;
+  //  }
 }
 
 void
@@ -239,27 +239,27 @@ nest::ClopathArchivingNode::write_LTD_history( const double t_ltd_ms, double u_b
 void
 nest::ClopathArchivingNode::write_LTP_history( const double t_ltp_ms, double u, double u_bar_plus )
 {
-  assert( false );  // TODO JV (pt)
-//  if ( has_stdp_connections() )
-//  {
-//    // prune all entries from history which are no longer needed
-//    // except the penultimate one. we might still need it.
-//    while ( ltp_history_.size() > 1 )
-//    {
-//      if ( ltp_history_.front().access_counter_ >= n_incoming_ )
-//      {
-//        ltp_history_.pop_front();
-//      }
-//      else
-//      {
-//        break;
-//      }
-//    }
-//    // value is not the change of the synaptic weight since the factor
-//    // x_bar is not included (but later in the synapse)
-//    const double dw = A_LTP_ * ( u - theta_plus_ ) * ( u_bar_plus - theta_minus_ ) * Time::get_resolution().get_ms();
-//    ltp_history_.push_back( ArchivedSpikeGeneric( t_ltp_ms, dw, 0 ) );
-//  }
+  assert( false ); // TODO JV (pt)
+  //  if ( has_stdp_connections() )
+  //  {
+  //    // prune all entries from history which are no longer needed
+  //    // except the penultimate one. we might still need it.
+  //    while ( ltp_history_.size() > 1 )
+  //    {
+  //      if ( ltp_history_.front().access_counter_ >= n_incoming_ )
+  //      {
+  //        ltp_history_.pop_front();
+  //      }
+  //      else
+  //      {
+  //        break;
+  //      }
+  //    }
+  //    // value is not the change of the synaptic weight since the factor
+  //    // x_bar is not included (but later in the synapse)
+  //    const double dw = A_LTP_ * ( u - theta_plus_ ) * ( u_bar_plus - theta_minus_ ) *
+  //    Time::get_resolution().get_ms(); ltp_history_.push_back( ArchivedSpikeGeneric( t_ltp_ms, dw, 0 ) );
+  //  }
 }
 
 } // of namespace nest

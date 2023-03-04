@@ -39,11 +39,13 @@ namespace nest
 
 class ArchivedSpikeBase
 {
-  public:
-    ArchivedSpikeBase( double t )
-      : t( t ){}
+public:
+  ArchivedSpikeBase( double t )
+    : t( t )
+  {
+  }
 
-    double t;               //!< point in time when spike occurred (in ms)
+  double t; //!< point in time when spike occurred (in ms)
 };
 
 // entry in the spiking history
@@ -53,10 +55,12 @@ public:
   ArchivedSpikeTrace( double t, double Kminus, double Kminus_triplet )
     : ArchivedSpikeBase( t )
     , Kminus( Kminus )
-    , Kminus_triplet( Kminus_triplet ){}
+    , Kminus_triplet( Kminus_triplet )
+  {
+  }
 
-  double Kminus;          //!< value of Kminus at that time
-  double Kminus_triplet;  //!< value of triplet STDP Kminus at that time
+  double Kminus;         //!< value of Kminus at that time
+  double Kminus_triplet; //!< value of triplet STDP Kminus at that time
 };
 
 // entry in the history of plasticity rules which consider additional factors
@@ -65,9 +69,11 @@ class ArchivedSpikeGeneric : public ArchivedSpikeBase
 public:
   ArchivedSpikeGeneric( double t, double dw )
     : ArchivedSpikeBase( t )
-    , value( dw ){}
+    , value( dw )
+  {
+  }
 
-  double value;              //!< value dependent on the additional factor
+  double value; //!< value dependent on the additional factor
 };
 }
 

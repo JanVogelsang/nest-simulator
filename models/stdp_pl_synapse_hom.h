@@ -211,7 +211,7 @@ public:
         "Axonal delay is greater than dendritic delay, "
         "which can lead to omission of post-synaptic spikes in this synapse type." );
     }
-    t.register_stdp_connection( t_lastspike_ - delay + 2.0 * cp.axonal_delay_, delay );
+    t.register_stdp_connection( get_dendritic_delay(), syn_id );
   }
 
   void
@@ -280,7 +280,7 @@ stdp_pl_synapse_hom::send( Event& e, thread t, const STDPPLHomCommonProperties& 
   }
 
   // depression due to new pre-synaptic spike
-  const double K_minus = target->get_K_value( t_spike + cp.axonal_delay_ - dendritic_delay );
+  const double K_minus = target->get_K_value( dendritic_delay, t_spike, e.get_sender_spike_data().get_syn_id() );
   weight_ = depress_( weight_, K_minus, cp );
 
   e.set_weight( weight_ );

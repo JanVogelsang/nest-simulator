@@ -164,8 +164,15 @@ public:
   void correct_synapse_stdp_ax_delay( const double t_last_pre_spike,
     double* weight_revert,
     const double t_post_spike,
+    const synindex syn_id,
     const CommonSynapseProperties&,
     Node* target );
+
+  /**
+   * Process a post-synaptic spike after it is backpropagated to the synapse.
+   * @param t_syn The time the post-synaptic spike arrives at this connection
+   */
+  void process_post_synaptic_spike( const double t_syn, const CommonSynapseProperties& );
 
   /**
    * Get the total transmission delay.
@@ -197,7 +204,8 @@ public:
     throw IllegalConnection( "Connection does not support axonal delays." );
   }
 
-  bool supports_axonal_delay() const
+  bool
+  supports_axonal_delay() const
   {
     return false;
   }
@@ -274,7 +282,7 @@ protected:
   // targetidentifierT target_;
   //! syn_id (9 bit), delay (21 bit) in timesteps of this connection and more_targets and disabled flags (each 1 bit)
   // SynIdDelay syn_id_delay_;
-  double delay_;
+  double delay_;  // TODO JV: Only store delay in delaygroup in node
 };
 
 inline void
@@ -312,9 +320,20 @@ Connection::calibrate( const TimeConverter& tc )
 }
 
 inline void
-Connection::correct_synapse_stdp_ax_delay( const double, double*, const double, const CommonSynapseProperties&, Node* )
+Connection::correct_synapse_stdp_ax_delay( const double,
+  double*,
+  const double,
+  const synindex,
+  const CommonSynapseProperties&,
+  Node* )
 {
   throw IllegalConnection( "Connection does not support correction in case of STDP with predominantly axonal delays." );
+}
+
+inline void
+Connection::process_post_synaptic_spike( const double t_syn, const CommonSynapseProperties& )
+{
+  throw IllegalConnection( "Connection does not support updates that are triggered by a volume transmitter." );
 }
 
 inline void

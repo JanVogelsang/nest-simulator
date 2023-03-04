@@ -184,7 +184,6 @@ Node::has_stdp_connections() const
 void
 Node::sort_stdp_connections_by_dendritic_delay()
 {
-  throw UnexpectedEvent( "Node does not support STDP synapses." );
 }
 
 void
@@ -534,11 +533,19 @@ Node::get_LTD_value( double )
 }
 
 double
-Node::get_K_value( double )
+Node::get_K_value( const double, const double, const synindex )
 {
   throw UnexpectedEvent();
 }
 
+std::pair< double, std::vector< double > >
+Node::get_stdp_history( const double last_pre_spike_time,
+  const double pre_spike_time,
+  const double dendritic_delay,
+  const synindex syn_id )
+{
+  throw UnexpectedEvent();
+}
 
 void
 Node::get_K_values( double, double&, double&, double& )
@@ -547,9 +554,17 @@ Node::get_K_values( double, double&, double&, double& )
 }
 
 void
-nest::Node::get_history( double, double, std::deque< ArchivedSpikeTrace >::iterator*, std::deque< ArchivedSpikeTrace >::iterator* )
+Node::get_history( double,
+  double,
+  std::deque< ArchivedSpikeTrace >::iterator*,
+  std::deque< ArchivedSpikeTrace >::iterator* )
 {
   throw UnexpectedEvent();
+}
+
+void
+Node::update_stdp_connections( Time const& origin, const long from, const long to )
+{
 }
 
 void

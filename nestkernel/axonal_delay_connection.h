@@ -27,11 +27,13 @@ class AxonalDelayConnection : public Connection
 
   double axonal_delay_; //!< Axonal delay in ms
 public:
-
-  AxonalDelayConnection() : axonal_delay_( 0 ) {}
+  AxonalDelayConnection()
+    : axonal_delay_( 0 )
+  {
+  }
 
   void get_status( DictionaryDatum& d ) const;
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm  );
+  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
 
   /**
    * Get the proportion of the transmission delay attributed to the dendrite.

@@ -268,7 +268,7 @@ public:
   {
     ConnTestDummyNode dummy_target;
 
-    t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
+    t.register_stdp_connection( get_dendritic_delay(), syn_id );
   }
 
   void
@@ -360,7 +360,7 @@ jonke_synapse::send( Event& e, thread t, const JonkeCommonProperties& cp, Node* 
     weight_ = facilitate_( weight_, Kplus_ * std::exp( minus_dt / cp.tau_plus_ ), cp );
   }
 
-  const double _K_value = target->get_K_value( t_spike - dendritic_delay );
+  const double _K_value = target->get_K_value( dendritic_delay, t_spike, e.get_sender_spike_data().get_syn_id() );
   weight_ = depress_( weight_, _K_value, cp );
 
   e.set_weight( weight_ );

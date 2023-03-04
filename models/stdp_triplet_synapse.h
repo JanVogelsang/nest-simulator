@@ -195,7 +195,7 @@ public:
   {
     ConnTestDummyNode dummy_target;
 
-    t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
+    t.register_stdp_connection( get_dendritic_delay(), syn_id );
   }
 
   void
@@ -275,7 +275,8 @@ stdp_triplet_synapse::send( Event& e, thread t, const CommonSynapseProperties&, 
   // dendritic delay means we must look back in time by that amount
   // for determining the K value, because the K value must propagate
   // out to the synapse
-  weight_ = depress_( weight_, target->get_K_value( t_spike - dendritic_delay ), Kplus_triplet_ );
+  weight_ = depress_(
+    weight_, target->get_K_value( dendritic_delay, t_spike, e.get_sender_spike_data().get_syn_id() ), Kplus_triplet_ );
 
   Kplus_triplet_ += 1.0;
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) / tau_plus_ ) + 1.0;

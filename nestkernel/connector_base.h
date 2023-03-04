@@ -139,6 +139,7 @@ public:
     const double t_last_pre_spike,
     double* weight_revert,
     const double t_post_spike,
+    const synindex syn_id,
     Node* target ) = 0;
 
   virtual void send_weight_event( const thread tid,
@@ -147,7 +148,21 @@ public:
     const CommonSynapseProperties& cp,
     Node* target ) = 0;
 
-  virtual void update_stdp_connections( const ArchivedSpikeTrace &archived_spike, const double dendritic_delay ) = 0;
+  virtual void update_stdp_connections( const double post_spike_time,
+    const double dendritic_delay,
+    const double tau_minus_inv,
+    const std::vector< ConnectorModel* >& cm ) = 0;
+
+  virtual std::pair< double, std::vector< double > > get_stdp_history( const double last_pre_spike_time,
+    const double pre_spike_time,
+    const double dendritic_delay,
+    const double tau_minus_inv,
+    const std::deque< double >::const_iterator history_begin,
+    const std::deque< double >::const_iterator history_end ) = 0;
+
+  virtual std::pair< double, double > get_Kminus( const double dendritic_delay ) = 0;
+
+  virtual void clear_history() = 0;
 
   /**
    * Update weights of dopamine modulated STDP connections.
@@ -196,9 +211,19 @@ protected:
 template < typename ConnectionT >
 class Connector : public ConnectorBase
 {
+  //! A region of connections in the Connector where all connections share the same dendritic delay
+  struct DelayRegion
+  {
+    typename std::vector< ConnectionT >::iterator start; //<! first connection of delay region
+    typename std::vector< ConnectionT >::iterator end;   //<! last connection of relay region
+    double Kminus;          //<! the post-synaptic trace in synapse time, i.e. the trace of the neuron "dendritic
+                            //delay"-milliseconds ago
+    double last_post_spike; //<! time of the last update in synapse time
+  };
+
 private:
   const synindex syn_id_;
-  std::map< delay, std::pair< typename std::vector< ConnectionT >::iterator, typename std::vector< ConnectionT >::iterator > > dendritic_delay_regions_;
+  std::map< delay, DelayRegion > dendritic_delay_regions_;
   std::vector< ConnectionT > C_;
 
 public:
@@ -281,10 +306,13 @@ public:
     std::vector< index > indices;
 
     std::vector< Source >::const_iterator it = sources_.cbegin();
-    while ( ( it = std::find_if( it, sources_.cend(), [ source_node_id ]( const Source src ) { return src.get_node_id() == source_node_id; } ) ) != sources_.end() )
+    while ( ( it = std::find_if( it,
+                sources_.cend(),
+                [ source_node_id ]( const Source src ) { return src.get_node_id() == source_node_id; } ) )
+      != sources_.end() )
     {
       // Do something with iter
-      indices.push_back( std::distance( sources_.begin(), it ));
+      indices.push_back( std::distance( sources_.begin(), it ) );
       ++it;
     }
 
@@ -350,6 +378,15 @@ public:
     }
   }
 
+  std::pair< double, double >
+  get_Kminus( const double dendritic_delay ) override
+  {
+    // get the post-synaptic trace in synapse time, i.e. the trace of the neuron "dendritic delay"-milliseconds ago
+    const delay dendritic_delay_steps = Time::delay_ms_to_steps( dendritic_delay );
+    auto delay_region = dendritic_delay_regions_[ dendritic_delay_steps ];
+    return { delay_region.last_post_spike, delay_region.Kminus };
+  }
+
   void send_weight_event( const thread tid,
     const index local_target_connection_id,
     Event& e,
@@ -378,19 +415,47 @@ public:
     }
   }
 
-  void update_stdp_connections( const ArchivedSpikeTrace &archived_spike, const double dendritic_delay ) override
+  void
+  update_stdp_connections( const double post_spike_time,
+    const double dendritic_delay,
+    const double tau_minus_inv,
+    const std::vector< ConnectorModel* >& cm ) override
   {
+    typename ConnectionT::CommonPropertiesType const& cp =
+      static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties();
+
     // TODO JV (pt): Verify for precise spike times
     // TODO JV: Make sure double->long conversion yields the correct delay
-    auto group_it = dendritic_delay_regions_.find( Time::delay_ms_to_steps(dendritic_delay) );
-    if ( group_it != dendritic_delay_regions_.end() )  // check if there are connections with given dendritic delay
+    auto group_it = dendritic_delay_regions_.find( Time::delay_ms_to_steps( dendritic_delay ) );
+    if ( group_it != dendritic_delay_regions_.end() ) // check if there are connections with given dendritic delay
     {
-      const auto end = group_it->second.second;
-      for ( auto it = group_it->second.first; it != end; ++it )
+      const auto end = group_it->second.end;
+      for ( auto it = group_it->second.start; it != end; ++it )
       {
-        // TODO JV (help): How to only implement this function on some synapse types and still make this compile?
-        // it->process_post_synaptic_spike( archived_spike.t + dendritic_delay, cp );
+        it->process_post_synaptic_spike( post_spike_time + dendritic_delay, cp );
       }
+
+      // update post-synaptic trace
+      group_it->second.Kminus = group_it->second.Kminus
+          * std::exp( ( group_it->second.last_post_spike - ( post_spike_time + dendritic_delay ) ) * tau_minus_inv ) + 1;
+      group_it->second.last_post_spike = post_spike_time + dendritic_delay;
+    }
+  }
+
+  std::pair< double, std::vector< double > > get_stdp_history( const double last_pre_spike_time,
+    const double pre_spike_time,
+    const double dendritic_delay,
+    const double tau_minus_inv,
+    const std::deque< double >::const_iterator history_begin,
+    const std::deque< double >::const_iterator history_end ) override;
+
+  void
+  clear_history() override
+  {
+    for ( auto& group : dendritic_delay_regions_ )
+    {
+      group.second.Kminus = 0;
+      group.second.last_post_spike = -1;
     }
   }
 
@@ -398,25 +463,29 @@ public:
     const double t_last_pre_spike,
     double* weight_revert,
     const double t_post_spike,
+    const synindex syn_id,
     Node* target ) override;
 
   void
   sort_connections_by_dendritic_delay() override
   {
-    std::sort( C_.begin(), C_.end(), []( const ConnectionT& lhs, const ConnectionT& rhs )
+    std::sort( C_.begin(),
+      C_.end(),
+      []( const ConnectionT& lhs, const ConnectionT& rhs )
       { return lhs.get_dendritic_delay() < rhs.get_dendritic_delay(); } );
 
     auto start_it = C_.begin();
-    delay last_delay = start_it->get_dendritic_delay();
+    delay last_delay = Time::delay_ms_to_steps( start_it->get_dendritic_delay() );
     for ( auto it = C_.begin() + 1; it != C_.end(); ++it )
     {
-      if ( it->get_dendritic_delay() != last_delay )  // detect switch to new dendritic delay region
+      if ( it->get_dendritic_delay() != last_delay ) // detect switch to new dendritic delay region
       {
-        dendritic_delay_regions_[ last_delay ] = { start_it, it };
+        dendritic_delay_regions_[ last_delay ] = { start_it, it, 0, -1 };
         start_it = it;
         last_delay = it->get_dendritic_delay();
       }
     }
+    dendritic_delay_regions_[ last_delay ] = { start_it, C_.end(), 0, -1 };
   }
 
   void

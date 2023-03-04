@@ -150,7 +150,7 @@ public:
   {
     ConnTestDummyNode dummy_target;
 
-    t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
+    t.register_stdp_connection( get_dendritic_delay(), syn_id );
   }
 
   void
@@ -228,7 +228,8 @@ vogels_sprekeler_synapse::send( Event& e, thread t, const CommonSynapsePropertie
   // Facilitation and constant depression
   // Getting kvalue at required time already for deferred processing, so no
   // need to transform it to the current time, and so, no exponential required
-  weight_ = facilitate_( weight_, target->get_K_value( t_spike - dendritic_delay ) );
+  weight_ =
+    facilitate_( weight_, target->get_K_value( dendritic_delay, t_spike, e.get_sender_spike_data().get_syn_id() ) );
   weight_ = depress_( weight_ );
 
   e.set_weight( weight_ );

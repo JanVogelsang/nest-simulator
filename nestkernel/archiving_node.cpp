@@ -35,14 +35,14 @@ namespace nest
 // member functions for ArchivingNode
 
 ArchivingNode::ArchivingNode()
-  : Kminus_( 0.0 )
-  , Kminus_triplet_( 0.0 )
-  , tau_minus_( 20.0 )
+  : // Kminus_( 0.0 )
+    //  , Kminus_triplet_( 0.0 )
+  tau_minus_( 20.0 )
   , tau_minus_inv_( 1. / tau_minus_ )
   , tau_minus_triplet_( 110.0 )
   , tau_minus_triplet_inv_( 1. / tau_minus_triplet_ )
-  , trace_( 0.0 )
-  , last_spike_( -1.0 )
+  //   , trace_( 0.0 )
+  // , last_spike_( -1.0 )
   , max_dendritic_delay_( 0 )
 {
   const size_t num_time_slots =
@@ -52,14 +52,14 @@ ArchivingNode::ArchivingNode()
 
 ArchivingNode::ArchivingNode( const ArchivingNode& n )
   : StructuralPlasticityNode( n )
-  , Kminus_( n.Kminus_ )
-  , Kminus_triplet_( n.Kminus_triplet_ )
+  // , Kminus_( n.Kminus_ )
+  // , Kminus_triplet_( n.Kminus_triplet_ )
   , tau_minus_( n.tau_minus_ )
   , tau_minus_inv_( n.tau_minus_inv_ )
   , tau_minus_triplet_( n.tau_minus_triplet_ )
   , tau_minus_triplet_inv_( n.tau_minus_triplet_inv_ )
-  , trace_( n.trace_ )
-  , last_spike_( n.last_spike_ )
+  // , trace_( n.trace_ )
+  // , last_spike_( n.last_spike_ )
   , max_dendritic_delay_( n.max_dendritic_delay_ )
 {
   const size_t num_time_slots =
@@ -91,96 +91,125 @@ ArchivingNode::has_stdp_connections() const
   return stdp_synapse_types_.size() > 0;
 }
 
-double
-ArchivingNode::get_K_value( double t )
-{
-  // case when the neuron has not yet spiked
-  if ( history_.empty() )
-  {
-    trace_ = 0.;
-    return trace_;
-  }
+// double
+// ArchivingNode::get_K_value( double t )
+//{
+//   // case when the neuron has not yet spiked
+//   if ( history_.empty() )
+//   {
+//     trace_ = 0.;
+//     return trace_;
+//   }
+//
+//   // search for the latest post spike in the history buffer that came strictly before `t`
+//   int i = history_.size() - 1;
+//   while ( i >= 0 )
+//   {
+//     if ( t - history_[ i ].t > kernel().connection_manager.get_stdp_eps() )
+//     {
+//       trace_ = ( history_[ i ].Kminus * std::exp( ( history_[ i ].t - t ) * tau_minus_inv_ ) );
+//       return trace_;
+//     }
+//     --i;
+//   }
+//
+//   // this case occurs when the trace was requested at a time precisely at or
+//   // before the first spike in the history
+//   trace_ = 0.;
+//   return trace_;
+// }
 
-  // search for the latest post spike in the history buffer that came strictly before `t`
-  int i = history_.size() - 1;
-  while ( i >= 0 )
-  {
-    if ( t - history_[ i ].t > kernel().connection_manager.get_stdp_eps() )
-    {
-      trace_ = ( history_[ i ].Kminus * std::exp( ( history_[ i ].t - t ) * tau_minus_inv_ ) );
-      return trace_;
-    }
-    --i;
-  }
+// void
+// ArchivingNode::get_K_values( double t, double& K_value, double& nearest_neighbor_K_value, double& K_triplet_value )
+//{
+//   // case when the neuron has not yet spiked
+//   if ( history_.empty() )
+//   {
+//     K_triplet_value = Kminus_triplet_;
+//     nearest_neighbor_K_value = Kminus_;
+//     K_value = Kminus_;
+//     return;
+//   }
+//
+//   // search for the latest post spike in the history buffer that came strictly
+//   // before `t`
+//   int i = history_.size() - 1;
+//   while ( i >= 0 )
+//   {
+//     if ( t - history_[ i ].t > kernel().connection_manager.get_stdp_eps() )
+//     {
+//       K_triplet_value =
+//         ( history_[ i ].Kminus_triplet * std::exp( ( history_[ i ].t - t ) * tau_minus_triplet_inv_ ) );
+//       K_value = ( history_[ i ].Kminus * std::exp( ( history_[ i ].t - t ) * tau_minus_inv_ ) );
+//       nearest_neighbor_K_value = std::exp( ( history_[ i ].t - t ) * tau_minus_inv_ );
+//       return;
+//     }
+//     --i;
+//   }
+//
+//   // this case occurs when the trace was requested at a time precisely at or
+//   // before the first spike in the history
+//   K_triplet_value = 0.0;
+//   nearest_neighbor_K_value = 0.0;
+//   K_value = 0.0;
+// }
 
-  // this case occurs when the trace was requested at a time precisely at or
-  // before the first spike in the history
-  trace_ = 0.;
-  return trace_;
-}
+// void
+// ArchivingNode::get_history( double t1,
+//   double t2,
+//   std::deque< ArchivedSpikeTrace >::iterator* start,
+//   std::deque< ArchivedSpikeTrace >::iterator* finish )
+//{
+//   *finish = history_.end();
+//   if ( history_.empty() )
+//   {
+//     *start = *finish;
+//     return;
+//   }
+//   std::deque< ArchivedSpikeTrace >::reverse_iterator runner = history_.rbegin();
+//   const double t2_lim = t2 + kernel().connection_manager.get_stdp_eps();
+//   const double t1_lim = t1 + kernel().connection_manager.get_stdp_eps();
+//   while ( runner != history_.rend() and runner->t >= t2_lim )
+//   {
+//     ++runner;
+//   }
+//   *finish = runner.base();
+//   while ( runner != history_.rend() and runner->t >= t1_lim )
+//   {
+//     runner->access_counter_++;
+//     ++runner;
+//   }
+//   *start = runner.base();
+// }
 
 void
-ArchivingNode::get_K_values( double t, double& K_value, double& nearest_neighbor_K_value, double& K_triplet_value )
+ArchivingNode::update_stdp_connections( Time const& origin, const long from, const long to )
 {
-  // case when the neuron has not yet spiked
-  if ( history_.empty() )
+  const std::vector< ConnectorModel* >& cm = kernel().model_manager.get_connection_models( get_thread() );
+  for ( long lag = from; lag < to; ++lag )
   {
-    K_triplet_value = Kminus_triplet_;
-    nearest_neighbor_K_value = Kminus_;
-    K_value = Kminus_;
-    return;
-  }
-
-  // search for the latest post spike in the history buffer that came strictly
-  // before `t`
-  int i = history_.size() - 1;
-  while ( i >= 0 )
-  {
-    if ( t - history_[ i ].t > kernel().connection_manager.get_stdp_eps() )
+    // let STDP connections process previous spikes of this neuron
+    for ( auto archived_spike_it = history_.cbegin(); archived_spike_it < history_.cend(); ++archived_spike_it )
     {
-      K_triplet_value =
-        ( history_[ i ].Kminus_triplet * std::exp( ( history_[ i ].t - t ) * tau_minus_triplet_inv_ ) );
-      K_value = ( history_[ i ].Kminus * std::exp( ( history_[ i ].t - t ) * tau_minus_inv_ ) );
-      nearest_neighbor_K_value = std::exp( ( history_[ i ].t - t ) * tau_minus_inv_ );
-      return;
+      const double dendritic_delay = Time::delay_steps_to_ms( origin.get_steps() + lag ) - *archived_spike_it;
+      if ( dendritic_delay < 0)
+      {
+        continue;
+      }
+
+      for ( const synindex stdp_syn_id : stdp_synapse_types_ )
+      {
+        connections_[ stdp_syn_id ]->update_stdp_connections( *archived_spike_it, dendritic_delay, tau_minus_inv_, cm );
+      }
+      if ( dendritic_delay >= max_dendritic_delay_ )
+      {
+        // This is guaranteed to always start erasing from the beginning of the history as entries are inserted into the
+        // history in chronological order. Thus, this will never create any holes.
+        history_.erase( archived_spike_it );
+      }
     }
-    --i;
   }
-
-  // this case occurs when the trace was requested at a time precisely at or
-  // before the first spike in the history
-  K_triplet_value = 0.0;
-  nearest_neighbor_K_value = 0.0;
-  K_value = 0.0;
 }
-
-//void
-//ArchivingNode::get_history( double t1,
-//  double t2,
-//  std::deque< ArchivedSpikeTrace >::iterator* start,
-//  std::deque< ArchivedSpikeTrace >::iterator* finish )
-//{
-//  *finish = history_.end();
-//  if ( history_.empty() )
-//  {
-//    *start = *finish;
-//    return;
-//  }
-//  std::deque< ArchivedSpikeTrace >::reverse_iterator runner = history_.rbegin();
-//  const double t2_lim = t2 + kernel().connection_manager.get_stdp_eps();
-//  const double t1_lim = t1 + kernel().connection_manager.get_stdp_eps();
-//  while ( runner != history_.rend() and runner->t >= t2_lim )
-//  {
-//    ++runner;
-//  }
-//  *finish = runner.base();
-//  while ( runner != history_.rend() and runner->t >= t1_lim )
-//  {
-//    runner->access_counter_++;
-//    ++runner;
-//  }
-//  *start = runner.base();
-//}
 
 void
 ArchivingNode::deliver_event( const thread tid,
@@ -197,17 +226,17 @@ ArchivingNode::deliver_event( const thread tid,
   // synapse before this spike will.
 
   // Only specific synapse types need to postpone the delivery
-//  if ( cm[ syn_id ]->requires_postponed_delivery() ) {
-//    const double t_spike = se.get_stamp().get_ms();  // TODO JV (pt): Offgrid spikes
-//    const delay axonal_delay = conn->get_axonal_delay( local_target_connection_id );
-//    const delay dendritic_delay = conn->get_dendritic_delay( local_target_connection_id );
-//    const double now = kernel().simulation_manager.get_slice_origin().get_ms();
-//
-//    if ( t_spike + axonal_delay - dendritic_delay < now ) {
-//      dynamic_spike_buffer_.push_back( se );
-//      return;
-//    }
-//  }
+  //  if ( cm[ syn_id ]->requires_postponed_delivery() ) {
+  //    const double t_spike = se.get_stamp().get_ms();  // TODO JV (pt): Offgrid spikes
+  //    const delay axonal_delay = conn->get_axonal_delay( local_target_connection_id );
+  //    const delay dendritic_delay = conn->get_dendritic_delay( local_target_connection_id );
+  //    const double now = kernel().simulation_manager.get_slice_origin().get_ms();
+  //
+  //    if ( t_spike + axonal_delay - dendritic_delay < now ) {
+  //      dynamic_spike_buffer_.push_back( se );
+  //      return;
+  //    }
+  //  }
 
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight.
@@ -223,15 +252,16 @@ ArchivingNode::set_spiketime( Time const& t_sp, double offset )
 
   const double t_sp_ms = t_sp.get_ms() - offset;
 
-  if ( stdp_synapse_types_.size() > 0 )  // check if node has any incoming STDP connections
+  if ( stdp_synapse_types_.size() > 0 ) // check if node has any incoming STDP connections
   {
     // update spiking history
-    Kminus_ = Kminus_ * std::exp( ( last_spike_ - t_sp_ms ) * tau_minus_inv_ ) + 1.0;
-    Kminus_triplet_ = Kminus_triplet_ * std::exp( ( last_spike_ - t_sp_ms ) * tau_minus_triplet_inv_ ) + 1.0;
-    history_.push_back( ArchivedSpikeTrace( t_sp_ms, Kminus_, Kminus_triplet_ ) );
+    //    Kminus_ = Kminus_ * std::exp( ( last_spike_ - t_sp_ms ) * tau_minus_inv_ ) + 1.0;
+    //    Kminus_triplet_ = Kminus_triplet_ * std::exp( ( last_spike_ - t_sp_ms ) * tau_minus_triplet_inv_ ) + 1.0;
+    //    history_.push_back( ArchivedSpikeTrace( t_sp_ms, Kminus_, Kminus_triplet_ ) );
+    history_.push_back( t_sp_ms );
   }
 
-  last_spike_ = t_sp_ms;
+  //  last_spike_ = t_sp_ms;
 
   correct_synapses_stdp_ax_delay_( t_sp );
 }
@@ -242,7 +272,7 @@ ArchivingNode::get_status( DictionaryDatum& d ) const
   def< double >( d, names::t_spike, get_spiketime_ms() );
   def< double >( d, names::tau_minus, tau_minus_ );
   def< double >( d, names::tau_minus_triplet, tau_minus_triplet_ );
-  def< double >( d, names::post_trace, trace_ );
+//  def< double >( d, names::post_trace, trace_ );
 #ifdef DEBUG_ARCHIVER
   def< int >( d, names::archiver_length, history_.size() );
 #endif
@@ -285,10 +315,14 @@ ArchivingNode::set_status( const DictionaryDatum& d )
 void
 ArchivingNode::clear_history()
 {
-  last_spike_ = -1.0;
-  Kminus_ = 0.0;
-  Kminus_triplet_ = 0.0;
+  //  last_spike_ = -1.0;
+  //  Kminus_ = 0.0;
+  //  Kminus_triplet_ = 0.0;
   history_.clear();
+  for ( const synindex stdp_syn_id : stdp_synapse_types_ )
+  {
+    connections_[ stdp_syn_id ]->clear_history();
+  }
 }
 
 void
@@ -297,16 +331,6 @@ ArchivingNode::add_correction_entry_stdp_ax_delay( SpikeEvent& spike_event,
   const double weight_revert,
   const double dendritic_delay )
 {
-  if ( correction_entries_stdp_ax_delay_.size() == 0 )
-  {
-    const size_t num_time_slots =
-      kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay();
-    if ( correction_entries_stdp_ax_delay_.size() != num_time_slots )
-    {
-      correction_entries_stdp_ax_delay_.resize( num_time_slots );
-    }
-  }
-
   assert( correction_entries_stdp_ax_delay_.size()
     == static_cast< size_t >(
       kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay() ) );
@@ -326,7 +350,7 @@ ArchivingNode::add_correction_entry_stdp_ax_delay( SpikeEvent& spike_event,
 void
 ArchivingNode::reset_correction_entries_stdp_ax_delay_()
 {
-  if ( correction_entries_stdp_ax_delay_.size() > 0 )
+  if ( stdp_synapse_types_.size() > 0 )
   {
     const long mindelay_steps = kernel().connection_manager.get_min_delay();
     assert( correction_entries_stdp_ax_delay_.size()
@@ -345,7 +369,7 @@ ArchivingNode::reset_correction_entries_stdp_ax_delay_()
 void
 ArchivingNode::correct_synapses_stdp_ax_delay_( const Time& t_spike )
 {
-  if ( correction_entries_stdp_ax_delay_.size() > 0 )
+  if ( stdp_synapse_types_.size() > 0 )
   {
     const Time& ori = kernel().simulation_manager.get_slice_origin();
     const Time& t_spike_rel = t_spike - ori;
@@ -366,6 +390,7 @@ ArchivingNode::correct_synapses_stdp_ax_delay_( const Time& t_spike )
           it_corr_entry->t_last_pre_spike_,
           &it_corr_entry->weight_revert_,
           t_spike.get_ms(),
+          it_corr_entry->syn_id_,
           this );
       }
     }

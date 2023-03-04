@@ -66,32 +66,32 @@ nest::UrbanczikArchivingNode< urbanczik_parameters >::get_urbanczik_history( dou
   std::deque< ArchivedSpikeGeneric >::iterator* finish,
   int comp )
 {
-  assert( false );  // TODO JV (pt)
+  assert( false ); // TODO JV (pt)
 
-//  *finish = urbanczik_history_[ comp - 1 ].end();
-//  if ( urbanczik_history_[ comp - 1 ].empty() )
-//  {
-//    *start = *finish;
-//    return;
-//  }
-//  else
-//  {
-//    std::deque< ArchivedSpikeGeneric >::iterator runner = urbanczik_history_[ comp - 1 ].begin();
-//    // To have a well defined discretization of the integral, we make sure
-//    // that we exclude the entry at t1 but include the one at t2 by subtracting
-//    // a small number so that runner->t is never equal to t1 or t2.
-//    while ( ( runner != urbanczik_history_[ comp - 1 ].end() ) and runner->t - 1.0e-6 < t1 )
-//    {
-//      ++runner;
-//    }
-//    *start = runner;
-//    while ( ( runner != urbanczik_history_[ comp - 1 ].end() ) and runner->t - 1.0e-6 < t2 )
-//    {
-//      ( runner->access_counter_ )++;
-//      ++runner;
-//    }
-//    *finish = runner;
-//  }
+  //  *finish = urbanczik_history_[ comp - 1 ].end();
+  //  if ( urbanczik_history_[ comp - 1 ].empty() )
+  //  {
+  //    *start = *finish;
+  //    return;
+  //  }
+  //  else
+  //  {
+  //    std::deque< ArchivedSpikeGeneric >::iterator runner = urbanczik_history_[ comp - 1 ].begin();
+  //    // To have a well defined discretization of the integral, we make sure
+  //    // that we exclude the entry at t1 but include the one at t2 by subtracting
+  //    // a small number so that runner->t is never equal to t1 or t2.
+  //    while ( ( runner != urbanczik_history_[ comp - 1 ].end() ) and runner->t - 1.0e-6 < t1 )
+  //    {
+  //      ++runner;
+  //    }
+  //    *start = runner;
+  //    while ( ( runner != urbanczik_history_[ comp - 1 ].end() ) and runner->t - 1.0e-6 < t2 )
+  //    {
+  //      ( runner->access_counter_ )++;
+  //      ++runner;
+  //    }
+  //    *finish = runner;
+  //  }
 }
 
 template < class urbanczik_parameters >
@@ -101,35 +101,35 @@ nest::UrbanczikArchivingNode< urbanczik_parameters >::write_urbanczik_history( T
   int n_spikes,
   int comp )
 {
-  assert( false );  // TODO JV (pt)
+  assert( false ); // TODO JV (pt)
 
-//  const double t_ms = t_sp.get_ms();
-//
-//  const double g_D = urbanczik_params->g_conn[ urbanczik_parameters::SOMA ];
-//  const double g_L = urbanczik_params->g_L[ urbanczik_parameters::SOMA ];
-//  const double E_L = urbanczik_params->E_L[ urbanczik_parameters::SOMA ];
-//  const double V_W_star = ( ( E_L * g_L + V_W * g_D ) / ( g_D + g_L ) );
-//
-//  if ( n_incoming_ )
-//  {
-//    // prune all entries from history which are no longer needed
-//    // except the penultimate one. we might still need it.
-//    while ( urbanczik_history_[ comp - 1 ].size() > 1 )
-//    {
-//      if ( urbanczik_history_[ comp - 1 ].front().access_counter_ >= n_incoming_ )
-//      {
-//        urbanczik_history_[ comp - 1 ].pop_front();
-//      }
-//      else
-//      {
-//        break;
-//      }
-//    }
-//
-//    double dPI = ( n_spikes - urbanczik_params->phi( V_W_star ) * Time::get_resolution().get_ms() )
-//      * urbanczik_params->h( V_W_star );
-//    urbanczik_history_[ comp - 1 ].push_back( ArchivedSpikeGeneric( t_ms, dPI, 0 ) );
-//  }
+  //  const double t_ms = t_sp.get_ms();
+  //
+  //  const double g_D = urbanczik_params->g_conn[ urbanczik_parameters::SOMA ];
+  //  const double g_L = urbanczik_params->g_L[ urbanczik_parameters::SOMA ];
+  //  const double E_L = urbanczik_params->E_L[ urbanczik_parameters::SOMA ];
+  //  const double V_W_star = ( ( E_L * g_L + V_W * g_D ) / ( g_D + g_L ) );
+  //
+  //  if ( n_incoming_ )
+  //  {
+  //    // prune all entries from history which are no longer needed
+  //    // except the penultimate one. we might still need it.
+  //    while ( urbanczik_history_[ comp - 1 ].size() > 1 )
+  //    {
+  //      if ( urbanczik_history_[ comp - 1 ].front().access_counter_ >= n_incoming_ )
+  //      {
+  //        urbanczik_history_[ comp - 1 ].pop_front();
+  //      }
+  //      else
+  //      {
+  //        break;
+  //      }
+  //    }
+  //
+  //    double dPI = ( n_spikes - urbanczik_params->phi( V_W_star ) * Time::get_resolution().get_ms() )
+  //      * urbanczik_params->h( V_W_star );
+  //    urbanczik_history_[ comp - 1 ].push_back( ArchivedSpikeGeneric( t_ms, dPI, 0 ) );
+  //  }
 }
 
 } // of namespace nest

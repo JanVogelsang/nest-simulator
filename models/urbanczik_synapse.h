@@ -167,7 +167,7 @@ public:
   {
     ConnTestDummyNode dummy_target;
 
-    t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
+    t.register_stdp_connection( get_dendritic_delay(), syn_id );
   }
 
   void
@@ -224,11 +224,12 @@ urbanczik_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Nod
 
   while ( start != finish )
   {
-    double const t_up = start->t + dendritic_delay;     // from t_lastspike to t_spike
+    double const t_up = start->t + dendritic_delay;      // from t_lastspike to t_spike
     double const minus_delta_t_up = t_lastspike_ - t_up; // from 0 to -delta t
     double const minus_t_down = t_up - t_spike;          // from -t_spike to 0
     double const PI =
-      ( tau_L_trace_ * exp( minus_delta_t_up / tau_L ) - tau_s_trace_ * exp( minus_delta_t_up / tau_s ) ) * start->value;
+      ( tau_L_trace_ * exp( minus_delta_t_up / tau_L ) - tau_s_trace_ * exp( minus_delta_t_up / tau_s ) )
+      * start->value;
     PI_integral_ += PI;
     dPI_exp_integral += exp( minus_t_down / tau_Delta_ ) * PI;
     ++start;

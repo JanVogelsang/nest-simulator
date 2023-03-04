@@ -995,6 +995,26 @@ nest::SimulationManager::update_()
         sw_gather_spike_data_.stop();
       }
 #endif
+      // after delivering all events, update all stdp synapses by calculating weight dynamics induced by post-synaptic
+      // spikes
+      for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
+      {
+        // We update in a parallel region. Therefore, we need to catch
+        // exceptions here and then handle them after the parallel region.
+        try
+        {
+          Node* node = n->get_node();
+          if ( not node->is_frozen() )
+          {
+            node->update_stdp_connections( clock_, from_step_, to_step_ );
+          }
+        }
+        catch ( std::exception& e )
+        {
+          // so throw the exception after parallel region
+          exceptions_raised.at( tid ) = std::shared_ptr< WrappedThreadException >( new WrappedThreadException( e ) );
+        }
+      }
 
 // the following block is executed by the master thread only
 // the other threads are enforced to wait at the end of the block

@@ -230,7 +230,7 @@ public:
   check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-    t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
+    t.register_stdp_connection( get_dendritic_delay(), syn_id );
   }
 
 private:
@@ -291,7 +291,8 @@ stdp_synapse_hom::send( Event& e, thread t, const STDPHomCommonProperties& cp, N
   }
 
   // depression due to new pre-synaptic spike
-  weight_ = depress_( weight_, target->get_K_value( t_spike - dendritic_delay ), cp );
+  weight_ =
+    depress_( weight_, target->get_K_value( dendritic_delay, t_spike, e.get_sender_spike_data().get_syn_id() ), cp );
 
   e.set_weight( weight_ );
   e.set_delay_steps( get_delay_steps() );

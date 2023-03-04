@@ -830,11 +830,15 @@ public:
    */
   virtual void connect_synaptic_element( Name, int ) {};
 
+  virtual std::pair< double, std::vector< double > >
+  get_stdp_history( const double last_pre_spike_time, const double pre_spike_time, const double dendritic_delay, const synindex syn_id );
+
   /**
    * return the Kminus value at t (in ms).
    * @throws UnexpectedEvent
    */
-  virtual double get_K_value( double t );
+  // TODO JV (pt): Remove and update models
+  virtual double get_K_value( const double dendritic_delay, const double t, const synindex syn_id );
 
   virtual double get_LTD_value( double t );
 
@@ -849,10 +853,16 @@ public:
    * return the spike history for (t1,t2].
    * @throws UnexpectedEvent
    */
+  // TODO JV (pt): Remove and update models
   virtual void get_history( double t1,
     double t2,
     std::deque< ArchivedSpikeTrace >::iterator* start,
     std::deque< ArchivedSpikeTrace >::iterator* finish );
+
+  /**
+   * Inform all incoming STDP connections of a post-synaptic spike to update the synaptic weight.
+   */
+  virtual void update_stdp_connections( Time const& origin, const long from, const long to );
 
   // for Clopath synapse
   virtual void get_LTP_history( double t1,

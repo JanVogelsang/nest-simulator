@@ -186,7 +186,7 @@ public:
   {
     ConnTestDummyNode dummy_target;
 
-    t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
+    t.register_stdp_connection( get_dendritic_delay(), syn_id );
   }
 
   void

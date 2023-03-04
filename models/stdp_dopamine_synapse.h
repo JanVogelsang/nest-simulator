@@ -283,7 +283,7 @@ public:
     }
 
     ConnTestDummyNode dummy_target;
-    t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
+    t.register_stdp_connection( get_dendritic_delay(), syn_id );
   }
 
   void
@@ -465,7 +465,7 @@ stdp_dopamine_synapse::send( Event& e, thread t, const STDPDopaCommonProperties&
 
   // depression due to new pre-synaptic spike
   process_dopa_spikes_( dopa_spikes, t0, t_spike, cp );
-  depress_( target->get_K_value( t_spike - dendritic_delay ), cp );
+  depress_( target->get_K_value( dendritic_delay, t_spike, e.get_sender_spike_data().get_syn_id() ), cp );
 
   e.set_weight( weight_ );
   e.set_delay_steps( get_delay_steps() );
