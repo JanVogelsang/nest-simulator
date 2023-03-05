@@ -611,7 +611,8 @@ public:
     const rport receptor_type,
     const bool is_primary,
     const bool from_device,
-    typename ConnectionT::CommonPropertiesType const& cp );
+    const delay dendritic_delay,
+    const delay axonal_delay );
 
   /**
    * When receiving an event from a device, forward it to the corresponding connection and handle the event previously
@@ -830,8 +831,10 @@ public:
    */
   virtual void connect_synaptic_element( Name, int ) {};
 
-  virtual std::pair< double, std::vector< double > >
-  get_stdp_history( const double last_pre_spike_time, const double pre_spike_time, const double dendritic_delay, const synindex syn_id );
+  virtual std::pair< double, std::vector< double > > get_stdp_history( const double last_pre_spike_time,
+    const double pre_spike_time,
+    const double dendritic_delay,
+    const synindex syn_id );
 
   /**
    * return the Kminus value at t (in ms).
@@ -1012,9 +1015,9 @@ public:
   virtual bool has_stdp_connections() const;
 
   /**
-   * Sort all stdp connections by dendritic delay for better vectorization.
+   * Sort all connections by dendritic delay for better vectorization.
    */
-  virtual void sort_stdp_connections_by_dendritic_delay();
+  void prepare_connections();
 
   /**
    * Framework for STDP with predominantly axonal delays:

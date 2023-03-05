@@ -1,6 +1,24 @@
-//
-// Created by vogelsang on 25.02.23.
-//
+/*
+ *  axonal_delay_connection.h
+ *
+ *  This file is part of NEST.
+ *
+ *  Copyright (C) 2004 The NEST Initiative
+ *
+ *  NEST is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  NEST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with NEST.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
 #ifndef NEST_AXONAL_DELAY_CONNECTION_H
 #define NEST_AXONAL_DELAY_CONNECTION_H
@@ -33,16 +51,12 @@ public:
   }
 
   void get_status( DictionaryDatum& d ) const;
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  //  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
 
   /**
-   * Get the proportion of the transmission delay attributed to the dendrite.
+   * Set the proportion of the transmission delay attributed to the axon.
    */
-  double
-  get_dendritic_delay() const
-  {
-    return get_delay() - get_axonal_delay();
-  }
+  void set_axonal_delay( const double axonal_delay );
 
   /**
    * Get the proportion of the transmission delay attributed to the axon.
@@ -51,6 +65,16 @@ public:
 
   bool supports_axonal_delay() const;
 };
+
+inline void
+AxonalDelayConnection::set_axonal_delay( const double axonal_delay )
+{
+  if ( axonal_delay < 0.0 ) // consistency with overall delay is checked in check_connection()
+  {
+    throw BadProperty( "Axonal delay should not be negative." );
+  }
+  axonal_delay_ = axonal_delay;
+}
 
 inline double
 AxonalDelayConnection::get_axonal_delay() const
@@ -73,21 +97,11 @@ AxonalDelayConnection::get_status( DictionaryDatum& d ) const
   def< double >( d, names::axonal_delay, axonal_delay_ );
 }
 
-inline void
-AxonalDelayConnection::set_status( const DictionaryDatum& d, ConnectorModel& cm )
-{
-  Connection::set_status( d, cm );
-
-  double axonal_delay;
-  if ( updateValue< double >( d, names::axonal_delay, axonal_delay ) )
-  {
-    if ( axonal_delay < 0.0 ) // consistency with overall delay is checked in check_connection()
-    {
-      throw BadProperty( "Axonal delay should not be negative." );
-    }
-    axonal_delay_ = axonal_delay;
-  }
-}
+// inline void
+// AxonalDelayConnection::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+//{
+//   Connection::set_status( d, cm );
+// }
 
 }
 #endif // NEST_AXONAL_DELAY_CONNECTION_H

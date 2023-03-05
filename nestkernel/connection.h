@@ -116,7 +116,6 @@ public:
 
   Connection()
   {
-    set_delay( 1.0 );
   }
 
   Connection( const Connection& rhs ) = default;
@@ -152,11 +151,6 @@ public:
   void check_synapse_params( const DictionaryDatum& d ) const;
 
   /**
-   * Calibrate the delay of this connection to the desired resolution.
-   */
-  void calibrate( const TimeConverter& );
-
-  /**
    * Framework for STDP with predominantly axonal delays:
    * Correct this synapse and the corresponding previously sent spike
    * taking into account a new post-synaptic spike.
@@ -165,6 +159,7 @@ public:
     double* weight_revert,
     const double t_post_spike,
     const synindex syn_id,
+    const delay dendritic_delay,
     const CommonSynapseProperties&,
     Node* target );
 
@@ -175,24 +170,12 @@ public:
   void process_post_synaptic_spike( const double t_syn, const CommonSynapseProperties& );
 
   /**
-   * Get the total transmission delay.
+   * Set the proportion of the transmission delay attributed to the axon.
    */
-  double
-  get_delay() const
+  void
+  set_axonal_delay( const double )
   {
-    // TODO JV (pt): Think about storing dendritic delay and assuming an axonal delay of 0. In derived connections
-    //  (AxonalDelayConnections), both the dendritic and axonal delay would be stored and the total delay would be the
-    //  sum instead of the other way around as it is the case right now.
-    return Time::delay_steps_to_ms( delay_ );
-  }
-
-  /**
-   * Get the proportion of the transmission delay attributed to the dendrite.
-   */
-  double
-  get_dendritic_delay() const
-  {
-    return get_delay();
+    throw UnexpectedEvent( "Connection does not support axonal delays." );
   }
 
   /**
@@ -201,40 +184,13 @@ public:
   double
   get_axonal_delay() const
   {
-    throw IllegalConnection( "Connection does not support axonal delays." );
+    throw UnexpectedEvent( "Connection does not support axonal delays." );
   }
 
   bool
   supports_axonal_delay() const
   {
     return false;
-  }
-
-  /**
-   * Return the delay of the connection in steps
-   */
-  long
-  get_delay_steps() const
-  {
-    return delay_;
-  }
-
-  /**
-   * Set the delay of the connection
-   */
-  void
-  set_delay( const double delay )
-  {
-    delay_ = Time::delay_ms_to_steps( delay );
-  }
-
-  /**
-   * Set the delay of the connection in steps
-   */
-  void
-  set_delay_steps( const long delay )
-  {
-    delay_ = delay;
   }
 
   long
@@ -249,6 +205,7 @@ public:
   void trigger_update_weight( const thread,
     const std::vector< spikecounter >&,
     const double,
+    const delay,
     const CommonSynapseProperties& );
 
   /**
@@ -273,33 +230,17 @@ public:
     return false;
     // return syn_id_delay_.is_disabled();
   }
-
-protected:
-  /* the order of the members below is critical as it influences the size of the object. Please leave unchanged as
-     targetidentifierT target_;
-     SynIdDelay syn_id_delay_;
-  */
-  // targetidentifierT target_;
-  //! syn_id (9 bit), delay (21 bit) in timesteps of this connection and more_targets and disabled flags (each 1 bit)
-  // SynIdDelay syn_id_delay_;
-  double delay_;  // TODO JV: Only store delay in delaygroup in node
 };
 
 inline void
-Connection::get_status( DictionaryDatum& d ) const
+Connection::get_status( DictionaryDatum& ) const
 {
-  def< double >( d, names::delay, get_delay() );
 }
 
 inline void
 Connection::set_status( const DictionaryDatum& d, ConnectorModel& )
 {
-  double delay;
-  if ( updateValue< double >( d, names::delay, delay ) )
-  {
-    kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
-    set_delay( delay );
-  }
+  // TODO JV: It is not possible to set delay anymore now after connection has been created
 }
 
 inline void
@@ -308,22 +249,11 @@ Connection::check_synapse_params( const DictionaryDatum& ) const
 }
 
 inline void
-Connection::calibrate( const TimeConverter& tc )
-{
-  Time t = tc.from_old_steps( delay_ );
-  delay_ = t.get_steps();
-
-  if ( delay_ == 0 )
-  {
-    delay_ = 1;
-  }
-}
-
-inline void
 Connection::correct_synapse_stdp_ax_delay( const double,
   double*,
   const double,
   const synindex,
+  const delay,
   const CommonSynapseProperties&,
   Node* )
 {
@@ -340,6 +270,7 @@ inline void
 Connection::trigger_update_weight( const thread,
   const std::vector< spikecounter >&,
   const double,
+  const delay,
   const CommonSynapseProperties& )
 {
   throw IllegalConnection( "Connection does not support updates that are triggered by a volume transmitter." );

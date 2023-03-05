@@ -75,8 +75,13 @@ Connector< ConnectionT >::correct_synapse_stdp_ax_delay( const index local_targe
   typename ConnectionT::CommonPropertiesType const& cp = static_cast< GenericConnectorModel< ConnectionT >* >(
     kernel().model_manager.get_connection_models( target->get_thread() )[ syn_id_ ] )
                                                            ->get_common_properties();
-  C_[ local_target_connection_id ].correct_synapse_stdp_ax_delay(
-    t_last_pre_spike, weight_revert, t_post_spike, syn_id, cp, target );
+  C_[ local_target_connection_id ].correct_synapse_stdp_ax_delay( t_last_pre_spike,
+    weight_revert,
+    t_post_spike,
+    syn_id,
+    get_dendritic_delay( local_target_connection_id ),
+    cp,
+    target );
 }
 
 template < typename ConnectionT >
@@ -102,7 +107,7 @@ Connector< ConnectionT >::get_stdp_history( const double last_pre_spike_time,
     }
 
     // if pre- and post-synaptic spikes occur at same time, don't add post-synaptic spike to trace yet
-    if ( std::abs(t_post - pre_spike_time ) < eps )
+    if ( std::abs( t_post - pre_spike_time ) < eps )
     {
       post_spikes_to_process.push_back( t_post );
       break;

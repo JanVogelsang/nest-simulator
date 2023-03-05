@@ -172,7 +172,6 @@ index
 Node::get_local_device_id() const
 {
   assert( false and "get_local_device_id() called on a non-device node." );
-  return invalid_index;
 }
 
 bool
@@ -182,8 +181,19 @@ Node::has_stdp_connections() const
 }
 
 void
-Node::sort_stdp_connections_by_dendritic_delay()
+Node::prepare_connections()
 {
+  // TODO JV (pt): Device connection indices must not change
+  if ( this->has_proxies() )
+  {
+    for ( auto conn : connections_ )
+    {
+      if ( conn )
+      {
+        conn->prepare_connections();
+      }
+    }
+  }
 }
 
 void
@@ -529,13 +539,13 @@ Node::sends_secondary_event( DelayedRateConnectionEvent& )
 double
 Node::get_LTD_value( double )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Can't retrieve LTD value. Base node class does not store its history." );
 }
 
 double
 Node::get_K_value( const double, const double, const synindex )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Can't retrieve K value. Base node class does not store its history." );
 }
 
 std::pair< double, std::vector< double > >
@@ -544,13 +554,13 @@ Node::get_stdp_history( const double last_pre_spike_time,
   const double dendritic_delay,
   const synindex syn_id )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Can't retrieve STDP history. Base node class does not store its history." );
 }
 
 void
 Node::get_K_values( double, double&, double&, double& )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Can't retrieve K values. Base node class does not store its history." );
 }
 
 void
@@ -559,7 +569,7 @@ Node::get_history( double,
   std::deque< ArchivedSpikeTrace >::iterator*,
   std::deque< ArchivedSpikeTrace >::iterator* )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Deprecated. Base node class does not store its history." );
 }
 
 void
@@ -573,7 +583,7 @@ nest::Node::get_LTP_history( double,
   std::deque< ArchivedSpikeGeneric >::iterator*,
   std::deque< ArchivedSpikeGeneric >::iterator* )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Base node class does not store its history." );
 }
 
 void
@@ -583,7 +593,7 @@ nest::Node::get_urbanczik_history( double,
   std::deque< ArchivedSpikeGeneric >::iterator*,
   int )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Base node class does not store its history." );
 }
 
 double

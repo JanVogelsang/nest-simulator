@@ -121,7 +121,8 @@ public:
 
 
 /**
- * Class representing an STDP connection with homogeneous parameters, i.e.
+ * Class representing an STDP connection with homogeneous parameters, i.e.-
+#
  * parameters are the same for all synapses.
  */
 class stdp_pl_synapse_hom_ax_delay : public AxonalDelayConnection
@@ -145,13 +146,6 @@ public:
   stdp_pl_synapse_hom_ax_delay( const stdp_pl_synapse_hom_ax_delay& ) = default;
   stdp_pl_synapse_hom_ax_delay& operator=( const stdp_pl_synapse_hom_ax_delay& ) = default;
 
-  // Explicitly declare all methods inherited from the dependent base
-  // ConnectionBase. This avoids explicit name prefixes in all places these
-  // functions are used. Since ConnectionBase depends on the template parameter,
-  // they are not automatically found in the base class.
-  using ConnectionBase::get_delay;
-  using ConnectionBase::get_delay_steps;
-
   /**
    * Get all properties of this connection and put them into a dictionary.
    */
@@ -166,7 +160,8 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void send( Event& e, thread t, const STDPPLHomAxDelayCommonProperties&, Node* target );
+  void
+  send( Event& e, const thread t, const delay dendritic_delay, const STDPPLHomAxDelayCommonProperties&, Node* target );
 
   /**
    * Process a post-synaptic spike after it is backpropagated to the synapse.
@@ -183,6 +178,7 @@ public:
     double* weight_revert,
     const double t_post_spike,
     const synindex syn_id,
+    const delay dendritic_delay,
     const STDPPLHomAxDelayCommonProperties& cp,
     Node* target );
 
@@ -213,16 +209,22 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const CommonPropertiesType& cp )
+  check_connection( Node&,
+    Node& t,
+    const rport,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& cp )
   {
     ConnTestDummyNode dummy_target;
 
-    const double delay = get_delay();
-    if ( get_axonal_delay() > delay )
+    if ( axonal_delay + dendritic_delay < kernel().connection_manager.get_stdp_eps() )
     {
-      throw BadProperty( "Axonal delay should not exceed total synaptic delay." );
+      throw BadProperty(
+        "Combination of axonal and dendritic delay has to be more than 0." ); // TODO JV (pt): Or does it actually?
     }
-    t.register_stdp_connection( get_dendritic_delay(), syn_id );
+    t.register_stdp_connection( Time::delay_steps_to_ms( dendritic_delay ), syn_id );
   }
 
   void
@@ -262,10 +264,14 @@ private:
  * \param e The event to send
  */
 inline void
-stdp_pl_synapse_hom_ax_delay::send( Event& e, thread, const STDPPLHomAxDelayCommonProperties& cp, Node* target )
+stdp_pl_synapse_hom_ax_delay::send( Event& e,
+  const thread,
+  const delay dendritic_delay,
+  const STDPPLHomAxDelayCommonProperties& cp,
+  Node* target )
 {
-  const double axonal_delay = get_axonal_delay();
-  const double dendritic_delay = get_dendritic_delay();
+  const double axonal_delay_ms = get_axonal_delay();
+  const double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
 
   const double t_spike = e.get_stamp().get_ms();
 
@@ -274,8 +280,10 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e, thread, const STDPPLHomAxDelayComm
   // spikes could not be processed before, as this connection might have an axonal delay lower than min_delay. Hence,
   // the order at which pre- and post-synaptic spikes have to be processed can only be known after the communication.
   // TODO JV: If the axonal delay is longer than min_delay, this might not be necessary
-  auto [ K_minus, post_spikes_to_process ] = target->get_stdp_history(
-    t_lastspike_ + axonal_delay, t_spike + axonal_delay, dendritic_delay, e.get_sender_spike_data().get_syn_id() );
+  auto [ K_minus, post_spikes_to_process ] = target->get_stdp_history( t_lastspike_ + axonal_delay_ms,
+    t_spike + axonal_delay_ms,
+    dendritic_delay_ms,
+    e.get_sender_spike_data().get_syn_id() );
 
   for ( const double t_post_spike_syn : post_spikes_to_process )
   {
@@ -293,15 +301,15 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e, thread, const STDPPLHomAxDelayComm
   // std::endl;
 
   e.set_weight( weight_ );
-  e.set_delay_steps( get_delay_steps() );
+  e.set_delay_steps( dendritic_delay + Time::delay_ms_to_steps( get_axonal_delay() ) );
   e();
 
   // TODO JV (pt): This does not take min_delay into account. The pre-synaptic spike could be safe already, due to the
   //  (up to min_delay-1) late delivery.
-  if ( ( axonal_delay - dendritic_delay ) > kernel().connection_manager.get_stdp_eps() )
+  if ( ( axonal_delay_ms - dendritic_delay_ms ) > kernel().connection_manager.get_stdp_eps() )
   {
     target->add_correction_entry_stdp_ax_delay(
-      dynamic_cast< SpikeEvent& >( e ), t_lastspike_, weight_revert, dendritic_delay );
+      dynamic_cast< SpikeEvent& >( e ), t_lastspike_, weight_revert, dendritic_delay_ms );
   }
 
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) * cp.tau_plus_inv_ ) + 1.0;
@@ -324,8 +332,9 @@ stdp_pl_synapse_hom_ax_delay::perform_facilitation( const double t_syn, const ST
 inline void
 stdp_pl_synapse_hom_ax_delay::process_post_synaptic_spike( double t_syn, const STDPPLHomAxDelayCommonProperties& cp )
 {
-  // Todo JV (pt): Move this to ConnectorBase. This would require t_lastspike to be a common member of all STDP synapses.
-  // Check if synapse has been updated to this point in time already and ignore the post-spike if that is the case.
+  // Todo JV (pt): Move this to ConnectorBase. This would require t_lastspike to be a common member of all STDP
+  // synapses. Check if synapse has been updated to this point in time already and ignore the post-spike if that is the
+  // case.
   if ( t_lastspike_ + get_axonal_delay() + kernel().connection_manager.get_stdp_eps() < t_syn )
   {
     perform_facilitation( t_syn, cp );
@@ -337,6 +346,7 @@ stdp_pl_synapse_hom_ax_delay::correct_synapse_stdp_ax_delay( const double t_last
   double* weight_revert,
   const double t_post_spike,
   const synindex syn_id,
+  const delay dendritic_delay,
   const STDPPLHomAxDelayCommonProperties& cp,
   Node* target )
 {
@@ -344,11 +354,11 @@ stdp_pl_synapse_hom_ax_delay::correct_synapse_stdp_ax_delay( const double t_last
   const double wrong_weight = weight_; // incorrectly transmitted weight
   weight_ = *weight_revert;            // removes the last depressive step
 
-  const double axonal_delay = get_axonal_delay();
-  double dendritic_delay = get_delay() - axonal_delay;
+  const double axonal_delay_ms = get_axonal_delay();
+  double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
 
   // facilitation due to new post-synaptic spike
-  const double minus_dt = t_last_spike + axonal_delay - ( t_post_spike + dendritic_delay );
+  const double minus_dt = t_last_spike + axonal_delay_ms - ( t_post_spike + dendritic_delay_ms );
 
   double K_plus_revert;
   // Multiple pre-spikes before post-spike possible. Only facilitate if not facilitated already (only if first
@@ -364,7 +374,9 @@ stdp_pl_synapse_hom_ax_delay::correct_synapse_stdp_ax_delay( const double t_last
   }
 
   // depression taking into account new post-synaptic spike
-  const double K_minus = target->get_stdp_history( t_last_spike + axonal_delay, t_spike + axonal_delay, dendritic_delay, syn_id ).first;
+  const double K_minus =
+    target->get_stdp_history( t_last_spike + axonal_delay_ms, t_spike + axonal_delay_ms, dendritic_delay_ms, syn_id )
+      .first;
   weight_ = depress_( weight_, K_minus, cp );
 
   // std::cout << std::setprecision( 17 ) << "Post " << t_post_spike + dendritic_delay << " " << K_plus_revert << " " <<
@@ -374,7 +386,7 @@ stdp_pl_synapse_hom_ax_delay::correct_synapse_stdp_ax_delay( const double t_last
   // send a correcting event to the target neuron
   SpikeEvent e;
   e.set_weight( weight_ - wrong_weight );
-  e.set_delay_steps( get_delay_steps() );
+  e.set_delay_steps( dendritic_delay + Time::delay_ms_to_steps( get_axonal_delay() ) );
   e.set_stamp( Time::ms_stamp( t_spike ) );
   e();
 }

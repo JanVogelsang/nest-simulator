@@ -84,8 +84,10 @@ public:
    */
   // double get_K_value( double t ) override;
 
-  std::pair< double, std::vector< double > >
-  get_stdp_history( const double last_pre_spike_time, const double pre_spike_time, const double dendritic_delay, const synindex syn_id ) override;
+  std::pair< double, std::vector< double > > get_stdp_history( const double last_pre_spike_time,
+    const double pre_spike_time,
+    const double dendritic_delay,
+    const synindex syn_id ) override;
 
   /**
    * \fn void get_K_values( double t,
@@ -199,11 +201,6 @@ protected:
   void update_stdp_connections( Time const& origin, const long from, const long to ) override;
 
   /**
-   * Sort all stdp connections by dendritic delay for better vectorization.
-   */
-  void sort_stdp_connections_by_dendritic_delay() override;
-
-  /**
    * clear spike history
    */
   void clear_history();
@@ -252,7 +249,7 @@ private:
   //  the history themselves somehow as this value depends on the exact synapse type. Even for "regular" STDP synapses
   //  the Kminus will be different for different pairing schemes.
   // SpikeArchive< ArchivedSpikeTrace > history_;
-  std::deque< double > history_;  // TODO JV (pt): Implement custom data structure that uses less memory than deque
+  std::deque< double > history_; // TODO JV (pt): Implement custom data structure that uses less memory than deque
 
   /**
    * Data structure to store incoming spikes sent over STDP synapses with predominantly axonal delay. If at time of
@@ -307,19 +304,8 @@ private:
 inline double
 ArchivingNode::get_spiketime_ms() const
 {
-  // TODO JV (pt)
-  return 0;
+  assert( false ); // TODO JV (pt)
   // return last_spike_;
-}
-
-inline void
-ArchivingNode::sort_stdp_connections_by_dendritic_delay()
-{
-  // Sort all connections by dendritic delay for
-  for ( const synindex syn_id : stdp_synapse_types_ )
-  {
-    connections_[ syn_id ]->sort_connections_by_dendritic_delay();
-  }
 }
 
 inline std::pair< double, std::vector< double > >
@@ -328,8 +314,8 @@ ArchivingNode::get_stdp_history( const double last_pre_spike_time,
   const double dendritic_delay,
   const synindex syn_id )
 {
-  return connections_[ syn_id ]->get_stdp_history( last_pre_spike_time,
-    pre_spike_time, dendritic_delay, tau_minus_inv_, history_.cbegin(), history_.cend() );
+  return connections_[ syn_id ]->get_stdp_history(
+    last_pre_spike_time, pre_spike_time, dendritic_delay, tau_minus_inv_, history_.cbegin(), history_.cend() );
 }
 
 } // of namespace

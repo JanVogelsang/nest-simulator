@@ -49,7 +49,8 @@ cont_delay_synapse::get_status( DictionaryDatum& d ) const
   ConnectionBase::get_status( d );
 
   def< double >( d, names::weight, weight_ );
-  def< double >( d, names::delay, Time( Time::step( get_delay_steps() ) ).get_ms() - delay_offset_ );
+  // def< double >( d, names::delay, Time( Time::step( get_delay_steps() ) ).get_ms() - delay_offset_ );  // TODO JV
+  // (pt)
   def< long >( d, names::size_of, sizeof( *this ) );
 }
 
@@ -73,15 +74,16 @@ cont_delay_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 
     if ( frac_delay == 0 )
     {
-      kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
-      set_delay_steps( Time::delay_ms_to_steps( delay ) );
+      kernel().connection_manager.get_delay_checker().assert_valid_delay_ms(
+        delay ); // TODO JV (pt): Axonal delay relevant?
+      // set_delay_steps( Time::delay_ms_to_steps( delay ) );  // TODO JV (pt)
       delay_offset_ = 0.0;
     }
     else
     {
       const long lowerbound = static_cast< long >( int_delay );
       kernel().connection_manager.get_delay_checker().assert_two_valid_delays_steps( lowerbound, lowerbound + 1 );
-      set_delay_steps( lowerbound + 1 );
+      // set_delay_steps( lowerbound + 1 );  // TODO JV (pt)
       delay_offset_ = h * ( 1.0 - frac_delay );
     }
   }

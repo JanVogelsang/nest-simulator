@@ -129,13 +129,6 @@ public:
   clopath_synapse( const clopath_synapse& ) = default;
   clopath_synapse& operator=( const clopath_synapse& ) = default;
 
-  // Explicitly declare all methods inherited from the dependent base
-  // ConnectionBase. This avoids explicit name prefixes in all places these
-  // functions are used. Since ConnectionBase depends on the template parameter,
-  // they are not automatically found in the base class.
-  using ConnectionBase::get_delay;
-  using ConnectionBase::get_delay_steps;
-
   /**
    * Get all properties of this connection and put them into a dictionary.
    */
@@ -151,7 +144,7 @@ public:
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target );
+  void send( Event& e, const thread t, const delay dendritic_delay, const CommonSynapseProperties& cp, Node* target );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -168,11 +161,17 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const CommonPropertiesType& )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
 
-    t.register_stdp_connection( get_dendritic_delay(), syn_id );
+    t.register_stdp_connection( Time::delay_steps_to_ms( dendritic_delay ), syn_id );
   }
 
   void
@@ -214,12 +213,16 @@ private:
  * \param cp Common properties object, containing the stdp parameters.
  */
 inline void
-clopath_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
+clopath_synapse::send( Event& e,
+  const thread t,
+  const delay dendritic_delay,
+  const CommonSynapseProperties&,
+  Node* target )
 {
   double t_spike = e.get_stamp().get_ms();
   // use accessor functions (inherited from Connection< >) to obtain delay and
   // target
-  double dendritic_delay = get_delay();
+  double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
   std::deque< ArchivedSpikeGeneric >::iterator start;
@@ -233,22 +236,22 @@ clopath_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node*
   // history[0, ..., t_last_spike - dendritic_delay] have been
   // incremented by ArchivingNode::register_stdp_connection(). See bug #218 for
   // details.
-  target->get_LTP_history( t_lastspike_ - dendritic_delay, t_spike - dendritic_delay, &start, &finish );
+  target->get_LTP_history( t_lastspike_ - dendritic_delay_ms, t_spike - dendritic_delay_ms, &start, &finish );
   // facilitation due to postsynaptic activity since last pre-synaptic spike
   while ( start != finish )
   {
-    const double minus_dt = t_lastspike_ - ( start->t + dendritic_delay );
+    const double minus_dt = t_lastspike_ - ( start->t + dendritic_delay_ms );
     weight_ = facilitate_( weight_, start->value, x_bar_ * exp( minus_dt / tau_x_ ) );
     ++start;
   }
 
   // depression due to new pre-synaptic spike
-  weight_ = depress_( weight_, target->get_LTD_value( t_spike - dendritic_delay ) );
+  weight_ = depress_( weight_, target->get_LTD_value( t_spike - dendritic_delay_ms ) );
 
   e.set_weight( weight_ );
   // use accessor functions (inherited from Connection< >) to obtain delay in
   // steps and rport
-  e.set_delay_steps( get_delay_steps() );
+  e.set_delay_steps( dendritic_delay );
   e();
 
   // compute the trace of the presynaptic spike train

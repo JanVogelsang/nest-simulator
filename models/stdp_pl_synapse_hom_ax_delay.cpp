@@ -104,7 +104,6 @@ void
 stdp_pl_synapse_hom_ax_delay::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 {
   // base class properties
-  AxonalDelayConnection::set_status( d, cm );
   updateValue< double >( d, names::weight, weight_ );
 
   updateValue< double >( d, names::Kplus, Kplus_ );

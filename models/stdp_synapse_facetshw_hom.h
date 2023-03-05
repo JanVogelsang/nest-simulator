@@ -245,13 +245,6 @@ public:
   stdp_facetshw_synapse_hom( const stdp_facetshw_synapse_hom& ) = default;
   stdp_facetshw_synapse_hom& operator=( const stdp_facetshw_synapse_hom& ) = default;
 
-  // Explicitly declare all methods inherited from the dependent base
-  // ConnectionBase. This avoids explicit name prefixes in all places these
-  // functions are used. Since ConnectionBase depends on the template parameter,
-  // they are not automatically found in the base class.
-  using ConnectionBase::get_delay;
-  using ConnectionBase::get_delay_steps;
-
   /**
    * Get all properties of this connection and put them into a dictionary.
    */
@@ -266,7 +259,8 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void send( Event& e, thread t, const STDPFACETSHWHomCommonProperties&, Node* target );
+  void
+  send( Event& e, const thread t, const delay dendritic_delay, const STDPFACETSHWHomCommonProperties&, Node* target );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -297,11 +291,17 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const CommonPropertiesType& )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
 
-    t.register_stdp_connection( get_dendritic_delay(), syn_id );
+    t.register_stdp_connection( Time::delay_steps_to_ms( dendritic_delay ), syn_id );
   }
 
   void
@@ -380,7 +380,11 @@ stdp_facetshw_synapse_hom::lookup_( unsigned int discrete_weight_, std::vector< 
  * \param e The event to send
  */
 inline void
-stdp_facetshw_synapse_hom::send( Event& e, thread t, const STDPFACETSHWHomCommonProperties& cp, Node* target )
+stdp_facetshw_synapse_hom::send( Event& e,
+  const thread t,
+  const delay dendritic_delay,
+  const STDPFACETSHWHomCommonProperties& cp,
+  Node* target )
 {
   // synapse STDP dynamics
 
@@ -468,7 +472,7 @@ stdp_facetshw_synapse_hom::send( Event& e, thread t, const STDPFACETSHWHomCommon
 
   // t_lastspike_ = 0 initially
 
-  double dendritic_delay = Time( Time::step( get_delay_steps() ) ).get_ms();
+  double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
   std::deque< ArchivedSpikeTrace >::iterator start;
@@ -479,7 +483,7 @@ stdp_facetshw_synapse_hom::send( Event& e, thread t, const STDPFACETSHWHomCommon
   // pre-synaptic spike
   if ( start != finish )
   {
-    double minus_dt_causal = t_lastspike_ - ( start->t + dendritic_delay );
+    double minus_dt_causal = t_lastspike_ - ( start->t + dendritic_delay_ms );
 
     // get_history() should make sure that
     // start->t > t_lastspike_ - dendritic_delay, i.e. minus_dt < 0
@@ -491,13 +495,13 @@ stdp_facetshw_synapse_hom::send( Event& e, thread t, const STDPFACETSHWHomCommon
     double minus_dt_acausal;
 
     --finish;
-    minus_dt_acausal = ( finish->t + dendritic_delay ) - t_spike;
+    minus_dt_acausal = ( finish->t + dendritic_delay_ms ) - t_spike;
 
     a_acausal_ += std::exp( minus_dt_acausal / cp.tau_minus_ );
   }
 
   e.set_weight( weight_ );
-  e.set_delay_steps( get_delay_steps() );
+  e.set_delay_steps( dendritic_delay );
   e();
 
   t_lastspike_ = t_spike;

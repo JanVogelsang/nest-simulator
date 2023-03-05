@@ -186,13 +186,13 @@ void
 ArchivingNode::update_stdp_connections( Time const& origin, const long from, const long to )
 {
   const std::vector< ConnectorModel* >& cm = kernel().model_manager.get_connection_models( get_thread() );
-  for ( long lag = from; lag < to; ++lag )
+  for ( long lag = from + 1; lag <= to; ++lag )
   {
     // let STDP connections process previous spikes of this neuron
     for ( auto archived_spike_it = history_.cbegin(); archived_spike_it < history_.cend(); ++archived_spike_it )
     {
       const double dendritic_delay = Time::delay_steps_to_ms( origin.get_steps() + lag ) - *archived_spike_it;
-      if ( dendritic_delay < 0)
+      if ( dendritic_delay < 0 )
       {
         continue;
       }
@@ -201,7 +201,8 @@ ArchivingNode::update_stdp_connections( Time const& origin, const long from, con
       {
         connections_[ stdp_syn_id ]->update_stdp_connections( *archived_spike_it, dendritic_delay, tau_minus_inv_, cm );
       }
-      if ( dendritic_delay >= max_dendritic_delay_ )
+      if ( dendritic_delay > max_dendritic_delay_
+        or std::abs( dendritic_delay - max_dendritic_delay_ ) < kernel().connection_manager.get_stdp_eps() )
       {
         // This is guaranteed to always start erasing from the beginning of the history as entries are inserted into the
         // history in chronological order. Thus, this will never create any holes.
@@ -269,7 +270,7 @@ ArchivingNode::set_spiketime( Time const& t_sp, double offset )
 void
 ArchivingNode::get_status( DictionaryDatum& d ) const
 {
-  def< double >( d, names::t_spike, get_spiketime_ms() );
+  // def< double >( d, names::t_spike, get_spiketime_ms() );
   def< double >( d, names::tau_minus, tau_minus_ );
   def< double >( d, names::tau_minus_triplet, tau_minus_triplet_ );
 //  def< double >( d, names::post_trace, trace_ );
@@ -377,7 +378,7 @@ ArchivingNode::correct_synapses_stdp_ax_delay_( const Time& t_spike )
     assert( correction_entries_stdp_ax_delay_.size()
       == static_cast< size_t >( kernel().connection_manager.get_min_delay() + maxdelay_steps ) );
 
-    for ( long lag = t_spike_rel.get_steps() - 1; lag < maxdelay_steps + 1; ++lag )
+    for ( long lag = t_spike_rel.get_steps() - 1; lag <= maxdelay_steps; ++lag )
     {
       const long idx = kernel().event_delivery_manager.get_modulo( lag );
       assert( static_cast< size_t >( idx ) < correction_entries_stdp_ax_delay_.size() );

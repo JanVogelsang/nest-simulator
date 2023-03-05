@@ -133,8 +133,9 @@ public:
     thread target_thread,
     const synindex syn_id,
     const DictionaryDatum& params,
-    const double delay = numerics::nan,
-    const double weight = numerics::nan );
+    const double delay,
+    const double axonal_delay,
+    const double weight );
 
   /**
    * Connect two nodes. The source and target nodes are defined by their
@@ -152,6 +153,7 @@ public:
     long* targets,
     double* weights,
     double* delays,
+    double* axonal_delays,
     std::vector< std::string >& p_keys,
     double* p_values,
     size_t n,
@@ -280,7 +282,7 @@ public:
   /**
    * Sort all STDP connections by dendritic delay for better vectorization.
    */
-  void sort_stdp_connections_by_dendritic_delay( const thread tid );
+  void prepare_connections( const thread tid );
 
   /**
    * Returns the delay checker for the current thread.
@@ -464,6 +466,7 @@ private:
     const DictionaryDatum& params,
     const ConnectionType connection_type,
     const double delay = numerics::nan,
+    const double axonal_delay = numerics::nan,
     const double weight = numerics::nan );
 
   /**

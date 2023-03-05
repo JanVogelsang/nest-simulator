@@ -119,13 +119,6 @@ public:
   quantal_stp_synapse( const quantal_stp_synapse& ) = default;
   quantal_stp_synapse& operator=( const quantal_stp_synapse& ) = default;
 
-  // Explicitly declare all methods inherited from the dependent base
-  // ConnectionBase. This avoids explicit name prefixes in all places these
-  // functions are used. Since ConnectionBase depends on the template parameter,
-  // they are not automatically found in the base class.
-  using ConnectionBase::get_delay;
-  using ConnectionBase::get_delay_steps;
-
   /**
    * Get all properties of this connection and put them into a dictionary.
    */
@@ -142,7 +135,7 @@ public:
    * \param e The event to send
    * \param cp Common properties to all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target );
+  void send( Event& e, const thread t, const delay dendritic_delay, const CommonSynapseProperties& cp, Node* target );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -158,7 +151,13 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const CommonPropertiesType& )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
   }
@@ -188,7 +187,11 @@ private:
  * \param cp Common properties object, containing the quantal_stp parameters.
  */
 inline void
-quantal_stp_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
+quantal_stp_synapse::send( Event& e,
+  const thread t,
+  const delay dendritic_delay,
+  const CommonSynapseProperties&,
+  Node* target )
 {
   const double t_spike = e.get_stamp().get_ms();
   const double h = t_spike - t_lastspike_;
@@ -210,7 +213,7 @@ quantal_stp_synapse::send( Event& e, thread t, const CommonSynapseProperties&, N
   if ( n_release > 0 )
   {
     e.set_weight( n_release * weight_ );
-    e.set_delay_steps( get_delay_steps() );
+    e.set_delay_steps( dendritic_delay );
     e();
     a_ -= n_release;
   }

@@ -67,7 +67,8 @@ Node::add_connection( Node& source_node,
   const rport receptor_type,
   const bool is_primary,
   const bool from_device,
-  typename ConnectionT::CommonPropertiesType const& cp )
+  const delay dendritic_delay,
+  const delay )
 {
   ConnectorBase* connector;
   // Check if the source of the connection is a device to add the connection to the corresponding container
@@ -93,7 +94,7 @@ Node::add_connection( Node& source_node,
 
   const Source src( source_node.get_node_id(), is_primary );
   Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connector );
-  return vc->add_connection( connection, src );
+  return vc->add_connection( connection, src, dendritic_delay );
 }
 
 template < typename EventT >
