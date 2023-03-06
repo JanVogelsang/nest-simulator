@@ -112,7 +112,7 @@ set ( nestkernel_sources
       position.h
       spatial.h spatial.cpp
       stimulation_backend.h
-      axonal_delay_connection.h )
+      axonal_delay_connection.h dynamic_spike_buffer.cpp dynamic_spike_buffer.h)
 
 
 if ( HAVE_SIONLIB )

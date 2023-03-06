@@ -139,13 +139,6 @@ public:
     Event& e,
     Node* target ) = 0;
 
-  virtual void correct_synapse_stdp_ax_delay( const index local_target_connection_id,
-    const double t_last_pre_spike,
-    double* weight_revert,
-    const double t_post_spike,
-    const synindex syn_id,
-    Node* target ) = 0;
-
   virtual void send_weight_event( const thread tid,
     const index local_target_connection_id,
     Event& e,
@@ -482,13 +475,6 @@ public:
       group.second.last_post_spike = -1;
     }
   }
-
-  void correct_synapse_stdp_ax_delay( const index local_target_connection_id,
-    const double t_last_pre_spike,
-    double* weight_revert,
-    const double t_post_spike,
-    const synindex syn_id,
-    Node* target ) override;
 
   void
   prepare_connections() override

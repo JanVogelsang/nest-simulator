@@ -37,6 +37,7 @@
 
 // Includes from sli:
 #include "dictdatum.h"
+#include "dynamic_spike_buffer.h"
 
 #ifdef HAVE_BOOST
 // TODO JV (pt): This is a fixed-size container now, but this will not work with offgrid spikes, as they can't be
@@ -158,8 +159,8 @@ public:
   }
 
   /**
-   * When receiving an incoming event, forward it to the corresponding connection and handle the event updated by the
-   * connection.
+   * When receiving an incoming event, decide if the event is due for processing at the synapse already or if this
+   * should be postponed.
    */
   void deliver_event( const thread tid,
     const synindex syn_id,
@@ -167,22 +168,19 @@ public:
     const std::vector< ConnectorModel* >& cm,
     SpikeEvent& se ) override;
 
+  /**
+   * To process an event, forward it to the corresponding connection and handle the event updated by the connection.
+   */
+  void process_event( const thread tid,
+    const synindex syn_id,
+    const index local_target_connection_id,
+    const std::vector< ConnectorModel* >& cm,
+    SpikeEvent& se );
+
   void get_status( DictionaryDatum& d ) const override;
   void set_status( const DictionaryDatum& d ) override;
 
-  /**
-   * Framework for STDP with predominantly axonal delays:
-   * Buffer a correction entry for a short time window.
-   */
-  void add_correction_entry_stdp_ax_delay( SpikeEvent& spike_event,
-    const double t_last_pre_spike,
-    const double weight_revert,
-    const double dendritic_delay );
-
-
 protected:
-  void pre_run_hook_();
-
   /**
    * \fn void set_spiketime(Time const & t_sp, double offset)
    * record spike history
@@ -204,8 +202,6 @@ protected:
    * clear spike history
    */
   void clear_history();
-
-  void reset_correction_entries_stdp_ax_delay_();
 
   /**
    * Return if the node has any incoming stdp connections.
@@ -252,53 +248,13 @@ private:
   std::deque< double > history_; // TODO JV (pt): Implement custom data structure that uses less memory than deque
 
   /**
-   * Data structure to store incoming spikes sent over STDP synapses with predominantly axonal delay. If at time of
+   * Data structure to store incoming spikes sent over connections with predominantly axonal delay. If at time of
    * delivery there might occur any post-synaptic spike that reaches the synapse before the pre-synaptic spike
    * (i.e., after the dendritic delay), the pre-synaptic spike has to be buffered until no more critical post-synaptic
    * spike can occur.
    * Arranged in a 2d structure: X|X
    */
-  // std::vector <  > intermediate_spike_buffer_;
-
-  /**
-   * Framework for STDP with predominantly axonal delays:
-   * Due to the long axonal delays, relevant spikes of this neuron might not yet be available at the time when incoming
-   * synapses are updated (spike delivery). Therefore, for each spike received through an STDP synapse with
-   * predominantly axonal delay, information is stored for a short period of time allowing for retrospective correction
-   * of the synapse and the already delivered spike.
-   */
-  struct CorrectionEntrySTDPAxDelay
-  {
-    CorrectionEntrySTDPAxDelay( const synindex syn_id,
-      const index local_connection_id,
-      const double t_last_pre_spike,
-      const double weight_revert )
-      : syn_id_( syn_id )
-      , local_connection_id_( local_connection_id )
-      , t_last_pre_spike_( t_last_pre_spike )
-      , weight_revert_( weight_revert )
-    {
-    }
-
-    synindex syn_id_;           //!< index of synapse type
-    index local_connection_id_; //!< index of connection in node
-    double t_last_pre_spike_;   //!< time of the last pre-synaptic spike before this spike
-    double weight_revert_;      //!< synaptic weight to revert to (STDP depression needs to be undone)
-  };
-
-  /**
-   * Framework for STDP with predominantly axonal delays:
-   * Buffer of correction entries sorted by t_spike_pre + delay
-   * (i.e., the actual arrival time at this neuron).
-   */
-  std::vector< std::vector< CorrectionEntrySTDPAxDelay > > correction_entries_stdp_ax_delay_;
-
-  /**
-   * Framework for STDP with predominantly axonal delays:
-   * Triggered when this neuron spikes, to correct all relevant incoming STDP synapses with predominantly axonal delays
-   * and corresponding received spikes.
-   */
-  void correct_synapses_stdp_ax_delay_( const Time& t_spike );
+  DynamicSpikeBuffer intermediate_spike_buffer_;
 };
 
 inline double
