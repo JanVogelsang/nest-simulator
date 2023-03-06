@@ -103,6 +103,27 @@ public:
   virtual index get_first_connection_index( const index source_node_id ) const = 0;
 
   /**
+   * Sets the index of the connection that last received a spike.
+   */
+  void set_last_visited_connection( const size_t last_visited_connection )
+  {
+    last_visited_connection_ = last_visited_connection;
+  }
+
+  /**
+   * Returns the index of the connection that last received a spike.
+   */
+  size_t get_last_visited_connection()
+  {
+    return last_visited_connection_;
+  }
+
+  void reset_last_visited_connection()
+  {
+    last_visited_connection_ = 0;
+  }
+
+  /**
    * Remove source information of all connections in this container.
    */
   virtual void clear_sources() = 0;
@@ -125,12 +146,6 @@ public:
    * source.
    */
   virtual void send( const thread tid,
-    const index local_target_connection_id,
-    const ConnectorModel* cm,
-    Event& e,
-    Node* target ) = 0;
-
-  virtual bool try_send ( const thread tid,
     const ConnectorModel* cm,
     Event& e,
     Node* target ) = 0;
@@ -171,11 +186,6 @@ public:
    * Remove disabled connections from the connector.
    */
   virtual void remove_disabled_connections( const index first_disabled_index ) = 0;
-
-  void reset_last_visited_connection()
-  {
-    last_visited_connection_ = 0;
-  }
 
 protected:
   /**
@@ -278,12 +288,12 @@ public:
   std::pair< index, index >
   get_connection_indices( const index source_node_id ) const override
   {
+    assert( source_node_id >= sources_[ last_visited_connection_ ] );
+
     // binary search in sorted sources
-    const std::vector< index >::const_iterator begin = sources_.begin();
+    const std::vector< index >::const_iterator begin = sources_.begin() + last_visited_connection_;
     const std::vector< index >::const_iterator end = sources_.end();
     auto first_last_source = std::equal_range( begin, end, source_node_id );
-
-    // TODO JV: Sorting connections by source has to be triggered somewhere
 
     return { first_last_source.first - begin, first_last_source.second - begin };
   }
@@ -291,13 +301,9 @@ public:
   index
   get_first_connection_index( const index source_node_id ) const override
   {
-    // TODO JV: Sorting connections by source has to be triggered somewhere
-
     // binary search in sorted sources
     const std::vector< index >::const_iterator begin = sources_.begin() + last_visited_connection_;
     const std::vector< index >::const_iterator end = sources_.end();
-
-    assert( static_cast< size_t >(end - begin) == sources_.size() );  // TODO JV: Remove again, just for debugging
 
     auto first_source = std::lower_bound( begin, end, source_node_id );
 
@@ -332,35 +338,11 @@ public:
   void
   clear_sources() override
   {
-    // TODO JV: Is this actually safe? Or is swap the better way of clearing 2D vectors?
-    sources_.clear();
-  }
-
-  bool try_send ( const thread tid,
-    const ConnectorModel* cm,
-    Event& e,
-    Node* target ) override
-  {
-    assert( e.get_sender_node_id() >= C_[ last_visited_connection_ ] );
-    // TODO JV (pt): This should actually send the event to all connection to the target node from this source node.
-    //  For performance reasons this is ignored here, as multapses are not the regular case and need to be optimized
-    //  somehow to not influence performance of the regular synapse case.
-    // TODO JV (help): Verify that multapses are not required in the benchmarks.
-    index first_index = get_first_connection_index( e.get_sender_node_id() );
-
-    if ( first_index != C_.size() )  // TODO JV: Verify this
-    {
-      last_visited_connection_ = first_index;
-      e.set_local_connection_id( first_index );
-      send( tid, first_index, cm, e, target );
-      return true;
-    }
-    return false;
+    std::vector< index >().swap( sources_ );
   }
 
   void
   send( const thread tid,
-    const index local_target_connection_id,
     const ConnectorModel* cm,
     Event& e,
     Node* target ) override
@@ -368,6 +350,7 @@ public:
     typename ConnectionT::CommonPropertiesType const& cp =
       static_cast< const GenericConnectorModel< ConnectionT >* >( cm )->get_common_properties();
 
+    const index local_target_connection_id = e.get_local_connection_id();
     e.set_port( local_target_connection_id );
     if ( not C_[ local_target_connection_id ].is_disabled() )
     {

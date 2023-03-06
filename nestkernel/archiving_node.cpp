@@ -219,8 +219,12 @@ ArchivingNode::deliver_event( const thread tid,
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight.
   se.set_syn_id( syn_id );
-  if ( conn->try_send( tid, cm[ syn_id ], se, this ) )
+  const std::pair< index, index >& connection_range = conn->get_connection_indices( se.get_sender_node_id() );
+  for ( auto idx = connection_range.first; idx != connection_range.second; ++idx )  // TODO JV: Verify this
   {
+    se.set_local_connection_id( idx );
+    conn->send( tid, cm[ syn_id ], se, this );
+    conn->set_last_visited_connection( idx );
     handle( se );
   }
 }
