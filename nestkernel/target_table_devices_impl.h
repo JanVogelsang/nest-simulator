@@ -113,7 +113,8 @@ TargetTableDevices::send_from_device( const thread tid, const index ldid, EventT
         ++it )
   {
     Node* target_node = kernel().node_manager.thread_lid_to_node( tid, it->get_local_target_node_id() );
-    target_node->deliver_event_from_device( tid, it->get_syn_id(), it->get_local_target_connection_id(), cm, e );
+    e.set_syn_id( it->get_syn_id() );
+    target_node->deliver_event_from_device( tid, it->get_local_target_connection_id(), cm, e );
   }
 }
 
@@ -126,9 +127,10 @@ TargetTableDevices::send_to_devices( const thread tid, const index source_node_l
         it != targets_to_devices_[ tid ][ source_node_lid ].end();
         ++it )
   {
+    e.set_syn_id( it->get_syn_id() );
     DeviceNode* target_node =
       static_cast< DeviceNode* >( kernel().node_manager.thread_lid_to_node( tid, it->get_local_target_node_id() ) );
-    target_node->deliver_event_to_device( tid, it->get_syn_id(), it->get_local_target_connection_id(), cm, e );
+    target_node->deliver_event_to_device( tid, it->get_local_target_connection_id(), cm, e );
   }
 }
 

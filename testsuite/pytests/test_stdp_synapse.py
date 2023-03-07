@@ -112,6 +112,7 @@ class TestSTDPSynapse:
         nest.set_verbosity('M_WARNING')
         nest.ResetKernel()
         nest.SetKernelStatus({'resolution': self.resolution})
+        nest.print_time = True
 
         presynaptic_neuron, postsynaptic_neuron = nest.Create(
             self.nest_neuron_model,

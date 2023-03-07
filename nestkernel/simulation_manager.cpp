@@ -805,8 +805,7 @@ nest::SimulationManager::update_()
               i != kernel().node_manager.get_local_nodes( tid ).end();
               ++i )
         {
-          Node* node = i->get_node();
-          node->decay_synaptic_elements_vacant();
+          i->get_node()->decay_synaptic_elements_vacant();
         }
 
         // after structural plasticity has created and deleted

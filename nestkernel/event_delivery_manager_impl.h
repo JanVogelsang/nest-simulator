@@ -103,7 +103,7 @@ inline void
 EventDeliveryManager::send_remote( thread tid, SpikeEvent& e, const long lag )
 {
   // Put the spike in a buffer for the remote machines
-  const index lid = kernel().vp_manager.node_id_to_lid( e.get_sender().get_node_id() );
+  const index lid = kernel().vp_manager.node_id_to_lid( e.get_sender_node_id() );
   const std::vector< Target >& targets = kernel().connection_manager.get_remote_targets_of_local_node( tid, lid );
 
   for ( std::vector< Target >::const_iterator it = targets.begin(); it != targets.end(); ++it )

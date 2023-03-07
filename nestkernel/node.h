@@ -633,7 +633,6 @@ public:
    */
   template < typename EventT >
   void deliver_event_from_device( const thread tid,
-    const synindex syn_id,
     const index local_target_connection_id,
     const std::vector< ConnectorModel* >& cm,
     EventT& e );
@@ -643,7 +642,6 @@ public:
    * just updated by the connection. If there is no connection for the
    */
   virtual void deliver_event( const thread tid,
-    const synindex syn_id,
     const std::vector< ConnectorModel* >& cm,
     SpikeEvent& se );
 

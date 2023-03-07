@@ -411,7 +411,10 @@ SourceManager::get_next_target_data( const thread tid,
   const std::vector< ConnectorModel* >& cm,
   TargetData& next_target_data )
 {
-  ensure_valid_source_position( tid );
+  if ( not ensure_valid_source_position( tid ) )
+  {
+    return false;
+  }
 
   SourcePosition& current_position = current_positions_[ tid ];
 
@@ -460,7 +463,7 @@ SourceManager::get_next_target_data( const thread tid,
   next_target_data.set_source_lid( kernel().vp_manager.node_id_to_lid( next_source ) );
   next_target_data.set_source_tid( kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( next_source ) ) );
 
-  return false; // reached the end of all sources
+  return true; // reached the end of all sources
 }
 
 void

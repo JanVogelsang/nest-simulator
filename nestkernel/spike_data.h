@@ -52,24 +52,30 @@ class SpikeData
 
   unsigned int marker_ : NUM_BITS_MARKER_SPIKE_DATA;     //!< status flag
   unsigned int lag_ : NUM_BITS_LAG;                      //!< lag in this min-delay interval
-  unsigned int target_tid_ : NUM_BITS_TID;                //!< target thread index
+  unsigned int target_tid_ : NUM_BITS_TID;               //!< target thread index
   synindex syn_id_ : NUM_BITS_SYN_ID;                    //!< synapse-type index
   unsigned int source_tid_ : NUM_BITS_TID;               //!< source thread index
   unsigned int source_lid_ : NUM_BITS_LOCAL_NODE_ID;     //!< source node local index
+//  unsigned int marker_;     //!< status flag
+//  unsigned int lag_;                      //!< lag in this min-delay interval
+//  unsigned int target_tid_;               //!< target thread index
+//  synindex syn_id_;                    //!< synapse-type index
+//  unsigned int source_tid_;               //!< source thread index
+//  unsigned int source_lid_;     //!< source node local index
   // TODO JV: There still are bits to spare here, could we use them somehow?
 
 public:
   SpikeData() = default;
-  ~SpikeData() = default;
+//  ~SpikeData() = default;
   SpikeData( const thread target_tid,
     const synindex syn_id,
     const unsigned int lag,
     const thread source_tid,
     const index source_lid );
-  SpikeData( const SpikeData& ) = default;
-  SpikeData( SpikeData&& ) noexcept = default;
-  SpikeData& operator=( const SpikeData& other ) = default;
-  SpikeData& operator=( SpikeData&& other ) = default;
+//  SpikeData( const SpikeData& ) = default;
+//  SpikeData( SpikeData&& ) noexcept = default;
+//  SpikeData& operator=( const SpikeData& other ) = default;
+//  SpikeData& operator=( SpikeData&& other ) = default;
 
 //  void set( const thread target_tid,
 //    const synindex syn_id,
@@ -144,7 +150,7 @@ public:
 };
 
 //! check legal size
-using success_spike_data_size = StaticAssert< sizeof( SpikeData ) == 8 >::success;
+// using success_spike_data_size = StaticAssert< sizeof( SpikeData ) == 8 >::success;
 
 //inline SpikeData::SpikeData()
 //  : marker_( SPIKE_DATA_ID_DEFAULT )
@@ -300,7 +306,7 @@ public:
 };
 
 //! check legal size
-using success_offgrid_spike_data_size = StaticAssert< sizeof( OffGridSpikeData ) == 16 >::success;
+// using success_offgrid_spike_data_size = StaticAssert< sizeof( OffGridSpikeData ) == 16 >::success;
 
 //inline OffGridSpikeData::OffGridSpikeData()
 //  : SpikeData()

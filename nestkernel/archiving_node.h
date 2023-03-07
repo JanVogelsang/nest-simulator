@@ -143,7 +143,6 @@ public:
    * connection.
    */
   void deliver_event( const thread tid,
-    const synindex syn_id,
     const std::vector< ConnectorModel* >& cm,
     SpikeEvent& se ) override;
 

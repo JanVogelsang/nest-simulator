@@ -52,11 +52,11 @@ class TargetData;
 class SendBufferPosition;
 
 struct SpikeDataSendBufferPosition {
-  std::vector< size_t > positions_for_rank;
-  thread write_thread_index;
-  index write_thread_pos;
-  thread start_rank;
-  thread end_rank;
+  std::vector< size_t > positions_for_rank;  //!<
+  thread write_thread_index;  //!< Current write thread vector for the current target rank
+  index write_thread_pos;  //!< Position inside the current write thread vector
+  thread start_rank;  //!< First rank this thread is assigned to
+  thread end_rank;  //!< Last rank this thread is assigned to
 
   SpikeDataSendBufferPosition( thread start_rank, thread end_rank )
   : positions_for_rank( end_rank - start_rank, 0 )

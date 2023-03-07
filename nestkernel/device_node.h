@@ -58,14 +58,15 @@ public:
   template < typename EventT >
   void
   deliver_event_to_device( const thread tid,
-    const synindex syn_id,
     const index local_target_connection_id,
     const std::vector< ConnectorModel* >& cm,
     EventT& e )
   {
+    const synindex syn_id = e.get_syn_id();
     // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
     // event by adding a weight and optionally updates its internal state as well.
-    connections_[ syn_id ]->send( tid, local_target_connection_id, cm[ syn_id ], e, this );
+    e.set_local_connection_id( local_target_connection_id );
+    connections_[ syn_id ]->send( tid, cm[ syn_id ], e, this );
 
     // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
     //  handle, or just handing the entire local connection id to the handle function.
@@ -74,7 +75,7 @@ public:
   }
 
   void
-  deliver_event( const thread, const synindex, const std::vector< ConnectorModel* >&, SpikeEvent& )
+  deliver_event( const thread, const std::vector< ConnectorModel* >&, SpikeEvent& )
     override
   {
   }

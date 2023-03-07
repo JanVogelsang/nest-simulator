@@ -293,12 +293,13 @@ Node::remove_disabled_connections()
 template <>
 void
 Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
-  const synindex syn_id,
   const index local_target_connection_id,
   const std::vector< ConnectorModel* >& cm,
   DSSpikeEvent& e )
 {
-  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, cm[ syn_id ], e, this );
+  const synindex syn_id = e.get_syn_id();
+  e.set_local_connection_id( local_target_connection_id );
+  connections_from_devices_[ syn_id ]->send( tid, cm[ syn_id ], e, this );
 
   // TODO JV: Make this cleaner, as only needed for poisson generators probably
   if ( not e.get_multiplicity() )
@@ -311,19 +312,26 @@ Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
 
 void
 Node::deliver_event( const thread tid,
-  const synindex syn_id,
   const std::vector< ConnectorModel* >& cm,
   SpikeEvent& se )
 {
+  const synindex syn_id = se.get_syn_id();
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight and optionally updates its internal state as well.
-  se.set_syn_id( syn_id );
-  if ( connections_[ syn_id ]->try_send( tid, cm[ syn_id ], se, this  ) )
-  {
-    // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
-    //  handle, or just handing the entire local connection id to the handle function.
+  ConnectorBase* conn = connections_[ syn_id ];
 
-    handle( se );
+  if ( conn )  // Does this node receive any spikes from that synapse type at all?
+  {
+    const std::pair< index, index >& connection_range = conn->get_connection_indices( se.get_sender_node_id() );
+    for ( auto idx = connection_range.first; idx != connection_range.second; ++idx ) // TODO JV: Verify this
+    {
+      // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
+      //  handle, or just handing the entire local connection id to the handle function.
+      se.set_local_connection_id( idx );
+      conn->send( tid, cm[ syn_id ], se, this );
+      conn->set_last_visited_connection( idx );
+      handle( se );
+    }
   }
 }
 
