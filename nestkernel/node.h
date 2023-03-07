@@ -463,7 +463,7 @@ public:
    *
    * @throws IllegalConnection
    */
-  virtual void register_stdp_connection( const double, const synindex );
+  virtual void register_stdp_connection( const delay, const delay, const synindex );
 
   /**
    * Change the number of different connection types to this node.
@@ -629,11 +629,11 @@ public:
    * When receiving an incoming spike event, forward it to the corresponding connection and handle the event previously
    * updated by the connection.
    */
-  virtual void deliver_event( const thread tid,
-    const synindex syn_id,
+  virtual void deliver_event( const synindex syn_id,
     const index local_target_connection_id,
     const std::vector< ConnectorModel* >& cm,
-    SpikeEvent& se );
+    const Time lag,
+    const double offset );
 
   /**
    * Handle incoming spike events.
@@ -862,11 +862,6 @@ public:
     std::deque< ArchivedSpikeTrace >::iterator* start,
     std::deque< ArchivedSpikeTrace >::iterator* finish );
 
-  /**
-   * Inform all incoming STDP connections of a post-synaptic spike to update the synaptic weight.
-   */
-  virtual void update_stdp_connections( Time const& origin, const long from, const long to );
-
   // for Clopath synapse
   virtual void get_LTP_history( double t1,
     double t2,
@@ -1078,18 +1073,6 @@ protected:
 
 private:
   /**
-   * Global Element ID (node ID).
-   *
-   * The node ID is unique within the network. The smallest valid node ID is 1.
-   */
-  index node_id_;
-
-  /**
-   * Local id of this node in the thread-local vector of nodes.
-   */
-  index thread_lid_;
-
-  /**
    * Model ID.
    * It is only set for actual node instances, not for instances of class Node
    * representing model prototypes. Model prototypes always have model_id_==-1.
@@ -1106,6 +1089,18 @@ private:
   NodeCollectionPTR nc_ptr_;
 
 protected:
+  /**
+   * Global Element ID (node ID).
+   *
+   * The node ID is unique within the network. The smallest valid node ID is 1.
+   */
+  index node_id_;
+
+  /**
+   * Local id of this node in the thread-local vector of nodes.
+   */
+  index thread_lid_;
+
   /**
    * A structure to hold the Connector objects which in turn hold the connection information of all incoming connections
    * to this node. Corresponds to a two dimensional structure:

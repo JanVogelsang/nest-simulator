@@ -64,27 +64,6 @@ Connector< ConnectionT >::send_weight_event( const thread tid,
 }
 
 template < typename ConnectionT >
-void
-Connector< ConnectionT >::correct_synapse_stdp_ax_delay( const index local_target_connection_id,
-  const double t_last_pre_spike,
-  double* weight_revert,
-  const double t_post_spike,
-  const synindex syn_id,
-  Node* target )
-{
-  typename ConnectionT::CommonPropertiesType const& cp = static_cast< GenericConnectorModel< ConnectionT >* >(
-    kernel().model_manager.get_connection_models( target->get_thread() )[ syn_id_ ] )
-                                                           ->get_common_properties();
-  C_[ local_target_connection_id ].correct_synapse_stdp_ax_delay( t_last_pre_spike,
-    weight_revert,
-    t_post_spike,
-    syn_id,
-    get_dendritic_delay( local_target_connection_id ),
-    cp,
-    target );
-}
-
-template < typename ConnectionT >
 std::pair< double, std::vector< double > >
 Connector< ConnectionT >::get_stdp_history( const double last_pre_spike_time,
   const double pre_spike_time,

@@ -210,7 +210,7 @@ public:
         "Axonal delay is greater than dendritic delay, "
         "which can lead to omission of post-synaptic spikes in this synapse type." );
     }
-    t.register_stdp_connection( Time::delay_steps_to_ms( dendritic_delay ), syn_id );
+    t.register_stdp_connection( axonal_delay, dendritic_delay, syn_id );
   }
 
   void

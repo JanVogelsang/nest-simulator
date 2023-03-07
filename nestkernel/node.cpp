@@ -41,14 +41,14 @@ namespace nest
 
 Node::Node()
   : deprecation_warning()
-  , node_id_( 0 )
-  , thread_lid_( invalid_index )
   , model_id_( -1 )
   , thread_( 0 )
   , vp_( invalid_thread )
   , frozen_( false )
   , initialized_( false )
   , node_uses_wfr_( false )
+  , node_id_( 0 )
+  , thread_lid_( invalid_index )
   , connections_( kernel().model_manager.get_num_connection_models() )
   , connections_from_devices_( kernel().model_manager.get_num_connection_models() )
 {
@@ -58,8 +58,6 @@ Node::Node()
 
 Node::Node( const Node& n )
   : deprecation_warning( n.deprecation_warning )
-  , node_id_( 0 )
-  , thread_lid_( n.thread_lid_ )
   , model_id_( n.model_id_ )
   , thread_( n.thread_ )
   , vp_( n.vp_ )
@@ -67,6 +65,8 @@ Node::Node( const Node& n )
   // copy must always initialize its own buffers
   , initialized_( false )
   , node_uses_wfr_( n.node_uses_wfr_ )
+  , node_id_( 0 )
+  , thread_lid_( n.thread_lid_ )
   , connections_( kernel().model_manager.get_num_connection_models() )
   , connections_from_devices_( kernel().model_manager.get_num_connection_models() )
 {
@@ -196,12 +196,6 @@ Node::prepare_connections()
   }
 }
 
-void
-Node::add_correction_entry_stdp_ax_delay( SpikeEvent&, const double, const double, const double )
-{
-  throw UnexpectedEvent( "Node does not support framework for STDP synapses with predominantly axonal delays." );
-}
-
 DictionaryDatum
 Node::get_status_base()
 {
@@ -272,7 +266,7 @@ Node::send_test_event( Node&, rport, synindex, bool )
  * throws IllegalConnection
  */
 void
-Node::register_stdp_connection( const double, const synindex )
+Node::register_stdp_connection( const delay, const delay, const synindex )
 {
   throw IllegalConnection( "The target node does not support STDP synapses." );
 }
@@ -331,15 +325,20 @@ Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
 }
 
 void
-Node::deliver_event( const thread tid,
-  const synindex syn_id,
+Node::deliver_event( const synindex syn_id,
   const index local_target_connection_id,
   const std::vector< ConnectorModel* >& cm,
-  SpikeEvent& se )
+  const Time lag,
+  const double offset )
 {
+  SpikeEvent se;
+  se.set_stamp( lag );
+  se.set_offset( offset );  // TODO JV (help): Why can't offset be incorporated into lag?
+  se.set_sender_node_id_info( thread_, syn_id, node_id_, local_target_connection_id );
+
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight and optionally updates its internal state as well.
-  connections_[ syn_id ]->send( tid, local_target_connection_id, cm, se, this );
+  connections_[ syn_id ]->send( thread_, local_target_connection_id, cm, se, this );
 
   // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
   //  handle, or just handing the entire local connection id to the handle function (and storing an array of rports
@@ -569,12 +568,7 @@ Node::get_history( double,
   std::deque< ArchivedSpikeTrace >::iterator*,
   std::deque< ArchivedSpikeTrace >::iterator* )
 {
-  throw UnexpectedEvent( "Deprecated. Base node class does not store its history." );
-}
-
-void
-Node::update_stdp_connections( Time const& origin, const long from, const long to )
-{
+  throw UnexpectedEvent( "Base node class does not store its history." );
 }
 
 void

@@ -146,9 +146,12 @@ public:
     Node* target ) = 0;
 
   virtual void update_stdp_connections( const double post_spike_time,
-    const double dendritic_delay,
-    const double tau_minus_inv,
-    const std::vector< ConnectorModel* >& cm ) = 0;
+    const delay dendritic_delay,
+    const ConnectorModel* cm ) = 0;
+
+  virtual void update_trace( const double post_spike_time,
+    const delay dendritic_delay,
+    const double tau_minus_inv ) = 0;
 
   virtual std::pair< double, std::vector< double > > get_stdp_history( const double last_pre_spike_time,
     const double pre_spike_time,
@@ -210,11 +213,11 @@ class Connector : public ConnectorBase
   //! A region of connections in the Connector where all connections share the same dendritic delay
   struct DelayRegion
   {
-    index start; //<! first connection of delay region
-    index end;   //<! last connection of relay region
+    index start; //!< first connection of delay region
+    index end;   //!< last connection of relay region
     //! the post-synaptic trace in synapse time, i.e. the trace of the neuron "dendritic delay"-milliseconds ago
     double Kminus;
-    double last_post_spike; //<! time of the last update in synapse time
+    double last_post_spike; //!< time of the last update in synapse time
   };
 
 private:
@@ -433,30 +436,36 @@ public:
 
   void
   update_stdp_connections( const double post_spike_time,
-    const double dendritic_delay,
-    const double tau_minus_inv,
-    const std::vector< ConnectorModel* >& cm ) override
+    const delay dendritic_delay,
+    const ConnectorModel* cm ) override
   {
     typename ConnectionT::CommonPropertiesType const& cp =
-      static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties();
+      static_cast< const GenericConnectorModel< ConnectionT >* >( cm )->get_common_properties();
 
     // TODO JV (pt): Verify for precise spike times
     // TODO JV: Make sure double->long conversion yields the correct delay
-    auto group_it = dendritic_delay_regions_.find( Time::delay_ms_to_steps( dendritic_delay ) );
+    auto group_it = dendritic_delay_regions_.find( dendritic_delay );
     if ( group_it != dendritic_delay_regions_.end() ) // check if there are connections with given dendritic delay
     {
       const auto end = C_.begin() + group_it->second.end;
       for ( auto it = C_.begin() + group_it->second.start; it != end; ++it )
       {
-        it->process_post_synaptic_spike( post_spike_time + dendritic_delay, cp );
+        it->process_post_synaptic_spike( post_spike_time + Time::delay_steps_to_ms( dendritic_delay ), cp );
       }
-
-      // update post-synaptic trace
-      group_it->second.Kminus = group_it->second.Kminus
-          * std::exp( ( group_it->second.last_post_spike - ( post_spike_time + dendritic_delay ) ) * tau_minus_inv )
-        + 1;
-      group_it->second.last_post_spike = post_spike_time + dendritic_delay;
     }
+  }
+
+  void update_trace( const double post_spike_time,
+    const delay dendritic_delay,
+    const double tau_minus_inv ) override
+  {
+    auto group_it = dendritic_delay_regions_.find( dendritic_delay );
+
+    // update post-synaptic trace
+    group_it->second.Kminus = group_it->second.Kminus
+        * std::exp( ( group_it->second.last_post_spike - ( post_spike_time + Time::delay_steps_to_ms( dendritic_delay ) ) ) * tau_minus_inv )
+      + 1;
+    group_it->second.last_post_spike = post_spike_time + Time::delay_steps_to_ms( dendritic_delay );
   }
 
   std::pair< double, std::vector< double > > get_stdp_history( const double last_pre_spike_time,

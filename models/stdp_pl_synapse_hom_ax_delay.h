@@ -211,7 +211,7 @@ public:
       throw BadProperty(
         "Combination of axonal and dendritic delay has to be more than 0." ); // TODO JV (pt): Or does it actually?
     }
-    t.register_stdp_connection( Time::delay_steps_to_ms( dendritic_delay ), syn_id );
+    t.register_stdp_connection( axonal_delay, dendritic_delay, syn_id );
   }
 
   void
@@ -276,10 +276,6 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e,
   {
     perform_facilitation( t_post_spike_syn, cp );
   }
-
-  // Framework for STDP with predominantly axonal delays:
-  // Store weight before depression for potential later correction
-  const double weight_revert = weight_;
 
   // depression due to new pre-synaptic spike
   weight_ = depress_( weight_, K_minus, cp );

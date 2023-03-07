@@ -77,6 +77,8 @@ public:
    */
   ArchivingNode( const ArchivingNode& );
 
+  void pre_run_hook() override;
+
   /**
    * \fn double get_K_value(long t)
    * return the Kminus (synaptic trace) value at t (in ms). When the trace is
@@ -135,10 +137,10 @@ public:
    */
   // TODO JV (pt): This function could still exist, as there is no reason why the history should not be accessed. This
   //  function will be commented out for now to make sure no currently implemented model depends on it anymore.
-  //  void get_history( double t1,
-  //    double t2,
-  //    std::deque< ArchivedSpikeTrace >::iterator* start,
-  //    std::deque< ArchivedSpikeTrace >::iterator* finish ) override;
+  // void get_history( double t1,
+  //   double t2,
+  //   std::deque< ArchivedSpikeTrace >::iterator* start,
+  //   std::deque< ArchivedSpikeTrace >::iterator* finish ) override;
 
   /**
    * Register a new incoming STDP connection.
@@ -146,7 +148,7 @@ public:
    * t_first_read: The newly registered synapse will read the history entries
    * with t > t_first_read.
    */
-  void register_stdp_connection( const double dendritic_delay, const synindex syn_id ) override;
+  void register_stdp_connection( const delay axonal_delay, const delay dendritic_delay, const synindex syn_id ) override;
 
   /**
    * Postponed delivery is required for STDP synapses with predominantly axonal delay. The archiving node supports this
@@ -162,20 +164,11 @@ public:
    * When receiving an incoming event, decide if the event is due for processing at the synapse already or if this
    * should be postponed.
    */
-  void deliver_event( const thread tid,
-    const synindex syn_id,
+  void deliver_event( const synindex syn_id,
     const index local_target_connection_id,
     const std::vector< ConnectorModel* >& cm,
-    SpikeEvent& se ) override;
-
-  /**
-   * To process an event, forward it to the corresponding connection and handle the event updated by the connection.
-   */
-  void process_event( const thread tid,
-    const synindex syn_id,
-    const index local_target_connection_id,
-    const std::vector< ConnectorModel* >& cm,
-    SpikeEvent& se );
+    const Time lag,
+    const double offset ) override;
 
   void get_status( DictionaryDatum& d ) const override;
   void set_status( const DictionaryDatum& d ) override;
@@ -196,7 +189,12 @@ protected:
   /**
    * Inform all incoming STDP connections of a post-synaptic spike to update the synaptic weight.
    */
-  void update_stdp_connections( Time const& origin, const long from, const long to ) override;
+  void update_stdp_connections( const Time& origin, const delay lag );
+
+  /**
+   * Prepare the node for the next update cycle.
+   */
+  void update( Time const& origin, const long from, const long to ) override;
 
   /**
    * clear spike history
@@ -227,16 +225,21 @@ private:
   // double last_spike_;
 
   /**
+   * Maximum axonal delay of all incoming connections.
+   */
+  delay max_axonal_delay_;
+
+  /**
    * Maximum dendritic delay of all incoming connections.
    */
-  double max_dendritic_delay_;
+  delay max_dendritic_delay_;
 
   /**
    * Saves all synapse types registered to this node that need to get informed of post-synaptic spikes and support
    * axonal delay.
    * TODO JV (pt): There has to be a better (more object-oriented) way of handling specific connections differently.
    */
-  std::set< synindex > stdp_synapse_types_;
+  std::set< synindex > stdp_synapse_types_;  // TODO JV (help)
 
   // spiking history needed by stdp synapses
   // TODO JV (pt): This has to be more generic somehow to support any synapse type, but without increasing memory usage
@@ -252,7 +255,7 @@ private:
    * delivery there might occur any post-synaptic spike that reaches the synapse before the pre-synaptic spike
    * (i.e., after the dendritic delay), the pre-synaptic spike has to be buffered until no more critical post-synaptic
    * spike can occur.
-   * Arranged in a 2d structure: X|X
+   * Arranged in a 2d structure: slices|spikes
    */
   DynamicSpikeBuffer intermediate_spike_buffer_;
 };

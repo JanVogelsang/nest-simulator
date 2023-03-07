@@ -180,7 +180,7 @@ public:
   {
     ConnTestDummyNode dummy_target;
 
-    t.register_stdp_connection( Time::delay_steps_to_ms( dendritic_delay ), syn_id );
+    t.register_stdp_connection( axonal_delay, dendritic_delay, syn_id );
   }
 
   void

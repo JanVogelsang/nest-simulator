@@ -151,19 +151,6 @@ public:
   void check_synapse_params( const DictionaryDatum& d ) const;
 
   /**
-   * Framework for STDP with predominantly axonal delays:
-   * Correct this synapse and the corresponding previously sent spike
-   * taking into account a new post-synaptic spike.
-   */
-  void correct_synapse_stdp_ax_delay( const double t_last_pre_spike,
-    double* weight_revert,
-    const double t_post_spike,
-    const synindex syn_id,
-    const delay dendritic_delay,
-    const CommonSynapseProperties&,
-    Node* target );
-
-  /**
    * Process a post-synaptic spike after it is backpropagated to the synapse.
    * @param t_syn The time the post-synaptic spike arrives at this connection
    */
@@ -246,18 +233,6 @@ Connection::set_status( const DictionaryDatum& d, ConnectorModel& )
 inline void
 Connection::check_synapse_params( const DictionaryDatum& ) const
 {
-}
-
-inline void
-Connection::correct_synapse_stdp_ax_delay( const double,
-  double*,
-  const double,
-  const synindex,
-  const delay,
-  const CommonSynapseProperties&,
-  Node* )
-{
-  throw IllegalConnection( "Connection does not support correction in case of STDP with predominantly axonal delays." );
 }
 
 inline void
