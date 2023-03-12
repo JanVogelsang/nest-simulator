@@ -214,13 +214,17 @@ public:
     t.register_stdp_connection( axonal_delay, dendritic_delay, syn_id );
   }
 
+  double
+  get_last_presynaptic_spike() const
+  {
+    return t_lastspike_;
+  }
+
   void
   set_weight( double w )
   {
     weight_ = w;
   }
-
-  void perform_facilitation( const double t_syn, const STDPPLHomAxDelayCommonProperties& cp );
 
 private:
   double
@@ -266,16 +270,9 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e,
   // Process all post-synaptic spikes which have to be processed before this pre-synaptic spike. The post-synaptic
   // spikes could not be processed before, as this connection might have an axonal delay lower than min_delay. Hence,
   // the order at which pre- and post-synaptic spikes have to be processed can only be known after the communication.
-  // TODO JV: If the axonal delay is longer than min_delay, this might not be necessary
-  auto [ K_minus, post_spikes_to_process ] = target->get_stdp_history( t_lastspike_ + axonal_delay_ms,
-    t_spike + axonal_delay_ms,
+  const double K_minus = target->get_trace( t_spike + axonal_delay_ms,
     dendritic_delay_ms,
     e.get_sender_spike_data().get_syn_id() );
-
-  for ( const double t_post_spike_syn : post_spikes_to_process )
-  {
-    perform_facilitation( t_post_spike_syn, cp );
-  }
 
   // depression due to new pre-synaptic spike
   weight_ = depress_( weight_, K_minus, cp );
@@ -293,27 +290,12 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e,
 }
 
 inline void
-stdp_pl_synapse_hom_ax_delay::perform_facilitation( const double t_syn, const STDPPLHomAxDelayCommonProperties& cp )
+stdp_pl_synapse_hom_ax_delay::process_post_synaptic_spike( double t_syn, const STDPPLHomAxDelayCommonProperties& cp )
 {
   // facilitation due to postsynaptic spike
   double minus_dt = t_lastspike_ + get_axonal_delay() - t_syn;
   assert( minus_dt < -1.0 * kernel().connection_manager.get_stdp_eps() );
   weight_ = facilitate_( weight_, Kplus_ * std::exp( minus_dt * cp.tau_plus_inv_ ), cp );
-
-  // std::cout << std::setprecision( 17 ) << "Post " << start->t + dendritic_delay << " "
-  //           << Kplus_ * std::exp( minus_dt * cp.tau_plus_inv_ ) << " " << weight_ << std::endl;
-}
-
-inline void
-stdp_pl_synapse_hom_ax_delay::process_post_synaptic_spike( double t_syn, const STDPPLHomAxDelayCommonProperties& cp )
-{
-  // Todo JV (pt): Move this to ConnectorBase. This would require t_lastspike to be a common member of all STDP
-  // synapses. Check if synapse has been updated to this point in time already and ignore the post-spike if that is the
-  // case.
-  if ( t_lastspike_ + get_axonal_delay() + kernel().connection_manager.get_stdp_eps() < t_syn )
-  {
-    perform_facilitation( t_syn, cp );
-  }
 }
 
 } // of namespace nest

@@ -299,7 +299,8 @@ public:
 
   // Default copy constructor: assumes legal time object
   // Defined by compiler.
-  // Time(const Time& t);
+  Time(const Time& t) : tics( t.tics ){
+  }
 
   Time( tic t )
     : tics( ( time_abs( t.t ) < LIM_MAX.tics ) ? t.t

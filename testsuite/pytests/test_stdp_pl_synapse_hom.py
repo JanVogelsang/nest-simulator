@@ -317,8 +317,7 @@ class TestSTDPPlSynapse:
 
             for self.min_delay in (3., .4, self.resolution):
                 for self.nest_neuron_model in ("iaf_psc_alpha_ax_delay",):
-                    for self.neuron_parameters["t_ref"] in (self.resolution, .5, 1., 2.5):
-                        # print()
+                    for self.neuron_parameters["t_ref"] in (self.resolution, .5, 1., 1.1, 2.5):
                         print(f"Axonal delay: {self.axonal_delay} - Dendritic delay: {self.dendritic_delay} - Min delay: {self.min_delay} - t_ref: {self.neuron_parameters['t_ref']}")
                         fname_snip = "_[nest_neuron_mdl=" + self.nest_neuron_model + "]"
                         fname_snip += "_[dend_delay=" + str(self.dendritic_delay) + "]"

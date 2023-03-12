@@ -77,7 +77,10 @@ public:
    */
   ArchivingNode( const ArchivingNode& );
 
-  void pre_run_hook() override;
+  /**
+   * Initialize node prior to first simulation after node has been created.
+   */
+  void init() override;
 
   /**
    * \fn double get_K_value(long t)
@@ -87,8 +90,7 @@ public:
    */
   // double get_K_value( double t ) override;
 
-  std::pair< double, std::vector< double > > get_stdp_history( const double last_pre_spike_time,
-    const double pre_spike_time,
+  double get_trace( const double pre_spike_time,
     const double dendritic_delay,
     const synindex syn_id ) override;
 
@@ -189,12 +191,17 @@ protected:
   /**
    * Inform all incoming STDP connections of a post-synaptic spike to update the synaptic weight.
    */
-  void update_stdp_connections( const Time& origin, const delay lag );
+  void update_stdp_connections( const delay lag );
 
   /**
    * Prepare the node for the next update cycle.
    */
-  void update( Time const& origin, const long from, const long to ) override;
+  void prepare_update() override;
+
+  /**
+   * Cleanup the node after an update cycle.
+   */
+  void end_update();
 
   /**
    * clear spike history
@@ -239,7 +246,7 @@ private:
    * axonal delay.
    * TODO JV (pt): There has to be a better (more object-oriented) way of handling specific connections differently.
    */
-  std::set< synindex > stdp_synapse_types_;  // TODO JV (help)
+  std::vector< synindex > stdp_synapse_types_;
 
   // spiking history needed by stdp synapses
   // TODO JV (pt): This has to be more generic somehow to support any synapse type, but without increasing memory usage
@@ -267,14 +274,12 @@ ArchivingNode::get_spiketime_ms() const
   // return last_spike_;
 }
 
-inline std::pair< double, std::vector< double > >
-ArchivingNode::get_stdp_history( const double last_pre_spike_time,
-  const double pre_spike_time,
+inline double
+ArchivingNode::get_trace( const double pre_spike_time,
   const double dendritic_delay,
   const synindex syn_id )
 {
-  return connections_[ syn_id ]->get_stdp_history(
-    last_pre_spike_time, pre_spike_time, dendritic_delay, tau_minus_inv_, history_.cbegin(), history_.cend() );
+  return connections_[ syn_id ]->get_trace( pre_spike_time, dendritic_delay, tau_minus_inv_, history_.cbegin(), history_.cend() );
 }
 
 } // of namespace

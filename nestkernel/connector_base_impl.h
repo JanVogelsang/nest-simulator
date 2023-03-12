@@ -33,6 +33,38 @@ namespace nest
 {
 
 template < typename ConnectionT >
+inline void
+Connector< ConnectionT >::update_stdp_connections( const double post_spike_time_syn,
+  const delay dendritic_delay,
+  const ConnectorModel* cm )
+{
+  typename ConnectionT::CommonPropertiesType const& cp =
+    static_cast< const GenericConnectorModel< ConnectionT >* >( cm )->get_common_properties();
+
+  const double eps = kernel().connection_manager.get_stdp_eps();
+  const auto begin = C_.begin();
+  // TODO JV (pt): Verify for precise spike times
+  // TODO JV: Make sure double->long conversion yields the correct delay
+  auto group_it = dendritic_delay_regions_.find( dendritic_delay );
+  if ( group_it != dendritic_delay_regions_.end() ) // check if there are connections with given dendritic delay
+  {
+    const auto end = begin + group_it->second.end;
+    for ( auto it = begin + group_it->second.start; it != end; ++it )
+    {
+      // Check if synapse has been updated to this point in time already and ignore the post-spike if that is the case
+      const double last_presynaptic_spike_time_ms = it->get_last_presynaptic_spike() + it->get_axonal_delay();
+      if ( last_presynaptic_spike_time_ms + eps < post_spike_time_syn )
+      {
+        it->process_post_synaptic_spike( post_spike_time_syn, cp );
+        // TODO JV (pt): Post-synaptic spikes can be sent as weight recorder events as well now as the weight is always
+        //  correct now.
+        // send_weight_event( tid, std::distance( begin, it ), e, cp, target );
+      }
+    }
+  }
+}
+
+template < typename ConnectionT >
 void
 Connector< ConnectionT >::send_weight_event( const thread tid,
   const index local_target_connection_id,
@@ -64,9 +96,8 @@ Connector< ConnectionT >::send_weight_event( const thread tid,
 }
 
 template < typename ConnectionT >
-std::pair< double, std::vector< double > >
-Connector< ConnectionT >::get_stdp_history( const double last_pre_spike_time,
-  const double pre_spike_time,
+double
+Connector< ConnectionT >::get_trace( const double pre_spike_time,
   const double dendritic_delay,
   const double tau_minus_inv,
   const std::deque< double >::const_iterator history_begin,
@@ -74,37 +105,30 @@ Connector< ConnectionT >::get_stdp_history( const double last_pre_spike_time,
 {
   const double eps = kernel().connection_manager.get_stdp_eps();
 
-  std::vector< double > post_spikes_to_process;
   auto [ last_post_spike, Kminus ] = get_Kminus( dendritic_delay );
   for ( auto it = history_begin; it != history_end; ++it )
   {
     const double t_post = *it + dendritic_delay;
-    // check if post-synaptic spike should be processed after the pre-synaptic one
-    if ( t_post > pre_spike_time + eps )
+
+    // skip post-synaptic spikes which have been processed by corresponding dendritic delay group already
+    if ( t_post < last_post_spike or std::abs( t_post - last_post_spike ) < eps )
     {
-      break;
+      continue;
     }
 
-    // if pre- and post-synaptic spikes occur at same time, don't add post-synaptic spike to trace yet
-    if ( std::abs( t_post - pre_spike_time ) < eps )
+    // only update trace until finding a spike that occurs at the same time or after the current pre-synaptic spike
+    if ( t_post > pre_spike_time or std::abs( t_post - pre_spike_time ) < eps )
     {
-      post_spikes_to_process.push_back( t_post );
       break;
     }
 
     // only add 1 to trace if post-synaptic spike happened strictly before pre-synaptic spike
     Kminus = Kminus * std::exp( ( last_post_spike - t_post ) * tau_minus_inv ) + 1;
     last_post_spike = t_post;
-
-    // check if post-synaptic spike has not been processed by the connection yet (influences the trace in any case)
-    if ( t_post > last_pre_spike_time + eps )
-    {
-      post_spikes_to_process.push_back( t_post );
-    }
   }
   Kminus *= std::exp( ( last_post_spike - pre_spike_time ) * tau_minus_inv );
 
-  return { Kminus, post_spikes_to_process };
+  return Kminus;
 }
 
 } // of namespace nest

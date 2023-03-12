@@ -986,6 +986,25 @@ nest::SimulationManager::update_()
           }
           kernel().event_delivery_manager.deliver_secondary_events( tid, false );
         }
+      } // implicit barrier
+
+      for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
+      {
+        // We update in a parallel region. Therefore, we need to catch
+        // exceptions here and then handle them after the parallel region.
+        try
+        {
+          Node* node = n->get_node();
+          if ( not( node )->is_frozen() )
+          {
+            node->prepare_update();
+          }
+        }
+        catch ( std::exception& e )
+        {
+          // so throw the exception after parallel region
+          exceptions_raised.at( tid ) = std::shared_ptr< WrappedThreadException >( new WrappedThreadException( e ) );
+        }
       }
 
 #pragma omp barrier

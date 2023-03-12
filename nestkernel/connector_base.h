@@ -82,17 +82,22 @@ public:
   /**
    * Get the proportion of the transmission delay attributed to the dendrite of a connection.
    */
-  virtual double get_dendritic_delay( const index lcid ) = 0;
+  virtual double get_dendritic_delay( const index lcid ) const = 0;
+
+  /**
+   * Get the time of the last pre-synaptic spike that was emitted over the specified connection.
+   */
+  virtual double get_last_presynaptic_spike( const index lcid ) const = 0;
 
   /**
    * Get the proportion of the transmission delay attributed to the axon of a connection.
    */
-  virtual double get_axonal_delay( const index lcid ) = 0;
+  virtual double get_axonal_delay( const index lcid ) const = 0;
 
   /**
    * Get information about the source node of a specific connection.
    */
-  virtual Source& get_source( const index local_target_connection_id ) = 0;
+  virtual Source& get_source( const index lcid ) = 0;
 
   /**
    * Get the indices of all connection corresponding to a specific source node.
@@ -127,34 +132,35 @@ public:
    * source.
    */
   virtual void send( const thread tid,
-    const index local_target_connection_id,
+    const index lcid,
     const std::vector< ConnectorModel* >& cm,
     Event& e,
     Node* target ) = 0;
 
   virtual void send( const thread tid,
-    const index local_target_connection_id,
+    const index lcid,
     const delay dendritic_delay,
     const std::vector< ConnectorModel* >& cm,
     Event& e,
     Node* target ) = 0;
 
   virtual void send_weight_event( const thread tid,
-    const index local_target_connection_id,
+    const index lcid,
     Event& e,
     const CommonSynapseProperties& cp,
     Node* target ) = 0;
 
-  virtual void update_stdp_connections( const double post_spike_time,
+  virtual void update_stdp_connections( const double post_spike_time_syn,
     const delay dendritic_delay,
     const ConnectorModel* cm ) = 0;
+
+  virtual void process_post_synaptic_spike( const index lcid, const double post_spike_time_syn, const ConnectorModel* cm ) = 0;
 
   virtual void update_trace( const double post_spike_time,
     const delay dendritic_delay,
     const double tau_minus_inv ) = 0;
 
-  virtual std::pair< double, std::vector< double > > get_stdp_history( const double last_pre_spike_time,
-    const double pre_spike_time,
+  virtual double get_trace( const double pre_spike_time,
     const double dendritic_delay,
     const double tau_minus_inv,
     const std::deque< double >::const_iterator history_begin,
@@ -270,10 +276,11 @@ public:
   }
 
   double
-  get_dendritic_delay( const index lcid ) override
+  get_dendritic_delay( const index lcid ) const override
   {
     assert( lcid < C_.size() );
 
+    // TODO JV (pt): Further optimize this as much as possible (after additional profiling)
     return std::lower_bound( dendritic_delay_regions_.begin(),
       dendritic_delay_regions_.end(),
       lcid,
@@ -281,14 +288,25 @@ public:
       ->first;
   }
 
+  double get_last_presynaptic_spike( const index lcid ) const override
+  {
+    return C_[ lcid ].get_last_presynaptic_spike();
+  }
+
   double
-  get_axonal_delay( const index lcid ) override
+  get_axonal_delay( const index lcid ) const override
   {
     assert( lcid < C_.size() );
 
     return C_[ lcid ].get_axonal_delay();
   }
 
+  Source&
+  get_source( const index lcid ) override
+  {
+    return sources_[ lcid ];
+  }
+    
   const index
   add_connection( const ConnectionT& c, const Source src, const delay dendritic_delay )
   {
@@ -300,13 +318,7 @@ public:
     // Return index of added item
     return next_index;
   }
-
-  Source&
-  get_source( const index local_target_connection_id ) override
-  {
-    return sources_[ local_target_connection_id ];
-  }
-
+  
   std::vector< index >
   get_connection_indices( const index source_node_id ) const override
   {
@@ -369,17 +381,17 @@ public:
 
   void
   send( const thread tid,
-    const index local_target_connection_id,
+    const index lcid,
     const std::vector< ConnectorModel* >& cm,
     Event& e,
     Node* target ) override
   {
-    send( tid, local_target_connection_id, get_dendritic_delay( local_target_connection_id ), cm, e, target );
+    send( tid, lcid, get_dendritic_delay( lcid ), cm, e, target );
   }
 
   void
   send( const thread tid,
-    const index local_target_connection_id,
+    const index lcid,
     const delay dendritic_delay,
     const std::vector< ConnectorModel* >& cm,
     Event& e,
@@ -388,11 +400,11 @@ public:
     typename ConnectionT::CommonPropertiesType const& cp =
       static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties();
 
-    e.set_port( local_target_connection_id );
-    if ( not C_[ local_target_connection_id ].is_disabled() )
+    e.set_port( lcid );
+    if ( not C_[ lcid ].is_disabled() )
     {
-      C_[ local_target_connection_id ].send( e, tid, dendritic_delay, cp, target );
-      send_weight_event( tid, local_target_connection_id, e, cp, target );
+      C_[ lcid ].send( e, tid, dendritic_delay, cp, target );
+      send_weight_event( tid, lcid, e, cp, target );
     }
   }
 
@@ -406,7 +418,7 @@ public:
   }
 
   void send_weight_event( const thread tid,
-    const index local_target_connection_id,
+    const index lcid,
     Event& e,
     const CommonSynapseProperties& cp,
     Node* target ) override;
@@ -435,24 +447,15 @@ public:
   }
 
   void
-  update_stdp_connections( const double post_spike_time,
+  update_stdp_connections( const double post_spike_time_syn,
     const delay dendritic_delay,
-    const ConnectorModel* cm ) override
+    const ConnectorModel* cm ) override;
+
+  void process_post_synaptic_spike( const index lcid, const double post_spike_time_syn, const ConnectorModel* cm ) override
   {
     typename ConnectionT::CommonPropertiesType const& cp =
       static_cast< const GenericConnectorModel< ConnectionT >* >( cm )->get_common_properties();
-
-    // TODO JV (pt): Verify for precise spike times
-    // TODO JV: Make sure double->long conversion yields the correct delay
-    auto group_it = dendritic_delay_regions_.find( dendritic_delay );
-    if ( group_it != dendritic_delay_regions_.end() ) // check if there are connections with given dendritic delay
-    {
-      const auto end = C_.begin() + group_it->second.end;
-      for ( auto it = C_.begin() + group_it->second.start; it != end; ++it )
-      {
-        it->process_post_synaptic_spike( post_spike_time + Time::delay_steps_to_ms( dendritic_delay ), cp );
-      }
-    }
+    C_[ lcid ].process_post_synaptic_spike( post_spike_time_syn, cp );
   }
 
   void update_trace( const double post_spike_time,
@@ -468,8 +471,7 @@ public:
     group_it->second.last_post_spike = post_spike_time + Time::delay_steps_to_ms( dendritic_delay );
   }
 
-  std::pair< double, std::vector< double > > get_stdp_history( const double last_pre_spike_time,
-    const double pre_spike_time,
+  double get_trace( const double pre_spike_time,
     const double dendritic_delay,
     const double tau_minus_inv,
     const std::deque< double >::const_iterator history_begin,

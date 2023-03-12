@@ -324,29 +324,6 @@ Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
   handle( e );
 }
 
-void
-Node::deliver_event( const synindex syn_id,
-  const index local_target_connection_id,
-  const std::vector< ConnectorModel* >& cm,
-  const Time lag,
-  const double offset )
-{
-  SpikeEvent se;
-  se.set_stamp( lag );
-  se.set_offset( offset );  // TODO JV (help): Why can't offset be incorporated into lag?
-  se.set_sender_node_id_info( thread_, syn_id, node_id_, local_target_connection_id );
-
-  // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
-  // event by adding a weight and optionally updates its internal state as well.
-  connections_[ syn_id ]->send( thread_, local_target_connection_id, cm, se, this );
-
-  // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
-  //  handle, or just handing the entire local connection id to the handle function (and storing an array of rports
-  //  which can be indexed by the local connection id).
-
-  handle( se );
-}
-
 /**
  * Default implementation of event handlers just throws
  * an UnexpectedEvent exception.
@@ -547,9 +524,8 @@ Node::get_K_value( const double, const double, const synindex )
   throw UnexpectedEvent( "Can't retrieve K value. Base node class does not store its history." );
 }
 
-std::pair< double, std::vector< double > >
-Node::get_stdp_history( const double last_pre_spike_time,
-  const double pre_spike_time,
+double
+Node::get_trace( const double pre_spike_time,
   const double dendritic_delay,
   const synindex syn_id )
 {

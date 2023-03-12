@@ -253,7 +253,7 @@ public:
    * called on a given node, otherwise it returns immediately. init() calls
    * virtual functions init_state_() and init_buffers_().
    */
-  void init();
+  virtual void init();
 
   /**
    * Re-calculate dependent parameters of the node.
@@ -305,6 +305,11 @@ public:
    *
    */
   virtual void update( Time const&, const long, const long ) = 0;
+
+  /**
+   *
+   */
+  virtual void prepare_update(){}
 
   /**
    * Bring the node from state $t$ to $t+n*dt$, sends SecondaryEvents
@@ -634,6 +639,13 @@ public:
     const std::vector< ConnectorModel* >& cm,
     const Time lag,
     const double offset );
+  //! Same as regular deliver event, but providing cached dendritic delay for connection
+  virtual void deliver_event( const synindex syn_id,
+    const index local_target_connection_id,
+    const delay dendritic_delay,
+    const std::vector< ConnectorModel* >& cm,
+    const Time lag,
+    const double offset );
 
   /**
    * Handle incoming spike events.
@@ -831,8 +843,7 @@ public:
    */
   virtual void connect_synaptic_element( Name, int ) {};
 
-  virtual std::pair< double, std::vector< double > > get_stdp_history( const double last_pre_spike_time,
-    const double pre_spike_time,
+  virtual double get_trace( const double pre_spike_time,
     const double dendritic_delay,
     const synindex syn_id );
 
@@ -1262,6 +1273,41 @@ inline index
 Node::get_thread_lid() const
 {
   return thread_lid_;
+}
+
+inline void
+Node::deliver_event( const synindex syn_id,
+  const index local_target_connection_id,
+  const std::vector< ConnectorModel* >& cm,
+  const Time lag,
+  const double offset )
+{
+  const delay dendritic_delay = connections_[ syn_id ]->get_dendritic_delay( local_target_connection_id );
+  deliver_event( syn_id, local_target_connection_id, dendritic_delay, cm, lag, offset );
+}
+
+inline void
+Node::deliver_event( const synindex syn_id,
+  const index local_target_connection_id,
+  const delay dendritic_delay,
+  const std::vector< ConnectorModel* >& cm,
+  const Time lag,
+  const double offset )
+{
+  SpikeEvent se;
+  se.set_stamp( lag );
+  se.set_offset( offset );  // TODO JV (help): Why can't offset be incorporated into lag?
+  se.set_sender_node_id_info( thread_, syn_id, node_id_, local_target_connection_id );
+
+  // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
+  // event by adding a weight and optionally updates its internal state as well.
+  connections_[ syn_id ]->send( thread_, local_target_connection_id, dendritic_delay, cm, se, this );
+
+  // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
+  //  handle, or just handing the entire local connection id to the handle function (and storing an array of rports
+  //  which can be indexed by the local connection id).
+
+  handle( se );
 }
 
 } // namespace

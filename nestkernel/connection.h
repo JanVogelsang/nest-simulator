@@ -174,6 +174,12 @@ public:
     throw UnexpectedEvent( "Connection does not support axonal delays." );
   }
 
+  double
+  get_last_presynaptic_spike() const
+  {
+    throw UnexpectedEvent( "Connection does not save the time of the last pre-synaptic spike." );
+  }
+
   bool
   supports_axonal_delay() const
   {

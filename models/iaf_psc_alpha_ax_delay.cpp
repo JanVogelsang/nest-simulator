@@ -242,8 +242,6 @@ iaf_psc_alpha_ax_delay::init_buffers_()
 void
 iaf_psc_alpha_ax_delay::pre_run_hook()
 {
-  ArchivingNode::pre_run_hook();
-
   // ensures initialization in case mm connected after Simulate
   B_.logger_.init();
 
@@ -303,8 +301,6 @@ iaf_psc_alpha_ax_delay::update( Time const& origin, const long from, const long 
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
-
-  ArchivingNode::update( origin, from, to );
 
   for ( long lag = from; lag < to; ++lag )
   {
@@ -370,8 +366,10 @@ iaf_psc_alpha_ax_delay::update( Time const& origin, const long from, const long 
     // log state data
     B_.logger_.record_data( origin.get_steps() + lag );
 
-    ArchivingNode::update_stdp_connections( origin, lag );
+    ArchivingNode::update_stdp_connections( lag );
   }
+
+  ArchivingNode::end_update();
 }
 
 void
