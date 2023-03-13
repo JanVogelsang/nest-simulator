@@ -27,7 +27,6 @@ set ( nestkernel_sources
       connection.h
       connection_label.h
       common_properties_hom_w.h
-      syn_id_delay.h
       connector_base.h connector_base_impl.h connector_base.cpp
       connector_model.h connector_model_impl.h connector_model.cpp
       connection_id.h connection_id.cpp
@@ -40,7 +39,7 @@ set ( nestkernel_sources
       genericmodel.h genericmodel_impl.h
       node_collection.h node_collection.cpp
       generic_factory.h
-      histentry.h histentry.cpp
+      archived_spike.h
       model.h model.cpp
       model_manager.h model_manager_impl.h model_manager.cpp
       nest_types.h
@@ -113,6 +112,7 @@ set ( nestkernel_sources
       spatial.h spatial.cpp
       stimulation_backend.h
       adjacency_list.h
+        dynamic_spike_buffer.cpp dynamic_spike_buffer.h
       )
 
 

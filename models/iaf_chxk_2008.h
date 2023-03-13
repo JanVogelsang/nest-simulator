@@ -388,7 +388,7 @@ private:
 // Boilerplate inline function definitions ----------------------------------
 
 inline port
-iaf_chxk_2008::send_test_event( Node& target, rport receptor_type, synindex, bool )
+iaf_chxk_2008::send_test_event( Node& target, const rport receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

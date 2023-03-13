@@ -390,7 +390,7 @@ private:
 };
 
 inline port
-pp_psc_delta::send_test_event( Node& target, rport receptor_type, synindex, bool )
+pp_psc_delta::send_test_event( Node& target, const rport receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

@@ -93,7 +93,6 @@ class ConnTestDummyNodeBase : public Node
   }
 };
 
-
 /**
  * Base class for representing connections.
  * It provides the mandatory properties receiver port and target,
@@ -117,7 +116,6 @@ public:
 
   Connection()
   {
-    set_delay( 1.0 );
   }
 
   Connection( const Connection& rhs ) = default;
@@ -153,55 +151,39 @@ public:
   void check_synapse_params( const DictionaryDatum& d ) const;
 
   /**
-   * Calibrate the delay of this connection to the desired resolution.
+   * Process a post-synaptic spike after it is backpropagated to the synapse.
+   * @param t_syn The time the post-synaptic spike arrives at this connection
    */
-  void calibrate( const TimeConverter& );
+  void process_post_synaptic_spike( const double t_syn, const CommonSynapseProperties& );
 
   /**
-   * Framework for STDP with predominantly axonal delays:
-   * Correct this synapse and the corresponding previously sent spike
-   * taking into account a new post-synaptic spike.
+   * Set the proportion of the transmission delay attributed to the axon.
    */
-  void correct_synapse_stdp_ax_delay( const double t_last_pre_spike,
-    double* weight_revert,
-    const double t_post_spike,
-    const CommonSynapseProperties&,
-    Node* target );
+//  void
+//  set_axonal_delay( const double )
+//  {
+//    throw UnexpectedEvent( "Connection does not support axonal delays." );
+//  }
 
   /**
-   * Return the delay of the connection in ms
+   * Get the proportion of the transmission delay attributed to the axon.
    */
+//  double
+//  get_axonal_delay() const
+//  {
+//    throw UnexpectedEvent( "Connection does not support axonal delays." );
+//  }
+
   double
-  get_delay() const
+  get_last_presynaptic_spike() const
   {
-    return Time::delay_steps_to_ms( delay_ );
+    throw UnexpectedEvent( "Connection does not save the time of the last pre-synaptic spike." );
   }
 
-  /**
-   * Return the delay of the connection in steps
-   */
-  long
-  get_delay_steps() const
+  bool
+  supports_axonal_delay() const
   {
-    return delay_;
-  }
-
-  /**
-   * Set the delay of the connection
-   */
-  void
-  set_delay( const double delay )
-  {
-    delay_ = Time::delay_ms_to_steps( delay );
-  }
-
-  /**
-   * Set the delay of the connection in steps
-   */
-  void
-  set_delay_steps( const long delay )
-  {
-    delay_ = delay;
+    return false;
   }
 
   long
@@ -216,6 +198,7 @@ public:
   void trigger_update_weight( const thread,
     const std::vector< spikecounter >&,
     const double,
+    const delay,
     const CommonSynapseProperties& );
 
   /**
@@ -240,33 +223,17 @@ public:
     return false;
     // return syn_id_delay_.is_disabled();
   }
-
-protected:
-  /* the order of the members below is critical as it influences the size of the object. Please leave unchanged as
-     targetidentifierT target_;
-     SynIdDelay syn_id_delay_;
-  */
-  // targetidentifierT target_;
-  //! syn_id (9 bit), delay (21 bit) in timesteps of this connection and more_targets and disabled flags (each 1 bit)
-  // SynIdDelay syn_id_delay_;
-  double delay_;
 };
 
 inline void
-Connection::get_status( DictionaryDatum& d ) const
+Connection::get_status( DictionaryDatum& ) const
 {
-  def< double >( d, names::delay, get_delay() );
 }
 
 inline void
 Connection::set_status( const DictionaryDatum& d, ConnectorModel& )
 {
-  double delay;
-  if ( updateValue< double >( d, names::delay, delay ) )
-  {
-    kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
-    set_delay( delay );
-  }
+  // TODO JV: It is not possible to set delay anymore now after connection has been created
 }
 
 inline void
@@ -275,27 +242,16 @@ Connection::check_synapse_params( const DictionaryDatum& ) const
 }
 
 inline void
-Connection::calibrate( const TimeConverter& tc )
+Connection::process_post_synaptic_spike( const double t_syn, const CommonSynapseProperties& )
 {
-  Time t = tc.from_old_steps( delay_ );
-  delay_ = t.get_steps();
-
-  if ( delay_ == 0 )
-  {
-    delay_ = 1;
-  }
-}
-
-inline void
-Connection::correct_synapse_stdp_ax_delay( const double, double*, const double, const CommonSynapseProperties&, Node* )
-{
-  throw IllegalConnection( "Connection does not support correction in case of STDP with predominantly axonal delays." );
+  throw IllegalConnection( "Connection does not support updates that are triggered by a volume transmitter." );
 }
 
 inline void
 Connection::trigger_update_weight( const thread,
   const std::vector< spikecounter >&,
   const double,
+  const delay,
   const CommonSynapseProperties& )
 {
   throw IllegalConnection( "Connection does not support updates that are triggered by a volume transmitter." );

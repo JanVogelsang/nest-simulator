@@ -95,14 +95,14 @@ public:
   {
   }
 
-  // Explicitly declare all methods inherited from the dependent base
-  // ConnectionBase. This avoids explicit name prefixes in all places these
-  // functions are used. Since ConnectionBase depends on the template parameter,
-  // they are not automatically found in the base class.
-  using ConnectionBase::get_delay_steps;
-
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& )
   {
     EventType ge;
 
@@ -116,7 +116,7 @@ public:
    * \param p The port under which this connection is stored in the Connector.
    */
   void
-  send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
+  send( Event& e, const thread t, const delay axonal_delay, const delay dendritic_delay, const CommonSynapseProperties&, Node* target )
   {
     e.set_weight( weight_ );
     e();

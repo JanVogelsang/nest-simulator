@@ -69,12 +69,6 @@ public:
   typedef CommonPropertiesHomW CommonPropertiesType;
   typedef Connection ConnectionBase;
 
-  // Explicitly declare all methods inherited from the dependent base
-  // ConnectionBase. This avoids explicit name prefixes in all places these
-  // functions are used. Since ConnectionBase depends on the template parameter,
-  // they are not automatically found in the base class.
-  using ConnectionBase::get_delay_steps;
-
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
   public:
@@ -127,7 +121,13 @@ public:
   void get_status( DictionaryDatum& d ) const;
 
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
   }
@@ -153,10 +153,10 @@ public:
    * \param cp Common properties-object of the synapse
    */
   void
-  send( Event& e, const thread, const CommonPropertiesHomW& cp, Node* )
+  send( Event& e, const thread, const delay axonal_delay, const delay dendritic_delay, const CommonPropertiesHomW& cp, Node* )
   {
     e.set_weight( cp.get_weight() );
-    e.set_delay_steps( get_delay_steps() );
+    e.set_delay_steps( dendritic_delay );
     e();
   }
 

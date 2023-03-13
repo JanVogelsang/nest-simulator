@@ -59,6 +59,7 @@ inline void
 TargetTableDevices::add_connection_to_device( Node& source,
   Node& target,
   const index local_target_connection_id,
+  const delay dendritic_delay,
   const thread tid,
   const synindex syn_id )
 {
@@ -72,8 +73,8 @@ TargetTableDevices::add_connection_to_device( Node& source,
     targets_to_devices_[ tid ].emplace( source_lid, std::vector< Target >() );
   }
 
-  targets_to_devices_[ tid ][ source_lid ].push_back( Target(
-    target.get_thread(), kernel().vp_manager.get_vp(), syn_id, target.get_thread_lid(), local_target_connection_id ) );
+  targets_to_devices_[ tid ][ source_lid ].push_back(
+    Target( target.get_thread(), dendritic_delay, syn_id, target.get_thread_lid(), local_target_connection_id ) );
 }
 
 // inline void
@@ -130,7 +131,8 @@ TargetTableDevices::send_to_devices( const thread tid, const index source_node_l
   {
     DeviceNode* target_node =
       static_cast< DeviceNode* >( kernel().node_manager.thread_lid_to_node( tid, it->get_local_target_node_id() ) );
-    target_node->deliver_event_to_device( tid, it->get_syn_id(), it->get_local_target_connection_id(), cm, e );
+    target_node->deliver_event_to_device(
+      tid, it->get_syn_id(), it->get_local_target_connection_id(), it->get_dendritic_delay(), cm, e );
   }
 }
 

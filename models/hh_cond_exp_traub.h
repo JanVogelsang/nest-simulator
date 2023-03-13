@@ -89,8 +89,8 @@ simulators covered is available from ModelDB [3]_.
 
    To avoid multiple spikes from occurring during the falling flank of a
    spike, it is essential to choose a sufficiently long refractory period.
-   Traub and Miles used  :math:`t_{ref} = 3` ms ([2]_, p 118), while we used
-   :math:`t_{ref} = 2` ms in [2]_.
+   Traub and Miles used  :math:`t{ref} = 3` ms ([2]_, p 118), while we used
+   :math:`t{ref} = 2` ms in [2]_.
 
 Parameters
 ++++++++++
@@ -330,7 +330,7 @@ public:
 };
 
 inline port
-hh_cond_exp_traub::send_test_event( Node& target, rport receptor_type, synindex, bool )
+hh_cond_exp_traub::send_test_event( Node& target, const rport receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

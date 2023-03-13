@@ -104,15 +104,6 @@ public:
   vogels_sprekeler_synapse( const vogels_sprekeler_synapse& ) = default;
   vogels_sprekeler_synapse& operator=( const vogels_sprekeler_synapse& ) = default;
 
-  // Explicitly declare all methods inherited from the dependent base
-  // ConnectionBase.
-  // This avoids explicit name prefixes in all places these functions are used.
-  // Since ConnectionBase depends on the template parameter, they are not
-  // automatically
-  // found in the base class.
-  using ConnectionBase::get_delay;
-  using ConnectionBase::get_delay_steps;
-
   /**
    * Get all properties of this connection and put them into a dictionary.
    */
@@ -129,7 +120,7 @@ public:
    * \param t_lastspike Point in time of last spike sent.
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target );
+  void send( Event& e, const thread t, const delay axonal_delay, const delay dendritic_delay, const CommonSynapseProperties& cp, Node* target );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -146,12 +137,17 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
 
-
-    t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
+    t.register_stdp_connection( axonal_delay, dendritic_delay, syn_id );
   }
 
   void
@@ -195,7 +191,12 @@ private:
  * \param cp Common properties object, containing the stdp parameters.
  */
 inline void
-vogels_sprekeler_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
+vogels_sprekeler_synapse::send( Event& e,
+  const thread t,
+  const delay axonal_delay,
+  const delay dendritic_delay,
+  const CommonSynapseProperties&,
+  Node* target )
 {
   // synapse STDP depressing/facilitation dynamics
   double t_spike = e.get_stamp().get_ms();
@@ -203,12 +204,12 @@ vogels_sprekeler_synapse::send( Event& e, thread t, const CommonSynapsePropertie
 
   // use accessor functions (inherited from Connection< >) to obtain delay and
   // target
-  double dendritic_delay = get_delay();
+  double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
-  std::deque< histentry >::iterator start;
-  std::deque< histentry >::iterator finish;
-  target->get_history( t_lastspike_ - dendritic_delay, t_spike - dendritic_delay, &start, &finish );
+  std::deque< ArchivedSpikeTrace >::iterator start;
+  std::deque< ArchivedSpikeTrace >::iterator finish;
+  target->get_history( t_lastspike_ - dendritic_delay_ms, t_spike - dendritic_delay_ms, &start, &finish );
 
   // presynaptic neuron j, postsynaptic neuron i
   // Facilitation for each postsynaptic spike
@@ -216,10 +217,10 @@ vogels_sprekeler_synapse::send( Event& e, thread t, const CommonSynapsePropertie
   double minus_dt;
   while ( start != finish )
   {
-    minus_dt = t_lastspike_ - ( start->t_ + dendritic_delay );
+    minus_dt = t_lastspike_ - ( start->t + dendritic_delay_ms );
     ++start;
     // get_history() should make sure that
-    // start->t_ > t_lastspike - dendritic_delay, i.e. minus_dt < 0
+    // start->t > t_lastspike - dendritic_delay, i.e. minus_dt < 0
     assert( minus_dt < -1.0 * kernel().connection_manager.get_stdp_eps() );
     weight_ = facilitate_( weight_, Kplus_ * std::exp( minus_dt / tau_ ) );
   }
@@ -229,13 +230,14 @@ vogels_sprekeler_synapse::send( Event& e, thread t, const CommonSynapsePropertie
   // Facilitation and constant depression
   // Getting kvalue at required time already for deferred processing, so no
   // need to transform it to the current time, and so, no exponential required
-  weight_ = facilitate_( weight_, target->get_K_value( t_spike - dendritic_delay ) );
+  weight_ =
+    facilitate_( weight_, target->get_K_value( dendritic_delay_ms, t_spike, e.get_sender_spike_data().syn_id ) );
   weight_ = depress_( weight_ );
 
   e.set_weight( weight_ );
   // use accessor functions (inherited from Connection< >) to obtain delay in
   // steps and rport
-  e.set_delay_steps( get_delay_steps() );
+  e.set_delay_steps( dendritic_delay );
   e();
 
   // exponential part for the decay, addition of one for each spike

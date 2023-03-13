@@ -82,13 +82,6 @@ public:
   static_synapse( const static_synapse& rhs ) = default;
   static_synapse& operator=( const static_synapse& rhs ) = default;
 
-  // Explicitly declare all methods inherited from the dependent base
-  // ConnectionBase. This avoids explicit name prefixes in all places these
-  // functions are used. Since ConnectionBase depends on the template parameter,
-  // they are not automatically found in the base class.
-  using ConnectionBase::get_delay_steps;
-
-
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
   public:
@@ -138,15 +131,15 @@ public:
   };
 
   void
-  check_connection( Node&, Node&, rport, const CommonPropertiesType& )
+  check_connection( Node&, Node&, rport, const synindex, const delay, const delay, const CommonPropertiesType& )
   {
   }
 
   void
-  send( Event& e, const thread, const CommonSynapseProperties&, Node* )
+  send( Event& e, const thread, const delay axonal_delay, const delay dendritic_delay, const CommonSynapseProperties&, Node* )
   {
     e.set_weight( weight_ );
-    e.set_delay_steps( get_delay_steps() );
+    e.set_delay_steps( dendritic_delay );
     e();
   }
 

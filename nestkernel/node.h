@@ -29,10 +29,10 @@
 #include <vector>
 
 // Includes from nestkernel:
+#include "archived_spike.h"
 #include "connector_base.h"
 #include "deprecation_warning.h"
 #include "event.h"
-#include "histentry.h"
 #include "nest_names.h"
 #include "nest_time.h"
 #include "nest_types.h"
@@ -252,7 +252,7 @@ public:
    * called on a given node, otherwise it returns immediately. init() calls
    * virtual functions init_state_() and init_buffers_().
    */
-  void init();
+  virtual void init();
 
   /**
    * Re-calculate dependent parameters of the node.
@@ -304,6 +304,11 @@ public:
    *
    */
   virtual void update( Time const&, const long, const long ) = 0;
+
+  /**
+   * Prepare the node for the next update cycle.
+   */
+  virtual void prepare_update(){}
 
   /**
    * Bring the node from state $t$ to $t+n*dt$, sends SecondaryEvents
@@ -387,7 +392,7 @@ public:
    * DS*Events when called with the dummy target, and *Events when called with
    * the real target, see #478.
    */
-  virtual port send_test_event( Node& receiving_node, rport receptor_type, synindex syn_id, bool dummy_target );
+  virtual port send_test_event( Node& receiving_node, const rport receptor_type, synindex syn_id, bool dummy_target );
 
   /**
    * Check if the node can handle a particular event and receptor type.
@@ -462,7 +467,7 @@ public:
    *
    * @throws IllegalConnection
    */
-  virtual void register_stdp_connection( double, double );
+  virtual void register_stdp_connection( const delay, const delay, const synindex );
 
   /**
    * Change the number of different connection types to this node.
@@ -561,21 +566,6 @@ public:
   }
 
   /**
-   * Sort all connections and sources by the source node id, per connection type.
-   */
-  void
-  sort_connections_and_sources()
-  {
-    for ( ConnectorBase* connections_per_syn_type : connections_ )
-    {
-      if ( connections_per_syn_type )
-      {
-        connections_per_syn_type->sort_connections_and_sources();
-      }
-    }
-  }
-
-  /**
    * Disables a connection to this node, without removing it.
    */
   virtual void disable_connection( const synindex syn_id, const index local_connection_id );
@@ -610,7 +600,8 @@ public:
     const rport receptor_type,
     const bool is_primary,
     const bool from_device,
-    typename ConnectionT::CommonPropertiesType const& cp );
+    const delay dendritic_delay,
+    const delay axonal_delay );
 
   /**
    * When receiving an event from a device, forward it to the corresponding connection and handle the event previously
@@ -627,11 +618,20 @@ public:
    * When receiving an incoming spike event, forward it to the corresponding connection and handle the event previously
    * updated by the connection.
    */
-  virtual void deliver_event( const thread tid,
-    const synindex syn_id,
+  virtual void deliver_event( const synindex syn_id,
     const index local_target_connection_id,
     const std::vector< ConnectorModel* >& cm,
-    SpikeEvent& se );
+    const Time lag,
+    const delay axonal_delay,
+    const double offset );
+  //! Same as regular deliver event, but providing cached dendritic delay for connection
+  virtual void deliver_event( const synindex syn_id,
+    const index local_target_connection_id,
+    const std::vector< ConnectorModel* >& cm,
+    const Time lag,
+    const delay axonal_delay,
+    const delay dendritic_delay,
+    const double offset );
 
   /**
    * Handle incoming spike events.
@@ -829,11 +829,16 @@ public:
    */
   virtual void connect_synaptic_element( Name, int ) {};
 
+  virtual double get_trace( const double pre_spike_time,
+    const double dendritic_delay,
+    const synindex syn_id );
+
   /**
    * return the Kminus value at t (in ms).
    * @throws UnexpectedEvent
    */
-  virtual double get_K_value( double t );
+  // TODO JV (pt): Remove and update models
+  virtual double get_K_value( const double dendritic_delay, const double t, const synindex syn_id );
 
   virtual double get_LTD_value( double t );
 
@@ -848,21 +853,22 @@ public:
    * return the spike history for (t1,t2].
    * @throws UnexpectedEvent
    */
+  // TODO JV (pt): Remove and update models
   virtual void get_history( double t1,
     double t2,
-    std::deque< histentry >::iterator* start,
-    std::deque< histentry >::iterator* finish );
+    std::deque< ArchivedSpikeTrace >::iterator* start,
+    std::deque< ArchivedSpikeTrace >::iterator* finish );
 
   // for Clopath synapse
   virtual void get_LTP_history( double t1,
     double t2,
-    std::deque< histentry_extended >::iterator* start,
-    std::deque< histentry_extended >::iterator* finish );
+    std::deque< ArchivedSpikeGeneric >::iterator* start,
+    std::deque< ArchivedSpikeGeneric >::iterator* finish );
   // for Urbanczik synapse
   virtual void get_urbanczik_history( double t1,
     double t2,
-    std::deque< histentry_extended >::iterator* start,
-    std::deque< histentry_extended >::iterator* finish,
+    std::deque< ArchivedSpikeGeneric >::iterator* start,
+    std::deque< ArchivedSpikeGeneric >::iterator* finish,
     int );
   // make neuron parameters accessible in Urbanczik synapse
   virtual double get_C_m( int comp );
@@ -947,7 +953,6 @@ public:
     return SPIKE;
   }
 
-
   /**
    *  Return a dictionary with the node's properties.
    *
@@ -997,10 +1002,15 @@ public:
   virtual index get_local_device_id() const;
 
   /**
-   * Framework for STDP with predominantly axonal delays:
-   * Buffer a correction entry for a short time window.
+   * Return if the node has any incoming stdp connections.
    */
-  virtual void add_correction_entry_stdp_ax_delay( SpikeEvent&, const double, const double, const double );
+  virtual bool has_stdp_connections() const;
+
+  /**
+   * Sort all connections by dendritic delay for better vectorization.
+   */
+  void prepare_connections();
+
   /**
    * Member of DeprecationWarning class to be used by models if parameters are
    * deprecated.
@@ -1060,18 +1070,6 @@ protected:
 
 private:
   /**
-   * Global Element ID (node ID).
-   *
-   * The node ID is unique within the network. The smallest valid node ID is 1.
-   */
-  index node_id_;
-
-  /**
-   * Local id of this node in the thread-local vector of nodes.
-   */
-  index thread_lid_;
-
-  /**
    * Model ID.
    * It is only set for actual node instances, not for instances of class Node
    * representing model prototypes. Model prototypes always have model_id_==-1.
@@ -1088,6 +1086,18 @@ private:
   NodeCollectionPTR nc_ptr_;
 
 protected:
+  /**
+   * Global Element ID (node ID).
+   *
+   * The node ID is unique within the network. The smallest valid node ID is 1.
+   */
+  index node_id_;
+
+  /**
+   * Local id of this node in the thread-local vector of nodes.
+   */
+  index thread_lid_;
+
   /**
    * A structure to hold the Connector objects which in turn hold the connection information of all incoming connections
    * to this node. Corresponds to a two dimensional structure:
@@ -1249,6 +1259,43 @@ inline index
 Node::get_thread_lid() const
 {
   return thread_lid_;
+}
+
+inline void
+Node::deliver_event( const synindex syn_id,
+  const index local_target_connection_id,
+  const std::vector< ConnectorModel* >& cm,
+  const Time lag,
+  const delay axonal_delay,
+  const double offset )
+{
+  const delay dendritic_delay = connections_[ syn_id ]->get_dendritic_delay( local_target_connection_id );
+  deliver_event( syn_id, local_target_connection_id, cm, lag, axonal_delay, dendritic_delay, offset );
+}
+
+inline void
+Node::deliver_event( const synindex syn_id,
+  const index local_target_connection_id,
+  const std::vector< ConnectorModel* >& cm,
+  const Time lag,
+  const delay axonal_delay,
+  const delay dendritic_delay,
+  const double offset )
+{
+  SpikeEvent se;
+  se.set_stamp( lag );
+  se.set_offset( offset );  // TODO JV (help): Why can't offset be incorporated into lag?
+  se.set_sender_node_id_info( thread_, syn_id, node_id_, local_target_connection_id );
+
+  // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
+  // event by adding a weight and optionally updates its internal state as well.
+  connections_[ syn_id ]->send( thread_, local_target_connection_id, axonal_delay, dendritic_delay, cm, se, this );
+
+  // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
+  //  handle, or just handing the entire local connection id to the handle function (and storing an array of rports
+  //  which can be indexed by the local connection id).
+
+  handle( se );
 }
 
 } // namespace

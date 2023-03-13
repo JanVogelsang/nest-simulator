@@ -99,13 +99,6 @@ public:
   {
   }
 
-  // Explicitly declare all methods inherited from the dependent base
-  // ConnectionBase. This avoids explicit name prefixes in all places these
-  // functions are used. Since ConnectionBase depends on the template parameter,
-  // they are not automatically found in the base class.
-  using ConnectionBase::get_delay_steps;
-  using ConnectionBase::set_delay_steps;
-
   //! Used by ConnectorModel::add_connection() for fast initialization
   void
   set_weight( double w )
@@ -133,7 +126,7 @@ public:
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target );
+  void send( Event& e, const thread t, const delay axonal_delay, const delay dendritic_delay, const CommonSynapseProperties& cp, Node* target );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -184,7 +177,13 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
   }
@@ -198,10 +197,14 @@ private:
 /**
  * Send an event to the receiver of this connection.
  * \param e The event to send
- * \param p The port under which this connection is stored in the Connector.
  */
 inline void
-cont_delay_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
+cont_delay_synapse::send( Event& e,
+  const thread t,
+  const delay axonal_delay,
+  const delay dendritic_delay,
+  const CommonSynapseProperties&,
+  Node* target )
 {
   e.set_weight( weight_ );
   double orig_event_offset = e.get_offset();
@@ -212,12 +215,12 @@ cont_delay_synapse::send( Event& e, thread t, const CommonSynapseProperties&, No
   // seems save.
   if ( total_offset < Time::get_resolution().get_ms() )
   {
-    e.set_delay_steps( get_delay_steps() );
+    e.set_delay_steps( dendritic_delay );
     e.set_offset( total_offset );
   }
   else
   {
-    e.set_delay_steps( get_delay_steps() - 1 );
+    e.set_delay_steps( dendritic_delay - 1 );
     e.set_offset( total_offset - Time::get_resolution().get_ms() );
   }
   e();

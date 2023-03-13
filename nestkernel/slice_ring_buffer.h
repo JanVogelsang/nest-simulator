@@ -136,9 +136,9 @@ private:
 
     // data elements must not be const, since heap implementation
     // in DEC STL uses operator=().
-    long stamp_;       //<! spike's time stamp
-    double ps_offset_; //<! spike offset is PS sense
-    double weight_;    //<! spike weight
+    long stamp_;       //!< spike's time stamp
+    double ps_offset_; //!< spike offset is PS sense
+    double weight_;    //!< spike weight
   };
 
   //! entire queue, one slot per min_delay block within max_delay

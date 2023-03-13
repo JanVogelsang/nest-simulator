@@ -108,6 +108,11 @@ public:
     const synindex syn_id,
     const index local_target_node_id,
     const index local_target_connection_id );
+  Target( const thread tid,
+    const delay dendritic_delay,
+    const synindex syn_id,
+    const index local_target_node_id,
+    const index local_target_connection_id );  // only required for devices
   Target( const thread tid, const thread rank, const index adjacency_list_index );
 
   Target& operator=( const Target& );
@@ -150,6 +155,16 @@ public:
    * Return rank.
    */
   thread get_rank() const;
+
+  /**
+   * Set dendritic delay (required for device nodes instead of rank).
+   */
+  void set_dendritic_delay( const delay dendritic_delay );
+
+  /**
+   * Get dendritic delay (required for device nodes instead of rank).
+   */
+  delay get_dendritic_delay() const;
 
   /**
    * Set thread id.
@@ -240,6 +255,26 @@ inline Target::Target( const thread tid,
   set_status( TARGET_ID_UNPROCESSED ); // initialize
 }
 
+inline Target::Target( const thread tid,
+  const delay dendritic_delay,
+  const synindex syn_id,
+  const index local_target_node_id,
+  const index local_target_connection_id )
+  : remote_target_id_( 0 )
+{
+  assert( tid <= MAX_TID );
+  assert( syn_id <= MAX_SYN_ID );
+  assert( local_target_node_id <= MAX_LOCAL_NODE_ID );
+  assert( local_target_connection_id <= MAX_LOCAL_CONNECTION_ID );
+
+  set_local_target_node_id( local_target_node_id );
+  set_local_target_connection_id( local_target_connection_id );
+  set_dendritic_delay( dendritic_delay );
+  set_tid( tid );
+  set_syn_id( syn_id );
+  set_status( TARGET_ID_UNPROCESSED ); // initialize
+}
+
 inline Target::Target( const thread tid, const thread rank, const index adjacency_list_index )
   : remote_target_id_( 0 )
 {
@@ -317,6 +352,19 @@ Target::set_rank( const thread rank )
 
 inline thread
 Target::get_rank() const
+{
+  return ( ( remote_target_id_ & MASK_RANK ) >> BITPOS_RANK );
+}
+
+inline void
+Target::set_dendritic_delay( const delay dendritic_delay )
+{
+  remote_target_id_ =
+    ( remote_target_id_ & ( ~MASK_RANK ) ) | ( static_cast< uint64_t >( dendritic_delay ) << BITPOS_RANK );
+}
+
+inline delay
+Target::get_dendritic_delay() const
 {
   return ( ( remote_target_id_ & MASK_RANK ) >> BITPOS_RANK );
 }

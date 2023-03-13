@@ -377,7 +377,7 @@ private:
 
 
 inline port
-hh_psc_alpha_clopath::send_test_event( Node& target, rport receptor_type, synindex, bool )
+hh_psc_alpha_clopath::send_test_event( Node& target, const rport receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

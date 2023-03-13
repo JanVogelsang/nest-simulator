@@ -578,8 +578,6 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
   // deliver only at end of time slice
   assert( kernel().simulation_manager.get_to_step() == kernel().connection_manager.get_min_delay() );
 
-  SpikeEvent se;
-
   // prepare Time objects for every possible time stamp within min_delay_
   std::vector< Time > prepared_timestamps( kernel().connection_manager.get_min_delay() );
   for ( size_t lag = 0; lag < static_cast< size_t >( kernel().connection_manager.get_min_delay() ); ++lag )
@@ -606,9 +604,6 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
     {
       const SpikeDataT& spike_data = recv_buffer[ rank * send_recv_count_spike_data_per_rank + i ];
 
-      se.set_stamp( prepared_timestamps[ spike_data.get_lag() ] );
-      se.set_offset( spike_data.get_offset() );
-
 #ifndef USE_ADJACENCY_LIST
       // simple node-to-node delivery without any indirections in between
       if ( spike_data.get_tid() == tid )
@@ -617,11 +612,8 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
         const index local_target_node_id = spike_data.get_local_target_node_id();
         const index local_target_connection_id = spike_data.get_local_target_connection_id();
 
-        // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
-        // only if needed, as this is computationally costly
-        se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id );
         Node* target_node = kernel().node_manager.thread_lid_to_node( tid, local_target_node_id );
-        target_node->deliver_event( tid, syn_id, local_target_connection_id, cm, se );
+        target_node->deliver_event( syn_id, local_target_connection_id, cm, prepared_timestamps[ spike_data.get_lag() ], spike_data.get_offset() );
       }
 #else
       if ( kernel().connection_manager.use_compressed_spikes() )
@@ -634,14 +626,14 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
         const auto compressed_spike_data_it = compressed_spike_data.find( tid );
         if ( compressed_spike_data_it != compressed_spike_data.end() )
         {
-          deliver_to_adjacency_list( tid, compressed_spike_data_it->second, se, cm );
+          deliver_to_adjacency_list( tid, compressed_spike_data_it->second, prepared_timestamps[ spike_data.get_lag() ], spike_data.get_offset(), cm );
         }
       }
       else // Delivery to single adjacency list entry (uncompressed spike)
       {
         if ( spike_data.get_tid() == tid )
         {
-          deliver_to_adjacency_list( tid, spike_data.get_adjacency_list_index(), se, cm );
+          deliver_to_adjacency_list( tid, spike_data.get_adjacency_list_index(), prepared_timestamps[ spike_data.get_lag() ], spike_data.get_offset(), cm );
         }
       }
 #endif
@@ -758,7 +750,7 @@ EventDeliveryManager::collocate_target_data_buffers_( const thread tid,
     send_buffer_target_data_[ send_buffer_position.begin( rank ) ].set_invalid_marker();
   }
 
-  while ( true ) // TODO JV (pt): This loop design is not idea, refactoring needed (check first, then get target data)
+  while ( true ) // TODO JV (pt): This loop design is not ideal, refactoring needed (check first, then get target data)
   {
     valid_next_target_data = kernel().connection_manager.get_next_target_data(
       tid, assigned_ranks.begin, assigned_ranks.end, source_rank, next_target_data );

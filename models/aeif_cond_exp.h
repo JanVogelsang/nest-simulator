@@ -96,7 +96,7 @@ and
 
 .. math::
 
- \tau_w \cdot dw/dt= a(V-E_L) -W
+ \tau_w \cdot value/dt= a(V-E_L) -W
 
 Note that the spike detection threshold V_peak is automatically set to
 :math:`V_th+10 mV` to avoid numerical instabilities that may result from
@@ -380,7 +380,7 @@ public:
 };
 
 inline port
-aeif_cond_exp::send_test_event( Node& target, rport receptor_type, synindex, bool )
+aeif_cond_exp::send_test_event( Node& target, const rport receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

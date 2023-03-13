@@ -404,7 +404,7 @@ private:
 };
 
 inline port
-gif_pop_psc_exp::send_test_event( Node& target, rport receptor_type, synindex, bool )
+gif_pop_psc_exp::send_test_event( Node& target, const rport receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

@@ -67,7 +67,8 @@ Node::add_connection( Node& source_node,
   const rport receptor_type,
   const bool is_primary,
   const bool from_device,
-  typename ConnectionT::CommonPropertiesType const& cp )
+  const delay dendritic_delay,
+  const delay )
 {
   ConnectorBase* connector;
   // Check if the source of the connection is a device to add the connection to the corresponding container
@@ -92,7 +93,7 @@ Node::add_connection( Node& source_node,
   assert( connector );
 
   Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connector );
-  return vc->add_connection( connection, source_node.get_node_id() );
+  return vc->add_connection( connection, source_node.get_node_id(), dendritic_delay );
 }
 
 template < typename EventT >
@@ -105,7 +106,7 @@ Node::deliver_event_from_device( const thread tid,
 {
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight and optionally updates its internal state as well.
-  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, cm, e, this );
+  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, 0, cm, e, this );
 
   // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
   //  handle, or just handing the entire local connection id to the handle function.

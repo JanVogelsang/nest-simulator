@@ -1,5 +1,5 @@
 /*
- *  histentry.h
+ *  ArchivedSpikeTrace.h
  *
  *  This file is part of NEST.
  *
@@ -21,9 +21,8 @@
  */
 
 /**
- * \file histentry.h
- * Part of definition of ArchivingNode which is capable of
- * recording and managing a spike history.
+ * \file ArchivedSpikeTrace.h
+ * Part of definition of ArchivingNode which is capable of recording and managing a spike history.
  * \author Moritz Helias, Abigail Morrison
  * \note moved to separate file to avoid circular inclusion in node.h
  * \date april 2006
@@ -38,27 +37,43 @@
 namespace nest
 {
 
-// entry in the spiking history
-class histentry
+class ArchivedSpikeBase
 {
 public:
-  histentry( double t, double Kminus, double Kminus_triplet, size_t access_counter );
+  ArchivedSpikeBase( double t )
+    : t( t )
+  {
+  }
 
-  double t_;              //!< point in time when spike occurred (in ms)
-  double Kminus_;         //!< value of Kminus at that time
-  double Kminus_triplet_; //!< value of triplet STDP Kminus at that time
-  size_t access_counter_; //!< access counter to enable removal of the entry, once all neurons read it
+  double t; //!< point in time when spike occurred (in ms)
+};
+
+// entry in the spiking history
+class ArchivedSpikeTrace : public ArchivedSpikeBase
+{
+public:
+  ArchivedSpikeTrace( double t, double Kminus, double Kminus_triplet )
+    : ArchivedSpikeBase( t )
+    , Kminus( Kminus )
+    , Kminus_triplet( Kminus_triplet )
+  {
+  }
+
+  double Kminus;         //!< value of Kminus at that time
+  double Kminus_triplet; //!< value of triplet STDP Kminus at that time
 };
 
 // entry in the history of plasticity rules which consider additional factors
-class histentry_extended
+class ArchivedSpikeGeneric : public ArchivedSpikeBase
 {
 public:
-  histentry_extended( double t, double dw, size_t access_counter );
+  ArchivedSpikeGeneric( double t, double dw )
+    : ArchivedSpikeBase( t )
+    , value( dw )
+  {
+  }
 
-  double t_;              //!< point in time when spike occurred (in ms)
-  double dw_;             //!< value dependend on the additional factor
-  size_t access_counter_; //!< access counter to enable removal of the entry, once all neurons read it
+  double value; //!< value dependent on the additional factor
 };
 }
 

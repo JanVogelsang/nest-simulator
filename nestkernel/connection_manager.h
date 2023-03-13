@@ -132,8 +132,9 @@ public:
     thread target_thread,
     const synindex syn_id,
     const DictionaryDatum& params,
-    const double delay = numerics::nan,
-    const double weight = numerics::nan );
+    const double delay,
+    const double axonal_delay,
+    const double weight );
 
   /**
    * Connect two nodes. The source and target nodes are defined by their
@@ -151,6 +152,7 @@ public:
     long* targets,
     double* weights,
     double* delays,
+    double* axonal_delays,
     std::vector< std::string >& p_keys,
     double* p_values,
     size_t n,
@@ -277,6 +279,11 @@ public:
   void calibrate( const TimeConverter& );
 
   /**
+   * Sort all STDP connections by dendritic delay for better vectorization.
+   */
+  void prepare_connections( const thread tid );
+
+  /**
    * Returns the delay checker for the current thread.
    */
   DelayChecker& get_delay_checker();
@@ -311,17 +318,9 @@ public:
 
   void restore_source_table_entry_point( const thread tid );
 
-  void no_targets_to_process( const thread tid );
-
   void add_target( const thread tid, const thread target_rank, const TargetData& target_data );
 
   bool use_compressed_spikes() const;
-
-  /**
-   * Sorts connections in the presynaptic infrastructure by increasing
-   * source node ID.
-   */
-  void sort_connections_and_sources( const thread tid );
 
   /**
    * Removes disabled connections (of structural plasticity)
@@ -354,6 +353,8 @@ public:
    * all information only exists on the postsynaptic side.
    */
   void restructure_connection_tables( const thread tid );
+
+  void no_targets_to_process( const thread tid );
 
   const std::vector< size_t >&
   get_secondary_send_buffer_positions( const thread tid, const index lid, const synindex syn_id ) const;
@@ -491,6 +492,7 @@ private:
     const DictionaryDatum& params,
     const ConnectionType connection_type,
     const double delay = numerics::nan,
+    const double axonal_delay = numerics::nan,
     const double weight = numerics::nan );
 
   /**

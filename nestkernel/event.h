@@ -327,8 +327,8 @@ protected:
 
   /**
    * Time stamp.
-   * The time stamp specifies the absolute time
-   * when the event shall arrive at the target.
+   * The time stamp specifies the absolute time when the event shall arrive at the target.
+   * TODO JV (help): Isn't this actually the time the event was emitted?
    */
   Time stamp_;
 

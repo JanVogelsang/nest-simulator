@@ -110,13 +110,6 @@ public:
    */
   ht_synapse( const ht_synapse& ) = default;
 
-  // Explicitly declare all methods inherited from the dependent base
-  // ConnectionBase. This avoids explicit name prefixes in all places these
-  // functions are used. Since ConnectionBase depends on the template parameter,
-  // they are not automatically found in the base class.
-  using ConnectionBase::get_delay;
-  using ConnectionBase::get_delay_steps;
-
   /**
    * Default Destructor.
    */
@@ -139,7 +132,7 @@ public:
    * \param e The event to send
    * \param cp Common properties to all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target );
+  void send( Event& e, const thread t, const delay axonal_delay, const delay dendritic_delay, const CommonSynapseProperties& cp, Node* target );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -155,7 +148,13 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
   }
@@ -182,10 +181,9 @@ private:
 /**
  * Send an event to the receiver of this connection.
  * \param e The event to send
- * \param p The port under which this connection is stored in the Connector.
  */
 inline void
-ht_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
+ht_synapse::send( Event& e, const thread t, const delay axonal_delay, const delay dendritic_delay, const CommonSynapseProperties&, Node* target )
 {
   // propagation t_lastspike -> t_spike, t_lastspike_ = 0 initially, p_ = 1
   const double t_spike = e.get_stamp().get_ms();
@@ -194,7 +192,7 @@ ht_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* targ
 
   // send the spike to the target
   e.set_weight( weight_ * p_ );
-  e.set_delay_steps( get_delay_steps() );
+  e.set_delay_steps( dendritic_delay );
   e();
 
   // reduce pool after spike is sent

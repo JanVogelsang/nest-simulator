@@ -41,14 +41,14 @@ namespace nest
 
 Node::Node()
   : deprecation_warning()
-  , node_id_( 0 )
-  , thread_lid_( invalid_index )
   , model_id_( -1 )
   , thread_( 0 )
   , vp_( invalid_thread )
   , frozen_( false )
   , initialized_( false )
   , node_uses_wfr_( false )
+  , node_id_( 0 )
+  , thread_lid_( invalid_index )
   , connections_( kernel().model_manager.get_num_connection_models() )
   , connections_from_devices_( kernel().model_manager.get_num_connection_models() )
 {
@@ -58,8 +58,6 @@ Node::Node()
 
 Node::Node( const Node& n )
   : deprecation_warning( n.deprecation_warning )
-  , node_id_( 0 )
-  , thread_lid_( n.thread_lid_ )
   , model_id_( n.model_id_ )
   , thread_( n.thread_ )
   , vp_( n.vp_ )
@@ -67,6 +65,8 @@ Node::Node( const Node& n )
   // copy must always initialize its own buffers
   , initialized_( false )
   , node_uses_wfr_( n.node_uses_wfr_ )
+  , node_id_( 0 )
+  , thread_lid_( n.thread_lid_ )
   , connections_( kernel().model_manager.get_num_connection_models() )
   , connections_from_devices_( kernel().model_manager.get_num_connection_models() )
 {
@@ -172,13 +172,28 @@ index
 Node::get_local_device_id() const
 {
   assert( false and "get_local_device_id() called on a non-device node." );
-  return invalid_index;
+}
+
+bool
+Node::has_stdp_connections() const
+{
+  throw UnexpectedEvent( "Node does not support STDP synapses." );
 }
 
 void
-Node::add_correction_entry_stdp_ax_delay( SpikeEvent&, const double, const double, const double )
+Node::prepare_connections()
 {
-  throw UnexpectedEvent( "Node does not support framework for STDP synapses with predominantly axonal delays." );
+  // TODO JV (pt): Device connection indices must not change
+  if ( this->has_proxies() )
+  {
+    for ( auto conn : connections_ )
+    {
+      if ( conn )
+      {
+        conn->prepare_connections();
+      }
+    }
+  }
 }
 
 DictionaryDatum
@@ -251,7 +266,7 @@ Node::send_test_event( Node&, rport, synindex, bool )
  * throws IllegalConnection
  */
 void
-Node::register_stdp_connection( double, double )
+Node::register_stdp_connection( const delay, const delay, const synindex )
 {
   throw IllegalConnection( "The target node does not support STDP synapses." );
 }
@@ -298,32 +313,15 @@ Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
   const std::vector< ConnectorModel* >& cm,
   DSSpikeEvent& e )
 {
-  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, cm, e, this );
+  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, 0, cm, e, this );
 
-  // TODO JV (help): Make this cleaner, as only needed for poisson generators probably
+  // TODO JV: Make this cleaner, as only needed for poisson generators probably
   if ( not e.get_multiplicity() )
   {
     return;
   }
 
   handle( e );
-}
-
-void
-Node::deliver_event( const thread tid,
-  const synindex syn_id,
-  const index local_target_connection_id,
-  const std::vector< ConnectorModel* >& cm,
-  SpikeEvent& se )
-{
-  // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
-  // event by adding a weight and optionally updates its internal state as well.
-  connections_[ syn_id ]->send( tid, local_target_connection_id, cm, se, this );
-
-  // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
-  //  handle, or just handing the entire local connection id to the handle function.
-
-  handle( se );
 }
 
 /**
@@ -517,45 +515,55 @@ Node::sends_secondary_event( DelayedRateConnectionEvent& )
 double
 Node::get_LTD_value( double )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Can't retrieve LTD value. Base node class does not store its history." );
 }
 
 double
-Node::get_K_value( double )
+Node::get_K_value( const double, const double, const synindex )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Can't retrieve K value. Base node class does not store its history." );
 }
 
+double
+Node::get_trace( const double pre_spike_time,
+  const double dendritic_delay,
+  const synindex syn_id )
+{
+  throw UnexpectedEvent( "Can't retrieve STDP history. Base node class does not store its history." );
+}
 
 void
 Node::get_K_values( double, double&, double&, double& )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Can't retrieve K values. Base node class does not store its history." );
 }
 
 void
-nest::Node::get_history( double, double, std::deque< histentry >::iterator*, std::deque< histentry >::iterator* )
+Node::get_history( double,
+  double,
+  std::deque< ArchivedSpikeTrace >::iterator*,
+  std::deque< ArchivedSpikeTrace >::iterator* )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Base node class does not store its history." );
 }
 
 void
 nest::Node::get_LTP_history( double,
   double,
-  std::deque< histentry_extended >::iterator*,
-  std::deque< histentry_extended >::iterator* )
+  std::deque< ArchivedSpikeGeneric >::iterator*,
+  std::deque< ArchivedSpikeGeneric >::iterator* )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Base node class does not store its history." );
 }
 
 void
 nest::Node::get_urbanczik_history( double,
   double,
-  std::deque< histentry_extended >::iterator*,
-  std::deque< histentry_extended >::iterator*,
+  std::deque< ArchivedSpikeGeneric >::iterator*,
+  std::deque< ArchivedSpikeGeneric >::iterator*,
   int )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Base node class does not store its history." );
 }
 
 double

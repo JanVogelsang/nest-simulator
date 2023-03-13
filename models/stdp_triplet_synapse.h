@@ -49,7 +49,7 @@ Notes:
   ``Kplus`` and ``Kplus_triplet`` and decay with time-constants ``tau_plus`` and
   ``tau_plus_triplet``, respectively.
 - Postsynaptic traces ``o_1`` and ``o_2`` of [1]_ are acquired from the postsynaptic
-  neuron states ``Kminus_`` and ``triplet_Kminus_`` which decay on time-constants
+  neuron states ``Kminus`` and ``triplet_Kminus_`` which decay on time-constants
   ``tau_minus`` and ``tau_minus_triplet``, respectively. These two time-constants
   can be set as properties of the postsynaptic neuron.
 - This version implements the 'all-to-all' spike interaction of [1]_. The
@@ -140,13 +140,6 @@ public:
   {
   }
 
-  // Explicitly declare all methods inherited from the dependent base
-  // ConnectionBase. This avoids explicit name prefixes in all places
-  // these functions are used. Since ConnectionBase depends on the template
-  // parameter, they are not automatically found in the base class.
-  using ConnectionBase::get_delay;
-  using ConnectionBase::get_delay_steps;
-
   /**
    * Get all properties of this connection and put them into a dictionary.
    */
@@ -162,7 +155,7 @@ public:
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target );
+  void send( Event& e, const thread t, const delay axonal_delay, const delay dendritic_delay, const CommonSynapseProperties& cp, Node* target );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -191,12 +184,17 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
 
-
-    t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
+    t.register_stdp_connection( axonal_delay, dendritic_delay, syn_id );
   }
 
   void
@@ -241,31 +239,36 @@ private:
  * \param cp Common properties object, containing the stdp parameters.
  */
 inline void
-stdp_triplet_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
+stdp_triplet_synapse::send( Event& e,
+  const thread t,
+  const delay axonal_delay,
+  const delay dendritic_delay,
+  const CommonSynapseProperties&,
+  Node* target )
 {
 
   double t_spike = e.get_stamp().get_ms();
-  double dendritic_delay = get_delay();
+  double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
-  std::deque< histentry >::iterator start;
-  std::deque< histentry >::iterator finish;
-  target->get_history( t_lastspike_ - dendritic_delay, t_spike - dendritic_delay, &start, &finish );
+  std::deque< ArchivedSpikeTrace >::iterator start;
+  std::deque< ArchivedSpikeTrace >::iterator finish;
+  target->get_history( t_lastspike_ - dendritic_delay_ms, t_spike - dendritic_delay_ms, &start, &finish );
 
   // facilitation due to postsynaptic spikes since last pre-synaptic spike
   while ( start != finish )
   {
     // postsynaptic spike is delayed by dendritic_delay so that
     // it is effectively late by that much at the synapse.
-    double minus_dt = t_lastspike_ - ( start->t_ + dendritic_delay );
+    double minus_dt = t_lastspike_ - ( start->t + dendritic_delay_ms );
 
     // subtract 1.0 yields the Kminus_triplet value just prior to
     // the postsynaptic spike, implementing the t-epsilon in
     // Pfister et al, 2006
-    double ky = start->Kminus_triplet_ - 1.0;
+    double ky = start->Kminus_triplet - 1.0;
     ++start;
     // get_history() should make sure that
-    // start->t_ > t_lastspike - dendritic_delay, i.e. minus_dt < 0
+    // start->t > t_lastspike - dendritic_delay, i.e. minus_dt < 0
     assert( minus_dt < -1.0 * kernel().connection_manager.get_stdp_eps() );
     weight_ = facilitate_( weight_, Kplus_ * std::exp( minus_dt / tau_plus_ ), ky );
   }
@@ -276,13 +279,15 @@ stdp_triplet_synapse::send( Event& e, thread t, const CommonSynapseProperties&, 
   // dendritic delay means we must look back in time by that amount
   // for determining the K value, because the K value must propagate
   // out to the synapse
-  weight_ = depress_( weight_, target->get_K_value( t_spike - dendritic_delay ), Kplus_triplet_ );
+  weight_ = depress_( weight_,
+    target->get_K_value( dendritic_delay_ms, t_spike, e.get_sender_spike_data().syn_id ),
+    Kplus_triplet_ );
 
   Kplus_triplet_ += 1.0;
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) / tau_plus_ ) + 1.0;
 
   e.set_weight( weight_ );
-  e.set_delay_steps( get_delay_steps() );
+  e.set_delay_steps( dendritic_delay );
   e();
 
   t_lastspike_ = t_spike;

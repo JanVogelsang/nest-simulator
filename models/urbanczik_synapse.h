@@ -124,13 +124,6 @@ public:
   urbanczik_synapse( const urbanczik_synapse& ) = default;
   urbanczik_synapse& operator=( const urbanczik_synapse& ) = default;
 
-  // Explicitly declare all methods inherited from the dependent base
-  // ConnectionBase. This avoids explicit name prefixes in all places these
-  // functions are used. Since ConnectionBase depends on the template parameter,
-  // they are not automatically found in the base class.
-  using ConnectionBase::get_delay;
-  using ConnectionBase::get_delay_steps;
-
   /**
    * Get all properties of this connection and put them into a dictionary.
    */
@@ -146,7 +139,7 @@ public:
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target );
+  void send( Event& e, const thread t, const delay axonal_delay, const delay dendritic_delay, const CommonSynapseProperties& cp, Node* target );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -163,12 +156,17 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
 
-
-    t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
+    t.register_stdp_connection( axonal_delay, dendritic_delay, syn_id );
   }
 
   void
@@ -201,21 +199,27 @@ private:
  * \param cp Common properties object, containing the stdp parameters.
  */
 inline void
-urbanczik_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
+urbanczik_synapse::send( Event& e,
+  const thread t,
+  const delay axonal_delay,
+  const delay dendritic_delay,
+  const CommonSynapseProperties&,
+  Node* target )
 {
   double t_spike = e.get_stamp().get_ms();
   // use accessor functions (inherited from Connection< >) to obtain delay and target
-  double dendritic_delay = get_delay();
+  double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
-  std::deque< histentry_extended >::iterator start;
-  std::deque< histentry_extended >::iterator finish;
+  std::deque< ArchivedSpikeGeneric >::iterator start;
+  std::deque< ArchivedSpikeGeneric >::iterator finish;
 
   // for now we only support two-compartment neurons
   // in this case the dendritic compartment has index 1
   const int comp = 1;
 
-  target->get_urbanczik_history( t_lastspike_ - dendritic_delay, t_spike - dendritic_delay, &start, &finish, comp );
+  target->get_urbanczik_history(
+    t_lastspike_ - dendritic_delay_ms, t_spike - dendritic_delay_ms, &start, &finish, comp );
 
   double const g_L = target->get_g_L( comp );
   double const tau_L = target->get_tau_L( comp );
@@ -225,11 +229,12 @@ urbanczik_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Nod
 
   while ( start != finish )
   {
-    double const t_up = start->t_ + dendritic_delay;     // from t_lastspike to t_spike
+    double const t_up = start->t + dendritic_delay_ms;   // from t_lastspike to t_spike
     double const minus_delta_t_up = t_lastspike_ - t_up; // from 0 to -delta t
     double const minus_t_down = t_up - t_spike;          // from -t_spike to 0
     double const PI =
-      ( tau_L_trace_ * exp( minus_delta_t_up / tau_L ) - tau_s_trace_ * exp( minus_delta_t_up / tau_s ) ) * start->dw_;
+      ( tau_L_trace_ * exp( minus_delta_t_up / tau_L ) - tau_s_trace_ * exp( minus_delta_t_up / tau_s ) )
+      * start->value;
     PI_integral_ += PI;
     dPI_exp_integral += exp( minus_t_down / tau_Delta_ ) * PI;
     ++start;
@@ -250,7 +255,7 @@ urbanczik_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Nod
 
   e.set_weight( weight_ );
   // use accessor functions (inherited from Connection< >) to obtain delay in steps and rport
-  e.set_delay_steps( get_delay_steps() );
+  e.set_delay_steps( dendritic_delay );
   e();
 
   // compute the trace of the presynaptic spike train

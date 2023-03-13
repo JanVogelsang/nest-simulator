@@ -230,7 +230,7 @@ private:
 
 template < class TGainfunction >
 inline port
-binary_neuron< TGainfunction >::send_test_event( Node& target, rport receptor_type, synindex, bool )
+binary_neuron< TGainfunction >::send_test_event( Node& target, const rport receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

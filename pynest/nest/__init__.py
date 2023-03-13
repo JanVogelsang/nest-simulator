@@ -315,7 +315,7 @@ class NestModule(types.ModuleType):
             "Whether to use spike compression; if a neuron has targets on"
             + " multiple threads of a process, this switch makes sure that only"
             + " a single packet is sent to the process instead of one packet"
-            + " per target thread;"
+            + " per target thread"
         ),
         default=True,
     )

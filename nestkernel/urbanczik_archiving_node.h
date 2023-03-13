@@ -27,8 +27,8 @@
 #include <deque>
 
 // Includes from nestkernel:
+#include "archived_spike.h"
 #include "archiving_node.h"
-#include "histentry.h"
 #include "nest_time.h"
 #include "nest_types.h"
 #include "synaptic_element.h"
@@ -69,15 +69,15 @@ public:
 
   /**
    * \fn void get_urbanczik_history( double t1, double t2,
-   * std::deque<Archiver::histentry>::iterator* start,
-   * std::deque<Archiver::histentry>::iterator* finish, int comp )
+   * std::deque<Archiver::ArchivedSpikeTrace>::iterator* start,
+   * std::deque<Archiver::ArchivedSpikeTrace>::iterator* finish, int comp )
    * Sets pointer start (finish) to the first (last) entry in urbanczik_history_[comp]
    * whose time argument is between t1 and t2
    */
   void get_urbanczik_history( double t1,
     double t2,
-    std::deque< histentry_extended >::iterator* start,
-    std::deque< histentry_extended >::iterator* finish,
+    std::deque< ArchivedSpikeGeneric >::iterator* start,
+    std::deque< ArchivedSpikeGeneric >::iterator* finish,
     int comp ) override;
 
   /**
@@ -123,7 +123,7 @@ protected:
   void set_status( const DictionaryDatum& d ) override;
 
 private:
-  std::deque< histentry_extended > urbanczik_history_[ urbanczik_parameters::NCOMP - 1 ];
+  std::deque< ArchivedSpikeGeneric > urbanczik_history_[ urbanczik_parameters::NCOMP - 1 ];
 };
 
 template < class urbanczik_parameters >

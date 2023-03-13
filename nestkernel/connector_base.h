@@ -26,9 +26,6 @@
 // C++ includes:
 #include <vector>
 
-// Includes from libnestutil:
-#include "sort.h"
-
 // Includes from nestkernel:
 #include "common_synapse_properties.h"
 #include "nest_datums.h"
@@ -36,6 +33,7 @@
 #include "spikecounter.h"
 
 // Includes from sli:
+#include "archived_spike.h"
 #include "arraydatum.h"
 #include "dictutils.h"
 
@@ -81,14 +79,24 @@ public:
   virtual void set_synapse_status( const index lcid, const DictionaryDatum& dict, ConnectorModel& cm ) = 0;
 
   /**
-   * Get the proportion of the transmission delay attributed to the dendrite.
+   * Get the proportion of the transmission delay attributed to the dendrite of a connection.
    */
-  virtual double get_connection_delay( const index lcid, ConnectorModel& cm ) = 0;
+  virtual double get_dendritic_delay( const index lcid ) const = 0;
 
   /**
-   * Get source node id of a specific connection.
+   * Get the time of the last pre-synaptic spike that was emitted over the specified connection.
    */
-  virtual index get_source( const index local_target_connection_id ) = 0;
+  virtual double get_last_presynaptic_spike( const index lcid ) const = 0;
+
+  /**
+   * Get the proportion of the transmission delay attributed to the axon of a connection.
+   */
+  // virtual double get_axonal_delay( const index lcid ) const = 0;
+
+  /**
+   * Get information about the source node of a specific connection.
+   */
+  virtual index get_source( const index lcid ) = 0;
 
   /**
    * Get the indices of all connection corresponding to a specific source node.
@@ -118,22 +126,45 @@ public:
    * source.
    */
   virtual void send( const thread tid,
-    const index local_target_connection_id,
+    const index lcid,
+    const delay axonal_delay,
     const std::vector< ConnectorModel* >& cm,
     Event& e,
     Node* target ) = 0;
 
-  virtual void correct_synapse_stdp_ax_delay( const index local_target_connection_id,
-    const double t_last_pre_spike,
-    double* weight_revert,
-    const double t_post_spike,
+  virtual void send( const thread tid,
+    const index lcid,
+    const delay axonal_delay,
+    const delay dendritic_delay,
+    const std::vector< ConnectorModel* >& cm,
+    Event& e,
     Node* target ) = 0;
 
   virtual void send_weight_event( const thread tid,
-    const index local_target_connection_id,
+    const index lcid,
     Event& e,
     const CommonSynapseProperties& cp,
     Node* target ) = 0;
+
+  virtual void update_stdp_connections( const double post_spike_time_syn,
+    const delay dendritic_delay,
+    const ConnectorModel* cm ) = 0;
+
+  virtual void process_post_synaptic_spike( const index lcid, const double post_spike_time_syn, const ConnectorModel* cm ) = 0;
+
+  virtual void update_trace( const double post_spike_time,
+    const delay dendritic_delay,
+    const double tau_minus_inv ) = 0;
+
+  virtual double get_trace( const double pre_spike_time,
+    const double dendritic_delay,
+    const double tau_minus_inv,
+    const std::deque< double >::const_iterator history_begin,
+    const std::deque< double >::const_iterator history_end ) = 0;
+
+  virtual std::pair< double, double > get_Kminus( const double dendritic_delay ) = 0;
+
+  virtual void clear_history() = 0;
 
   /**
    * Update weights of dopamine modulated STDP connections.
@@ -145,9 +176,9 @@ public:
     const std::vector< ConnectorModel* >& cm ) = 0;
 
   /**
-   * Sort connections according to source node IDs.
+   * Sort connections according to dendritic delay.
    */
-  virtual void sort_connections_and_sources() = 0;
+  virtual void prepare_connections() = 0;
 
   /**
    * Disable the transfer of events through the connection at position
@@ -181,9 +212,21 @@ protected:
 template < typename ConnectionT >
 class Connector : public ConnectorBase
 {
+  //! A region of connections in the Connector where all connections share the same dendritic delay
+  struct DelayRegion
+  {
+    index start; //!< first connection of delay region
+    index end;   //!< last connection of relay region
+    //! the post-synaptic trace in synapse time, i.e. the trace of the neuron "dendritic delay"-milliseconds ago
+    double Kminus;
+    double last_post_spike; //!< time of the last update in synapse time
+  };
+
 private:
-  std::vector< ConnectionT > C_;
   const synindex syn_id_;
+  std::map< delay, DelayRegion > dendritic_delay_regions_;
+  std::map< delay, std::vector< index > > connection_indices_by_delay_;
+  std::vector< ConnectionT > C_;
 
 public:
   explicit Connector( const synindex syn_id )
@@ -229,49 +272,65 @@ public:
   }
 
   double
-  get_connection_delay( const index lcid, ConnectorModel& cm ) override
+  get_dendritic_delay( const index lcid ) const override
   {
     assert( lcid < C_.size() );
 
-    return C_[ lcid ].get_delay();
+    // TODO JV: Profiling - lower bound vs find vs simply iterating
+    // TODO JV (pt): Further optimize this as much as possible (after additional profiling)
+    return std::lower_bound( dendritic_delay_regions_.begin(),
+      dendritic_delay_regions_.end(),
+      lcid,
+      []( const std::pair< const delay, DelayRegion >& r, const index idx ) -> const bool { return r.second.start < idx; } )
+      ->first;
+  }
+
+  double get_last_presynaptic_spike( const index lcid ) const override
+  {
+    return C_[ lcid ].get_last_presynaptic_spike();
+  }
+
+//  double
+//  get_axonal_delay( const index lcid ) const override
+//  {
+//    assert( lcid < C_.size() );
+//
+//    return C_[ lcid ].get_axonal_delay();
+//  }
+
+  index
+  get_source( const index lcid ) override
+  {
+    return sources_[ lcid ];
   }
 
   const index
-  add_connection( const ConnectionT& c, const index source_node_id )
+  add_connection( const ConnectionT& c, const index source_node_id, const delay dendritic_delay )
   {
+    const size_t next_index = C_.size();
+    connection_indices_by_delay_[ dendritic_delay ].push_back( next_index );
+    dendritic_delay_regions_[ dendritic_delay ];
     C_.push_back( c );
     sources_.push_back( source_node_id );
     // Return index of added item
-    return C_.size() - 1;
-  }
-
-  index
-  get_source( const index local_target_connection_id ) override
-  {
-    return sources_[ local_target_connection_id ];
+    return next_index;
   }
 
   std::vector< index >
   get_connection_indices( const index source_node_id ) const override
   {
     // binary search in sorted sources
-    const std::vector< index >::const_iterator begin = sources_.begin();
-    const std::vector< index >::const_iterator end = sources_.end();
-    // TODO JV (pt): Secondary events: Is primary really always the case? (Adapted from master though)
-    std::vector< index >::const_iterator it = std::lower_bound( begin, end, source_node_id );
+    std::vector< index >::const_iterator it = sources_.cbegin();
+    const std::vector< index >::const_iterator end = sources_.cend();
 
     std::vector< index > indices;
-
-    index connection_index = it - begin;
-
-    assert( false );
-    // TODO JV: This assumes the sources and connections are sorted by source node id
-    while ( it != end && *it == source_node_id )
+    while ( ( it = std::find( it, end, source_node_id ) ) != sources_.end() )
     {
+      const index connection_index = std::distance( sources_.cbegin(), it );
       // Connection is disabled
       if ( not C_[ connection_index ].is_disabled() )
       {
-        indices.push_back( it - begin );
+        indices.push_back( connection_index );
       }
       ++it;
     }
@@ -307,12 +366,26 @@ public:
   void
   clear_sources() override
   {
+    // TODO JV: Is this actually safe? Or is swap the better way of clearing 2D vectors?
     sources_.clear();
   }
 
   void
   send( const thread tid,
-    const index local_target_connection_id,
+    const index lcid,
+    const delay axonal_delay,
+    const std::vector< ConnectorModel* >& cm,
+    Event& e,
+    Node* target ) override
+  {
+    send( tid, lcid, axonal_delay, get_dendritic_delay( lcid ), cm, e, target );
+  }
+
+  void
+  send( const thread tid,
+    const index lcid,
+    const delay axonal_delay,
+    const delay dendritic_delay,
     const std::vector< ConnectorModel* >& cm,
     Event& e,
     Node* target ) override
@@ -320,16 +393,25 @@ public:
     typename ConnectionT::CommonPropertiesType const& cp =
       static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties();
 
-    e.set_port( local_target_connection_id );
-    if ( not C_[ local_target_connection_id ].is_disabled() )
+    e.set_port( lcid );
+    if ( not C_[ lcid ].is_disabled() )
     {
-      C_[ local_target_connection_id ].send( e, tid, cp, target );
-      send_weight_event( tid, local_target_connection_id, e, cp, target );
+      C_[ lcid ].send( e, tid, axonal_delay, dendritic_delay, cp, target );
+      send_weight_event( tid, lcid, e, cp, target );
     }
   }
 
+  std::pair< double, double >
+  get_Kminus( const double dendritic_delay ) override
+  {
+    // get the post-synaptic trace in synapse time, i.e. the trace of the neuron "dendritic delay"-milliseconds ago
+    const delay dendritic_delay_steps = Time::delay_ms_to_steps( dendritic_delay );
+    const DelayRegion& delay_region = dendritic_delay_regions_.find( dendritic_delay_steps )->second;
+    return { delay_region.last_post_spike, delay_region.Kminus };
+  }
+
   void send_weight_event( const thread tid,
-    const index local_target_connection_id,
+    const index lcid,
     Event& e,
     const CommonSynapseProperties& cp,
     Node* target ) override;
@@ -351,21 +433,76 @@ public:
         C_[ i ].trigger_update_weight( tid,
           dopa_spikes,
           t_trig,
+          get_dendritic_delay( i ),
           static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties() );
       }
     }
   }
 
-  void correct_synapse_stdp_ax_delay( const index local_target_connection_id,
-    const double t_last_pre_spike,
-    double* weight_revert,
-    const double t_post_spike,
-    Node* target ) override;
+  void
+  update_stdp_connections( const double post_spike_time_syn,
+    const delay dendritic_delay,
+    const ConnectorModel* cm ) override;
+
+  void process_post_synaptic_spike( const index lcid, const double post_spike_time_syn, const ConnectorModel* cm ) override
+  {
+    typename ConnectionT::CommonPropertiesType const& cp =
+      static_cast< const GenericConnectorModel< ConnectionT >* >( cm )->get_common_properties();
+    C_[ lcid ].process_post_synaptic_spike( post_spike_time_syn, cp );
+  }
+
+  void update_trace( const double post_spike_time,
+    const delay dendritic_delay,
+    const double tau_minus_inv ) override
+  {
+    auto group_it = dendritic_delay_regions_.find( dendritic_delay );
+
+    // update post-synaptic trace
+    group_it->second.Kminus = group_it->second.Kminus
+        * std::exp( ( group_it->second.last_post_spike - ( post_spike_time + Time::delay_steps_to_ms( dendritic_delay ) ) ) * tau_minus_inv )
+      + 1;
+    group_it->second.last_post_spike = post_spike_time + Time::delay_steps_to_ms( dendritic_delay );
+  }
+
+  double get_trace( const double pre_spike_time,
+    const double dendritic_delay,
+    const double tau_minus_inv,
+    const std::deque< double >::const_iterator history_begin,
+    const std::deque< double >::const_iterator history_end ) override;
 
   void
-  sort_connections_and_sources() override
+  clear_history() override
   {
-    nest::sort( sources_, C_ );
+    for ( auto& group : dendritic_delay_regions_ )
+    {
+      group.second.Kminus = 0;
+      group.second.last_post_spike = -1;
+    }
+  }
+
+  void
+  prepare_connections() override
+  {
+    std::vector< ConnectionT > temp_connections;
+    std::vector< index > temp_sources;
+    temp_connections.reserve( C_.size() );
+    temp_sources.reserve( C_.size() );
+    for ( const auto& region : connection_indices_by_delay_ )
+    {
+      const auto region_start = temp_sources.cend();
+      for ( auto idx : region.second )
+      {
+        temp_connections.push_back( std::move( C_[ idx ] ) );
+        temp_sources.push_back( std::move( sources_[ idx ] ) );
+      }
+      dendritic_delay_regions_[ region.first ] = { static_cast< index >(
+                                                     std::distance( temp_sources.cbegin(), region_start ) ),
+        static_cast< index >( std::distance( temp_sources.cbegin(), temp_sources.cend() ) ),
+        0,
+        -1 };
+    }
+    C_ = std::move( temp_connections );
+    sources_ = std::move( temp_sources );
   }
 
   void
