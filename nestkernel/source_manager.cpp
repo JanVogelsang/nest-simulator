@@ -80,17 +80,18 @@ void
 SourceManager::finalize()
 {
   // only clear sources when there were nodes added to the simulation already
-  if ( kernel().node_manager.size() > 0 ){
-#pragma omp parallel
+  if ( kernel().node_manager.size() > 0 )
   {
-    const thread tid = kernel().vp_manager.get_thread_id();
-    if ( is_cleared_[ tid ].is_false() )
+#pragma omp parallel
     {
-      clear( tid );
-      compressible_sources_[ tid ].clear();
-      compressed_spike_data_map_[ tid ].clear();
+      const thread tid = kernel().vp_manager.get_thread_id();
+      if ( is_cleared_[ tid ].is_false() )
+      {
+        clear( tid );
+        compressible_sources_[ tid ].clear();
+        compressed_spike_data_map_[ tid ].clear();
+      }
     }
-  }
   }
 
   current_positions_.clear();
@@ -258,7 +259,7 @@ SourceManager::reject_last_target_data( const thread tid )
 void
 SourceManager::reset_processed_flags( const thread tid )
 {
-  // TODO JV: Make sure iteration over all nodes is efficient
+  // TODO JV (help): Make sure iteration over all nodes is efficient
   const SparseNodeArray& thread_local_nodes = kernel().node_manager.get_local_nodes( tid );
 
   for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )

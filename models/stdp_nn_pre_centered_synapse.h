@@ -147,8 +147,7 @@ public:
   // ConnectionBase. This avoids explicit name prefixes in all places these
   // functions are used. Since ConnectionBase depends on the template parameter,
   // they are not automatically found in the base class.
-  using ConnectionBase::get_delay;
-  using ConnectionBase::get_delay_steps;
+  using ConnectionBase::get_dendritic_delay_steps;
 
   /**
    * Get all properties of this connection and put them into a dictionary.
@@ -182,12 +181,12 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const rport receptor_type, const delay dendritic_delay, const delay axonal_delay, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
 
 
-    t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
+    t.register_stdp_connection( t_lastspike_ - get_dendritic_delay(), get_dendritic_delay() );
   }
 
   void
@@ -239,7 +238,7 @@ stdp_nn_pre_centered_synapse::send( Event& e, thread t, const CommonSynapsePrope
 
   // use accessor functions (inherited from Connection< >) to obtain delay and
   // target
-  double dendritic_delay = get_delay();
+  double dendritic_delay = get_dendritic_delay();
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
   std::deque< histentry >::iterator start;
@@ -291,7 +290,7 @@ stdp_nn_pre_centered_synapse::send( Event& e, thread t, const CommonSynapsePrope
   e.set_weight( weight_ );
   // use accessor functions (inherited from Connection< >) to obtain delay in
   // steps and rport
-  e.set_delay_steps( get_delay_steps() );
+  e.set_delay_steps( get_dendritic_delay_steps() );
   e();
 
   t_lastspike_ = t_spike;

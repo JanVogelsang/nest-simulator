@@ -249,8 +249,7 @@ public:
   // ConnectionBase. This avoids explicit name prefixes in all places these
   // functions are used. Since ConnectionBase depends on the template parameter,
   // they are not automatically found in the base class.
-  using ConnectionBase::get_delay;
-  using ConnectionBase::get_delay_steps;
+  using ConnectionBase::get_dendritic_delay_steps;
 
   /**
    * Get all properties of this connection and put them into a dictionary.
@@ -297,12 +296,12 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const rport receptor_type, const delay dendritic_delay, const delay axonal_delay, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
 
 
-    t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
+    t.register_stdp_connection( t_lastspike_ - get_dendritic_delay(), get_dendritic_delay() );
   }
 
   void
@@ -470,7 +469,7 @@ stdp_facetshw_synapse_hom::send( Event& e, thread t, const STDPFACETSHWHomCommon
 
   // t_lastspike_ = 0 initially
 
-  double dendritic_delay = Time( Time::step( get_delay_steps() ) ).get_ms();
+  double dendritic_delay = Time( Time::step( get_dendritic_delay_steps() ) ).get_ms();
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
   std::deque< histentry >::iterator start;
@@ -499,7 +498,7 @@ stdp_facetshw_synapse_hom::send( Event& e, thread t, const STDPFACETSHWHomCommon
   }
 
   e.set_weight( weight_ );
-  e.set_delay_steps( get_delay_steps() );
+  e.set_delay_steps( get_dendritic_delay_steps() );
   e();
 
   t_lastspike_ = t_spike;

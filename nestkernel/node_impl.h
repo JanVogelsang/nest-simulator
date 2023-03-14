@@ -66,8 +66,7 @@ Node::add_connection( Node& source_node,
   ConnectionT& connection,
   const rport receptor_type,
   const bool is_primary,
-  const bool from_device,
-  typename ConnectionT::CommonPropertiesType const& cp )
+  const bool from_device )
 {
   ConnectorBase* connector;
   // Check if the source of the connection is a device to add the connection to the corresponding container

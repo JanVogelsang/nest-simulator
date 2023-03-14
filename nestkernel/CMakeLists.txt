@@ -113,8 +113,7 @@ set ( nestkernel_sources
       position.h
       spatial.h spatial.cpp
       stimulation_backend.h
-      # adjacency_list.cpp adjacency_list.h
-      )
+      axonal_delay_connection.h )
 
 
 if ( HAVE_SIONLIB )

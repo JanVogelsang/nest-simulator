@@ -93,7 +93,6 @@ class ConnTestDummyNodeBase : public Node
   }
 };
 
-
 /**
  * Base class for representing connections.
  * It provides the mandatory properties receiver port and target,
@@ -117,7 +116,6 @@ public:
 
   Connection()
   {
-    set_delay( 1.0 );
   }
 
   Connection( const Connection& rhs ) = default;
@@ -172,7 +170,7 @@ public:
    * Return the delay of the connection in ms
    */
   double
-  get_delay() const
+  get_dendritic_delay() const
   {
     return Time::delay_steps_to_ms( delay_ );
   }
@@ -181,7 +179,7 @@ public:
    * Return the delay of the connection in steps
    */
   long
-  get_delay_steps() const
+  get_dendritic_delay_steps() const
   {
     return delay_;
   }
@@ -190,7 +188,7 @@ public:
    * Set the delay of the connection
    */
   void
-  set_delay( const double delay )
+  set_dendritic_delay( const double delay )
   {
     delay_ = Time::delay_ms_to_steps( delay );
   }
@@ -199,9 +197,33 @@ public:
    * Set the delay of the connection in steps
    */
   void
-  set_delay_steps( const long delay )
+  set_dendritic_delay_steps( const long delay )
   {
     delay_ = delay;
+  }
+
+  /**
+   * Set the proportion of the transmission delay attributed to the axon.
+   */
+  void
+  set_axonal_delay( const double )
+  {
+    throw UnexpectedEvent( "Connection does not support axonal delays." );
+  }
+
+  /**
+   * Get the proportion of the transmission delay attributed to the axon.
+   */
+  double
+  get_axonal_delay() const
+  {
+    throw UnexpectedEvent( "Connection does not support axonal delays." );
+  }
+
+  bool
+  supports_axonal_delay() const
+  {
+    return false;
   }
 
   long
@@ -255,7 +277,7 @@ protected:
 inline void
 Connection::get_status( DictionaryDatum& d ) const
 {
-  def< double >( d, names::delay, get_delay() );
+  def< double >( d, names::delay, get_dendritic_delay() );
 }
 
 inline void
@@ -265,7 +287,7 @@ Connection::set_status( const DictionaryDatum& d, ConnectorModel& )
   if ( updateValue< double >( d, names::delay, delay ) )
   {
     kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
-    set_delay( delay );
+    set_dendritic_delay( delay );
   }
 }
 

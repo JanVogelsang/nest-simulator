@@ -82,9 +82,14 @@ public:
   virtual void set_synapse_status( const index lcid, const DictionaryDatum& dict, ConnectorModel& cm ) = 0;
 
   /**
-   * Get the proportion of the transmission delay attributed to the dendrite.
+   * Get the proportion of the transmission delay attributed to the dendrite of a connection.
    */
-  virtual double get_connection_delay( const index lcid, ConnectorModel& cm ) = 0;
+  virtual double get_dendritic_delay( const index lcid ) = 0;
+
+  /**
+   * Get the proportion of the transmission delay attributed to the axon of a connection.
+   */
+  virtual double get_axonal_delay( const index lcid ) = 0;
 
   /**
    * Get information about the source node of a specific connection.
@@ -236,11 +241,19 @@ public:
   }
 
   double
-  get_connection_delay( const index lcid, ConnectorModel& cm ) override
+  get_dendritic_delay( const index lcid ) override
   {
     assert( lcid < C_.size() );
 
-    return C_[ lcid ].get_delay();
+    return C_[ lcid ].get_dendritic_delay();
+  }
+
+  double
+  get_axonal_delay( const index lcid ) override
+  {
+    assert( lcid < C_.size() );
+
+    return C_[ lcid ].get_axonal_delay();
   }
 
   const index

@@ -492,6 +492,7 @@ ConnectionManager::connect( const index snode_id,
   const synindex syn_id,
   const DictionaryDatum& params,
   const double delay,
+  const double axonal_delay,
   const double weight )
 {
   kernel().model_manager.assert_valid_syn_id( syn_id );
@@ -502,7 +503,7 @@ ConnectionManager::connect( const index snode_id,
 
   if ( connection_type != NO_CONNECTION )
   {
-    connect_( *source, *target, target_thread, syn_id, params, connection_type, delay, weight );
+    connect_( *source, *target, target_thread, syn_id, params, connection_type, delay, axonal_delay, weight );
   }
 }
 
@@ -542,6 +543,7 @@ ConnectionManager::connect_arrays( long* sources,
   long* targets,
   double* weights,
   double* delays,
+  double* axonal_delays,
   std::vector< std::string >& p_keys,
   double* p_values,
   size_t n,
@@ -597,7 +599,8 @@ ConnectionManager::connect_arrays( long* sources,
   }
 
   // Increments pointers to weight and delay, if they are specified.
-  auto increment_wd = [ weights, delays ]( decltype( weights ) & w, decltype( delays ) & d )
+  auto increment_wd = [ weights, delays, axonal_delays ](
+                        decltype( weights ) & w, decltype( delays ) & d, decltype( axonal_delays ) & a )
   {
     if ( weights )
     {
@@ -606,6 +609,10 @@ ConnectionManager::connect_arrays( long* sources,
     if ( delays )
     {
       ++d;
+    }
+    if ( axonal_delays )
+    {
+      ++a;
     }
   };
 
@@ -624,8 +631,10 @@ ConnectionManager::connect_arrays( long* sources,
       auto t = targets;
       auto w = weights;
       auto d = delays;
+      auto a = axonal_delays;
       double weight_buffer = numerics::nan;
       double delay_buffer = numerics::nan;
+      double axonal_delay_buffer = numerics::nan;
       int index_counter = 0; // Index of the current connection, for connection parameters
 
       for ( ; s != sources + n; ++s, ++t, ++index_counter )
@@ -641,7 +650,7 @@ ConnectionManager::connect_arrays( long* sources,
         auto target_node = kernel().node_manager.get_node_or_proxy( *t, tid );
         if ( target_node->is_proxy() )
         {
-          increment_wd( w, d );
+          increment_wd( w, d, a );
           continue;
         }
 
@@ -654,6 +663,10 @@ ConnectionManager::connect_arrays( long* sources,
         if ( delays )
         {
           delay_buffer = *d;
+        }
+        if ( axonal_delays )
+        {
+          axonal_delay_buffer = *a;
         }
 
         // Store the key-value pair of each parameter in the Dictionary.
@@ -687,11 +700,18 @@ ConnectionManager::connect_arrays( long* sources,
           }
         }
 
-        connect( *s, target_node, tid, synapse_model_id, param_dicts[ tid ], delay_buffer, weight_buffer );
+        connect( *s,
+          target_node,
+          tid,
+          synapse_model_id,
+          param_dicts[ tid ],
+          delay_buffer,
+          axonal_delay_buffer,
+          weight_buffer );
 
         ALL_ENTRIES_ACCESSED( *param_dicts[ tid ], "connect_arrays", "Unread dictionary entries: " );
 
-        increment_wd( w, d );
+        increment_wd( w, d, a );
       }
     }
     catch ( std::exception& err )
@@ -720,6 +740,7 @@ ConnectionManager::connect_( Node& source,
   const DictionaryDatum& params,
   const ConnectionType connection_type,
   const double delay,
+  const double axonal_delay,
   const double weight )
 {
   const bool is_primary = kernel().model_manager.get_connection_model( syn_id, tid ).is_primary();
@@ -744,7 +765,7 @@ ConnectionManager::connect_( Node& source,
 
   ConnectorModel& conn_model = kernel().model_manager.get_connection_model( syn_id, tid );
   const index local_target_connection_id = conn_model.add_connection(
-    source, target, syn_id, params, delay, weight, is_primary, connection_type == CONNECT_FROM_DEVICE );
+    source, target, syn_id, params, delay, axonal_delay, weight, is_primary, connection_type == CONNECT_FROM_DEVICE );
   switch ( connection_type )
   {
   case CONNECT:

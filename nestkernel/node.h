@@ -625,8 +625,7 @@ public:
     ConnectionT& connection,
     const rport receptor_type,
     const bool is_primary,
-    const bool from_device,
-    typename ConnectionT::CommonPropertiesType const& cp );
+    const bool from_device );
 
   /**
    * When receiving an event from a device, forward it to the corresponding connection and handle the event previously
