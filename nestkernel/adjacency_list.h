@@ -165,7 +165,7 @@ inline std::pair< std::vector< AdjacencyListTarget >::const_iterator,
 AdjacencyList::get_iterators( const thread tid, const index adjacency_list_index ) const
 {
   assert( tid >= 0 );
-  assert( static_cast<size_t>(tid) < adjacency_list_.size() );
+  assert( static_cast< size_t >( tid ) < adjacency_list_.size() );
   assert( adjacency_list_index < adjacency_list_[ tid ].size() );
 
   return { adjacency_list_[ tid ][ adjacency_list_index ].cbegin(),
@@ -182,8 +182,8 @@ AdjacencyList::add_target( const thread tid,
   const bool prepare_for_compression )
 {
   assert( tid >= 0 );
-  assert( static_cast<size_t>(tid) < adjacency_list_.size() );
-  assert( static_cast<size_t>(tid) < sources_.size() );
+  assert( static_cast< size_t >( tid ) < adjacency_list_.size() );
+  assert( static_cast< size_t >( tid ) < sources_.size() );
 
   auto source_index = sources_[ tid ].find( source_node_id );
 
@@ -193,7 +193,7 @@ AdjacencyList::add_target( const thread tid,
     adjacency_list_[ tid ][ ( *source_index ).second ].emplace_back(
       local_target_node_id, local_target_connection_id, syn_id, axonal_delay );
   }
-  else  // actually the first connection
+  else // actually the first connection
   {
     const index new_index = adjacency_list_[ tid ].size(); // set index for this source node id
     sources_[ tid ][ source_node_id ] = new_index;

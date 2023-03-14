@@ -308,7 +308,10 @@ public:
   /**
    * Prepare the node for the next update cycle.
    */
-  virtual void prepare_update(){}
+  virtual void
+  prepare_update()
+  {
+  }
 
   /**
    * Bring the node from state $t$ to $t+n*dt$, sends SecondaryEvents
@@ -829,9 +832,7 @@ public:
    */
   virtual void connect_synaptic_element( Name, int ) {};
 
-  virtual double get_trace( const double pre_spike_time,
-    const double dendritic_delay,
-    const synindex syn_id );
+  virtual double get_trace( const double pre_spike_time, const double dendritic_delay, const synindex syn_id );
 
   /**
    * return the Kminus value at t (in ms).
@@ -1284,7 +1285,7 @@ Node::deliver_event( const synindex syn_id,
 {
   SpikeEvent se;
   se.set_stamp( lag );
-  se.set_offset( offset );  // TODO JV (help): Why can't offset be incorporated into lag?
+  se.set_offset( offset ); // TODO JV (help): Why can't offset be incorporated into lag?
   se.set_sender_node_id_info( thread_, syn_id, node_id_, local_target_connection_id );
 
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the

@@ -184,7 +184,12 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void send( Event& e, const thread t, const delay axonal_delay, const delay dendritic_delay, const STDPHomCommonProperties&, Node* target );
+  void send( Event& e,
+    const thread t,
+    const delay axonal_delay,
+    const delay dendritic_delay,
+    const STDPHomCommonProperties&,
+    Node* target );
 
   void
   set_weight( double w )

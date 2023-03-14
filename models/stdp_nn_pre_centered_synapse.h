@@ -158,7 +158,12 @@ public:
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e, const thread t, const delay axonal_delay, const delay dendritic_delay, const CommonSynapseProperties& cp, Node* target );
+  void send( Event& e,
+    const thread t,
+    const delay axonal_delay,
+    const delay dendritic_delay,
+    const CommonSynapseProperties& cp,
+    Node* target );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase

@@ -613,7 +613,11 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
         const index local_target_connection_id = spike_data.get_local_target_connection_id();
 
         Node* target_node = kernel().node_manager.thread_lid_to_node( tid, local_target_node_id );
-        target_node->deliver_event( syn_id, local_target_connection_id, cm, prepared_timestamps[ spike_data.get_lag() ], spike_data.get_offset() );
+        target_node->deliver_event( syn_id,
+          local_target_connection_id,
+          cm,
+          prepared_timestamps[ spike_data.get_lag() ],
+          spike_data.get_offset() );
       }
 #else
       if ( kernel().connection_manager.use_compressed_spikes() )
@@ -626,14 +630,22 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
         const auto compressed_spike_data_it = compressed_spike_data.find( tid );
         if ( compressed_spike_data_it != compressed_spike_data.end() )
         {
-          deliver_to_adjacency_list( tid, compressed_spike_data_it->second, prepared_timestamps[ spike_data.get_lag() ], spike_data.get_offset(), cm );
+          deliver_to_adjacency_list( tid,
+            compressed_spike_data_it->second,
+            prepared_timestamps[ spike_data.get_lag() ],
+            spike_data.get_offset(),
+            cm );
         }
       }
       else // Delivery to single adjacency list entry (uncompressed spike)
       {
         if ( spike_data.get_tid() == tid )
         {
-          deliver_to_adjacency_list( tid, spike_data.get_adjacency_list_index(), prepared_timestamps[ spike_data.get_lag() ], spike_data.get_offset(), cm );
+          deliver_to_adjacency_list( tid,
+            spike_data.get_adjacency_list_index(),
+            prepared_timestamps[ spike_data.get_lag() ],
+            spike_data.get_offset(),
+            cm );
         }
       }
 #endif

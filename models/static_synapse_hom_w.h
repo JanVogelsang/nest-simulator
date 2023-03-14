@@ -153,7 +153,12 @@ public:
    * \param cp Common properties-object of the synapse
    */
   void
-  send( Event& e, const thread, const delay axonal_delay, const delay dendritic_delay, const CommonPropertiesHomW& cp, Node* )
+  send( Event& e,
+    const thread,
+    const delay axonal_delay,
+    const delay dendritic_delay,
+    const CommonPropertiesHomW& cp,
+    Node* )
   {
     e.set_weight( cp.get_weight() );
     e.set_delay_steps( dendritic_delay );

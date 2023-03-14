@@ -232,7 +232,12 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void send( Event& e, const thread t, const delay axonal_delay, const delay dendritic_delay, const STDPDopaCommonProperties& cp, Node* target );
+  void send( Event& e,
+    const thread t,
+    const delay axonal_delay,
+    const delay dendritic_delay,
+    const STDPDopaCommonProperties& cp,
+    Node* target );
 
   void trigger_update_weight( thread t,
     const std::vector< spikecounter >& dopa_spikes,

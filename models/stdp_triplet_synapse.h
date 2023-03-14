@@ -155,7 +155,12 @@ public:
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e, const thread t, const delay axonal_delay, const delay dendritic_delay, const CommonSynapseProperties& cp, Node* target );
+  void send( Event& e,
+    const thread t,
+    const delay axonal_delay,
+    const delay dendritic_delay,
+    const CommonSynapseProperties& cp,
+    Node* target );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -279,9 +284,8 @@ stdp_triplet_synapse::send( Event& e,
   // dendritic delay means we must look back in time by that amount
   // for determining the K value, because the K value must propagate
   // out to the synapse
-  weight_ = depress_( weight_,
-    target->get_K_value( dendritic_delay_ms, t_spike, e.get_sender_spike_data().syn_id ),
-    Kplus_triplet_ );
+  weight_ = depress_(
+    weight_, target->get_K_value( dendritic_delay_ms, t_spike, e.get_sender_spike_data().syn_id ), Kplus_triplet_ );
 
   Kplus_triplet_ += 1.0;
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) / tau_plus_ ) + 1.0;

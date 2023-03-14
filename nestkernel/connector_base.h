@@ -150,11 +150,11 @@ public:
     const delay dendritic_delay,
     const ConnectorModel* cm ) = 0;
 
-  virtual void process_post_synaptic_spike( const index lcid, const double post_spike_time_syn, const ConnectorModel* cm ) = 0;
+  virtual void
+  process_post_synaptic_spike( const index lcid, const double post_spike_time_syn, const ConnectorModel* cm ) = 0;
 
-  virtual void update_trace( const double post_spike_time,
-    const delay dendritic_delay,
-    const double tau_minus_inv ) = 0;
+  virtual void
+  update_trace( const double post_spike_time, const delay dendritic_delay, const double tau_minus_inv ) = 0;
 
   virtual double get_trace( const double pre_spike_time,
     const double dendritic_delay,
@@ -281,22 +281,24 @@ public:
     return std::lower_bound( dendritic_delay_regions_.begin(),
       dendritic_delay_regions_.end(),
       lcid,
-      []( const std::pair< const delay, DelayRegion >& r, const index idx ) -> const bool { return r.second.start < idx; } )
+      []( const std::pair< const delay, DelayRegion >& r, const index idx ) -> const bool
+      { return r.second.start < idx; } )
       ->first;
   }
 
-  double get_last_presynaptic_spike( const index lcid ) const override
+  double
+  get_last_presynaptic_spike( const index lcid ) const override
   {
     return C_[ lcid ].get_last_presynaptic_spike();
   }
 
-//  double
-//  get_axonal_delay( const index lcid ) const override
-//  {
-//    assert( lcid < C_.size() );
-//
-//    return C_[ lcid ].get_axonal_delay();
-//  }
+  //  double
+  //  get_axonal_delay( const index lcid ) const override
+  //  {
+  //    assert( lcid < C_.size() );
+  //
+  //    return C_[ lcid ].get_axonal_delay();
+  //  }
 
   index
   get_source( const index lcid ) override
@@ -439,27 +441,28 @@ public:
     }
   }
 
-  void
-  update_stdp_connections( const double post_spike_time_syn,
+  void update_stdp_connections( const double post_spike_time_syn,
     const delay dendritic_delay,
     const ConnectorModel* cm ) override;
 
-  void process_post_synaptic_spike( const index lcid, const double post_spike_time_syn, const ConnectorModel* cm ) override
+  void
+  process_post_synaptic_spike( const index lcid, const double post_spike_time_syn, const ConnectorModel* cm ) override
   {
     typename ConnectionT::CommonPropertiesType const& cp =
       static_cast< const GenericConnectorModel< ConnectionT >* >( cm )->get_common_properties();
     C_[ lcid ].process_post_synaptic_spike( post_spike_time_syn, cp );
   }
 
-  void update_trace( const double post_spike_time,
-    const delay dendritic_delay,
-    const double tau_minus_inv ) override
+  void
+  update_trace( const double post_spike_time, const delay dendritic_delay, const double tau_minus_inv ) override
   {
     auto group_it = dendritic_delay_regions_.find( dendritic_delay );
 
     // update post-synaptic trace
     group_it->second.Kminus = group_it->second.Kminus
-        * std::exp( ( group_it->second.last_post_spike - ( post_spike_time + Time::delay_steps_to_ms( dendritic_delay ) ) ) * tau_minus_inv )
+        * std::exp(
+          ( group_it->second.last_post_spike - ( post_spike_time + Time::delay_steps_to_ms( dendritic_delay ) ) )
+          * tau_minus_inv )
       + 1;
     group_it->second.last_post_spike = post_spike_time + Time::delay_steps_to_ms( dendritic_delay );
   }

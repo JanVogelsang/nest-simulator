@@ -55,7 +55,8 @@ ArchivingNode::ArchivingNode( const ArchivingNode& n )
 {
 }
 
-void ArchivingNode::init()
+void
+ArchivingNode::init()
 {
   Node::init();
   if ( max_axonal_delay_ )
@@ -71,7 +72,8 @@ ArchivingNode::register_stdp_connection( const delay axonal_delay, const delay d
   max_dendritic_delay_ = std::max( max_dendritic_delay_, dendritic_delay );
 
   // check if synapse type has been registered already
-  if( std::find(stdp_synapse_types_.begin(), stdp_synapse_types_.end(), syn_id ) == stdp_synapse_types_.end() ) {
+  if ( std::find( stdp_synapse_types_.begin(), stdp_synapse_types_.end(), syn_id ) == stdp_synapse_types_.end() )
+  {
     stdp_synapse_types_.push_back( syn_id );
   }
 }
@@ -180,11 +182,11 @@ ArchivingNode::update_stdp_connections( const delay lag )
   {
     const std::vector< ConnectorModel* >& cm = kernel().model_manager.get_connection_models( get_thread() );
     auto [ current_pre_synaptic_spike, last_pre_synaptic_spike ] = intermediate_spike_buffer_.get_next_spikes();
-    // Process all pending pre-synaptic spikes. Lag+1 is required, as lag marks the beginning of the current update step and
-    // the update should be performed at the end instead.
+    // Process all pending pre-synaptic spikes. Lag+1 is required, as lag marks the beginning of the current update step
+    // and the update should be performed at the end instead.
     while ( current_pre_synaptic_spike != last_pre_synaptic_spike and current_pre_synaptic_spike->t_syn_lag == lag + 1 )
     {
-      const double eps = kernel().connection_manager.get_stdp_eps();  // only get eps when there is a pre-synaptic spike
+      const double eps = kernel().connection_manager.get_stdp_eps(); // only get eps when there is a pre-synaptic spike
       const synindex syn_id = current_pre_synaptic_spike->syn_id;
       const index local_connection_id = current_pre_synaptic_spike->local_connection_id;
       const Time pre_spike_time = current_pre_synaptic_spike->t_stamp;
@@ -194,19 +196,24 @@ ArchivingNode::update_stdp_connections( const delay lag )
       const double last_pre_spike_time_ms = connections_[ syn_id ]->get_last_presynaptic_spike( local_connection_id );
       // If a pre-synaptic spike is about to be processed, make sure to process all post-synaptic spikes first, which
       // are due before or at the same time of the pre-synaptic spike.
-      for ( std::deque< double >::const_iterator archived_spike_it = history_.cbegin(); archived_spike_it != history_.cend(); ++archived_spike_it )
+      for ( std::deque< double >::const_iterator archived_spike_it = history_.cbegin();
+            archived_spike_it != history_.cend();
+            ++archived_spike_it )
       {
         const double post_spike_time_ms = *archived_spike_it + Time::delay_steps_to_ms( dendritic_delay );
         // Skip post-synaptic spikes which have been processed by the dendritic delay region already after the last
         // communication round.
-        const double last_communication_time_ms = pre_spike_time.get_ms() + Time::delay_steps_to_ms( axonal_delay - lag - 1 );
-        if ( last_communication_time_ms > post_spike_time_ms + eps or std::abs( last_communication_time_ms - post_spike_time_ms ) < eps )
+        const double last_communication_time_ms =
+          pre_spike_time.get_ms() + Time::delay_steps_to_ms( axonal_delay - lag - 1 );
+        if ( last_communication_time_ms > post_spike_time_ms + eps
+          or std::abs( last_communication_time_ms - post_spike_time_ms ) < eps )
         {
           continue;
         }
 
         // Only process spikes which reached the synapse after the last (already processed) pre-synaptic spike.
-        if ( last_pre_spike_time_ms > post_spike_time_ms + eps or std::abs( last_pre_spike_time_ms - post_spike_time_ms ) < eps )
+        if ( last_pre_spike_time_ms > post_spike_time_ms + eps
+          or std::abs( last_pre_spike_time_ms - post_spike_time_ms ) < eps )
         {
           continue;
         }
@@ -234,7 +241,8 @@ ArchivingNode::update_stdp_connections( const delay lag )
   }
 }
 
-void ArchivingNode::prepare_update()
+void
+ArchivingNode::prepare_update()
 {
   intermediate_spike_buffer_.prepare_next_slice();
 
@@ -244,7 +252,7 @@ void ArchivingNode::prepare_update()
   auto [ current_pre_synaptic_spike, last_pre_synaptic_spike ] = intermediate_spike_buffer_.get_next_spikes();
   const Time origin = kernel().simulation_manager.get_slice_origin();
   const delay min_delay = kernel().connection_manager.get_min_delay();
-  for ( delay lag = 1; lag != min_delay + 1; ++lag)
+  for ( delay lag = 1; lag != min_delay + 1; ++lag )
   {
     const Time t_now = origin + Time::step( lag );
     std::deque< double >::const_iterator archived_spike_it = history_.cbegin();
@@ -255,7 +263,8 @@ void ArchivingNode::prepare_update()
       const tic_t time_since_post_spike_tics = ( t_now - Time::ms( *archived_spike_it ) ).get_tics();
       if ( time_since_post_spike_tics >= 0 )
       {
-        // TODO JV (pt): Precise spike times will lead to a wrong delay here, as Time::ms does a round while a ceil would
+        // TODO JV (pt): Precise spike times will lead to a wrong delay here, as Time::ms does a round while a ceil
+        // would
         //  be required to "remove" the offset from the spike time.
         const delay dendritic_delay = Time( Time::tic( time_since_post_spike_tics ) ).get_steps();
         for ( const synindex stdp_syn_id : stdp_synapse_types_ )
@@ -267,9 +276,9 @@ void ArchivingNode::prepare_update()
         // as soon as dendritic delay > max dendritic delay here, the spike can be safely removed from history
         if ( dendritic_delay > max_dendritic_delay_ )
         {
-          // This is guaranteed to always start erasing from the beginning of the history as entries are inserted into the
-          // history in chronological order. Thus, this will never create any holes.
-          archived_spike_it = history_.erase( archived_spike_it );  // it points to next element after erasing
+          // This is guaranteed to always start erasing from the beginning of the history as entries are inserted into
+          // the history in chronological order. Thus, this will never create any holes.
+          archived_spike_it = history_.erase( archived_spike_it ); // it points to next element after erasing
           continue;
         }
         // process all pending post-synaptic spikes
@@ -300,9 +309,10 @@ void ArchivingNode::prepare_update()
   intermediate_spike_buffer_.prepare_next_slice();
 }
 
-void ArchivingNode::end_update()
+void
+ArchivingNode::end_update()
 {
-  if ( max_axonal_delay_ > 0 )  // no need to clean the intermediate spike buffer if there is no axonal delay
+  if ( max_axonal_delay_ > 0 ) // no need to clean the intermediate spike buffer if there is no axonal delay
   {
     intermediate_spike_buffer_.clean_slice();
   }
@@ -339,9 +349,11 @@ ArchivingNode::deliver_event( const synindex syn_id,
 
 
   // end of slice is inclusive, therefore subtract 1
-  const unsigned long slices_to_postpone = static_cast< unsigned long >( ( time_until_reaching_synapse + min_delay - 1 ) / min_delay );
+  const unsigned long slices_to_postpone =
+    static_cast< unsigned long >( ( time_until_reaching_synapse + min_delay - 1 ) / min_delay );
   const delay t_syn_lag = time_until_reaching_synapse + min_delay - slices_to_postpone * min_delay;
-  intermediate_spike_buffer_.push_back( slices_to_postpone, lag, axonal_delay, syn_id, local_target_connection_id, t_syn_lag );
+  intermediate_spike_buffer_.push_back(
+    slices_to_postpone, lag, axonal_delay, syn_id, local_target_connection_id, t_syn_lag );
 }
 
 void

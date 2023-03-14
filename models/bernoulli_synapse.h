@@ -138,7 +138,12 @@ public:
   }
 
   void
-  send( Event& e, const thread t, const delay axonal_delay, const delay dendritic_delay, const CommonSynapseProperties&, Node* target )
+  send( Event& e,
+    const thread t,
+    const delay axonal_delay,
+    const delay dendritic_delay,
+    const CommonSynapseProperties&,
+    Node* target )
   {
     SpikeEvent e_spike = static_cast< SpikeEvent& >( e );
 

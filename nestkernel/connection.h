@@ -159,20 +159,20 @@ public:
   /**
    * Set the proportion of the transmission delay attributed to the axon.
    */
-//  void
-//  set_axonal_delay( const double )
-//  {
-//    throw UnexpectedEvent( "Connection does not support axonal delays." );
-//  }
+  //  void
+  //  set_axonal_delay( const double )
+  //  {
+  //    throw UnexpectedEvent( "Connection does not support axonal delays." );
+  //  }
 
   /**
    * Get the proportion of the transmission delay attributed to the axon.
    */
-//  double
-//  get_axonal_delay() const
-//  {
-//    throw UnexpectedEvent( "Connection does not support axonal delays." );
-//  }
+  //  double
+  //  get_axonal_delay() const
+  //  {
+  //    throw UnexpectedEvent( "Connection does not support axonal delays." );
+  //  }
 
   double
   get_last_presynaptic_spike() const

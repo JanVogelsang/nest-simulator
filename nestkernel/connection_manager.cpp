@@ -774,8 +774,13 @@ ConnectionManager::connect_( Node& source,
 #ifdef USE_ADJACENCY_LIST
   case CONNECT:
     // if two nodes (no devices) are connected to each other, we have to add an entry to the adjacency list
-    adjacency_list_.add_target(
-      tid, syn_id, source.get_node_id(), target.get_thread_lid(), local_target_connection_id, Time::delay_ms_to_steps( axonal_delay ), use_compressed_spikes_ );
+    adjacency_list_.add_target( tid,
+      syn_id,
+      source.get_node_id(),
+      target.get_thread_lid(),
+      local_target_connection_id,
+      Time::delay_ms_to_steps( axonal_delay ),
+      use_compressed_spikes_ );
     break;
 #endif
   case CONNECT_FROM_DEVICE:

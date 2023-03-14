@@ -525,9 +525,7 @@ Node::get_K_value( const double, const double, const synindex )
 }
 
 double
-Node::get_trace( const double pre_spike_time,
-  const double dendritic_delay,
-  const synindex syn_id )
+Node::get_trace( const double pre_spike_time, const double dendritic_delay, const synindex syn_id )
 {
   throw UnexpectedEvent( "Can't retrieve STDP history. Base node class does not store its history." );
 }

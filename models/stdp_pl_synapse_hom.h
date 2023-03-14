@@ -159,7 +159,12 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void send( Event& e, const thread t, const delay axonal_delay, const delay dendritic_delay, const STDPPLHomCommonProperties&, Node* target );
+  void send( Event& e,
+    const thread t,
+    const delay axonal_delay,
+    const delay dendritic_delay,
+    const STDPPLHomCommonProperties&,
+    Node* target );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {

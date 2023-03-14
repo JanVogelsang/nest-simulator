@@ -158,9 +158,12 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void
-  send( Event& e, const thread t, const delay axonal_delay, const delay dendritic_delay,
-     const STDPPLHomAxDelayCommonProperties&, Node* target );
+  void send( Event& e,
+    const thread t,
+    const delay axonal_delay,
+    const delay dendritic_delay,
+    const STDPPLHomAxDelayCommonProperties&,
+    Node* target );
 
   /**
    * Process a post-synaptic spike after it is backpropagated to the synapse.
@@ -242,7 +245,7 @@ private:
   // data members of each connection
   double weight_;
   double Kplus_;
-  double t_lastspike_;  //!< time of the last pre-synaptic spike when it reached this synapse
+  double t_lastspike_; //!< time of the last pre-synaptic spike when it reached this synapse
 };
 
 //
@@ -267,9 +270,8 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e,
   // Process all post-synaptic spikes which have to be processed before this pre-synaptic spike. The post-synaptic
   // spikes could not be processed before, as this connection might have an axonal delay lower than min_delay. Hence,
   // the order at which pre- and post-synaptic spikes have to be processed can only be known after the communication.
-  const double K_minus = target->get_trace( t_spike,
-    Time::delay_steps_to_ms( dendritic_delay ),
-    e.get_sender_spike_data().syn_id );
+  const double K_minus =
+    target->get_trace( t_spike, Time::delay_steps_to_ms( dendritic_delay ), e.get_sender_spike_data().syn_id );
 
   // depression due to new pre-synaptic spike
   weight_ = depress_( weight_, K_minus, cp );

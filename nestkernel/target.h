@@ -112,7 +112,7 @@ public:
     const delay dendritic_delay,
     const synindex syn_id,
     const index local_target_node_id,
-    const index local_target_connection_id );  // only required for devices
+    const index local_target_connection_id ); // only required for devices
   Target( const thread tid, const thread rank, const index adjacency_list_index );
 
   Target& operator=( const Target& );

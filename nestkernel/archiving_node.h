@@ -90,9 +90,7 @@ public:
    */
   // double get_K_value( double t ) override;
 
-  double get_trace( const double pre_spike_time,
-    const double dendritic_delay,
-    const synindex syn_id ) override;
+  double get_trace( const double pre_spike_time, const double dendritic_delay, const synindex syn_id ) override;
 
   /**
    * \fn void get_K_values( double t,
@@ -150,7 +148,8 @@ public:
    * t_first_read: The newly registered synapse will read the history entries
    * with t > t_first_read.
    */
-  void register_stdp_connection( const delay axonal_delay, const delay dendritic_delay, const synindex syn_id ) override;
+  void
+  register_stdp_connection( const delay axonal_delay, const delay dendritic_delay, const synindex syn_id ) override;
 
   /**
    * Postponed delivery is required for STDP synapses with predominantly axonal delay. The archiving node supports this
@@ -276,11 +275,10 @@ ArchivingNode::get_spiketime_ms() const
 }
 
 inline double
-ArchivingNode::get_trace( const double pre_spike_time,
-  const double dendritic_delay,
-  const synindex syn_id )
+ArchivingNode::get_trace( const double pre_spike_time, const double dendritic_delay, const synindex syn_id )
 {
-  return connections_[ syn_id ]->get_trace( pre_spike_time, dendritic_delay, tau_minus_inv_, history_.cbegin(), history_.cend() );
+  return connections_[ syn_id ]->get_trace(
+    pre_spike_time, dendritic_delay, tau_minus_inv_, history_.cbegin(), history_.cend() );
 }
 
 } // of namespace

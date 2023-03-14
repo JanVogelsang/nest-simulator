@@ -136,7 +136,12 @@ public:
   }
 
   void
-  send( Event& e, const thread, const delay axonal_delay, const delay dendritic_delay, const CommonSynapseProperties&, Node* )
+  send( Event& e,
+    const thread,
+    const delay axonal_delay,
+    const delay dendritic_delay,
+    const CommonSynapseProperties&,
+    Node* )
   {
     e.set_weight( weight_ );
     e.set_delay_steps( dendritic_delay );

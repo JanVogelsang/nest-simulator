@@ -75,8 +75,12 @@ public:
   }
 
   void
-  deliver_event( const synindex, const index, const std::vector< ConnectorModel* >&, const Time, const delay, const double )
-    override
+  deliver_event( const synindex,
+    const index,
+    const std::vector< ConnectorModel* >&,
+    const Time,
+    const delay,
+    const double ) override
   {
   }
 

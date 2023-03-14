@@ -112,7 +112,12 @@ public:
    * \param p The port under which this connection is stored in the Connector.
    */
   void
-  send( Event& e, const thread t, const delay axonal_delay, const delay dendritic_delay, const CommonSynapseProperties&, Node* target )
+  send( Event& e,
+    const thread t,
+    const delay axonal_delay,
+    const delay dendritic_delay,
+    const CommonSynapseProperties&,
+    Node* target )
   {
     e.set_weight( weight_ );
     e();

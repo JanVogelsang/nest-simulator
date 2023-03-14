@@ -125,7 +125,12 @@ public:
    * \param p The port under which this connection is stored in the Connector.
    */
   void
-  send( Event& e, const thread t, const delay axonal_delay, const delay dendritic_delay, const CommonSynapseProperties&, Node* target )
+  send( Event& e,
+    const thread t,
+    const delay axonal_delay,
+    const delay dendritic_delay,
+    const CommonSynapseProperties&,
+    Node* target )
   {
     e.set_drift_factor( drift_factor_ );
     e.set_diffusion_factor( diffusion_factor_ );
