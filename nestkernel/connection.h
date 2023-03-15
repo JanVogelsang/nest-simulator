@@ -233,7 +233,7 @@ Connection::get_status( DictionaryDatum& ) const
 inline void
 Connection::set_status( const DictionaryDatum& d, ConnectorModel& )
 {
-  // TODO JV: It is not possible to set delay anymore now after connection has been created
+  // TODO JV (pt): It is not possible to set delay anymore now after connection has been created
 }
 
 inline void

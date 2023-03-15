@@ -81,17 +81,15 @@ generate_max_value( const uint8_t num_bits )
 #if TARGET_BITS_SPLIT == TARGET_BITS_SPLIT_STANDARD
 constexpr uint8_t NUM_BITS_RANK = 18U;
 constexpr uint8_t NUM_BITS_TID = 9U;
-constexpr uint8_t NUM_BITS_SYN_ID = 9U;
+constexpr uint8_t NUM_BITS_SYN_ID = 8U;
 #elif TARGET_BITS_SPLIT == TARGET_BITS_SPLIT_HPC
 constexpr uint8_t NUM_BITS_RANK = 20U;
 constexpr uint8_t NUM_BITS_TID = 10U;
-constexpr uint8_t NUM_BITS_SYN_ID = 6U;
+constexpr uint8_t NUM_BITS_SYN_ID = 5U;
 #endif
-constexpr uint8_t NUM_BITS_LOCAL_NODE_ID = 13U;
+constexpr uint8_t NUM_BITS_LOCAL_NODE_ID = 14U;
 constexpr uint8_t NUM_BITS_LOCAL_CONNECTION_ID = 14U;
-constexpr uint8_t NUM_BITS_ADJACENCY_LIST_INDEX =
-  32U; // NUM_BITS_LOCAL_NODE_ID + NUM_BITS_LOCAL_CONNECTION_ID + NUM_BITS_SYN_ID;  // TODO JV (pt): We don't need that
-       // many bits here
+constexpr uint8_t NUM_BITS_ADJACENCY_LIST_INDEX = 32U;  // TODO JV (pt): We don't need that many bits here
 constexpr uint8_t NUM_BITS_PROCESSED_FLAG = 1U;
 constexpr uint8_t NUM_BITS_MARKER_SPIKE_DATA = 2U;
 constexpr uint8_t NUM_BITS_LAG = 14U;

@@ -20,13 +20,8 @@
  *
  */
 
-// TODO JV: Define only for debugging!
-// #define USE_ADJACENCY_LIST ON
-// TODO JV: Test with very low communication sizes, so multiple communication rounds are needed (both spikes and
-//  targets)
-
-#ifndef NEST_ADJACENCY_LIST_H
-#define NEST_ADJACENCY_LIST_H
+#ifndef ADJACENCY_LIST_H
+#define ADJACENCY_LIST_H
 #ifdef USE_ADJACENCY_LIST
 
 // C++ includes:
@@ -317,4 +312,4 @@ AdjacencyList::get_next_target( const thread tid )
 } // nest
 
 #endif // USE_ADJACENCY_LIST
-#endif // NEST_ADJACENCY_LIST_H
+#endif // ADJACENCY_LIST_H

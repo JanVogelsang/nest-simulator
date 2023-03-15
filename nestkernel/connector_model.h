@@ -31,6 +31,7 @@
 #include "numerics.h"
 
 // Includes from nestkernel:
+#include "connection_type_enum.h"
 #include "nest_time.h"
 #include "nest_types.h"
 
@@ -78,15 +79,15 @@ public:
    * omitted, NAN indicates this and weight/delay are set only if they are
    * valid.
    */
-  virtual const index add_connection( Node& src,
+  virtual const std::tuple< index, double, double > add_connection( Node& src,
     Node& tgt,
     const synindex syn_id,
     const DictionaryDatum& d,
-    const double delay = NAN,
-    const double axonal_delay = NAN,
-    const double weight = NAN,
-    const bool is_primary = true,
-    const bool from_device = false ) = 0;
+    const double delay,
+    const double axonal_delay,
+    const double weight,
+    const bool is_primary,
+    const ConnectionType connection_type ) = 0;
 
   virtual ConnectorModel* clone( std::string, synindex syn_id ) const = 0;
 
@@ -227,7 +228,7 @@ public:
   {
   }
 
-  const index add_connection( Node& src,
+  const std::tuple< index, double, double > add_connection( Node& src,
     Node& tgt,
     const synindex syn_id,
     const DictionaryDatum& d,
@@ -235,7 +236,7 @@ public:
     const double axonal_delay,
     const double weight,
     const bool is_primary,
-    const bool from_device ) override;
+    const ConnectionType connection_type ) override;
 
   ConnectorModel* clone( std::string, synindex ) const override;
 

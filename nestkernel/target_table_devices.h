@@ -85,6 +85,7 @@ public:
   void add_connection_from_device( Node& source,
     Node& target,
     const index local_target_connection_id,
+    const delay dendritic_delay,
     const thread tid,
     const synindex syn_id );
 

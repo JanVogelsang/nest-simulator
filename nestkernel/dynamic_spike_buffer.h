@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef NEST_DYNAMIC_SPIKE_BUFFER_H
-#define NEST_DYNAMIC_SPIKE_BUFFER_H
+#ifndef DYNAMIC_SPIKE_BUFFER_H
+#define DYNAMIC_SPIKE_BUFFER_H
 
 // C++ includes:
 #include <algorithm>
@@ -160,4 +160,4 @@ DynamicSpikeBuffer::increase_slice_index()
 
 }
 
-#endif // NEST_DYNAMIC_SPIKE_BUFFER_H
+#endif // DYNAMIC_SPIKE_BUFFER_H

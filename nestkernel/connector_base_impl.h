@@ -44,7 +44,6 @@ Connector< ConnectionT >::update_stdp_connections( const double post_spike_time_
   const double eps = kernel().connection_manager.get_stdp_eps();
   const auto begin = C_.begin();
   // TODO JV (pt): Verify for precise spike times
-  // TODO JV: Make sure double->long conversion yields the correct delay
   auto group_it = dendritic_delay_regions_.find( dendritic_delay );
   if ( group_it != dendritic_delay_regions_.end() ) // check if there are connections with given dendritic delay
   {
@@ -129,6 +128,46 @@ Connector< ConnectionT >::get_trace( const double pre_spike_time,
   Kminus *= std::exp( ( last_post_spike - pre_spike_time ) * tau_minus_inv );
 
   return Kminus;
+}
+
+template < typename ConnectionT >
+void
+Connector< ConnectionT >::prepare_connections( const thread tid, const index target_lid )
+{
+  std::vector< ConnectionT > temp_connections;
+  std::vector< index > temp_sources;
+  temp_connections.reserve( C_.size() );
+  temp_sources.reserve( C_.size() );
+  for ( const auto& region : connection_indices_by_delay_ )
+  {
+    const auto region_start = temp_sources.cend();
+    for ( auto idx : region.second )
+    {
+#ifdef USE_ADJACENCY_LIST
+      // Add an entry to the adjacency list with the new (sorted) index
+      kernel().connection_manager.add_adjacency_list_target( tid,
+        syn_id_,
+        sources_[idx],
+        target_lid,
+        temp_connections.size(),
+        axonal_delays_[ idx ] );
+#endif
+
+      temp_connections.push_back( std::move( C_[ idx ] ) );
+      temp_sources.push_back( std::move( sources_[ idx ] ) );
+    }
+    dendritic_delay_regions_[ region.first ] = { static_cast< index >(
+                                                   std::distance( temp_sources.cbegin(), region_start ) ),
+      static_cast< index >( std::distance( temp_sources.cbegin(), temp_sources.cend() ) ),
+      0,
+      -1 };
+  }
+  C_ = std::move( temp_connections );
+  sources_ = std::move( temp_sources );
+  std::map< delay, std::vector< index > >().swap( connection_indices_by_delay_ );
+#ifdef USE_ADJACENCY_LIST
+  std::vector< delay >().swap( axonal_delays_ );
+#endif
 }
 
 } // of namespace nest

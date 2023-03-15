@@ -180,22 +180,6 @@ Node::has_stdp_connections() const
   throw UnexpectedEvent( "Node does not support STDP synapses." );
 }
 
-void
-Node::prepare_connections()
-{
-  // TODO JV (pt): Device connection indices must not change
-  if ( this->has_proxies() )
-  {
-    for ( auto conn : connections_ )
-    {
-      if ( conn )
-      {
-        conn->prepare_connections();
-      }
-    }
-  }
-}
-
 DictionaryDatum
 Node::get_status_base()
 {
@@ -310,12 +294,13 @@ void
 Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
   const synindex syn_id,
   const index local_target_connection_id,
+  const delay dendritic_delay,
   const std::vector< ConnectorModel* >& cm,
   DSSpikeEvent& e )
 {
-  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, 0, cm, e, this );
+  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, 0, dendritic_delay, cm, e, this );
 
-  // TODO JV: Make this cleaner, as only needed for poisson generators probably
+  // TODO JV (pt): Make this cleaner, as only needed for poisson generators probably
   if ( not e.get_multiplicity() )
   {
     return;

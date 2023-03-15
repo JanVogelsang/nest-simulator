@@ -44,6 +44,7 @@
 #include "delay_checker.h"
 #include "exceptions.h"
 #include "kernel_manager.h"
+#include "mpi_manager_impl.h"
 #include "nest_names.h"
 #include "node.h"
 #include "target_table_devices_impl.h"
@@ -126,9 +127,11 @@ ConnectionManager::initialize()
 void
 ConnectionManager::finalize()
 {
+#ifdef USE_ADJACENCY_LIST
+  adjacency_list_.finalize();
+#endif
   target_table_.finalize();
   target_table_devices_.finalize();
-  adjacency_list_.finalize();
   delete_connections_();
   std::vector< std::vector< std::vector< size_t > > >().swap( secondary_recv_buffer_pos_ );
 }
@@ -767,27 +770,15 @@ ConnectionManager::connect_( Node& source,
   }
 
   ConnectorModel& conn_model = kernel().model_manager.get_connection_model( syn_id, tid );
-  const index local_target_connection_id = conn_model.add_connection(
-    source, target, syn_id, params, delay, axonal_delay, weight, is_primary, connection_type == CONNECT_FROM_DEVICE );
+  const auto [ local_target_connection_id, actual_dendritic_delay, actual_axonal_delay ] = conn_model.add_connection(
+    source, target, syn_id, params, delay, axonal_delay, weight, is_primary, connection_type );
   switch ( connection_type )
   {
-#ifdef USE_ADJACENCY_LIST
-  case CONNECT:
-    // if two nodes (no devices) are connected to each other, we have to add an entry to the adjacency list
-    adjacency_list_.add_target( tid,
-      syn_id,
-      source.get_node_id(),
-      target.get_thread_lid(),
-      local_target_connection_id,
-      Time::delay_ms_to_steps( axonal_delay ),
-      use_compressed_spikes_ );
-    break;
-#endif
   case CONNECT_FROM_DEVICE:
-    target_table_devices_.add_connection_from_device( source, target, local_target_connection_id, tid, syn_id );
+    target_table_devices_.add_connection_from_device( source, target, local_target_connection_id, actual_dendritic_delay, tid, syn_id );
     break;
   case CONNECT_TO_DEVICE:
-    target_table_devices_.add_connection_to_device( source, target, local_target_connection_id, delay, tid, syn_id );
+    target_table_devices_.add_connection_to_device( source, target, local_target_connection_id, actual_dendritic_delay, tid, syn_id );
     break;
   default:
     break;
@@ -822,13 +813,6 @@ ConnectionManager::increase_connection_count( const thread tid, const synindex s
     num_connections_[ tid ].resize( syn_id + 1 );
   }
   ++num_connections_[ tid ][ syn_id ];
-  if ( num_connections_[ tid ][ syn_id ] >= MAX_LOCAL_CONNECTION_ID )
-  {
-    throw KernelException(
-      String::compose( "Too many connections: at most %1 connections supported per virtual "
-                       "process and synapse model to a specific target neuron.",
-        MAX_LOCAL_CONNECTION_ID ) );
-  }
 }
 
 std::vector< index >
@@ -1353,7 +1337,7 @@ ConnectionManager::compute_compressed_secondary_recv_buffer_positions( const thr
   }*/
 }
 
-ConnectionManager::ConnectionType
+ConnectionType
 ConnectionManager::connection_required( Node*& source, Node*& target, thread tid )
 {
   // The caller has to check and guarantee that the target is not a

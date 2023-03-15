@@ -81,6 +81,7 @@ set ( nestkernel_sources
       mpi_manager.h mpi_manager_impl.h mpi_manager.cpp
       simulation_manager.h simulation_manager.cpp
       connection_manager.h connection_manager_impl.h connection_manager.cpp
+      connection_type_enum.h
       sp_manager.h sp_manager_impl.h sp_manager.cpp
       delay_checker.h delay_checker.cpp
       random_manager.h random_manager.cpp
@@ -112,8 +113,7 @@ set ( nestkernel_sources
       spatial.h spatial.cpp
       stimulation_backend.h
       adjacency_list.h
-        dynamic_spike_buffer.cpp dynamic_spike_buffer.h
-      )
+      dynamic_spike_buffer.cpp dynamic_spike_buffer.h )
 
 
 if ( HAVE_SIONLIB )

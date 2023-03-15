@@ -34,6 +34,7 @@
 #include "adjacency_list.h"
 #include "conn_builder.h"
 #include "connection_id.h"
+#include "connection_type_enum.h"
 #include "nest_names.h"
 #include "nest_time.h"
 #include "nest_timeconverter.h"
@@ -64,17 +65,6 @@ class ConnectionManager : public ManagerInterface
 {
   friend class SimulationManager; // update_delay_extrema_
 public:
-  /**
-   * Connection type.
-   */
-  enum ConnectionType
-  {
-    CONNECT,
-    CONNECT_FROM_DEVICE,
-    CONNECT_TO_DEVICE,
-    NO_CONNECTION
-  };
-
   ConnectionManager();
   ~ConnectionManager() override;
 
@@ -414,6 +404,16 @@ public:
   {
     return adjacency_list_.get_compressed_spike_data( idx );
   }
+
+  /**
+   * Add a target to the adjacency list.
+   */
+  void add_adjacency_list_target( const thread tid,
+    const synindex syn_id,
+    const index source_node_id,
+    const index target_node_id,
+    const index target_connection_id,
+    const delay axonal_delay );
 #endif
 
   double get_stdp_eps() const;
@@ -676,6 +676,14 @@ ConnectionManager::get_device_connected( const thread tid, const index lcid ) co
 {
   return target_table_devices_.is_device_connected( tid, lcid );
 }
+
+#ifdef USE_ADJACENCY_LIST
+inline void
+ConnectionManager::add_adjacency_list_target( const thread tid, const synindex syn_id, const index source_node_id, const index target_node_id, const index target_connection_id, const delay axonal_delay )
+{
+  adjacency_list_.add_target( tid, syn_id, source_node_id, target_node_id, target_connection_id, axonal_delay, use_compressed_spikes_ );
+}
+#endif
 
 } // namespace nest
 

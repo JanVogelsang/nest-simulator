@@ -205,7 +205,7 @@ GenericConnectorModel< ConnectionT >::set_syn_id( synindex syn_id )
 }
 
 template < typename ConnectionT >
-const index
+const std::tuple< index, double, double >
 GenericConnectorModel< ConnectionT >::add_connection( Node& src,
   Node& tgt,
   const synindex syn_id,
@@ -214,7 +214,7 @@ GenericConnectorModel< ConnectionT >::add_connection( Node& src,
   const double axonal_delay,
   const double weight,
   const bool is_primary,
-  const bool from_device )
+  const ConnectionType connection_type )
 {
   nest::delay actual_dendritic_delay;
   // check if dendritic delay was not provided explicitly
@@ -300,14 +300,13 @@ GenericConnectorModel< ConnectionT >::add_connection( Node& src,
   connection.check_connection(
     src, tgt, actual_receptor_type, syn_id, actual_dendritic_delay, actual_axonal_delay, get_common_properties() );
 
-  return tgt.add_connection< ConnectionT >( src,
-    syn_id,
-    connection,
-    actual_receptor_type,
-    is_primary,
-    from_device,
+  return {
+    tgt.add_connection< ConnectionT >( src, syn_id, connection, actual_receptor_type, is_primary, connection_type,
+      actual_axonal_delay, actual_dendritic_delay
+    ),
     actual_dendritic_delay,
-    actual_axonal_delay );
+    actual_axonal_delay
+  };
 }
 
 } // namespace nest

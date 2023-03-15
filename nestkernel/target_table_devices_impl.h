@@ -38,6 +38,7 @@ inline void
 TargetTableDevices::add_connection_from_device( Node& source,
   Node& target,
   const index local_target_connection_id,
+  const delay dendritic_delay,
   const thread tid,
   const synindex syn_id )
 {
@@ -49,7 +50,7 @@ TargetTableDevices::add_connection_from_device( Node& source,
   assert( ldid < targets_from_devices_[ tid ].size() );
 
   targets_from_devices_[ tid ][ ldid ].push_back( Target(
-    target.get_thread(), kernel().vp_manager.get_vp(), syn_id, target.get_thread_lid(), local_target_connection_id ) );
+    target.get_thread(), dendritic_delay, syn_id, target.get_thread_lid(), local_target_connection_id ) );
 
   // store node ID of sending device
   sending_devices_node_ids_[ tid ][ ldid ] = source.get_node_id();
@@ -63,9 +64,6 @@ TargetTableDevices::add_connection_to_device( Node& source,
   const thread tid,
   const synindex syn_id )
 {
-  // TODO JV: Remove this and find another way to get the thread local node id
-  // kernel().node_manager.ensure_valid_thread_local_ids();
-
   const index source_lid = source.get_thread_lid();
   // Check if the source node has not been registered as source to devices yet
   if ( not targets_to_devices_[ tid ].count( source_lid ) )
@@ -116,7 +114,7 @@ TargetTableDevices::send_from_device( const thread tid, const index ldid, EventT
         ++it )
   {
     Node* target_node = kernel().node_manager.thread_lid_to_node( tid, it->get_local_target_node_id() );
-    target_node->deliver_event_from_device( tid, it->get_syn_id(), it->get_local_target_connection_id(), cm, e );
+    target_node->deliver_event_from_device( tid, it->get_syn_id(), it->get_local_target_connection_id(), it->get_dendritic_delay(), cm, e );
   }
 }
 

@@ -31,6 +31,7 @@
 // Includes from nestkernel:
 #include "archived_spike.h"
 #include "connector_base.h"
+#include "connection_type_enum.h"
 #include "deprecation_warning.h"
 #include "event.h"
 #include "nest_names.h"
@@ -479,6 +480,7 @@ public:
   resize_connections( const size_t size )
   {
     connections_.resize( size );
+    connections_from_devices_.resize( size );
   }
 
   /**
@@ -487,7 +489,6 @@ public:
   std::vector< index >
   get_connection_indices( const synindex syn_id, const index source_node_id ) const
   {
-    assert( connections_[ syn_id ] ); // TODO JV: Remove this
     if ( connections_[ syn_id ] )
     {
       return connections_[ syn_id ]->get_connection_indices( source_node_id );
@@ -602,9 +603,9 @@ public:
     ConnectionT& connection,
     const rport receptor_type,
     const bool is_primary,
-    const bool from_device,
-    const delay dendritic_delay,
-    const delay axonal_delay );
+    const ConnectionType from_device,
+    const delay axonal_delay,
+    const delay dendritic_delay );
 
   /**
    * When receiving an event from a device, forward it to the corresponding connection and handle the event previously
@@ -614,6 +615,7 @@ public:
   void deliver_event_from_device( const thread tid,
     const synindex syn_id,
     const index local_target_connection_id,
+    const delay dendritic_delay,
     const std::vector< ConnectorModel* >& cm,
     EventT& e );
 
@@ -621,13 +623,21 @@ public:
    * When receiving an incoming spike event, forward it to the corresponding connection and handle the event previously
    * updated by the connection.
    */
+#ifndef USE_ADJACENCY_LIST
+  virtual void deliver_event( const synindex syn_id,
+    const index local_target_connection_id,
+    const std::vector< ConnectorModel* >& cm,
+    const Time lag,
+    const double offset );
+#endif
+  //! Same as regular deliver event, but also providing cached axonal delay
   virtual void deliver_event( const synindex syn_id,
     const index local_target_connection_id,
     const std::vector< ConnectorModel* >& cm,
     const Time lag,
     const delay axonal_delay,
     const double offset );
-  //! Same as regular deliver event, but providing cached dendritic delay for connection
+  //! Same as regular deliver event with axonal delay provided, but also providing cached dendritic delay
   virtual void deliver_event( const synindex syn_id,
     const index local_target_connection_id,
     const std::vector< ConnectorModel* >& cm,
@@ -1262,6 +1272,19 @@ Node::get_thread_lid() const
   return thread_lid_;
 }
 
+#ifndef USE_ADJACENCY_LIST
+inline void
+Node::deliver_event( const synindex syn_id,
+  const index local_target_connection_id,
+  const std::vector< ConnectorModel* >& cm,
+  const Time lag,
+  const double offset )
+{
+  const delay axonal_delay = connections_[ syn_id ]->get_axonal_delay( local_target_connection_id );
+  deliver_event( syn_id, local_target_connection_id, cm, lag, axonal_delay, offset );
+}
+#endif
+
 inline void
 Node::deliver_event( const synindex syn_id,
   const index local_target_connection_id,
@@ -1297,6 +1320,21 @@ Node::deliver_event( const synindex syn_id,
   //  which can be indexed by the local connection id).
 
   handle( se );
+}
+
+inline void
+Node::prepare_connections()
+{
+  if ( this->has_proxies() )  // devices store dendritic delay in target_table and thus need no additional preparation
+  {
+    for ( auto conn : connections_ )
+    {
+      if ( conn )
+      {
+        conn->prepare_connections( thread_, thread_lid_ );
+      }
+    }
+  }
 }
 
 } // namespace

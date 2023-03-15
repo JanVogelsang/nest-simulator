@@ -257,8 +257,8 @@ SpikeData::set( const TargetT& target, const unsigned int lag )
 {
   // the assertions in the above function are granted by the TargetT object!
   assert( lag < MAX_LAG );
-  single_target_data_.node_id = target.get_local_target_node_id();
-  single_target_data_.connection_id = target.get_local_target_connection_id();
+  single_target_data_.local_target_node_id = target.get_local_target_node_id();
+  single_target_data_.local_target_connection_id = target.get_local_target_connection_id();
   single_target_data_.marker = SPIKE_DATA_ID_DEFAULT;
   single_target_data_.lag = lag;
   single_target_data_.tid = target.get_tid();

@@ -88,10 +88,12 @@ public:
    */
   virtual double get_last_presynaptic_spike( const index lcid ) const = 0;
 
+#ifndef USE_ADJACENCY_LIST
   /**
    * Get the proportion of the transmission delay attributed to the axon of a connection.
    */
-  // virtual double get_axonal_delay( const index lcid ) const = 0;
+  virtual double get_axonal_delay( const index lcid ) const = 0;
+#endif
 
   /**
    * Get information about the source node of a specific connection.
@@ -178,7 +180,7 @@ public:
   /**
    * Sort connections according to dendritic delay.
    */
-  virtual void prepare_connections() = 0;
+  virtual void prepare_connections( const thread tid, const index target_lid ) = 0;
 
   /**
    * Disable the transfer of events through the connection at position
@@ -190,20 +192,6 @@ public:
    * Remove disabled connections from the connector.
    */
   virtual void remove_disabled_connections( const index first_disabled_index ) = 0;
-
-
-protected:
-  /**
-   * This data structure stores the node IDs of presynaptic neurons connected to this neuron. If structural plasticity
-   * is disabled, it is only relevant during postsynaptic connection creation, before the connection information has
-   * been transferred to the presynaptic side.
-   * Arranged in a 2d array:
-   * 1st dimension: synapse types
-   * 2nd dimension: source node IDs
-   * After all connections have been created, the information stored in this structure is transferred to the presynaptic
-   * side and the sources vector can be cleared, unless further required for structural plasticity.
-   */
-  std::vector< index > sources_;
 };
 
 /**
@@ -226,12 +214,34 @@ private:
   const synindex syn_id_;
   std::map< delay, DelayRegion > dendritic_delay_regions_;
   std::map< delay, std::vector< index > > connection_indices_by_delay_;
+  std::vector< delay > axonal_delays_;
   std::vector< ConnectionT > C_;
+
+  /**
+   * This data structure stores the node IDs of presynaptic neurons connected to this neuron. If structural plasticity
+   * is disabled, it is only relevant during postsynaptic connection creation, before the connection information has
+   * been transferred to the presynaptic side.
+   * Arranged in a 2d array:
+   * 1st dimension: synapse types
+   * 2nd dimension: source node IDs
+   * After all connections have been created, the information stored in this structure is transferred to the presynaptic
+   * side and the sources vector can be cleared, unless further required for structural plasticity.
+   */
+  std::vector< index > sources_;
 
 public:
   explicit Connector( const synindex syn_id )
     : syn_id_( syn_id )
+    , dendritic_delay_regions_()
+    , connection_indices_by_delay_()
+    , axonal_delays_()
+    , C_()
+    , sources_()
   {
+    // TODO JV: Benchmark this both with and without reserve
+    axonal_delays_.reserve( 11250 );
+    C_.reserve( 11250 );
+    sources_.reserve( 11250 );
   }
 
   ~Connector() override
@@ -292,13 +302,15 @@ public:
     return C_[ lcid ].get_last_presynaptic_spike();
   }
 
-  //  double
-  //  get_axonal_delay( const index lcid ) const override
-  //  {
-  //    assert( lcid < C_.size() );
-  //
-  //    return C_[ lcid ].get_axonal_delay();
-  //  }
+#ifndef USE_ADJACENCY_LIST
+  double
+  get_axonal_delay( const index lcid ) const override
+  {
+    assert( lcid < axonal_delays_.size() );
+
+    return axonal_delays_[ lcid ];
+  }
+#endif
 
   index
   get_source( const index lcid ) override
@@ -306,16 +318,35 @@ public:
     return sources_[ lcid ];
   }
 
-  const index
-  add_connection( const ConnectionT& c, const index source_node_id, const delay dendritic_delay )
+  const index add_device_connection( ConnectionT& c, const index source_node_id )
   {
-    const size_t next_index = C_.size();
-    connection_indices_by_delay_[ dendritic_delay ].push_back( next_index );
-    dendritic_delay_regions_[ dendritic_delay ];
     C_.push_back( c );
     sources_.push_back( source_node_id );
-    // Return index of added item
-    return next_index;
+    if ( C_.size() > MAX_LOCAL_CONNECTION_ID )
+    {
+      throw KernelException(
+        String::compose( "Too many connections: at most %1 connections supported per virtual "
+                         "process and synapse model to a specific target neuron.",
+          MAX_LOCAL_CONNECTION_ID ) );
+    }
+    return C_.size() - 1;
+  }
+
+  void
+  add_connection( const ConnectionT& c, const index source_node_id, const delay axonal_delay, const delay dendritic_delay )
+  {
+    connection_indices_by_delay_[ dendritic_delay ].push_back( C_.size() );
+    dendritic_delay_regions_[ dendritic_delay ];
+    axonal_delays_.push_back( axonal_delay );
+    C_.push_back( c );
+    sources_.push_back( source_node_id );
+    if ( C_.size() > MAX_LOCAL_CONNECTION_ID )
+    {
+      throw KernelException(
+        String::compose( "Too many connections: at most %1 connections supported per virtual "
+                         "process and synapse model to a specific target neuron.",
+          MAX_LOCAL_CONNECTION_ID ) );
+    }
   }
 
   std::vector< index >
@@ -368,8 +399,7 @@ public:
   void
   clear_sources() override
   {
-    // TODO JV: Is this actually safe? Or is swap the better way of clearing 2D vectors?
-    sources_.clear();
+    std::vector< index >().swap( sources_ );
   }
 
   void
@@ -484,29 +514,7 @@ public:
   }
 
   void
-  prepare_connections() override
-  {
-    std::vector< ConnectionT > temp_connections;
-    std::vector< index > temp_sources;
-    temp_connections.reserve( C_.size() );
-    temp_sources.reserve( C_.size() );
-    for ( const auto& region : connection_indices_by_delay_ )
-    {
-      const auto region_start = temp_sources.cend();
-      for ( auto idx : region.second )
-      {
-        temp_connections.push_back( std::move( C_[ idx ] ) );
-        temp_sources.push_back( std::move( sources_[ idx ] ) );
-      }
-      dendritic_delay_regions_[ region.first ] = { static_cast< index >(
-                                                     std::distance( temp_sources.cbegin(), region_start ) ),
-        static_cast< index >( std::distance( temp_sources.cbegin(), temp_sources.cend() ) ),
-        0,
-        -1 };
-    }
-    C_ = std::move( temp_connections );
-    sources_ = std::move( temp_sources );
-  }
+  prepare_connections( const thread tid, const index target_lid ) override;
 
   void
   disable_connection( const index lcid ) override

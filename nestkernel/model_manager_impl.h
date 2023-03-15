@@ -57,6 +57,7 @@ template < class ConnectionT >
 void
 ModelManager::register_connection_model( const std::string& name, const RegisterConnectionModelFlags flags )
 {
+#if TARGET_BITS_SPLIT != TARGET_BITS_SPLIT_HPC  // This is necessary to not overflow on synapse types in HPC split
   // register normal version of the synapse
   ConnectorModel* cf = new GenericConnectorModel< ConnectionT >( name,
     enumFlagSet( flags, RegisterConnectionModelFlags::IS_PRIMARY ),
@@ -67,6 +68,7 @@ ModelManager::register_connection_model( const std::string& name, const Register
     enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_URBANCZIK_ARCHIVING ),
     enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_POSTPONED_DELIVERY ) );
   register_connection_model_( cf );
+#endif
 
   // register the "hpc" version with the same parameters but a different target identifier
   if ( enumFlagSet( flags, RegisterConnectionModelFlags::REGISTER_HPC ) )
@@ -82,6 +84,7 @@ ModelManager::register_connection_model( const std::string& name, const Register
     register_connection_model_( cf );
   }
 
+#if TARGET_BITS_SPLIT != TARGET_BITS_SPLIT_HPC  // This is necessary to not overflow on synapse types in HPC split
   // register the "lbl" (labeled) version with the same parameters but a different connection type
   if ( enumFlagSet( flags, RegisterConnectionModelFlags::REGISTER_LBL ) )
   {
@@ -96,6 +99,7 @@ ModelManager::register_connection_model( const std::string& name, const Register
 
     register_connection_model_( cf );
   }
+#endif
 }
 
 /**
