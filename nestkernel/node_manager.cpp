@@ -68,7 +68,7 @@ NodeManager::initialize()
   wfr_network_size_ = 0;
   local_nodes_.resize( kernel().vp_manager.get_num_threads() );
   num_thread_local_devices_.resize( kernel().vp_manager.get_num_threads(), 0 );
-  ensure_valid_thread_local_ids();
+  // ensure_valid_thread_local_ids();  // TODO JV (pt): Check this
 
   sw_construction_create_.reset();
 }

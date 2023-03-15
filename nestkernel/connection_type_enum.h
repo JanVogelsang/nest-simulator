@@ -1,5 +1,5 @@
 /*
-*  connection_manager.h
+*  connection_type_enum.h
 *
 *  This file is part of NEST.
 *

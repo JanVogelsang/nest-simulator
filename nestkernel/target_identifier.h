@@ -168,7 +168,7 @@ private:
 inline void
 TargetIdentifierIndex::set_target( Node* target )
 {
-  kernel().node_manager.ensure_valid_thread_local_ids();
+  // kernel().node_manager.ensure_valid_thread_local_ids();  // TODO JV (pt): Check this
 
   index target_lid = target->get_thread_lid();
   if ( target_lid > max_targetindex )
