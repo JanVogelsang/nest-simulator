@@ -230,6 +230,13 @@ bool
 SourceManager::seek_next_possible_source_position( const thread tid )
 {
   SourcePosition& source_position = current_positions_[ tid ];
+
+  // first check if we reached the end already
+  if ( source_position.tid == kernel().vp_manager.get_num_threads() )
+  {
+    return false;
+  }
+
   while ( source_position.it == has_source_[ source_position.tid ][ source_position.syn_id ].cend() )
   {
     ++source_position.syn_id;
