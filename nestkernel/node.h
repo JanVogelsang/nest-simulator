@@ -518,7 +518,7 @@ public:
     return std::accumulate( connections_.cbegin(),
       connections_.cend(),
       0,
-      []( size_t sum, auto sources_syn_id )
+      []( size_t sum, auto& sources_syn_id )
       {
         if ( sources_syn_id )
         {

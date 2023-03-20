@@ -239,6 +239,7 @@ public:
     sources_.reserve( 11250 );
   }
 
+  ~Connector() override = default;
 //  ~Connector() override
 //  {
 //    std::vector< ConnectionT >().swap( C_ );
