@@ -109,13 +109,13 @@ M_ERROR = 30
 
 
 params = {
-    'nvp': 8,               # total number of virtual processes
-    'scale': 1.,            # scaling factor of the network size
+    'nvp': 1,               # total number of virtual processes
+    'scale': .015,            # scaling factor of the network size
     # total network size = scale*11250 neurons
     'simtime': 250.,        # total simulation time in ms
     'presimtime': 50.,      # simulation time until reaching equilibrium
     'dt': 0.1,              # simulation step
-    'record_spikes': True,  # switch to record spikes of excitatory
+    'record_spikes': False,  # switch to record spikes of excitatory
     # neurons to file
     'path_name': '.',       # path where all files will have to be written
     'log_file': 'log',      # naming scheme for the log files
@@ -226,6 +226,7 @@ def build_network(logger):
 
     # set global kernel parameters
     nest.total_num_virtual_procs = params['nvp']
+    nest.print_time = True
     nest.resolution = params['dt']
     nest.overwrite_files = True
 
@@ -284,14 +285,14 @@ def build_network(logger):
 
     tic = time.time()
 
-    nest.SetDefaults('static_synapse_hpc', {'delay': brunel_params['delay']})
-    nest.CopyModel('static_synapse_hpc', 'syn_ex',
+    nest.SetDefaults('static_synapse', {'delay': brunel_params['delay']})
+    nest.CopyModel('static_synapse', 'syn_ex',
                    {'weight': JE_pA})
-    nest.CopyModel('static_synapse_hpc', 'syn_in',
+    nest.CopyModel('static_synapse', 'syn_in',
                    {'weight': brunel_params['g'] * JE_pA})
 
     stdp_params['weight'] = JE_pA
-    nest.SetDefaults('stdp_pl_synapse_hom_ax_delay_hpc', stdp_params)
+    nest.SetDefaults('stdp_pl_synapse_hom_ax_delay', stdp_params)
 
     nest.message(M_INFO, 'build_network', 'Connecting stimulus generators.')
 
@@ -308,7 +309,7 @@ def build_network(logger):
     nest.Connect(E_neurons, E_neurons,
                  {'rule': 'fixed_indegree', 'indegree': CE,
                   'allow_autapses': False, 'allow_multapses': True},
-                 {'synapse_model': 'stdp_pl_synapse_hom_ax_delay_hpc'})
+                 {'synapse_model': 'stdp_pl_synapse_hom_ax_delay'})
 
     nest.message(M_INFO, 'build_network',
                  'Connecting inhibitory -> excitatory population.')
@@ -354,7 +355,7 @@ def build_network(logger):
 
         nest.message(M_INFO, 'build_network', 'Connecting spike recorders.')
         nest.Connect(local_neurons[:brunel_params['Nrec']], E_recorder,
-                     'all_to_all', 'static_synapse_hpc')
+                     'all_to_all', 'static_synapse')
 
     # read out time used for building
     BuildEdgeTime = time.time() - tic

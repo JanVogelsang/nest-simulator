@@ -98,7 +98,6 @@ Node::init()
 void
 Node::finalize()
 {
-  std::vector< ConnectorBase* >().swap( connections_ );
 }
 
 void
@@ -258,13 +257,16 @@ Node::register_stdp_connection( const delay, const delay, const synindex )
 void
 Node::delete_connections()
 {
-  for ( auto syn_type_connections : connections_ )
+  for ( std::unique_ptr< ConnectorBase >& syn_type_connections : connections_ )
   {
-    if ( syn_type_connections )
-    {
-      delete syn_type_connections;
-    }
+    syn_type_connections.reset();
   }
+  for ( std::unique_ptr< ConnectorBase >& syn_type_connections : connections_from_devices_ )
+  {
+    syn_type_connections.reset();
+  }
+  connections_.clear();
+  connections_from_devices_.clear();
 }
 
 void

@@ -62,28 +62,6 @@ private:
   //! Needed during readout of sources_.
   std::vector< SourceTablePosition > saved_positions_;
 
-  // TODO JV (pt): This needs some proper thoughts, as this might cause high memory utilization with many threads
-  //! Flag for each possible source neuron, if it has a target on this thread
-  // std::vector< std::vector< bool > > has_source_;
-
-  /**
-   * A structure to temporarily hold information about all process
-   * local targets will be addressed by incoming spikes. Data from
-   * this structure is transferred to the compressed_indices_
-   * structure of ConnectionManager during construction of the
-   * postsynaptic connection infrastructure. Arranged as a two
-   * dimensional vector (thread|synapse) with an inner map (source
-   * node id -> spike data).
-   */
-  // std::vector< std::vector< std::map< index, SpikeData > > > compressible_sources_;
-
-  /**
-   * A structure to temporarily store locations of "unpacked spikes" in the compressed_indices_ structure of
-   * ConnectionManager. Data from this structure is transferred to the presynaptic side during construction of the
-   * presynaptic connection infrastructure. Map of (source node id -> index) for each thread.
-   */
-  // std::vector< std::map< index, size_t > > compressed_spike_data_map_;
-
 public:
   SourceManager();
   ~SourceManager() override;

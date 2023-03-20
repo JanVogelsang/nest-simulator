@@ -679,8 +679,7 @@ NodeManager::post_run_cleanup()
 }
 
 /**
- * This function is called only if the thread data structures are properly set
- * up.
+ * This function is called only if the thread data structures are properly set up.
  */
 void
 NodeManager::finalize_nodes()

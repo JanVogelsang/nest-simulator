@@ -232,11 +232,6 @@ private:
 public:
   explicit Connector( const synindex syn_id )
     : syn_id_( syn_id )
-    , dendritic_delay_regions_()
-    , connection_indices_by_delay_()
-    , axonal_delays_()
-    , C_()
-    , sources_()
   {
     // TODO JV: Benchmark this both with and without reserve
     axonal_delays_.reserve( 11250 );
@@ -244,10 +239,17 @@ public:
     sources_.reserve( 11250 );
   }
 
-  ~Connector() override
-  {
-    C_.clear();
-  }
+//  ~Connector() override
+//  {
+//    std::vector< ConnectionT >().swap( C_ );
+//    std::vector< index >().swap( sources_ );
+//    std::map< delay, DelayRegion >().swap( dendritic_delay_regions_ );
+//    // std::map< delay, std::vector< index > >().swap( connection_indices_by_delay_ );
+//    connection_indices_by_delay_.clear();
+//#ifndef USE_ADJACNECY_LIST
+//    std::vector< delay >().swap( axonal_delays_ );
+//#endif
+//  }
 
   synindex
   get_syn_id() const override
@@ -335,8 +337,7 @@ public:
   void
   add_connection( const ConnectionT& c, const index source_node_id, const delay axonal_delay, const delay dendritic_delay )
   {
-    connection_indices_by_delay_[ dendritic_delay ].push_back( C_.size() );
-    dendritic_delay_regions_[ dendritic_delay ];
+    connection_indices_by_delay_[ dendritic_delay ].push_back( C_.size() );  // TODO JV: Save continuous indices as start and end instead of each individual
     axonal_delays_.push_back( axonal_delay );
     C_.push_back( c );
     sources_.push_back( source_node_id );

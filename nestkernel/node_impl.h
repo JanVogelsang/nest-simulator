@@ -74,22 +74,22 @@ Node::add_connection( Node& source_node,
   // Check if the source of the connection is a device to add the connection to the corresponding container
   if ( connection_type == ConnectionType::CONNECT_FROM_DEVICE )
   {
-    if ( not connections_from_devices_[ syn_id ] )
+    if ( not connections_from_devices_.at( syn_id ) )
     {
       // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
-      connections_from_devices_[ syn_id ] = new Connector< ConnectionT >( syn_id );
+      connections_from_devices_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id );
     }
-    Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connections_from_devices_[ syn_id ] );
+    Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connections_from_devices_.at( syn_id ).get() );
     return vc->add_device_connection( connection, source_node.get_node_id() );
   }
   else
   {
-    if ( not connections_[ syn_id ] )
+    if ( not connections_.at( syn_id ) )
     {
       // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
-      connections_[ syn_id ] = new Connector< ConnectionT >( syn_id );
+      connections_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id );
     }
-    Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connections_[ syn_id ] );
+    Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() );
     if ( connection_type == ConnectionType::CONNECT_TO_DEVICE )
     {
       return vc->add_device_connection( connection, source_node.get_node_id() );

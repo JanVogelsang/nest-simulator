@@ -62,7 +62,6 @@ SourceManager::initialize()
   is_cleared_.initialize( num_threads, false );
   current_positions_.resize( num_threads );
   saved_positions_.resize( num_threads );
-  // has_source_.resize( num_threads );
 }
 
 void
@@ -83,7 +82,6 @@ SourceManager::finalize()
 
   current_positions_.clear();
   saved_positions_.clear();
-  // has_source_.clear();
 }
 
 bool
