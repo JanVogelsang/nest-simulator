@@ -27,8 +27,8 @@ set ( nestkernel_sources
       connection.h
       connection_label.h
       common_properties_hom_w.h
-        connector_base.h connector_base_impl.h connector_base.cpp
-      connector_model.h connector_model_impl.h connector_model.cpp
+      connector_base.h connector_base_impl.h
+        connector_model.h connector_model_impl.h connector_model.cpp
       connection_id.h connection_id.cpp
       deprecation_warning.h deprecation_warning.cpp
       device.h device.cpp
@@ -81,6 +81,7 @@ set ( nestkernel_sources
       mpi_manager.h mpi_manager_impl.h mpi_manager.cpp
       simulation_manager.h simulation_manager.cpp
       connection_manager.h connection_manager_impl.h connection_manager.cpp
+      connection_type_enum.h
       sp_manager.h sp_manager_impl.h sp_manager.cpp
       delay_checker.h delay_checker.cpp
       random_manager.h random_manager.cpp
@@ -97,7 +98,6 @@ set ( nestkernel_sources
       target_table_devices.h target_table_devices.cpp target_table_devices_impl.h
       target.h target_data.h static_assert.h
       send_buffer_position.h
-      source.h
       source_manager.h source_manager.cpp
       source_table_position.h source_table_position.cpp
       spike_data.h

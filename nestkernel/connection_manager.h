@@ -33,6 +33,7 @@
 // Includes from nestkernel:
 #include "conn_builder.h"
 #include "connection_id.h"
+#include "connection_type_enum.h"
 #include "nest_names.h"
 #include "nest_time.h"
 #include "nest_timeconverter.h"
@@ -63,17 +64,6 @@ class ConnectionManager : public ManagerInterface
 {
   friend class SimulationManager; // update_delay_extrema_
 public:
-  /**
-   * Connection type.
-   */
-  enum ConnectionType
-  {
-    CONNECT,
-    CONNECT_FROM_DEVICE,
-    CONNECT_TO_DEVICE,
-    NO_CONNECTION
-  };
-
   ConnectionManager();
   ~ConnectionManager() override;
 

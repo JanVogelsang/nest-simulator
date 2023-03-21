@@ -68,20 +68,6 @@ ModelManager::register_connection_model( const std::string& name, const Register
     enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_POSTPONED_DELIVERY ) );
   register_connection_model_( cf );
 
-  // register the "hpc" version with the same parameters but a different target identifier
-  if ( enumFlagSet( flags, RegisterConnectionModelFlags::REGISTER_HPC ) )
-  {
-    cf = new GenericConnectorModel< ConnectionT >( name + "_hpc",
-      enumFlagSet( flags, RegisterConnectionModelFlags::IS_PRIMARY ),
-      enumFlagSet( flags, RegisterConnectionModelFlags::HAS_DELAY ),
-      enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_SYMMETRIC ),
-      enumFlagSet( flags, RegisterConnectionModelFlags::SUPPORTS_WFR ),
-      enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_CLOPATH_ARCHIVING ),
-      enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_URBANCZIK_ARCHIVING ),
-      enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_POSTPONED_DELIVERY ) );
-    register_connection_model_( cf );
-  }
-
   // register the "lbl" (labeled) version with the same parameters but a different connection type
   if ( enumFlagSet( flags, RegisterConnectionModelFlags::REGISTER_LBL ) )
   {

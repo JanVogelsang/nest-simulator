@@ -80,7 +80,7 @@ STDPPLHomAxDelayCommonProperties::set_status( const DictionaryDatum& d, Connecto
 
 
 stdp_pl_synapse_hom_ax_delay::stdp_pl_synapse_hom_ax_delay()
-  : AxonalDelayConnection()
+  : ConnectionBase()
   , weight_( 1.0 )
   , Kplus_( 0.0 )
   , t_lastspike_( 0.0 )
@@ -92,7 +92,7 @@ stdp_pl_synapse_hom_ax_delay::get_status( DictionaryDatum& d ) const
 {
 
   // base class properties, different for individual synapse
-  AxonalDelayConnection::get_status( d );
+  ConnectionBase::get_status( d );
   def< double >( d, names::weight, weight_ );
 
   // own properties, different for individual synapse
@@ -104,6 +104,7 @@ void
 stdp_pl_synapse_hom_ax_delay::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 {
   // base class properties
+  ConnectionBase::set_status( d, cm );
   updateValue< double >( d, names::weight, weight_ );
 
   updateValue< double >( d, names::Kplus, Kplus_ );

@@ -98,7 +98,6 @@ Node::init()
 void
 Node::finalize()
 {
-  std::vector< ConnectorBase* >().swap( connections_ );
 }
 
 void
@@ -183,10 +182,9 @@ Node::has_stdp_connections() const
 void
 Node::prepare_connections()
 {
-  // TODO JV (pt): Device connection indices must not change
-  if ( this->has_proxies() )
+  if ( this->has_proxies() )  // don't change connection indices (e.g. by sorting) for device nodes
   {
-    for ( auto conn : connections_ )
+    for ( auto& conn : connections_ )
     {
       if ( conn )
       {
@@ -280,13 +278,16 @@ Node::register_stdp_connection( const double, const synindex )
 void
 Node::delete_connections()
 {
-  for ( auto syn_type_connections : connections_ )
+  for ( std::unique_ptr< ConnectorBase >& syn_type_connections : connections_ )
   {
-    if ( syn_type_connections )
-    {
-      delete syn_type_connections;
-    }
+    syn_type_connections.reset();
   }
+  for ( std::unique_ptr< ConnectorBase >& syn_type_connections : connections_from_devices_ )
+  {
+    syn_type_connections.reset();
+  }
+  connections_.clear();
+  connections_from_devices_.clear();
 }
 
 void
@@ -316,10 +317,11 @@ void
 Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
   const synindex syn_id,
   const index local_target_connection_id,
+  const delay dendritic_delay,
   const std::vector< ConnectorModel* >& cm,
   DSSpikeEvent& e )
 {
-  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, cm, e, this );
+  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, dendritic_delay, cm, e, this );
 
   // TODO JV: Make this cleaner, as only needed for poisson generators probably
   if ( not e.get_multiplicity() )

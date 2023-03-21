@@ -759,18 +759,18 @@ ConnectionManager::connect_( Node& source,
   }
 
   ConnectorModel& conn_model = kernel().model_manager.get_connection_model( syn_id, tid );
-  const index local_target_connection_id = conn_model.add_connection(
-    source, target, syn_id, params, delay, axonal_delay, weight, is_primary, connection_type == CONNECT_FROM_DEVICE );
+  const auto [ local_target_connection_id, actual_dendritic_delay, actual_axonal_delay ] = conn_model.add_connection(
+    source, target, syn_id, params, delay, axonal_delay, weight, is_primary, connection_type );
   switch ( connection_type )
   {
   case CONNECT:
     kernel().source_manager.add_source( tid, source.get_node_id() );
     break;
   case CONNECT_FROM_DEVICE:
-    target_table_devices_.add_connection_from_device( source, target, local_target_connection_id, tid, syn_id );
+    target_table_devices_.add_connection_from_device( source, target, local_target_connection_id, actual_dendritic_delay, tid, syn_id );
     break;
   case CONNECT_TO_DEVICE:
-    target_table_devices_.add_connection_to_device( source, target, local_target_connection_id, delay, tid, syn_id );
+    target_table_devices_.add_connection_to_device( source, target, local_target_connection_id, actual_dendritic_delay, tid, syn_id );
     break;
   default:
     break;
@@ -805,13 +805,6 @@ ConnectionManager::increase_connection_count( const thread tid, const synindex s
     num_connections_[ tid ].resize( syn_id + 1 );
   }
   ++num_connections_[ tid ][ syn_id ];
-  if ( num_connections_[ tid ][ syn_id ] >= MAX_LOCAL_CONNECTION_ID )
-  {
-    throw KernelException(
-      String::compose( "Too many connections: at most %1 connections supported per virtual "
-                       "process and synapse model to a specific target neuron.",
-        MAX_LOCAL_CONNECTION_ID ) );
-  }
 }
 
 std::vector< index >
@@ -1335,7 +1328,7 @@ ConnectionManager::compute_compressed_secondary_recv_buffer_positions( const thr
   }*/
 }
 
-ConnectionManager::ConnectionType
+ConnectionType
 ConnectionManager::connection_required( Node*& source, Node*& target, thread tid )
 {
   // The caller has to check and guarantee that the target is not a

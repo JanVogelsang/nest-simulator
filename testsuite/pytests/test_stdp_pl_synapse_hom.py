@@ -202,8 +202,8 @@ class TestSTDPPlSynapse:
         pre_spikes_delayed = pre_spikes + self.axonal_delay
         post_spikes_delayed = post_spikes + self.dendritic_delay
         # Make sure only spikes that were relevant for simulation are actually considered in the test
-        # For pre-spikes that will be all spikes with: t_pre < sim_duration
-        pre_spikes_delayed = pre_spikes_delayed[pre_spikes + self.eps < self.simulation_duration]
+        # For pre-spikes that will be all spikes with: t_pre <= sim_duration
+        pre_spikes_delayed = pre_spikes_delayed[np.logical_or(pre_spikes + self.eps < self.simulation_duration, pre_spikes - self.simulation_duration < self.eps)]
         # For post-spikes that will be all spikes with: t_post + d_dend <= latest_pre_spike + d_axon
         post_spikes_delayed = post_spikes_delayed[post_spikes_delayed <= pre_spikes_delayed[-1] + self.eps]
 

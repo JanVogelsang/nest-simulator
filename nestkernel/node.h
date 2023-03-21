@@ -31,6 +31,7 @@
 // Includes from nestkernel:
 #include "archived_spike.h"
 #include "connector_base.h"
+#include "connection_type_enum.h"
 #include "deprecation_warning.h"
 #include "event.h"
 #include "nest_names.h"
@@ -472,6 +473,7 @@ public:
   resize_connections( const size_t size )
   {
     connections_.resize( size );
+    connections_from_devices_.resize( size );
   }
 
   /**
@@ -510,7 +512,7 @@ public:
     return std::accumulate( connections_.cbegin(),
       connections_.cend(),
       0,
-      []( size_t sum, auto sources_syn_id )
+      []( size_t sum, auto& sources_syn_id )
       {
         if ( sources_syn_id )
         {
@@ -552,7 +554,14 @@ public:
   void
   clear_sources()
   {
-    for ( auto connections_per_syn_type : connections_ )
+    for ( std::unique_ptr< ConnectorBase >& connections_per_syn_type : connections_ )
+    {
+      if ( connections_per_syn_type )
+      {
+        connections_per_syn_type->clear_sources();
+      }
+    }
+    for ( std::unique_ptr< ConnectorBase >& connections_per_syn_type : connections_from_devices_ )
     {
       if ( connections_per_syn_type )
       {
@@ -567,7 +576,7 @@ public:
   void
   reset_sources_processed_flags()
   {
-    for ( ConnectorBase* connections_per_syn_type : connections_ )
+    for ( std::unique_ptr< ConnectorBase >& connections_per_syn_type : connections_ )
     {
       if ( connections_per_syn_type )
       {
@@ -610,9 +619,8 @@ public:
     ConnectionT& connection,
     const rport receptor_type,
     const bool is_primary,
-    const bool from_device,
-    const delay dendritic_delay,
-    const delay axonal_delay );
+    const ConnectionType from_device,
+    const delay dendritic_delay );
 
   /**
    * When receiving an event from a device, forward it to the corresponding connection and handle the event previously
@@ -622,6 +630,7 @@ public:
   void deliver_event_from_device( const thread tid,
     const synindex syn_id,
     const index local_target_connection_id,
+    const delay dendritic_delay,
     const std::vector< ConnectorModel* >& cm,
     EventT& e );
 
@@ -1116,14 +1125,14 @@ protected:
    * to this node. Corresponds to a two dimensional structure:
    * synapse types|connections
    */
-  std::vector< ConnectorBase* > connections_;
+  std::vector< std::unique_ptr< ConnectorBase > > connections_;
 
   /**
    * A structure to hold the Connector objects which in turn hold the connection information of all incoming connections
    * from devices to this node. Corresponds to a two dimensional structure:
    * synapse types|connections
    */
-  std::vector< ConnectorBase* > connections_from_devices_;
+  std::vector< std::unique_ptr< ConnectorBase > > connections_from_devices_;
 };
 
 inline bool

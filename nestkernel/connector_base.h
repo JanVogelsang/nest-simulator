@@ -294,15 +294,33 @@ public:
   }
 
   const index
-  add_connection( const ConnectionT& c, const Source src, const delay dendritic_delay )
+  add_device_connection( ConnectionT& c, const Source source_node_id )
   {
-    const size_t next_index = C_.size();
-    connection_indices_by_delay_[ dendritic_delay ].push_back( next_index );
-    dendritic_delay_regions_[ dendritic_delay ];
     C_.push_back( c );
-    sources_.push_back( src );
-    // Return index of added item
-    return next_index;
+    sources_.push_back( source_node_id );
+    if ( C_.size() > MAX_LOCAL_CONNECTION_ID )
+    {
+      throw KernelException(
+        String::compose( "Too many connections: at most %1 connections supported per virtual "
+                         "process and synapse model to a specific target neuron.",
+          MAX_LOCAL_CONNECTION_ID ) );
+    }
+    return C_.size() - 1;
+  }
+
+  void
+  add_connection( const ConnectionT& c, const Source source_node_id, const delay dendritic_delay )
+  {
+    connection_indices_by_delay_[ dendritic_delay ].push_back( C_.size() );  // TODO JV: Save continuous indices as start and end instead of each individual
+    C_.push_back( c );
+    sources_.push_back( source_node_id );
+    if ( C_.size() > MAX_LOCAL_CONNECTION_ID )
+    {
+      throw KernelException(
+        String::compose( "Too many connections: at most %1 connections supported per virtual "
+                         "process and synapse model to a specific target neuron.",
+          MAX_LOCAL_CONNECTION_ID ) );
+    }
   }
 
   Source&

@@ -40,11 +40,11 @@ namespace nest
  */
 class AxonalDelayConnection : public Connection
 {
+  double axonal_delay_; //!< Axonal delay in ms
+public:
   using Connection::get_status;
   using Connection::set_status;
 
-  double axonal_delay_; //!< Axonal delay in ms
-public:
   AxonalDelayConnection()
     : axonal_delay_( 0 )
   {
