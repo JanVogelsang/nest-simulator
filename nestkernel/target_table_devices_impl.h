@@ -41,9 +41,6 @@ TargetTableDevices::add_connection_from_device( Node& source,
   const thread tid,
   const synindex syn_id )
 {
-  // TODO JV: Remove this and find another way to get the thread local node id
-  // kernel().node_manager.ensure_valid_thread_local_ids();
-
   const index ldid = source.get_local_device_id();
   assert( ldid != invalid_index );
   assert( ldid < targets_from_devices_[ tid ].size() );
@@ -62,9 +59,6 @@ TargetTableDevices::add_connection_to_device( Node& source,
   const thread tid,
   const synindex syn_id )
 {
-  // TODO JV: Remove this and find another way to get the thread local node id
-  // kernel().node_manager.ensure_valid_thread_local_ids();
-
   const index source_lid = source.get_thread_lid();
   // Check if the source node has not been registered as source to devices yet
   if ( not targets_to_devices_[ tid ].count( source_lid ) )

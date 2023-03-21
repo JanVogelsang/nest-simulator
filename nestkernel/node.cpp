@@ -98,7 +98,6 @@ Node::init()
 void
 Node::finalize()
 {
-  std::vector< ConnectorBase* >().swap( connections_ );
 }
 
 void
@@ -259,13 +258,16 @@ Node::register_stdp_connection( double, double )
 void
 Node::delete_connections()
 {
-  for ( auto syn_type_connections : connections_ )
+  for ( std::unique_ptr< ConnectorBase >& syn_type_connections : connections_ )
   {
-    if ( syn_type_connections )
-    {
-      delete syn_type_connections;
-    }
+    syn_type_connections.reset();
   }
+  for ( std::unique_ptr< ConnectorBase >& syn_type_connections : connections_from_devices_ )
+  {
+    syn_type_connections.reset();
+  }
+  connections_.clear();
+  connections_from_devices_.clear();
 }
 
 void
@@ -321,7 +323,8 @@ Node::deliver_event( const thread tid,
   connections_[ syn_id ]->send( tid, local_target_connection_id, cm, se, this );
 
   // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
-  //  handle, or just handing the entire local connection id to the handle function.
+  //  handle, or just handing the entire local connection id to the handle function (and storing an array of rports
+  //  which can be indexed by the local connection id).
 
   handle( se );
 }
@@ -517,13 +520,13 @@ Node::sends_secondary_event( DelayedRateConnectionEvent& )
 double
 Node::get_LTD_value( double )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Can't retrieve LTD value. Base node class does not store its history." );
 }
 
 double
 Node::get_K_value( double )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Can't retrieve K value. Base node class does not store its history." );
 }
 
 
@@ -545,7 +548,7 @@ nest::Node::get_LTP_history( double,
   std::deque< histentry_extended >::iterator*,
   std::deque< histentry_extended >::iterator* )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Base node class does not store its history." );
 }
 
 void
@@ -555,7 +558,7 @@ nest::Node::get_urbanczik_history( double,
   std::deque< histentry_extended >::iterator*,
   int )
 {
-  throw UnexpectedEvent();
+  throw UnexpectedEvent( "Base node class does not store its history." );
 }
 
 double

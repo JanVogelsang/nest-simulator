@@ -47,8 +47,8 @@ class TestSTDPPlSynapse:
         self.resolution = 0.1  # [ms]
         self.simulation_duration = 1E2  # [ms]
         self.synapse_model = "stdp_pl_synapse_hom_ax_delay"
-        self.presynaptic_firing_rate = 100.  # [ms^-1]
-        self.postsynaptic_firing_rate = 100.  # [ms^-1]
+        self.presynaptic_firing_rate = 20.  # [ms^-1]
+        self.postsynaptic_firing_rate = 20.  # [ms^-1]
         self.tau_pre = 20.0
         self.tau_post = 33.7
         self.init_weight = .5
@@ -86,14 +86,13 @@ class TestSTDPPlSynapse:
         # contains the weight at pre *and* post times: check that weights are equal only for pre spike times
         assert len(weight_by_nest) > 0
 
-        t_delayed = t_weight_by_nest + self.axonal_delay
-        difference_matrix = (t_delayed[t_delayed < self.simulation_duration].reshape(1, -1) - t_weight_reproduced_independently.reshape(-1, 1))
+        difference_matrix = (t_weight_by_nest.reshape(1, -1) + self.axonal_delay - t_weight_reproduced_independently.reshape(-1, 1))
         pre_spike_reproduced_indices = np.abs(difference_matrix).argmin(axis=0)
         time_differences = np.diagonal(difference_matrix[pre_spike_reproduced_indices])
         # make sure all spike times are equal
         np.testing.assert_allclose(time_differences, 0, atol=1e-07)
         # make sure the weights after the pre_spikes times are equal
-        np.testing.assert_allclose(weight_by_nest[t_delayed < self.simulation_duration], weight_reproduced_independently[pre_spike_reproduced_indices])
+        np.testing.assert_allclose(weight_by_nest, weight_reproduced_independently[pre_spike_reproduced_indices])
 
         if DEBUG_PLOTS:
             self.plot_weight_evolution(pre_spikes, post_spikes,
@@ -152,9 +151,9 @@ class TestSTDPPlSynapse:
         spike_recorder = nest.Create("spike_recorder")
 
         nest.Connect(presynaptic_generator + pre_spike_generator, presynaptic_neuron,
-                     syn_spec={"synapse_model": "static_synapse", "weight": 3000.})
+                     syn_spec={"synapse_model": "static_synapse", "weight": 1000.})
         nest.Connect(postsynaptic_generator + post_spike_generator, postsynaptic_neuron,
-                     syn_spec={"synapse_model": "static_synapse", "weight": 3000.})
+                     syn_spec={"synapse_model": "static_synapse", "weight": 1000.})
         nest.Connect(presynaptic_neuron + postsynaptic_neuron, spike_recorder,
                      syn_spec={"synapse_model": "static_synapse"})
 
@@ -203,8 +202,8 @@ class TestSTDPPlSynapse:
         pre_spikes_delayed = pre_spikes + self.axonal_delay
         post_spikes_delayed = post_spikes + self.dendritic_delay
         # Make sure only spikes that were relevant for simulation are actually considered in the test
-        # For pre-spikes that will be all spikes with: t_pre < sim_duration
-        pre_spikes_delayed = pre_spikes_delayed[pre_spikes + self.eps < self.simulation_duration]
+        # For pre-spikes that will be all spikes with: t_pre <= sim_duration
+        pre_spikes_delayed = pre_spikes_delayed[np.logical_or(pre_spikes + self.eps < self.simulation_duration, pre_spikes - self.simulation_duration < self.eps)]
         # For post-spikes that will be all spikes with: t_post + d_dend <= latest_pre_spike + d_axon
         post_spikes_delayed = post_spikes_delayed[post_spikes_delayed <= pre_spikes_delayed[-1] + self.eps]
 

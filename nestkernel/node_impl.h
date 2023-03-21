@@ -20,13 +20,14 @@
  *
  */
 
-#ifndef NEST_NODE_IMPL_H
-#define NEST_NODE_IMPL_H
+#ifndef NODE_IMPL_H
+#define NODE_IMPL_H
 
 #include "node.h"
 
 // Includes from nestkernel:
 #include "connector_base.h"
+#include "connection_type_enum.h"
 
 namespace nest
 {
@@ -66,33 +67,37 @@ Node::add_connection( Node& source_node,
   ConnectionT& connection,
   const rport receptor_type,
   const bool is_primary,
-  const bool from_device )
+  const ConnectionType connection_type )
 {
-  ConnectorBase* connector;
+  const Source src( source_node.get_node_id(), is_primary );
   // Check if the source of the connection is a device to add the connection to the corresponding container
-  if ( from_device )
+  if ( connection_type == ConnectionType::CONNECT_FROM_DEVICE )
   {
-    if ( not connections_from_devices_[ syn_id ] )
+    if ( not connections_from_devices_.at( syn_id ) )
     {
       // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
-      connections_from_devices_[ syn_id ] = new Connector< ConnectionT >( syn_id );
+      connections_from_devices_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id );
     }
-    connector = connections_from_devices_[ syn_id ];
+    Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connections_from_devices_.at( syn_id ).get() );
+    return vc->add_connection( connection, src );
   }
   else
   {
-    if ( not connections_[ syn_id ] )
+    if ( not connections_.at( syn_id ) )
     {
       // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
-      connections_[ syn_id ] = new Connector< ConnectionT >( syn_id );
+      connections_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id );
     }
-    connector = connections_[ syn_id ];
+    Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() );
+    if ( connection_type == ConnectionType::CONNECT_TO_DEVICE )
+    {
+      return vc->add_connection( connection, src );
+    }
+    else{
+      vc->add_connection( connection, src );
+      return invalid_index;  // TODO JV (pt): This index should never be used as it will change after sorting
+    }
   }
-  assert( connector );
-
-  const Source src( source_node.get_node_id(), is_primary );
-  Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connector );
-  return vc->add_connection( connection, src );
 }
 
 template < typename EventT >
@@ -115,4 +120,4 @@ Node::deliver_event_from_device( const thread tid,
 
 }
 
-#endif // NEST_NODE_IMPL_H
+#endif // NODE_IMPL_H

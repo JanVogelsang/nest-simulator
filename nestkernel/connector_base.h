@@ -184,6 +184,7 @@ protected:
    * side and the sources vector can be cleared, unless further required for structural plasticity.
    */
   // TODO JV: This should be converted from type Source to index once the simulation starts
+  // TODO JV: Move to Connector
   std::vector< Source > sources_;
 };
 
@@ -262,6 +263,13 @@ public:
     C_.push_back( c );
     sources_.push_back( src );
     // Return index of added item
+    if ( C_.size() > MAX_LOCAL_CONNECTION_ID )
+    {
+      throw KernelException(
+        String::compose( "Too many connections: at most %1 connections supported per virtual "
+                         "process and synapse model to a specific target neuron.",
+          MAX_LOCAL_CONNECTION_ID ) );
+    }
     return C_.size() - 1;
   }
 
@@ -328,7 +336,6 @@ public:
   void
   clear_sources() override
   {
-    // TODO JV: Is this actually safe? Or is swap the better way of clearing 2D vectors?
     sources_.clear();
   }
 

@@ -80,7 +80,7 @@ STDPPLHomAxDelayCommonProperties::set_status( const DictionaryDatum& d, Connecto
 
 
 stdp_pl_synapse_hom_ax_delay::stdp_pl_synapse_hom_ax_delay()
-  : AxonalDelayConnection()
+  : ConnectionBase()
   , weight_( 1.0 )
   , Kplus_( 0.0 )
   , t_lastspike_( 0.0 )

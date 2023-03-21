@@ -200,25 +200,9 @@ ArchivingNode::deliver_event( const thread tid,
   const std::vector< ConnectorModel* >& cm,
   SpikeEvent& se )
 {
-  // TODO JV (pt): Think about removing access to connections_ in derived classes of node
-  ConnectorBase* conn = connections_[ syn_id ];
-
-  // STDP synapses need to make sure all post-synaptic spikes are known when delivering the spike to the synapse.
-  // Spikes will therefore be stored in an intermediate spike buffer until no more post-synaptic spike could reach the
-  // synapse before this spike will.
-
-  // Only specific synapse types need to postpone the delivery
-  /*if ( cm[ syn_id ]->requires_postponed_delivery() ) {
-    if ( const double t_spike = se.get_stamp().get_ms(), delay dendritic_delay = 0, const Time& ori =
-  kernel().simulation_manager.get_slice_origin(); t_spike + axonal - conn->get_connection_delay() < now ) {
-      dynamic_spike_buffer_.push_back(se);
-      return;
-    }
-  }*/
-
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight.
-  conn->send( tid, local_target_connection_id, cm, se, this );
+  connections_[ syn_id ]->send( tid, local_target_connection_id, cm, se, this );
 
   handle( se );
 }

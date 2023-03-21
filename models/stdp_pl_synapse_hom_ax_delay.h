@@ -93,7 +93,6 @@ EndUserDocs */
  */
 class STDPPLHomAxDelayCommonProperties : public CommonSynapseProperties
 {
-
 public:
   /**
    * Default constructor.
@@ -129,8 +128,7 @@ class stdp_pl_synapse_hom_ax_delay : public AxonalDelayConnection
 
 public:
   typedef STDPPLHomAxDelayCommonProperties CommonPropertiesType;
-  typedef Connection ConnectionBase;
-
+  typedef AxonalDelayConnection ConnectionBase;
 
   /**
    * Default Constructor.

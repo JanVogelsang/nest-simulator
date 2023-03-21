@@ -30,6 +30,7 @@
 
 // Includes from nestkernel:
 #include "connector_base.h"
+#include "connection_type_enum.h"
 #include "deprecation_warning.h"
 #include "event.h"
 #include "histentry.h"
@@ -388,7 +389,7 @@ public:
    * DS*Events when called with the dummy target, and *Events when called with
    * the real target, see #478.
    */
-  virtual port send_test_event( Node& receiving_node, rport receptor_type, synindex syn_id, bool dummy_target );
+  virtual port send_test_event( Node& receiving_node, const rport receptor_type, synindex syn_id, bool dummy_target );
 
   /**
    * Check if the node can handle a particular event and receptor type.
@@ -472,6 +473,7 @@ public:
   resize_connections( const size_t size )
   {
     connections_.resize( size );
+    connections_from_devices_.resize( size );
   }
 
   /**
@@ -480,7 +482,6 @@ public:
   std::vector< index >
   get_connection_indices( const synindex syn_id, const index source_node_id ) const
   {
-    assert( connections_[ syn_id ] ); // TODO JV: Remove this
     if ( connections_[ syn_id ] )
     {
       return connections_[ syn_id ]->get_connection_indices( source_node_id );
@@ -510,7 +511,7 @@ public:
     return std::accumulate( connections_.cbegin(),
       connections_.cend(),
       0,
-      []( size_t sum, auto sources_syn_id )
+      []( size_t sum, auto& sources_syn_id )
       {
         if ( sources_syn_id )
         {
@@ -552,7 +553,14 @@ public:
   void
   clear_sources()
   {
-    for ( auto connections_per_syn_type : connections_ )
+    for ( std::unique_ptr< ConnectorBase >& connections_per_syn_type : connections_ )
+    {
+      if ( connections_per_syn_type )
+      {
+        connections_per_syn_type->clear_sources();
+      }
+    }
+    for ( std::unique_ptr< ConnectorBase >& connections_per_syn_type : connections_from_devices_ )
     {
       if ( connections_per_syn_type )
       {
@@ -567,7 +575,7 @@ public:
   void
   reset_sources_processed_flags()
   {
-    for ( ConnectorBase* connections_per_syn_type : connections_ )
+    for ( std::unique_ptr< ConnectorBase >& connections_per_syn_type : connections_ )
     {
       if ( connections_per_syn_type )
       {
@@ -582,7 +590,7 @@ public:
   void
   sort_connections_and_sources()
   {
-    for ( ConnectorBase* connections_per_syn_type : connections_ )
+    for ( std::unique_ptr< ConnectorBase >& connections_per_syn_type : connections_ )
     {
       if ( connections_per_syn_type )
       {
@@ -625,7 +633,7 @@ public:
     ConnectionT& connection,
     const rport receptor_type,
     const bool is_primary,
-    const bool from_device );
+    const ConnectionType from_device );
 
   /**
    * When receiving an event from a device, forward it to the corresponding connection and handle the event previously
@@ -962,7 +970,6 @@ public:
     return SPIKE;
   }
 
-
   /**
    *  Return a dictionary with the node's properties.
    *
@@ -1108,14 +1115,14 @@ protected:
    * to this node. Corresponds to a two dimensional structure:
    * synapse types|connections
    */
-  std::vector< ConnectorBase* > connections_;
+  std::vector< std::unique_ptr< ConnectorBase > > connections_;
 
   /**
    * A structure to hold the Connector objects which in turn hold the connection information of all incoming connections
    * from devices to this node. Corresponds to a two dimensional structure:
    * synapse types|connections
    */
-  std::vector< ConnectorBase* > connections_from_devices_;
+  std::vector< std::unique_ptr< ConnectorBase > > connections_from_devices_;
 };
 
 inline bool
