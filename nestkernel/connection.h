@@ -271,7 +271,7 @@ protected:
   // targetidentifierT target_;
   //! syn_id (9 bit), delay (21 bit) in timesteps of this connection and more_targets and disabled flags (each 1 bit)
   // SynIdDelay syn_id_delay_;
-  double delay_;
+  delay delay_;
 };
 
 inline void
