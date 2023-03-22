@@ -142,11 +142,11 @@ public:
    * When receiving an incoming event, forward it to the corresponding connection and handle the event updated by the
    * connection.
    */
-//  void deliver_event( const synindex syn_id,
-//    const index local_target_connection_id,
-//    const delay axonal_delay,
-//    const std::vector< ConnectorModel* >& cm,
-//    SpikeEvent& se ) override;
+  //  void deliver_event( const synindex syn_id,
+  //    const index local_target_connection_id,
+  //    const delay axonal_delay,
+  //    const std::vector< ConnectorModel* >& cm,
+  //    SpikeEvent& se ) override;
 
   void get_status( DictionaryDatum& d ) const override;
   void set_status( const DictionaryDatum& d ) override;
@@ -160,6 +160,7 @@ public:
     const double weight_revert,
     const double axonal_delay,
     const double dendritic_delay );
+
 protected:
   void pre_run_hook_();
 
@@ -250,7 +251,7 @@ private:
     index local_connection_id_; //!< index of connection in node
     double t_last_pre_spike_;   //!< time of the last pre-synaptic spike before this spike
     double axonal_delay_;
-    double weight_revert_;      //!< synaptic weight to revert to (STDP depression needs to be undone)
+    double weight_revert_; //!< synaptic weight to revert to (STDP depression needs to be undone)
   };
 
   /**

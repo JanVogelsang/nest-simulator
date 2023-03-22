@@ -180,7 +180,13 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const delay dendritic_delay, const delay axonal_delay, const CommonPropertiesType& )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
   }
@@ -197,7 +203,11 @@ private:
  * \param p The port under which this connection is stored in the Connector.
  */
 inline void
-cont_delay_synapse::send( Event& e, const thread t, const double axonal_delay, const CommonSynapseProperties&, Node* target )
+cont_delay_synapse::send( Event& e,
+  const thread t,
+  const double axonal_delay,
+  const CommonSynapseProperties&,
+  Node* target )
 {
   e.set_weight( weight_ );
   double orig_event_offset = e.get_offset();

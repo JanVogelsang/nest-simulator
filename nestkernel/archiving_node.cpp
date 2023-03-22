@@ -194,17 +194,17 @@ ArchivingNode::get_history( double t1,
   *start = runner.base();
 }
 
-//void
-//ArchivingNode::deliver_event( const synindex syn_id,
-//  const index local_target_connection_id,
-//  const std::vector< ConnectorModel* >& cm,
-//  const delay axonal_delay,
-//  SpikeEvent& se )
+// void
+// ArchivingNode::deliver_event( const synindex syn_id,
+//   const index local_target_connection_id,
+//   const std::vector< ConnectorModel* >& cm,
+//   const delay axonal_delay,
+//   SpikeEvent& se )
 //{
-//  connections_[ syn_id ]->send( thread_, local_target_connection_id, axonal_delay, cm, se, this );
+//   connections_[ syn_id ]->send( thread_, local_target_connection_id, axonal_delay, cm, se, this );
 //
-//  handle( se );
-//}
+//   handle( se );
+// }
 
 void
 ArchivingNode::set_spiketime( Time const& t_sp, double offset )

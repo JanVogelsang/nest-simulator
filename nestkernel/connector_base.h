@@ -195,11 +195,11 @@ public:
     sources_.reserve( 11250 );
   }
 
-    ~Connector() override = default;
-//  ~Connector() override
-//  {
-//    C_.clear();
-//  }
+  ~Connector() override = default;
+  //  ~Connector() override
+  //  {
+  //    C_.clear();
+  //  }
 
   synindex
   get_syn_id() const override

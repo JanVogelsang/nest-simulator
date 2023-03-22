@@ -74,8 +74,7 @@ public:
   }
 
   void
-  deliver_event( const synindex, const index, const delay, const std::vector< ConnectorModel* >&, SpikeEvent& )
-    override
+  deliver_event( const synindex, const index, const delay, const std::vector< ConnectorModel* >&, SpikeEvent& ) override
   {
   }
 

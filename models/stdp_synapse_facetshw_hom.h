@@ -262,7 +262,8 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void send( Event& e, const thread t, const double axonal_delay, const STDPFACETSHWHomCommonProperties&, Node* target );
+  void
+  send( Event& e, const thread t, const double axonal_delay, const STDPFACETSHWHomCommonProperties&, Node* target );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -293,12 +294,18 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const delay dendritic_delay, const delay axonal_delay, const CommonPropertiesType& )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
 
 
-      t.register_stdp_connection( t_lastspike_ - dendritic_delay, dendritic_delay );
+    t.register_stdp_connection( t_lastspike_ - dendritic_delay, dendritic_delay );
   }
 
   void
@@ -378,7 +385,11 @@ stdp_facetshw_synapse_hom::lookup_( unsigned int discrete_weight_, std::vector< 
  * \param p The port under which this connection is stored in the Connector.
  */
 inline void
-stdp_facetshw_synapse_hom::send( Event& e, const thread t, const double axonal_delay, const STDPFACETSHWHomCommonProperties& cp, Node* target )
+stdp_facetshw_synapse_hom::send( Event& e,
+  const thread t,
+  const double axonal_delay,
+  const STDPFACETSHWHomCommonProperties& cp,
+  Node* target )
 {
   // synapse STDP dynamics
 

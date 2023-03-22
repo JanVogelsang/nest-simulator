@@ -271,7 +271,13 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const delay dendritic_delay, const delay axonal_delay, const CommonPropertiesType& cp )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& cp )
   {
     if ( not cp.vt_ )
     {
@@ -280,7 +286,7 @@ public:
 
     ConnTestDummyNode dummy_target;
 
-      t.register_stdp_connection( t_lastspike_ - dendritic_delay, dendritic_delay );
+    t.register_stdp_connection( t_lastspike_ - dendritic_delay, dendritic_delay );
   }
 
   void
@@ -427,7 +433,11 @@ stdp_dopamine_synapse::depress_( double kminus, const STDPDopaCommonProperties& 
  * \param p The port under which this connection is stored in the Connector.
  */
 inline void
-stdp_dopamine_synapse::send( Event& e, const thread t, const double axonal_delay, const STDPDopaCommonProperties& cp, Node* target )
+stdp_dopamine_synapse::send( Event& e,
+  const thread t,
+  const double axonal_delay,
+  const STDPDopaCommonProperties& cp,
+  Node* target )
 {
   // purely dendritic delay
   double dendritic_delay = get_dendritic_delay();

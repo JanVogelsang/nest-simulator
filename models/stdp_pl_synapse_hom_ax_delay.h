@@ -160,7 +160,8 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void send( Event& e, const thread t, const double axonal_delay, const STDPPLHomAxDelayCommonProperties&, Node* target );
+  void
+  send( Event& e, const thread t, const double axonal_delay, const STDPPLHomAxDelayCommonProperties&, Node* target );
 
   /**
    * Framework for STDP with predominantly axonal delays:
@@ -201,16 +202,22 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const delay dendritic_delay, const double axonal_delay, const CommonPropertiesType& cp )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const double axonal_delay,
+    const CommonPropertiesType& cp )
   {
     ConnTestDummyNode dummy_target;
-    
+
     if ( axonal_delay + dendritic_delay < kernel().connection_manager.get_stdp_eps() )
     {
       throw BadProperty(
         "Combination of axonal and dendritic delay has to be more than 0." ); // TODO JV (pt): Or does it actually?
     }
-      t.register_stdp_connection( t_lastspike_ - dendritic_delay + axonal_delay, dendritic_delay );
+    t.register_stdp_connection( t_lastspike_ - dendritic_delay + axonal_delay, dendritic_delay );
   }
 
   void
@@ -249,7 +256,11 @@ private:
  * \param p The port under which this connection is stored in the Connector.
  */
 inline void
-stdp_pl_synapse_hom_ax_delay::send( Event& e, const thread, const double axonal_delay, const STDPPLHomAxDelayCommonProperties& cp, Node* target )
+stdp_pl_synapse_hom_ax_delay::send( Event& e,
+  const thread,
+  const double axonal_delay,
+  const STDPPLHomAxDelayCommonProperties& cp,
+  Node* target )
 {
   // synapse STDP depressing/facilitation dynamics
 

@@ -165,11 +165,17 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const delay dendritic_delay, const delay axonal_delay, const CommonPropertiesType& )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
 
-      t.register_stdp_connection( t_lastspike_ - dendritic_delay, dendritic_delay );
+    t.register_stdp_connection( t_lastspike_ - dendritic_delay, dendritic_delay );
   }
 
   void

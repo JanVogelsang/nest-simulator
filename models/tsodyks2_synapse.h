@@ -173,7 +173,13 @@ public:
 
 
   void
-  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const delay dendritic_delay, const delay axonal_delay, const CommonPropertiesType& )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
   }
@@ -202,7 +208,11 @@ private:
  * \param p The port under which this connection is stored in the Connector.
  */
 inline void
-tsodyks2_synapse::send( Event& e, const thread t, const double axonal_delay, const CommonSynapseProperties&, Node* target )
+tsodyks2_synapse::send( Event& e,
+  const thread t,
+  const double axonal_delay,
+  const CommonSynapseProperties&,
+  Node* target )
 {
   const double t_spike = e.get_stamp().get_ms();
   const double h = t_spike - t_lastspike_;

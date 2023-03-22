@@ -673,9 +673,15 @@ ConnectionManager::get_device_connected( const thread tid, const index lcid ) co
 
 #ifdef USE_ADJACENCY_LIST
 inline void
-ConnectionManager::add_adjacency_list_target( const thread tid, const synindex syn_id, const index source_node_id, const index target_node_id, const index target_connection_id, const delay axonal_delay )
+ConnectionManager::add_adjacency_list_target( const thread tid,
+  const synindex syn_id,
+  const index source_node_id,
+  const index target_node_id,
+  const index target_connection_id,
+  const delay axonal_delay )
 {
-  adjacency_list_.add_target( tid, syn_id, source_node_id, target_node_id, target_connection_id, axonal_delay, use_compressed_spikes_ );
+  adjacency_list_.add_target(
+    tid, syn_id, source_node_id, target_node_id, target_connection_id, axonal_delay, use_compressed_spikes_ );
 }
 #endif
 

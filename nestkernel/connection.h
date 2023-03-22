@@ -279,7 +279,12 @@ Connection::calibrate( const TimeConverter& tc )
 }
 
 inline void
-Connection::correct_synapse_stdp_ax_delay( const double, double*, const double, const double, const CommonSynapseProperties&, Node* )
+Connection::correct_synapse_stdp_ax_delay( const double,
+  double*,
+  const double,
+  const double,
+  const CommonSynapseProperties&,
+  Node* )
 {
   throw IllegalConnection( "Connection does not support correction in case of STDP with predominantly axonal delays." );
 }

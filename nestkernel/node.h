@@ -29,8 +29,8 @@
 #include <vector>
 
 // Includes from nestkernel:
-#include "connector_base.h"
 #include "connection_type_enum.h"
+#include "connector_base.h"
 #include "deprecation_warning.h"
 #include "event.h"
 #include "histentry.h"
@@ -631,7 +631,7 @@ public:
     const index local_target_connection_id,
     const delay axonal_delay,
     const std::vector< ConnectorModel* >& cm,
-    SpikeEvent& se  );
+    SpikeEvent& se );
 
   /**
    * Handle incoming spike events.
@@ -999,7 +999,8 @@ public:
    * Framework for STDP with predominantly axonal delays:
    * Buffer a correction entry for a short time window.
    */
-  virtual void add_correction_entry_stdp_ax_delay( SpikeEvent&, const double, const double, const double, const double );
+  virtual void
+  add_correction_entry_stdp_ax_delay( SpikeEvent&, const double, const double, const double, const double );
   /**
    * Member of DeprecationWarning class to be used by models if parameters are
    * deprecated.

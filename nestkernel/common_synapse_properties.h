@@ -93,6 +93,7 @@ public:
    * get weight_recorder
    */
   NodeCollectionDatum get_weight_recorder() const;
+
 private:
   NodeCollectionDatum weight_recorder_;
   long wr_node_id_;

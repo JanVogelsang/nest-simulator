@@ -223,11 +223,17 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const delay dendritic_delay, const delay axonal_delay, const CommonPropertiesType& )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const synindex syn_id,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
 
-      t.register_stdp_connection( t_lastspike_ - dendritic_delay, dendritic_delay );
+    t.register_stdp_connection( t_lastspike_ - dendritic_delay, dendritic_delay );
   }
 
 private:
@@ -262,7 +268,11 @@ private:
  * \param p The port under which this connection is stored in the Connector.
  */
 inline void
-stdp_synapse_hom::send( Event& e, const thread t, const double axonal_delay, const STDPHomCommonProperties& cp, Node* target )
+stdp_synapse_hom::send( Event& e,
+  const thread t,
+  const double axonal_delay,
+  const STDPHomCommonProperties& cp,
+  Node* target )
 {
   // synapse STDP depressing/facilitation dynamics
 
