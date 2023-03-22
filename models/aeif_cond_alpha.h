@@ -98,7 +98,7 @@ and
 
 .. math::
 
- \tau_w \frac{dw}{dt} = a(V-E_L) - w
+ \tau_w \frac{value}{dt} = a(V-E_L) - w
 
 For implementation details see the
 `aeif_models_implementation <../model_details/aeif_models_implementation.ipynb>`_ notebook.
@@ -387,7 +387,7 @@ public:
 };
 
 inline port
-aeif_cond_alpha::send_test_event( Node& target, rport receptor_type, synindex, bool )
+aeif_cond_alpha::send_test_event( Node& target, const rport receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

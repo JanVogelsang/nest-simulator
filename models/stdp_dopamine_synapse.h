@@ -209,12 +209,8 @@ public:
   stdp_dopamine_synapse( const stdp_dopamine_synapse& ) = default;
   stdp_dopamine_synapse& operator=( const stdp_dopamine_synapse& ) = default;
 
-  // Explicitly declare all methods inherited from the dependent base
-  // ConnectionBase. This avoids explicit name prefixes in all places these
-  // functions are used. Since ConnectionBase depends on the template parameter,
-  // they are not automatically found in the base class.
-  using ConnectionBase::get_delay;
-  using ConnectionBase::get_delay_steps;
+  using ConnectionBase::get_dendritic_delay;
+  using ConnectionBase::get_dendritic_delay_steps;
 
   /**
    * Get all properties of this connection and put them into a dictionary.
@@ -239,7 +235,7 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void send( Event& e, thread t, const STDPDopaCommonProperties& cp, Node* target );
+  void send( Event& e, const thread t, const double axonal_delay, const STDPDopaCommonProperties& cp, Node* target );
 
   void trigger_update_weight( thread t,
     const std::vector< spikecounter >& dopa_spikes,
@@ -275,7 +271,7 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& cp )
+  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const delay dendritic_delay, const delay axonal_delay, const CommonPropertiesType& cp )
   {
     if ( not cp.vt_ )
     {
@@ -284,7 +280,7 @@ public:
 
     ConnTestDummyNode dummy_target;
 
-    t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
+      t.register_stdp_connection( t_lastspike_ - dendritic_delay, dendritic_delay );
   }
 
   void
@@ -431,11 +427,10 @@ stdp_dopamine_synapse::depress_( double kminus, const STDPDopaCommonProperties& 
  * \param p The port under which this connection is stored in the Connector.
  */
 inline void
-stdp_dopamine_synapse::send( Event& e, thread t, const STDPDopaCommonProperties& cp, Node* target )
+stdp_dopamine_synapse::send( Event& e, const thread t, const double axonal_delay, const STDPDopaCommonProperties& cp, Node* target )
 {
-
   // purely dendritic delay
-  double dendritic_delay = get_delay();
+  double dendritic_delay = get_dendritic_delay();
 
   double t_spike = e.get_stamp().get_ms();
 
@@ -470,7 +465,7 @@ stdp_dopamine_synapse::send( Event& e, thread t, const STDPDopaCommonProperties&
   depress_( target->get_K_value( t_spike - dendritic_delay ), cp );
 
   e.set_weight( weight_ );
-  e.set_delay_steps( get_delay_steps() );
+  e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay ) );
   e();
 
   Kplus_ = Kplus_ * std::exp( ( t_last_update_ - t_spike ) / cp.tau_plus_ ) + 1.0;
@@ -489,7 +484,7 @@ stdp_dopamine_synapse::trigger_update_weight( thread t,
   // postsyn. neuron
 
   // purely dendritic delay
-  double dendritic_delay = get_delay();
+  double dendritic_delay = get_dendritic_delay();
 
   // get spike history in relevant range (t_last_update, t_trig] from postsyn.
   // neuron

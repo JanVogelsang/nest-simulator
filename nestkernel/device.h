@@ -22,8 +22,6 @@
 
 #ifndef DEVICE_H
 #define DEVICE_H
-
-
 // Includes from nestkernel:
 #include "nest_time.h"
 #include "nest_types.h"
@@ -140,8 +138,6 @@ private:
     //! Update given Time parameter including error checking
     static void update_( const DictionaryDatum&, const Name&, Time& );
   };
-
-
   // ----------------------------------------------------------------
 
   /**

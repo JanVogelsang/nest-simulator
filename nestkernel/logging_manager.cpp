@@ -63,8 +63,6 @@ nest::LoggingManager::get_status( DictionaryDatum& dict )
 {
   ( *dict )[ names::dict_miss_is_error ] = dict_miss_is_error_;
 }
-
-
 void
 nest::LoggingManager::register_logging_client( const deliver_logging_event_ptr callback )
 {

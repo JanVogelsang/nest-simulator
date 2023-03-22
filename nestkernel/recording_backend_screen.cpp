@@ -132,8 +132,6 @@ nest::RecordingBackendScreen::get_device_status( const nest::RecordingDevice& de
     device_data->second.get_status( d );
   }
 }
-
-
 void
 nest::RecordingBackendScreen::prepare()
 {

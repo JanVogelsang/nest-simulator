@@ -123,6 +123,4 @@ DelayChecker::enable_delay_update()
   freeze_delay_update_ = false;
 }
 }
-
-
 #endif /* DELAY_CHECKER_H */

@@ -234,6 +234,4 @@ StimulationDevice::has_proxies() const
 }
 
 } // namespace nest
-
-
 #endif

@@ -53,8 +53,6 @@ using binomial_distribution = RandomDistribution< std::binomial_distribution< un
 using gamma_distribution = RandomDistribution< std::gamma_distribution<> >;
 using exponential_distribution = RandomDistribution< std::exponential_distribution<> >;
 using discrete_distribution = RandomDistribution< std::discrete_distribution< unsigned long > >;
-
-
 /**
  * @brief Base class for RNG engine wrappers.
  */

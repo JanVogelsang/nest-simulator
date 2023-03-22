@@ -118,8 +118,6 @@ public:
    */
   static ConnParameter* create( const Token&, const size_t );
 };
-
-
 /**
  * Single double value.
  *
@@ -217,8 +215,6 @@ public:
 private:
   long value_;
 };
-
-
 /**
  * Array parameter classes, returning double values in order.
  *

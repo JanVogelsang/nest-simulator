@@ -24,13 +24,9 @@
 #include "kernel_manager.h"
 #include "mpi_manager_impl.h"
 #include "vp_manager_impl.h"
-
-
 // C++ includes:
 #include <algorithm> // copy
 #include <numeric>   // accumulate
-
-
 namespace nest
 {
 
@@ -49,8 +45,6 @@ struct PrimitiveSortObject
     return primitive_lhs[ 0 ] < primitive_rhs[ 0 ];
   }
 } primitiveSort;
-
-
 nc_const_iterator::nc_const_iterator( NodeCollectionPTR collection_ptr,
   const NodeCollectionPrimitive& collection,
   size_t offset,
@@ -186,8 +180,6 @@ NodeCollection::create( const TokenArray& node_idsarray )
   }
   return NodeCollection::create_( node_ids );
 }
-
-
 NodeCollectionPTR
 NodeCollection::create( const index node_id )
 {

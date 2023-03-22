@@ -119,9 +119,5 @@ ConnectionLabel< ConnectionT >::get_label() const
 {
   return label_;
 }
-
-
 } // namespace nest
-
-
 #endif /* CONNECTION_LABEL_H */

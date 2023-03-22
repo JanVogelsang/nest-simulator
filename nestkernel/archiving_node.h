@@ -126,7 +126,7 @@ public:
    * t_first_read: The newly registered synapse will read the history entries
    * with t > t_first_read.
    */
-  void register_stdp_connection( double t_first_read, double delay ) override;
+  void register_stdp_connection( double t_first_read, delay dendritic_delay ) override;
 
   /**
    * Postponed delivery is required for STDP synapses with predominantly axonal delay. The archiving node supports this
@@ -142,11 +142,11 @@ public:
    * When receiving an incoming event, forward it to the corresponding connection and handle the event updated by the
    * connection.
    */
-  void deliver_event( const thread tid,
-    const synindex syn_id,
-    const index local_target_connection_id,
-    const std::vector< ConnectorModel* >& cm,
-    SpikeEvent& se ) override;
+//  void deliver_event( const synindex syn_id,
+//    const index local_target_connection_id,
+//    const delay axonal_delay,
+//    const std::vector< ConnectorModel* >& cm,
+//    SpikeEvent& se ) override;
 
   void get_status( DictionaryDatum& d ) const override;
   void set_status( const DictionaryDatum& d ) override;
@@ -158,9 +158,8 @@ public:
   void add_correction_entry_stdp_ax_delay( SpikeEvent& spike_event,
     const double t_last_pre_spike,
     const double weight_revert,
+    const double axonal_delay,
     const double dendritic_delay );
-
-
 protected:
   void pre_run_hook_();
 
@@ -204,8 +203,12 @@ private:
   double tau_minus_triplet_inv_;
 
   double min_delay_;
-  double max_delay_;
   double trace_;
+
+  /**
+   * Maximum dendritic delay of all incoming connections.
+   */
+  delay max_dendritic_delay_;
 
   double last_spike_;
 
@@ -233,10 +236,12 @@ private:
     CorrectionEntrySTDPAxDelay( const synindex syn_id,
       const index local_connection_id,
       const double t_last_pre_spike,
+      const double axonal_delay,
       const double weight_revert )
       : syn_id_( syn_id )
       , local_connection_id_( local_connection_id )
       , t_last_pre_spike_( t_last_pre_spike )
+      , axonal_delay_( axonal_delay )
       , weight_revert_( weight_revert )
     {
     }
@@ -244,6 +249,7 @@ private:
     synindex syn_id_;           //!< index of synapse type
     index local_connection_id_; //!< index of connection in node
     double t_last_pre_spike_;   //!< time of the last pre-synaptic spike before this spike
+    double axonal_delay_;
     double weight_revert_;      //!< synaptic weight to revert to (STDP depression needs to be undone)
   };
 

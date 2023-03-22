@@ -120,8 +120,6 @@ nest::NoThreadSiblingsAvailable::message() const
 
   return out.str();
 }
-
-
 std::string
 nest::LocalNodeExpected::message() const
 {
@@ -377,8 +375,6 @@ nest::MUSICPortUnknown::message() const
   msg << "The port " << portname_ << " does not exist.";
   return msg.str();
 }
-
-
 std::string
 nest::MUSICChannelAlreadyMapped::message() const
 {

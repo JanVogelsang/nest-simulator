@@ -333,8 +333,6 @@ Ntree< D, T, max_capacity, max_depth >::masked_iterator::first_leaf_()
     }
   }
 }
-
-
 template < int D, class T, int max_capacity, int max_depth >
 void
 Ntree< D, T, max_capacity, max_depth >::masked_iterator::first_leaf_inside_()

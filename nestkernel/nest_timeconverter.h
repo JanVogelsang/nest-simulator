@@ -57,8 +57,6 @@ public:
    * members OLD_TICS_PER_MS, OLD_TICS_PER_STEP.
    */
   TimeConverter();
-
-
   /**
    * Converts a given number of steps with respect to old representation
    * into a time object in current representation.

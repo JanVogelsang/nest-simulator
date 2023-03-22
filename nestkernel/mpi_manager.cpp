@@ -292,8 +292,6 @@ nest::MPIManager::mpi_abort( int exitcode )
 {
   MPI_Abort( comm, exitcode );
 }
-
-
 std::string
 nest::MPIManager::get_processor_name()
 {
@@ -676,8 +674,6 @@ nest::MPIManager::communicate( double send_val, std::vector< double >& recv_buff
   recv_buffer.resize( get_num_processes() );
   MPI_Allgather( &send_val, 1, MPI_DOUBLE, &recv_buffer[ 0 ], 1, MPI_DOUBLE, comm );
 }
-
-
 /**
  * communicate function for sending set-up information
  */
@@ -794,8 +790,6 @@ nest::MPIManager::synchronize()
 {
   MPI_Barrier( comm );
 }
-
-
 // any_true: takes a single bool, exchanges with all other processes,
 // and returns "true" if one or more processes provide "true"
 bool

@@ -401,8 +401,6 @@ private:
   Position< D, int > lower_left_;
   Position< D, int > upper_right_;
 };
-
-
 template < int D, class T >
 inline Position< D, T >::Position()
 {
@@ -498,8 +496,6 @@ Position< D, T >::getToken() const
   std::vector< T > result = get_vector();
   return Token( result );
 }
-
-
 template < int D, class T >
 const std::vector< T >
 Position< D, T >::get_vector() const
@@ -514,8 +510,6 @@ Position< D, T >::get_vector( std::vector< T >& vector ) const
   assert( vector.size() == D );
   std::copy( x_.begin(), x_.end(), vector.begin() );
 }
-
-
 template < int D, class T >
 template < class OT >
 inline Position< D, T >

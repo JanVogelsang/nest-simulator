@@ -86,8 +86,6 @@ namespace nest
      are updated after a change in resolution.
    - The default resolution can be changed using the --with-tics_per_step
      option to configure.
-
-
    @NOTE
    The step-time counter is NOT changed when the resolution is
    changed.  This is of no consequence, since changes in resolution
@@ -646,6 +644,4 @@ operator*( const Time& t, long factor )
 } // namespace
 
 std::ostream& operator<<( std::ostream&, const nest::Time& );
-
-
 #endif

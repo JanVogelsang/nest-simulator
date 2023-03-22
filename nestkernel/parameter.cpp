@@ -28,8 +28,6 @@
 #include "vp_manager_impl.h"
 
 #include "parameter.h"
-
-
 namespace nest
 {
 
@@ -102,8 +100,6 @@ NormalParameter::value( RngPtr rng, Node* node )
                         : kernel().vp_manager.get_thread_id();
   return normal_dists_[ tid ]( rng );
 }
-
-
 LognormalParameter::LognormalParameter( const DictionaryDatum& d )
   : mean_( 0.0 )
   , std_( 1.0 )
@@ -128,8 +124,6 @@ LognormalParameter::value( RngPtr rng, Node* node )
                         : kernel().vp_manager.get_thread_id();
   return lognormal_dists_[ tid ]( rng );
 }
-
-
 double
 NodePosParameter::get_node_pos_( Node* node ) const
 {
@@ -253,8 +247,6 @@ RedrawParameter::value( RngPtr rng,
 
   return value;
 }
-
-
 ExpDistParameter::ExpDistParameter( const DictionaryDatum& d )
   : Parameter( true )
   , p_( getValue< ParameterDatum >( d, "x" ) )
@@ -300,8 +292,6 @@ GaussianParameter::value( RngPtr rng,
   const auto dx = p_->value( rng, source_pos, target_pos, layer, node ) - mean_;
   return std::exp( -dx * dx * inv_two_std2_ );
 }
-
-
 Gaussian2DParameter::Gaussian2DParameter( const DictionaryDatum& d )
   : Parameter( true )
   , px_( getValue< ParameterDatum >( d, "x" ) )
@@ -349,8 +339,6 @@ Gaussian2DParameter::value( RngPtr rng,
   const auto dy = py_->value( rng, source_pos, target_pos, layer, node ) - mean_y_;
   return std::exp( -dx * dx * x_term_const_ - dy * dy * y_term_const_ + dx * dy * xy_term_const_ );
 }
-
-
 GammaParameter::GammaParameter( const DictionaryDatum& d )
   : Parameter( true )
   , p_( getValue< ParameterDatum >( d, "x" ) )
@@ -379,8 +367,6 @@ GammaParameter::value( RngPtr rng,
   const auto x = p_->value( rng, source_pos, target_pos, layer, node );
   return std::pow( x, kappa_ - 1. ) * std::exp( -1. * inv_theta_ * x ) * delta_;
 }
-
-
 std::shared_ptr< Parameter >
 multiply_parameter( const std::shared_ptr< Parameter > first, const std::shared_ptr< Parameter > second )
 {

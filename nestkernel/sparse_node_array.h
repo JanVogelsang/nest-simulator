@@ -32,8 +32,6 @@
 
 // Includes from libnestutil
 #include "block_vector.h"
-
-
 namespace nest
 {
 class Node;
@@ -221,8 +219,6 @@ private:
 };
 
 } // namespace nest
-
-
 inline nest::SparseNodeArray::const_iterator
 nest::SparseNodeArray::begin() const
 {

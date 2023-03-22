@@ -206,8 +206,6 @@ private:
   virtual void set_status_( DictionaryDatum ) = 0;
 
   virtual DictionaryDatum get_status_() = 0;
-
-
   /**
    * Set the number of threads.
    * @see set_threads()
@@ -239,8 +237,6 @@ private:
    */
   std::vector< std::vector< Node* > > memory_;
 };
-
-
 inline Node*
 Model::create( thread t )
 {

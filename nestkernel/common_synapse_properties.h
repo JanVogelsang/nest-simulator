@@ -30,8 +30,6 @@
 
 // Includes from sli:
 #include "dictdatum.h"
-
-
 namespace nest
 {
 
@@ -70,8 +68,6 @@ public:
    * Set properties from the values given in dictionary.
    */
   void set_status( const DictionaryDatum& d, ConnectorModel& cm );
-
-
   /**
    * Calibrate all time objects, which might be contained in this object.
    */
@@ -97,8 +93,6 @@ public:
    * get weight_recorder
    */
   NodeCollectionDatum get_weight_recorder() const;
-
-
 private:
   NodeCollectionDatum weight_recorder_;
   long wr_node_id_;
@@ -121,8 +115,6 @@ CommonSynapseProperties::get_weight_recorder() const
 {
   return weight_recorder_;
 }
-
-
 } // of namespace nest
 
 #endif

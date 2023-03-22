@@ -27,7 +27,6 @@ set ( nestkernel_sources
       connection.h
       connection_label.h
       common_properties_hom_w.h
-      syn_id_delay.h
       connector_base.h connector_base_impl.h connector_base.cpp
       connector_model.h connector_model_impl.h connector_model.cpp
       connection_id.h connection_id.cpp
@@ -82,6 +81,7 @@ set ( nestkernel_sources
       mpi_manager.h mpi_manager_impl.h mpi_manager.cpp
       simulation_manager.h simulation_manager.cpp
       connection_manager.h connection_manager_impl.h connection_manager.cpp
+      connection_type_enum.h
       sp_manager.h sp_manager_impl.h sp_manager.cpp
       delay_checker.h delay_checker.cpp
       random_manager.h random_manager.cpp
@@ -115,7 +115,6 @@ set ( nestkernel_sources
       adjacency_list.h
       )
 
-
 if ( HAVE_SIONLIB )
   set( nestkernel_sources
        ${nestkernel_sources}
@@ -130,12 +129,8 @@ if ( HAVE_MPI )
     stimulation_backend_mpi.h stimulation_backend_mpi.cpp
   )
 endif ()
-
-
-# Prevent problems with Conda path substitution (see #2348) 
+# Prevent problems with Conda path substitution (see #2348)
 set_source_files_properties( dynamicloader.cpp PROPERTIES COMPILE_OPTIONS "-O0" )
-
-
 add_library( nestkernel ${nestkernel_sources} )
 set_target_properties( nestkernel
     PROPERTIES

@@ -40,8 +40,6 @@ nest::StimulationBackendMPI::StimulationBackendMPI()
 nest::StimulationBackendMPI::~StimulationBackendMPI() noexcept
 {
 }
-
-
 void
 nest::StimulationBackendMPI::initialize()
 {
@@ -80,8 +78,6 @@ nest::StimulationBackendMPI::enroll( nest::StimulationDevice& device, const Dict
   devices_[ tid ].insert( secondpair );
   enrolled_ = true;
 }
-
-
 void
 nest::StimulationBackendMPI::disenroll( nest::StimulationDevice& device )
 {

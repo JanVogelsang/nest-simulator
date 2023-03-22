@@ -139,8 +139,6 @@ nest::SynapticElement::set( const DictionaryDatum& d )
   }
   tau_vacant_ = new_tau_vacant;
 }
-
-
 /* ----------------------------------------------------------------
  * Update the number of element at the time t (in ms)
  * ---------------------------------------------------------------- */

@@ -20,13 +20,8 @@
  *
  */
 
-// TODO JV: Define only for debugging!
-// #define USE_ADJACENCY_LIST ON
-// TODO JV: Test with very low communication sizes, so multiple communication rounds are needed (both spikes and
-//  targets)
-
-#ifndef NEST_ADJACENCY_LIST_H
-#define NEST_ADJACENCY_LIST_H
+#ifndef ADJACENCY_LIST_H
+#define ADJACENCY_LIST_H
 #ifdef USE_ADJACENCY_LIST
 
 // C++ includes:
@@ -48,17 +43,17 @@ struct AdjacencyListTarget
   index local_target_node_id : NUM_BITS_LOCAL_NODE_ID;
   index local_target_connection_id : NUM_BITS_LOCAL_CONNECTION_ID;
   synindex syn_id : NUM_BITS_SYN_ID;
-  delay partial_delay : NUM_BITS_DELAY;
+  delay axonal_delay : NUM_BITS_DELAY;
   // TODO JV (pt): Still some bits to spare here
 
   AdjacencyListTarget( const index local_target_node_id,
     const index local_target_connection_id,
     const synindex syn_id,
-    const delay partial_delay )
+    const delay axonal_delay )
     : local_target_node_id( local_target_node_id )
     , local_target_connection_id( local_target_connection_id )
     , syn_id( syn_id )
-    , partial_delay( partial_delay )
+    , axonal_delay( axonal_delay )
   {
   }
 };
@@ -133,7 +128,7 @@ public:
     const index source_node_id,
     const index target_node_id,
     const index target_connection_id,
-    const delay partial_delay,
+    const delay axonal_delay,
     const bool prepare_for_compression );
 
   std::pair< std::vector< AdjacencyListTarget >::const_iterator, std::vector< AdjacencyListTarget >::const_iterator >
@@ -165,7 +160,7 @@ inline std::pair< std::vector< AdjacencyListTarget >::const_iterator,
 AdjacencyList::get_iterators( const thread tid, const index adjacency_list_index ) const
 {
   assert( tid >= 0 );
-  assert( static_cast<size_t>(tid) < adjacency_list_.size() );
+  assert( static_cast< size_t >( tid ) < adjacency_list_.size() );
   assert( adjacency_list_index < adjacency_list_[ tid ].size() );
 
   return { adjacency_list_[ tid ][ adjacency_list_index ].cbegin(),
@@ -178,12 +173,12 @@ AdjacencyList::add_target( const thread tid,
   const index source_node_id,
   const index local_target_node_id,
   const index local_target_connection_id,
-  const delay partial_delay,
+  const delay axonal_delay,
   const bool prepare_for_compression )
 {
   assert( tid >= 0 );
-  assert( static_cast<size_t>(tid) < adjacency_list_.size() );
-  assert( static_cast<size_t>(tid) < sources_.size() );
+  assert( static_cast< size_t >( tid ) < adjacency_list_.size() );
+  assert( static_cast< size_t >( tid ) < sources_.size() );
 
   auto source_index = sources_[ tid ].find( source_node_id );
 
@@ -191,14 +186,14 @@ AdjacencyList::add_target( const thread tid,
   if ( source_index != sources_[ tid ].end() ) // not the first connection
   {
     adjacency_list_[ tid ][ ( *source_index ).second ].emplace_back(
-      local_target_node_id, local_target_connection_id, syn_id, partial_delay );
+      local_target_node_id, local_target_connection_id, syn_id, axonal_delay );
   }
-  else  // actually the first connection
+  else // actually the first connection
   {
     const index new_index = adjacency_list_[ tid ].size(); // set index for this source node id
     sources_[ tid ][ source_node_id ] = new_index;
     adjacency_list_[ tid ].emplace_back( std::initializer_list< AdjacencyListTarget > {
-      { local_target_node_id, local_target_connection_id, syn_id, partial_delay } } );
+      { local_target_node_id, local_target_connection_id, syn_id, axonal_delay } } );
 
     // if spike compression is enabled, fill the compression data structures as well
     if ( prepare_for_compression )
@@ -317,4 +312,4 @@ AdjacencyList::get_next_target( const thread tid )
 } // nest
 
 #endif // USE_ADJACENCY_LIST
-#endif // NEST_ADJACENCY_LIST_H
+#endif // ADJACENCY_LIST_H

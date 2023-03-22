@@ -44,8 +44,6 @@ nest::RingBuffer::clear()
   // clear all elements
   buffer_.assign( buffer_.size(), 0.0 );
 }
-
-
 nest::MultRBuffer::MultRBuffer()
   : buffer_( kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay(), 0.0 )
 {
@@ -67,8 +65,6 @@ nest::MultRBuffer::clear()
   // clear all elements
   buffer_.assign( buffer_.size(), 0.0 );
 }
-
-
 nest::ListRingBuffer::ListRingBuffer()
   : buffer_( kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay() )
 {

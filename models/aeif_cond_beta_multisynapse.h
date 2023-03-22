@@ -106,7 +106,7 @@ and the differential equation for the spike-adaptation current `w` is:
 
 .. math::
 
- \tau_w \cdot dw/dt = a(V - E_L) - w
+ \tau_w \cdot value/dt = a(V - E_L) - w
 
 When the neuron fires a spike, the adaptation current `w <- w + b`.
 
@@ -397,7 +397,7 @@ private:
 };
 
 inline port
-aeif_cond_beta_multisynapse::send_test_event( Node& target, rport receptor_type, synindex, bool )
+aeif_cond_beta_multisynapse::send_test_event( Node& target, const rport receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

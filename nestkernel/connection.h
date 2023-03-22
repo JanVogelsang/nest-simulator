@@ -93,7 +93,6 @@ class ConnTestDummyNodeBase : public Node
   }
 };
 
-
 /**
  * Base class for representing connections.
  * It provides the mandatory properties receiver port and target,
@@ -117,7 +116,6 @@ public:
 
   Connection()
   {
-    set_delay( 1.0 );
   }
 
   Connection( const Connection& rhs ) = default;
@@ -165,6 +163,7 @@ public:
   void correct_synapse_stdp_ax_delay( const double t_last_pre_spike,
     double* weight_revert,
     const double t_post_spike,
+    const double axonal_delay,
     const CommonSynapseProperties&,
     Node* target );
 
@@ -172,7 +171,7 @@ public:
    * Return the delay of the connection in ms
    */
   double
-  get_delay() const
+  get_dendritic_delay() const
   {
     return Time::delay_steps_to_ms( delay_ );
   }
@@ -181,7 +180,7 @@ public:
    * Return the delay of the connection in steps
    */
   long
-  get_delay_steps() const
+  get_dendritic_delay_steps() const
   {
     return delay_;
   }
@@ -190,7 +189,7 @@ public:
    * Set the delay of the connection
    */
   void
-  set_delay( const double delay )
+  set_dendritic_delay( const double delay )
   {
     delay_ = Time::delay_ms_to_steps( delay );
   }
@@ -199,7 +198,7 @@ public:
    * Set the delay of the connection in steps
    */
   void
-  set_delay_steps( const long delay )
+  set_dendritic_delay_steps( const long delay )
   {
     delay_ = delay;
   }
@@ -242,20 +241,13 @@ public:
   }
 
 protected:
-  /* the order of the members below is critical as it influences the size of the object. Please leave unchanged as
-     targetidentifierT target_;
-     SynIdDelay syn_id_delay_;
-  */
-  // targetidentifierT target_;
-  //! syn_id (9 bit), delay (21 bit) in timesteps of this connection and more_targets and disabled flags (each 1 bit)
-  // SynIdDelay syn_id_delay_;
-  double delay_;
+  delay delay_;
 };
 
 inline void
 Connection::get_status( DictionaryDatum& d ) const
 {
-  def< double >( d, names::delay, get_delay() );
+  def< double >( d, names::delay, get_dendritic_delay() );
 }
 
 inline void
@@ -265,7 +257,7 @@ Connection::set_status( const DictionaryDatum& d, ConnectorModel& )
   if ( updateValue< double >( d, names::delay, delay ) )
   {
     kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
-    set_delay( delay );
+    set_dendritic_delay( delay );
   }
 }
 
@@ -287,7 +279,7 @@ Connection::calibrate( const TimeConverter& tc )
 }
 
 inline void
-Connection::correct_synapse_stdp_ax_delay( const double, double*, const double, const CommonSynapseProperties&, Node* )
+Connection::correct_synapse_stdp_ax_delay( const double, double*, const double, const double, const CommonSynapseProperties&, Node* )
 {
   throw IllegalConnection( "Connection does not support correction in case of STDP with predominantly axonal delays." );
 }

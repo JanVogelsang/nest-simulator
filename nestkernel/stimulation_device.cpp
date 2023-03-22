@@ -19,13 +19,9 @@
  *  along with NEST.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 // Includes from nestkernel:
 #include "stimulation_device.h"
 #include "kernel_manager.h"
-
-
 nest::StimulationDevice::StimulationDevice()
   : DeviceNode()
   , Device()
@@ -86,8 +82,6 @@ nest::StimulationDevice::get_label() const
 {
   return P_.label_;
 }
-
-
 nest::StimulationDevice::Parameters_::Parameters_()
   : label_()
   , stimulus_source_( Name() )
@@ -160,8 +154,6 @@ nest::StimulationDevice::set_status( const DictionaryDatum& d )
   // if we get here, temporaries contain consistent set of properties
   P_ = ptmp;
 }
-
-
 void
 nest::StimulationDevice::get_status( DictionaryDatum& d ) const
 {

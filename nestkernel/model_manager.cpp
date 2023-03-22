@@ -38,8 +38,6 @@
 #include "node.h"
 #include "proxynode.h"
 #include "vp_manager_impl.h"
-
-
 namespace nest
 {
 
@@ -286,8 +284,6 @@ ModelManager::copy_connection_model_( index old_id, Name new_name )
   kernel().connection_manager.resize_connections();
   return new_id;
 }
-
-
 bool
 ModelManager::set_model_defaults( Name name, DictionaryDatum params )
 {
@@ -312,8 +308,6 @@ ModelManager::set_model_defaults( Name name, DictionaryDatum params )
     return false;
   }
 }
-
-
 void
 ModelManager::set_node_defaults_( index model_id, const DictionaryDatum& params )
 {

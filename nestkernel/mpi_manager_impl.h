@@ -49,8 +49,6 @@ extern MPI::Intracomm comm;
 #else  /* #ifdef HAVE_MUSIC */
 extern MPI_Comm comm;
 #endif /* #ifdef HAVE_MUSIC */
-
-
 /* ------------------------------------------------------
    The following datatypes are defined here in communicator_impl.h
    file instead of as static class members, to avoid inclusion
@@ -91,8 +89,6 @@ nest::MPIManager::get_process_id_of_node_id( const index node_id ) const
 }
 
 #else // HAVE_MPI
-
-
 inline nest::thread
 nest::MPIManager::get_process_id_of_node_id( const index ) const
 {

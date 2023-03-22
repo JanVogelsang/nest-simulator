@@ -64,8 +64,6 @@ public:
    * request to all ConnectorModel objects.
    */
   void calibrate( const TimeConverter& );
-
-
   /**
    * Return a proxynode configured for thread tid and the given
    * node_id.
@@ -285,8 +283,6 @@ private:
   //! True if any model defaults have been modified
   bool model_defaults_modified_;
 };
-
-
 inline Model*
 ModelManager::get_node_model( index m ) const
 {

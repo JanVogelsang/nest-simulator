@@ -55,8 +55,6 @@ namespace nest
 
   SeeAlso: Device, StimulationDevice, RecordingDevice
 */
-
-
 /**
  * Base class for all pseudo recording devices.
  *

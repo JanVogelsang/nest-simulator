@@ -37,8 +37,6 @@
 #include "Random123/philox.h"
 #include "Random123/threefry.h"
 #endif
-
-
 const std::string nest::RandomManager::DEFAULT_RNG_TYPE_ = "mt19937_64";
 
 const std::uint32_t nest::RandomManager::DEFAULT_BASE_SEED_ = 143202461;
@@ -46,8 +44,6 @@ const std::uint32_t nest::RandomManager::DEFAULT_BASE_SEED_ = 143202461;
 const std::uint32_t nest::RandomManager::RANK_SYNCED_SEEDER_ = 0xc229212d;
 const std::uint32_t nest::RandomManager::THREAD_SYNCED_SEEDER_ = 0x37722d5e;
 const std::uint32_t nest::RandomManager::THREAD_SPECIFIC_SEEDER_ = 0xb84c9bae;
-
-
 nest::RandomManager::RandomManager()
   : current_rng_type_( DEFAULT_RNG_TYPE_ )
   , base_seed_( DEFAULT_BASE_SEED_ )

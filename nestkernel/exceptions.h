@@ -270,8 +270,6 @@ public:
 
   std::string message() const override;
 };
-
-
 class LocalNodeExpected : public KernelException
 {
   int id_;
@@ -330,8 +328,6 @@ public:
   }
   std::string message() const override;
 };
-
-
 /**
  * Exception to be thrown if the specified
  * receptor type does not exist in the node.
@@ -553,8 +549,6 @@ public:
 private:
   std::string msg_;
 };
-
-
 /**
  * Exception to be thrown by a Connection object if
  * a connection with an unsupported event type is
@@ -669,8 +663,6 @@ public:
     , msg_( msg )
   {
   }
-
-
   ~DimensionMismatch() throw() override
   {
   }
@@ -957,8 +949,6 @@ public:
 
   std::string message() const override;
 };
-
-
 #ifdef HAVE_MUSIC
 /**
  * Exception to be thrown if a music_event_out_proxy is generated, but the music
@@ -1021,8 +1011,6 @@ private:
   const std::string model_;
   const std::string portname_;
 };
-
-
 /**
  * Exception to be thrown if the user tries to change the name of an already
  * published port.
@@ -1080,8 +1068,6 @@ public:
 private:
   const std::string model_;
 };
-
-
 /**
  * Exception to be thrown if the user tries to map a channel that exceeds the
  * width of the MUSIC port.
@@ -1215,8 +1201,6 @@ public:
     : backend_( std::move( backend ) )
   {
   }
-
-
   std::string message() const override;
 
 private:

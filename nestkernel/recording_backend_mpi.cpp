@@ -22,8 +22,6 @@
 
 // C++ includes:
 #include <iostream>
-
-
 // Includes from nestkernel:
 #include "exceptions.h"
 #include "recording_backend_mpi.h"
@@ -38,8 +36,6 @@ nest::RecordingBackendMPI::RecordingBackendMPI()
 nest::RecordingBackendMPI::~RecordingBackendMPI() throw()
 {
 }
-
-
 void
 nest::RecordingBackendMPI::initialize()
 {
@@ -212,8 +208,6 @@ nest::RecordingBackendMPI::pre_run_hook()
   }
 #pragma omp barrier
 }
-
-
 void
 nest::RecordingBackendMPI::post_step_hook()
 {
@@ -313,8 +307,6 @@ nest::RecordingBackendMPI::get_device_status( const nest::RecordingDevice&, Dict
 {
   // nothing to do
 }
-
-
 void
 nest::RecordingBackendMPI::write( const RecordingDevice& device,
   const Event& event,

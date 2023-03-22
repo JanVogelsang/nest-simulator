@@ -300,8 +300,6 @@ nest::UniversalDataLogger< HostNode >::DataLogger_::DataLogger_( const DataLoggi
   recording_interval_ = req.get_recording_interval();
   recording_offset_ = req.get_recording_offset();
 }
-
-
 /**
  * Dynamic Universal data-logging plug-in for multisynapse neuron models.
  *
@@ -362,8 +360,6 @@ nest::UniversalDataLogger< HostNode >::DataLogger_::DataLogger_( const DataLoggi
  *
  * @addtogroup Devices
  */
-
-
 template < typename HostNode >
 class DynamicUniversalDataLogger
 {
@@ -481,8 +477,6 @@ private:
   //! Should not be assigned
   DynamicUniversalDataLogger const& operator=( const DynamicUniversalDataLogger& );
 };
-
-
 // must be defined in this file, since it is required by check_connection(),
 // which typically is in h-files.
 template < typename HostNode >

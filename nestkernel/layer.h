@@ -334,8 +334,6 @@ public:
   double compute_distance( const std::vector< double >& from_pos, const index lid ) const override;
 
   double compute_distance( const std::vector< double >& from_pos, const std::vector< double >& to_pos ) const override;
-
-
   /**
    * Get positions for all nodes in layer, including nodes on other MPI
    * processes. The positions will be cached so that subsequent calls for
@@ -518,8 +516,6 @@ AbstractLayer::set_node_collection( NodeCollectionPTR node_collection )
 {
   node_collection_ = node_collection;
 }
-
-
 inline NodeCollectionPTR
 AbstractLayer::get_node_collection()
 {

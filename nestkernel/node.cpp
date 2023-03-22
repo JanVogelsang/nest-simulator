@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "node.h"
 
 // Includes from libnestutil:
@@ -41,14 +40,14 @@ namespace nest
 
 Node::Node()
   : deprecation_warning()
-  , node_id_( 0 )
-  , thread_lid_( invalid_index )
   , model_id_( -1 )
   , thread_( 0 )
   , vp_( invalid_thread )
   , frozen_( false )
   , initialized_( false )
   , node_uses_wfr_( false )
+  , node_id_( 0 )
+  , thread_lid_( invalid_index )
   , connections_( kernel().model_manager.get_num_connection_models() )
   , connections_from_devices_( kernel().model_manager.get_num_connection_models() )
 {
@@ -58,8 +57,6 @@ Node::Node()
 
 Node::Node( const Node& n )
   : deprecation_warning( n.deprecation_warning )
-  , node_id_( 0 )
-  , thread_lid_( n.thread_lid_ )
   , model_id_( n.model_id_ )
   , thread_( n.thread_ )
   , vp_( n.vp_ )
@@ -67,6 +64,8 @@ Node::Node( const Node& n )
   // copy must always initialize its own buffers
   , initialized_( false )
   , node_uses_wfr_( n.node_uses_wfr_ )
+  , node_id_( 0 )
+  , thread_lid_( n.thread_lid_ )
   , connections_( kernel().model_manager.get_num_connection_models() )
   , connections_from_devices_( kernel().model_manager.get_num_connection_models() )
 {
@@ -98,7 +97,6 @@ Node::init()
 void
 Node::finalize()
 {
-  std::vector< ConnectorBase* >().swap( connections_ );
 }
 
 void
@@ -176,7 +174,7 @@ Node::get_local_device_id() const
 }
 
 void
-Node::add_correction_entry_stdp_ax_delay( SpikeEvent&, const double, const double, const double )
+Node::add_correction_entry_stdp_ax_delay( SpikeEvent&, const double, const double, const double, const double )
 {
   throw UnexpectedEvent( "Node does not support framework for STDP synapses with predominantly axonal delays." );
 }
@@ -251,7 +249,7 @@ Node::send_test_event( Node&, rport, synindex, bool )
  * throws IllegalConnection
  */
 void
-Node::register_stdp_connection( double, double )
+Node::register_stdp_connection( double, delay )
 {
   throw IllegalConnection( "The target node does not support STDP synapses." );
 }
@@ -259,13 +257,16 @@ Node::register_stdp_connection( double, double )
 void
 Node::delete_connections()
 {
-  for ( auto syn_type_connections : connections_ )
+  for ( std::unique_ptr< ConnectorBase >& syn_type_connections : connections_ )
   {
-    if ( syn_type_connections )
-    {
-      delete syn_type_connections;
-    }
+    syn_type_connections.reset();
   }
+  for ( std::unique_ptr< ConnectorBase >& syn_type_connections : connections_from_devices_ )
+  {
+    syn_type_connections.reset();
+  }
+  connections_.clear();
+  connections_from_devices_.clear();
 }
 
 void
@@ -298,7 +299,7 @@ Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
   const std::vector< ConnectorModel* >& cm,
   DSSpikeEvent& e )
 {
-  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, cm, e, this );
+  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, 0, cm, e, this );
 
   // TODO JV (help): Make this cleaner, as only needed for poisson generators probably
   if ( not e.get_multiplicity() )
@@ -307,23 +308,6 @@ Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
   }
 
   handle( e );
-}
-
-void
-Node::deliver_event( const thread tid,
-  const synindex syn_id,
-  const index local_target_connection_id,
-  const std::vector< ConnectorModel* >& cm,
-  SpikeEvent& se )
-{
-  // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
-  // event by adding a weight and optionally updates its internal state as well.
-  connections_[ syn_id ]->send( tid, local_target_connection_id, cm, se, this );
-
-  // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
-  //  handle, or just handing the entire local connection id to the handle function.
-
-  handle( se );
 }
 
 /**
@@ -525,8 +509,6 @@ Node::get_K_value( double )
 {
   throw UnexpectedEvent();
 }
-
-
 void
 Node::get_K_values( double, double&, double&, double& )
 {

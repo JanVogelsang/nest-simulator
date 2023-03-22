@@ -129,8 +129,6 @@ RecordablesMap< HostNode >::create()
 {
   assert( false );
 }
-
-
 //! Class that reads out state vector elements, used by UniversalDataLogger
 template < typename HostNode >
 class DataAccessFunctor
@@ -151,8 +149,6 @@ public:
     return parent_->get_state_element( elem_ );
   };
 };
-
-
 /**
  * Map names of recordables to DataAccessFunctors.
  *

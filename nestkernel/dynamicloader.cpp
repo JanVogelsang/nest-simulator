@@ -50,8 +50,6 @@
 #include "integerdatum.h"
 #include "interpret.h"
 #include "stringdatum.h"
-
-
 namespace nest
 {
 
@@ -85,8 +83,6 @@ DynamicLoaderModule::getLinkedModules()
   static vecLinkedModules lm; // initialized empty on first call
   return lm;
 }
-
-
 /*! At the time when DynamicLoaderModule is constructed, the SLI Interpreter
   and NestModule must be already constructed and initialized.
   DynamicLoaderModule relies on the presence of
@@ -127,8 +123,6 @@ DynamicLoaderModule::commandstring() const
 {
   return std::string( "" ); // Run associated SLI startup script
 }
-
-
 // auxiliary function to check name of module via its pointer
 // we cannot use a & for the second argument, as std::bind2nd() then
 // becomes confused, at least with g++ 4.0.1.
@@ -137,8 +131,6 @@ has_name( SLIModule const* const m, const std::string n )
 {
   return m->name() == n;
 }
-
-
 /** @BeginDocumentation
   Name: Install - Load a dynamic module to extend the functionality.
 
@@ -280,8 +272,6 @@ DynamicLoaderModule::init( SLIInterpreter* i )
     LOG( M_ERROR, "DynamicLoaderModule::init", "Could not add dynamic module search directory." );
   }
 }
-
-
 int
 DynamicLoaderModule::registerLinkedModule( SLIModule* pModule )
 {
@@ -301,8 +291,6 @@ DynamicLoaderModule::initLinkedModules( SLIInterpreter& interpreter )
     interpreter.addlinkedusermodule( *it );
   }
 }
-
-
 } // namespace nest
 
 #endif // HAVE_LIBLTDL

@@ -26,9 +26,6 @@
 // C++ includes:
 #include <vector>
 
-// Includes from libnestutil:
-#include "sort.h"
-
 // Includes from nestkernel:
 #include "common_synapse_properties.h"
 #include "nest_datums.h"
@@ -81,9 +78,16 @@ public:
   virtual void set_synapse_status( const index lcid, const DictionaryDatum& dict, ConnectorModel& cm ) = 0;
 
   /**
-   * Get the proportion of the transmission delay attributed to the dendrite.
+   * Get the proportion of the transmission delay attributed to the dendrite of a connection.
    */
-  virtual double get_connection_delay( const index lcid, ConnectorModel& cm ) = 0;
+  virtual double get_dendritic_delay( const index lcid ) const = 0;
+
+#ifndef USE_ADJACENCY_LIST
+  /**
+   * Get the proportion of the transmission delay attributed to the axon of a connection.
+   */
+  virtual double get_axonal_delay( const index lcid ) const = 0;
+#endif
 
   /**
    * Get source node id of a specific connection.
@@ -118,19 +122,21 @@ public:
    * source.
    */
   virtual void send( const thread tid,
-    const index local_target_connection_id,
+    const index lcid,
+    const delay axonal_delay,
     const std::vector< ConnectorModel* >& cm,
     Event& e,
     Node* target ) = 0;
 
   virtual void correct_synapse_stdp_ax_delay( const index local_target_connection_id,
     const double t_last_pre_spike,
+    const double axonal_delay,
     double* weight_revert,
     const double t_post_spike,
     Node* target ) = 0;
 
   virtual void send_weight_event( const thread tid,
-    const index local_target_connection_id,
+    const index lcid,
     Event& e,
     const CommonSynapseProperties& cp,
     Node* target ) = 0;
@@ -145,11 +151,6 @@ public:
     const std::vector< ConnectorModel* >& cm ) = 0;
 
   /**
-   * Sort connections according to source node IDs.
-   */
-  virtual void sort_connections_and_sources() = 0;
-
-  /**
    * Disable the transfer of events through the connection at position
    * lcid.
    */
@@ -159,9 +160,19 @@ public:
    * Remove disabled connections from the connector.
    */
   virtual void remove_disabled_connections( const index first_disabled_index ) = 0;
+};
 
+/**
+ * Homogeneous connector, contains synapses of one particular type (syn_id_).
+ */
+template < typename ConnectionT >
+class Connector : public ConnectorBase
+{
+private:
+  const synindex syn_id_;
+  std::vector< ConnectionT > C_;
+  std::vector< delay > axonal_delays_;
 
-protected:
   /**
    * This data structure stores the node IDs of presynaptic neurons connected to this neuron. If structural plasticity
    * is disabled, it is only relevant during postsynaptic connection creation, before the connection information has
@@ -173,28 +184,22 @@ protected:
    * side and the sources vector can be cleared, unless further required for structural plasticity.
    */
   std::vector< index > sources_;
-};
-
-/**
- * Homogeneous connector, contains synapses of one particular type (syn_id_).
- */
-template < typename ConnectionT >
-class Connector : public ConnectorBase
-{
-private:
-  std::vector< ConnectionT > C_;
-  const synindex syn_id_;
 
 public:
   explicit Connector( const synindex syn_id )
     : syn_id_( syn_id )
   {
+    // TODO JV: Benchmark this both with and without reserve
+    axonal_delays_.reserve( 11250 );
+    C_.reserve( 11250 );
+    sources_.reserve( 11250 );
   }
 
-  ~Connector() override
-  {
-    C_.clear();
-  }
+    ~Connector() override = default;
+//  ~Connector() override
+//  {
+//    C_.clear();
+//  }
 
   synindex
   get_syn_id() const override
@@ -229,18 +234,36 @@ public:
   }
 
   double
-  get_connection_delay( const index lcid, ConnectorModel& cm ) override
+  get_dendritic_delay( const index lcid ) const override
   {
     assert( lcid < C_.size() );
 
-    return C_[ lcid ].get_delay();
+    return C_[ lcid ].get_dendritic_delay();
   }
 
+#ifndef USE_ADJACENCY_LIST
+  double
+  get_axonal_delay( const index lcid ) const override
+  {
+    assert( lcid < axonal_delays_.size() );
+
+    return axonal_delays_[ lcid ];
+  }
+#endif
+
   const index
-  add_connection( const ConnectionT& c, const index source_node_id )
+  add_connection( const ConnectionT& c, const index source_node_id, const delay axonal_delay )
   {
     C_.push_back( c );
     sources_.push_back( source_node_id );
+    axonal_delays_.push_back( axonal_delay );
+    if ( C_.size() > MAX_LOCAL_CONNECTION_ID )
+    {
+      throw KernelException(
+        String::compose( "Too many connections: at most %1 connections supported per virtual "
+                         "process and synapse model to a specific target neuron.",
+          MAX_LOCAL_CONNECTION_ID ) );
+    }
     // Return index of added item
     return C_.size() - 1;
   }
@@ -312,7 +335,8 @@ public:
 
   void
   send( const thread tid,
-    const index local_target_connection_id,
+    const index lcid,
+    const delay axonal_delay,
     const std::vector< ConnectorModel* >& cm,
     Event& e,
     Node* target ) override
@@ -320,11 +344,11 @@ public:
     typename ConnectionT::CommonPropertiesType const& cp =
       static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties();
 
-    e.set_port( local_target_connection_id );
-    if ( not C_[ local_target_connection_id ].is_disabled() )
+    e.set_port( lcid );
+    if ( not C_[ lcid ].is_disabled() )
     {
-      C_[ local_target_connection_id ].send( e, tid, cp, target );
-      send_weight_event( tid, local_target_connection_id, e, cp, target );
+      C_[ lcid ].send( e, tid, axonal_delay, cp, target );
+      send_weight_event( tid, lcid, e, cp, target );
     }
   }
 
@@ -358,15 +382,10 @@ public:
 
   void correct_synapse_stdp_ax_delay( const index local_target_connection_id,
     const double t_last_pre_spike,
+    const double axonal_delay,
     double* weight_revert,
     const double t_post_spike,
     Node* target ) override;
-
-  void
-  sort_connections_and_sources() override
-  {
-    nest::sort( sources_, C_ );
-  }
 
   void
   disable_connection( const index lcid ) override

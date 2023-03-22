@@ -443,8 +443,6 @@ Ntree< D, T, max_capacity, max_depth >::is_leaf() const
 {
   return leaf_;
 }
-
-
 template < int D, class T, int max_capacity, int max_depth >
 std::vector< std::pair< Position< D >, T > >
 Ntree< D, T, max_capacity, max_depth >::get_nodes()

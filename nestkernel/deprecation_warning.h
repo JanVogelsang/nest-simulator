@@ -27,8 +27,6 @@
 
 #ifndef DEPRECATION_WARNING_H
 #define DEPRECATION_WARNING_H
-
-
 /** @BeginDocumentation
 
    Name: DeprecationWarning - General deprecation warning class for models with
@@ -48,8 +46,6 @@
      node->deprecation_warning.deprecation_warning(deprecated_parameter,
                                                    new_parameter);
  */
-
-
 namespace nest
 {
 

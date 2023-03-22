@@ -305,8 +305,6 @@ protected:
    * Thus, we can still ensure that the pointers are never nullptr.
    */
   Node* sender_; //!< Pointer to sender or nullptr.
-
-
   /**
    * Sender port number.
    * The sender port is used as a unique identifier for the
@@ -327,8 +325,8 @@ protected:
 
   /**
    * Time stamp.
-   * The time stamp specifies the absolute time
-   * when the event shall arrive at the target.
+   * The time stamp specifies the absolute time when the event shall arrive at the target.
+   * TODO JV (help): Isn't this actually the time the event was emitted?
    */
   Time stamp_;
 
@@ -354,8 +352,6 @@ protected:
    */
   weight w_;
 };
-
-
 // Built-in event types
 /**
  * Event for spike information.
@@ -400,8 +396,6 @@ SpikeEvent::get_multiplicity() const
 {
   return multiplicity_;
 }
-
-
 /**
  * Event for recording the weight of a spike.
  */
@@ -452,8 +446,6 @@ WeightRecorderEvent::get_receiver_node_id() const
 {
   return receiver_node_id_;
 }
-
-
 /**
  * "Callback request event" for use in Device.
  *
@@ -656,8 +648,6 @@ inline DataLoggingRequest::DataLoggingRequest( const Time& rec_int,
   , record_from_( &recs )
 {
 }
-
-
 inline DataLoggingRequest*
 DataLoggingRequest::clone() const
 {
@@ -794,8 +784,6 @@ ConductanceEvent::get_conductance() const
 {
   return g_;
 }
-
-
 /**
  * Event for transmitting arbitrary data.
  * This event type may be used for transmitting arbitrary

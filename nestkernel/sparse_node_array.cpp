@@ -27,8 +27,6 @@
 #include "kernel_manager.h"
 #include "node.h"
 #include "vp_manager_impl.h"
-
-
 nest::SparseNodeArray::NodeEntry::NodeEntry( Node& node, index node_id )
   : node_( &node )
   , node_id_( node_id )

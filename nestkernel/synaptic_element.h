@@ -153,8 +153,6 @@ public:
    * @param d to take data from
    */
   void set( const DictionaryDatum& d );
-
-
   /*
    * Updates the number of available synaptic elements according to the mean
    * calcium concentration of the neuron at time t.

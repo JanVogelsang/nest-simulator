@@ -711,8 +711,6 @@ EventDeliveryManager::gather_target_data( const thread tid )
       sw_communicate_target_data_.stop();
 #endif
     } // of omp single (implicit barrier)
-
-
     const bool distribute_completed = distribute_target_data_buffers_( tid );
     gather_completed_checker_[ tid ].logical_and( distribute_completed );
 

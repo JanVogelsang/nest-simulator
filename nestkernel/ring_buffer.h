@@ -77,8 +77,6 @@ namespace nest
    Each field represents an entry in the vector.
 
 */
-
-
 class RingBuffer
 {
 public:
@@ -194,8 +192,6 @@ RingBuffer::get_index_( const delay d ) const
   assert( ( size_t ) idx < buffer_.size() );
   return idx;
 }
-
-
 class MultRBuffer
 {
 public:
@@ -275,8 +271,6 @@ MultRBuffer::get_index_( const delay d ) const
   assert( 0 <= idx and ( size_t ) idx < buffer_.size() );
   return idx;
 }
-
-
 class ListRingBuffer
 {
 public:
@@ -352,8 +346,6 @@ ListRingBuffer::get_index_( const delay d ) const
   assert( ( size_t ) idx < buffer_.size() );
   return idx;
 }
-
-
 template < unsigned int num_channels >
 class MultiChannelInputBuffer
 {
@@ -411,6 +403,4 @@ MultiChannelInputBuffer< num_channels >::size() const
 }
 
 } // namespace nest
-
-
 #endif

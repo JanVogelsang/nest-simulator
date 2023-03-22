@@ -41,8 +41,6 @@
 #include "music_event_handler.h"
 #include "music_rate_in_handler.h"
 #endif
-
-
 namespace nest
 {
 
@@ -190,6 +188,4 @@ private:
 #endif
 };
 }
-
-
 #endif /* MUSIC_MANAGER_H */

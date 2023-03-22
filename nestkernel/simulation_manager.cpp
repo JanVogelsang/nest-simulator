@@ -466,7 +466,7 @@ nest::SimulationManager::prepare()
     kernel().event_delivery_manager.configure_spike_data_buffers();
   }
 
-  kernel().node_manager.ensure_valid_thread_local_ids();
+  // kernel().node_manager.ensure_valid_thread_local_ids();  // TODO JV(pt): Check this
   kernel().node_manager.prepare_nodes();
 
   // we have to do enter_runtime after prepare_nodes, since we use
@@ -491,18 +491,17 @@ nest::SimulationManager::prepare()
       const thread tid = kernel().vp_manager.get_thread_id();
       update_connection_infrastructure( tid );
     } // of omp parallel
-  }
 
 #ifdef USE_ADJACENCY_LIST
 #pragma omp master
-  {
-    // TODO JV (pt): Where is the correct place to do this?
-    if ( kernel().connection_manager.use_compressed_spikes() )
     {
-      kernel().connection_manager.clear_compressed_indices();
+      if ( kernel().connection_manager.use_compressed_spikes() )
+      {
+        kernel().connection_manager.clear_compressed_indices();
+      }
     }
-  }
 #endif
+  }
 }
 
 void
@@ -581,7 +580,6 @@ nest::SimulationManager::run( Time const& t )
   // have the proper value.  to_step_ is set as in advance_time().
   to_step_ = std::min( from_step_ + to_do_, kernel().connection_manager.get_min_delay() );
 
-
   // Warn about possible inconsistencies, see #504.
   // This test cannot come any earlier, because we first need to compute
   // min_delay_
@@ -652,7 +650,6 @@ nest::SimulationManager::call_update_()
 
   LOG( M_INFO, "SimulationManager::start_updating_", os.str() );
 
-
   if ( to_do_ == 0 )
   {
     return;
@@ -692,7 +689,6 @@ nest::SimulationManager::update_connection_infrastructure( const thread tid )
   }
 
   kernel().connection_manager.restructure_connection_tables( tid );
-  kernel().connection_manager.sort_connections_and_sources( tid );
 
 #pragma omp barrier // wait for all threads to finish sorting
 

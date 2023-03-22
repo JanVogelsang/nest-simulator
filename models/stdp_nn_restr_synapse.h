@@ -138,12 +138,8 @@ public:
   stdp_nn_restr_synapse( const stdp_nn_restr_synapse& ) = default;
   stdp_nn_restr_synapse& operator=( const stdp_nn_restr_synapse& ) = default;
 
-  // Explicitly declare all methods inherited from the dependent base
-  // ConnectionBase. This avoids explicit name prefixes in all places these
-  // functions are used. Since ConnectionBase depends on the template parameter,
-  // they are not automatically found in the base class.
-  using ConnectionBase::get_delay;
-  using ConnectionBase::get_delay_steps;
+  using ConnectionBase::get_dendritic_delay;
+  using ConnectionBase::get_dendritic_delay_steps;
 
   /**
    * Get all properties of this connection and put them into a dictionary.
@@ -160,7 +156,7 @@ public:
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e, thread t, const CommonSynapseProperties& cp, Node* target );
+  void send( Event& e, const thread t, const double axonal_delay, const CommonSynapseProperties& cp, Node* target );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -177,12 +173,12 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const delay dendritic_delay, const delay axonal_delay, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
 
 
-    t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
+      t.register_stdp_connection( t_lastspike_ - dendritic_delay, dendritic_delay );
   }
 
   void
@@ -226,14 +222,14 @@ private:
  * \param cp Common properties object, containing the stdp parameters.
  */
 inline void
-stdp_nn_restr_synapse::send( Event& e, thread t, const CommonSynapseProperties&, Node* target )
+stdp_nn_restr_synapse::send( Event& e, const thread t, const double axonal_delay, const CommonSynapseProperties&, Node* target )
 {
   // synapse STDP depressing/facilitation dynamics
   double t_spike = e.get_stamp().get_ms();
 
   // use accessor functions (inherited from Connection< >) to obtain delay and
   // target
-  double dendritic_delay = get_delay();
+  double dendritic_delay = get_dendritic_delay();
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
   std::deque< histentry >::iterator start;
@@ -283,7 +279,7 @@ stdp_nn_restr_synapse::send( Event& e, thread t, const CommonSynapseProperties&,
   e.set_weight( weight_ );
   // use accessor functions (inherited from Connection< >) to obtain delay in
   // steps and rport
-  e.set_delay_steps( get_delay_steps() );
+  e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay ) );
   e();
 
   t_lastspike_ = t_spike;

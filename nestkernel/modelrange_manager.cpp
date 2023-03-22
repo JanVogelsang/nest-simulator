@@ -28,8 +28,6 @@
 // Includes from nestkernel:
 #include "kernel_manager.h"
 #include "model.h"
-
-
 namespace nest
 {
 

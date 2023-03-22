@@ -158,6 +158,4 @@ nest::IOManager::overwrite_files() const
 {
   return overwrite_files_;
 }
-
-
 #endif /* IO_MANAGER_H */

@@ -24,8 +24,6 @@
 
 // Includes from nestkernel:
 #include "kernel_manager.h"
-
-
 namespace nest
 {
 

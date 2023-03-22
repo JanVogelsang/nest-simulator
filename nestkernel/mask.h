@@ -45,7 +45,6 @@ class AbstractMask;
 
 typedef sharedPtrDatum< AbstractMask, &NestModule::MaskType > MaskDatum;
 
-
 /**
  * Abstract base class for masks with unspecified dimension.
  */
@@ -631,8 +630,6 @@ public:
 protected:
   Mask< D >*mask1_, *mask2_;
 };
-
-
 /**
  * Mask oriented in the opposite direction.
  */
@@ -678,8 +675,6 @@ public:
 protected:
   Mask< D >* m_;
 };
-
-
 /**
  * Mask shifted by an anchor
  */

@@ -893,8 +893,6 @@ NodeCollectionComposite::operator[]( const size_t i ) const
     throw std::out_of_range( "pos points outside of the NodeCollection" );
   }
 }
-
-
 inline bool
 NodeCollectionComposite::operator==( NodeCollectionPTR rhs ) const
 {

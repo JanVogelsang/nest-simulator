@@ -37,8 +37,6 @@
 #include "slifunction.h"
 #include "slimodule.h"
 #include "slitype.h"
-
-
 namespace nest
 {
 class AbstractLayer;

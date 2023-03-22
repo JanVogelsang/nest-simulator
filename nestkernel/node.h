@@ -30,6 +30,7 @@
 
 // Includes from nestkernel:
 #include "connector_base.h"
+#include "connection_type_enum.h"
 #include "deprecation_warning.h"
 #include "event.h"
 #include "histentry.h"
@@ -51,7 +52,6 @@ namespace nest
 class ConnectorModel;
 class Model;
 class TimeConverter;
-
 
 /**
  * @defgroup user_interface Model developer interface.
@@ -387,7 +387,7 @@ public:
    * DS*Events when called with the dummy target, and *Events when called with
    * the real target, see #478.
    */
-  virtual port send_test_event( Node& receiving_node, rport receptor_type, synindex syn_id, bool dummy_target );
+  virtual port send_test_event( Node& receiving_node, const rport receptor_type, synindex syn_id, bool dummy_target );
 
   /**
    * Check if the node can handle a particular event and receptor type.
@@ -462,7 +462,7 @@ public:
    *
    * @throws IllegalConnection
    */
-  virtual void register_stdp_connection( double, double );
+  virtual void register_stdp_connection( double, delay );
 
   /**
    * Change the number of different connection types to this node.
@@ -471,6 +471,7 @@ public:
   resize_connections( const size_t size )
   {
     connections_.resize( size );
+    connections_from_devices_.resize( size );
   }
 
   /**
@@ -479,7 +480,6 @@ public:
   std::vector< index >
   get_connection_indices( const synindex syn_id, const index source_node_id ) const
   {
-    assert( connections_[ syn_id ] ); // TODO JV: Remove this
     if ( connections_[ syn_id ] )
     {
       return connections_[ syn_id ]->get_connection_indices( source_node_id );
@@ -509,7 +509,7 @@ public:
     return std::accumulate( connections_.cbegin(),
       connections_.cend(),
       0,
-      []( size_t sum, auto sources_syn_id )
+      []( size_t sum, auto& sources_syn_id )
       {
         if ( sources_syn_id )
         {
@@ -551,26 +551,18 @@ public:
   void
   clear_sources()
   {
-    for ( auto connections_per_syn_type : connections_ )
+    for ( std::unique_ptr< ConnectorBase >& connections_per_syn_type : connections_ )
     {
       if ( connections_per_syn_type )
       {
         connections_per_syn_type->clear_sources();
       }
     }
-  }
-
-  /**
-   * Sort all connections and sources by the source node id, per connection type.
-   */
-  void
-  sort_connections_and_sources()
-  {
-    for ( ConnectorBase* connections_per_syn_type : connections_ )
+    for ( std::unique_ptr< ConnectorBase >& connections_per_syn_type : connections_from_devices_ )
     {
       if ( connections_per_syn_type )
       {
-        connections_per_syn_type->sort_connections_and_sources();
+        connections_per_syn_type->clear_sources();
       }
     }
   }
@@ -609,8 +601,9 @@ public:
     ConnectionT& connection,
     const rport receptor_type,
     const bool is_primary,
-    const bool from_device,
-    typename ConnectionT::CommonPropertiesType const& cp );
+    const ConnectionType from_device,
+    const delay axonal_delay,
+    const delay dendritic_delay );
 
   /**
    * When receiving an event from a device, forward it to the corresponding connection and handle the event previously
@@ -627,11 +620,18 @@ public:
    * When receiving an incoming spike event, forward it to the corresponding connection and handle the event previously
    * updated by the connection.
    */
-  virtual void deliver_event( const thread tid,
-    const synindex syn_id,
+#ifndef USE_ADJACENCY_LIST
+  virtual void deliver_event( const synindex syn_id,
     const index local_target_connection_id,
     const std::vector< ConnectorModel* >& cm,
     SpikeEvent& se );
+#endif
+  //! Same as regular deliver event, but also providing cached axonal delay
+  virtual void deliver_event( const synindex syn_id,
+    const index local_target_connection_id,
+    const delay axonal_delay,
+    const std::vector< ConnectorModel* >& cm,
+    SpikeEvent& se  );
 
   /**
    * Handle incoming spike events.
@@ -947,7 +947,6 @@ public:
     return SPIKE;
   }
 
-
   /**
    *  Return a dictionary with the node's properties.
    *
@@ -1000,7 +999,7 @@ public:
    * Framework for STDP with predominantly axonal delays:
    * Buffer a correction entry for a short time window.
    */
-  virtual void add_correction_entry_stdp_ax_delay( SpikeEvent&, const double, const double, const double );
+  virtual void add_correction_entry_stdp_ax_delay( SpikeEvent&, const double, const double, const double, const double );
   /**
    * Member of DeprecationWarning class to be used by models if parameters are
    * deprecated.
@@ -1060,18 +1059,6 @@ protected:
 
 private:
   /**
-   * Global Element ID (node ID).
-   *
-   * The node ID is unique within the network. The smallest valid node ID is 1.
-   */
-  index node_id_;
-
-  /**
-   * Local id of this node in the thread-local vector of nodes.
-   */
-  index thread_lid_;
-
-  /**
    * Model ID.
    * It is only set for actual node instances, not for instances of class Node
    * representing model prototypes. Model prototypes always have model_id_==-1.
@@ -1089,18 +1076,30 @@ private:
 
 protected:
   /**
+   * Global Element ID (node ID).
+   *
+   * The node ID is unique within the network. The smallest valid node ID is 1.
+   */
+  index node_id_;
+
+  /**
+   * Local id of this node in the thread-local vector of nodes.
+   */
+  index thread_lid_;
+
+  /**
    * A structure to hold the Connector objects which in turn hold the connection information of all incoming connections
    * to this node. Corresponds to a two dimensional structure:
    * synapse types|connections
    */
-  std::vector< ConnectorBase* > connections_;
+  std::vector< std::unique_ptr< ConnectorBase > > connections_;
 
   /**
    * A structure to hold the Connector objects which in turn hold the connection information of all incoming connections
    * from devices to this node. Corresponds to a two dimensional structure:
    * synapse types|connections
    */
-  std::vector< ConnectorBase* > connections_from_devices_;
+  std::vector< std::unique_ptr< ConnectorBase > > connections_from_devices_;
 };
 
 inline bool
@@ -1181,7 +1180,6 @@ Node::set_node_id_( index i )
   node_id_ = i;
 }
 
-
 inline void
 Node::set_nc_( NodeCollectionPTR nc_ptr )
 {
@@ -1249,6 +1247,35 @@ inline index
 Node::get_thread_lid() const
 {
   return thread_lid_;
+}
+
+#ifndef USE_ADJACENCY_LIST
+inline void
+Node::deliver_event( const synindex syn_id,
+  const index local_target_connection_id,
+  const std::vector< ConnectorModel* >& cm,
+  SpikeEvent& se )
+{
+  const delay axonal_delay = connections_[ syn_id ]->get_axonal_delay( local_target_connection_id );
+  deliver_event( syn_id, local_target_connection_id, axonal_delay, cm, se );
+}
+#endif
+
+inline void
+Node::deliver_event( const synindex syn_id,
+  const index local_target_connection_id,
+  const delay axonal_delay,
+  const std::vector< ConnectorModel* >& cm,
+  SpikeEvent& se )
+{
+  // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
+  // event by adding a weight and optionally updates its internal state as well.
+  connections_[ syn_id ]->send( thread_, local_target_connection_id, axonal_delay, cm, se, this );
+
+  // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
+  //  handle, or just handing the entire local connection id to the handle function.
+
+  handle( se );
 }
 
 } // namespace

@@ -62,7 +62,6 @@ SourceManager::initialize()
   is_cleared_.initialize( num_threads, false );
   current_positions_.resize( num_threads );
   saved_positions_.resize( num_threads );
-  // has_source_.resize( num_threads );
 }
 
 void
@@ -83,7 +82,6 @@ SourceManager::finalize()
 
   current_positions_.clear();
   saved_positions_.clear();
-  // has_source_.clear();
 }
 
 bool
@@ -235,6 +233,7 @@ SourceManager::get_next_target_data( const thread tid,
 
     // reaching this means we found an entry that should be communicated via MPI, so we prepare to return the relevant
     // data
+
     // if ( primary ) {
     // we store the thread index of the source table, not our own tid!
     next_target_data.set_is_primary( true );

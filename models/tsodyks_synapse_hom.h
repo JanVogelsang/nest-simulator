@@ -191,11 +191,7 @@ public:
   {
   }
 
-  // Explicitly declare all methods inherited from the dependent base
-  // ConnectionBase. This avoids explicit name prefixes in all places these
-  // functions are used. Since ConnectionBase depends on the template parameter,
-  // they are not automatically found in the base class.
-  using ConnectionBase::get_delay_steps;
+  using ConnectionBase::get_dendritic_delay_steps;
 
   /**
    * Get all properties of this connection and put them into a dictionary.
@@ -212,7 +208,7 @@ public:
    * \param e The event to send
    * \param cp Common properties to all synapses (empty).
    */
-  void send( Event& e, thread t, const TsodyksHomCommonProperties& cp, Node* target );
+  void send( Event& e, const thread t, const double axonal_delay, const TsodyksHomCommonProperties& cp, Node* target );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -228,7 +224,7 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, rport receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const rport receptor_type, const synindex syn_id, const delay dendritic_delay, const delay axonal_delay, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
   }
@@ -256,7 +252,7 @@ private:
  * \param p The port under which this connection is stored in the Connector.
  */
 inline void
-tsodyks_synapse_hom::send( Event& e, thread t, const TsodyksHomCommonProperties& cp, Node* target )
+tsodyks_synapse_hom::send( Event& e, const thread t, const double axonal_delay, const TsodyksHomCommonProperties& cp, Node* target )
 {
   const double t_spike = e.get_stamp().get_ms();
   const double h = t_spike - t_lastspike_;
@@ -295,7 +291,7 @@ tsodyks_synapse_hom::send( Event& e, thread t, const TsodyksHomCommonProperties&
 
 
   e.set_weight( delta_y_tsp * cp.get_weight() );
-  e.set_delay_steps( get_delay_steps() );
+  e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay ) );
   e();
 
   t_lastspike_ = t_spike;

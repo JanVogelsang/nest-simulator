@@ -31,6 +31,7 @@
 #include "numerics.h"
 
 // Includes from nestkernel:
+#include "connection_type_enum.h"
 #include "nest_time.h"
 #include "nest_types.h"
 
@@ -78,14 +79,15 @@ public:
    * omitted, NAN indicates this and weight/delay are set only if they are
    * valid.
    */
-  virtual const index add_connection( Node& src,
+  virtual const std::tuple< index, double, double > add_connection( Node& src,
     Node& tgt,
     const synindex syn_id,
     const DictionaryDatum& d,
-    const double delay = NAN,
-    const double weight = NAN,
-    const bool is_primary = true,
-    const bool from_device = false ) = 0;
+    const double delay,
+    const double axonal_delay,
+    const double weight,
+    const bool is_primary,
+    const ConnectionType connection_type ) = 0;
 
   virtual ConnectorModel* clone( std::string, synindex syn_id ) const = 0;
 
@@ -177,8 +179,6 @@ protected:
   bool requires_postponed_delivery_;
 
 }; // ConnectorModel
-
-
 template < typename ConnectionT >
 class GenericConnectorModel : public ConnectorModel
 {
@@ -188,6 +188,8 @@ private:
   typename ConnectionT::EventType* pev_;
 
   ConnectionT default_connection_;
+  delay default_delay_;
+  delay default_axonal_delay_;
   rport receptor_type_;
 
 public:
@@ -207,6 +209,8 @@ public:
       requires_clopath_archiving,
       requires_urbanczik_archiving,
       requires_postponed_delivery )
+    , default_delay_( 1.0 )
+    , default_axonal_delay_( 0.0 )
     , receptor_type_( 0 )
   {
   }
@@ -216,18 +220,21 @@ public:
     , cp_( cm.cp_ )
     , pev_( cm.pev_ )
     , default_connection_( cm.default_connection_ )
+    , default_delay_( cm.default_delay_ )
+    , default_axonal_delay_( cm.default_axonal_delay_ )
     , receptor_type_( cm.receptor_type_ )
   {
   }
 
-  const index add_connection( Node& src,
+  const std::tuple< index, double, double > add_connection( Node& src,
     Node& tgt,
     const synindex syn_id,
     const DictionaryDatum& d,
     const double delay,
+    const double axonal_delay,
     const double weight,
     const bool is_primary,
-    const bool from_device ) override;
+    const ConnectionType connection_type ) override;
 
   ConnectorModel* clone( std::string, synindex ) const override;
 
@@ -307,8 +314,6 @@ public:
   {
     pev_ = new typename ConnectionT::EventType( *cm.pev_ );
   }
-
-
   ConnectorModel* clone( std::string name, synindex syn_id ) const;
 
   SecondaryEvent*
@@ -316,8 +321,6 @@ public:
   {
     return new typename ConnectionT::EventType();
   }
-
-
   ~GenericSecondaryConnectorModel()
   {
     if ( pev_ != 0 )

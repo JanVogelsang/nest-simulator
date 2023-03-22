@@ -166,8 +166,6 @@ public:
 private:
   double value_;
 };
-
-
 /**
  * Random parameter with uniform distribution in [min,max).
  */
@@ -245,8 +243,6 @@ public:
 private:
   double max_;
 };
-
-
 /**
  * Random parameter with normal distribution.
  */
@@ -271,8 +267,6 @@ private:
   double mean_, std_;
   std::vector< normal_distribution > normal_dists_;
 };
-
-
 /**
  * Random parameter with lognormal distribution.
  */
@@ -297,8 +291,6 @@ private:
   double mean_, std_;
   std::vector< lognormal_distribution > lognormal_dists_;
 };
-
-
 /**
  * Random parameter with exponential distribution.
  */
@@ -329,8 +321,6 @@ public:
 private:
   double beta_;
 };
-
-
 /**
  * Node position parameter.
  */
@@ -410,8 +400,6 @@ private:
 
   double get_node_pos_( Node* node ) const;
 };
-
-
 /**
  * Parameter representing the spatial distance between two nodes, optionally in a specific dimension.
  */
@@ -444,8 +432,6 @@ public:
 private:
   int dimension_;
 };
-
-
 /**
  * Parameter class representing the product of two parameters.
  */
@@ -748,8 +734,6 @@ private:
 
   int comparator_;
 };
-
-
 /**
  * Parameter class choosing a value based on a comparing parameter.
  */
@@ -820,8 +804,6 @@ protected:
   std::shared_ptr< Parameter > const if_true_;
   std::shared_ptr< Parameter > const if_false_;
 };
-
-
 /**
  * Parameter class representing the minimum of a parameter's value and a given value.
  */
@@ -873,8 +855,6 @@ protected:
   std::shared_ptr< Parameter > const p_;
   double other_value_;
 };
-
-
 /**
  * Parameter class representing the maximum of a parameter's value and a given value.
  */
@@ -925,8 +905,6 @@ protected:
   std::shared_ptr< Parameter > const p_;
   double other_value_;
 };
-
-
 /**
  * Parameter class redrawing a parameter value if it is outside of specified limits.
  */
@@ -967,8 +945,6 @@ protected:
   double max_;
   const size_t max_redraws_;
 };
-
-
 /**
  * Parameter class representing the exponential of a parameter.
  */
@@ -1016,8 +992,6 @@ public:
 protected:
   std::shared_ptr< Parameter > const p_;
 };
-
-
 /**
  * Parameter class representing the sine of a parameter.
  */
@@ -1113,8 +1087,6 @@ public:
 protected:
   std::shared_ptr< Parameter > const p_;
 };
-
-
 /**
  * Parameter class representing the parameter raised to the power of an
  * exponent.
@@ -1165,8 +1137,6 @@ protected:
   std::shared_ptr< Parameter > const p_;
   const double exponent_;
 };
-
-
 /**
  * Position-generating Parameter class. One Parameter per dimension is
  * stored. When getting a position vector, a value for each dimension is
@@ -1251,8 +1221,6 @@ protected:
   std::shared_ptr< Parameter > const py_;
   std::shared_ptr< Parameter > const pz_;
 };
-
-
 /**
  * Parameter class representing an exponential distribution applied on a parameter.
  * Can only be used when connecting spatially distributed nodes.
@@ -1297,8 +1265,6 @@ protected:
   std::shared_ptr< Parameter > const p_;
   const double inv_beta_;
 };
-
-
 /**
  * Parameter class representing a gaussian distribution applied on a parameter.
  * Can only be used when connecting spatially distributed nodes.
@@ -1344,8 +1310,6 @@ protected:
   const double mean_;
   const double inv_two_std2_;
 };
-
-
 /**
  * Parameter class representing a gaussian distribution in two dimensions applied on a parameter.
  * Can only be used when connecting spatially distributed nodes.
@@ -1399,8 +1363,6 @@ protected:
   const double y_term_const_;
   const double xy_term_const_;
 };
-
-
 /**
  * Parameter class representing a gamma distribution applied on a parameter.
  * Can only be used when connecting spatially distributed nodes.
@@ -1479,8 +1441,6 @@ Parameter::value_is_integer_( const double value ) const
   // is zero, the value is an integer.
   return std::fmod( value, static_cast< double >( 1.0 ) ) == 0.0;
 }
-
-
 /**
  * Create the product of one parameter with another.
  * @returns a new dynamically allocated parameter.
@@ -1581,8 +1541,6 @@ std::shared_ptr< Parameter > dimension_parameter( const std::shared_ptr< Paramet
 std::shared_ptr< Parameter > dimension_parameter( const std::shared_ptr< Parameter > x_parameter,
   const std::shared_ptr< Parameter > y_parameter,
   const std::shared_ptr< Parameter > z_parameter );
-
-
 } // namespace nest
 
 #endif

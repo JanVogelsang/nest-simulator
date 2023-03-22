@@ -19,12 +19,8 @@
  *  along with NEST.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 // Includes from nestkernel:
 #include "kernel_manager.h"
-
-
 namespace nest
 {
 

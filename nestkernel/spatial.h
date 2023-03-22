@@ -41,8 +41,6 @@
 #include "free_layer.h"
 #include "layer.h"
 #include "mask.h"
-
-
 namespace nest
 {
 

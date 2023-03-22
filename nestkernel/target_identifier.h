@@ -19,8 +19,6 @@
  *  along with NEST.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 #ifndef TARGET_IDENTIFIER_H
 #define TARGET_IDENTIFIER_H
 
@@ -53,12 +51,8 @@ public:
     , rport_( 0 )
   {
   }
-
-
   TargetIdentifierPtrRport( const TargetIdentifierPtrRport& t ) = default;
   TargetIdentifierPtrRport& operator=( const TargetIdentifierPtrRport& t ) = default;
-
-
   void
   get_status( DictionaryDatum& d ) const
   {
@@ -98,8 +92,6 @@ private:
   Node* target_; //!< Target node
   rport rport_;  //!< Receiver port at the target node
 };
-
-
 /**
  * Class providing compact (hpc) target identified by index.
  *
@@ -117,12 +109,8 @@ public:
     : target_( invalid_targetindex )
   {
   }
-
-
   TargetIdentifierIndex( const TargetIdentifierIndex& t ) = default;
   TargetIdentifierIndex& operator=( const TargetIdentifierIndex& t ) = default;
-
-
   void
   get_status( DictionaryDatum& d ) const
   {
@@ -168,7 +156,7 @@ private:
 inline void
 TargetIdentifierIndex::set_target( Node* target )
 {
-  kernel().node_manager.ensure_valid_thread_local_ids();
+  // kernel().node_manager.ensure_valid_thread_local_ids();  // TODO JV (pt): Check this
 
   index target_lid = target->get_thread_lid();
   if ( target_lid > max_targetindex )
@@ -180,9 +168,5 @@ TargetIdentifierIndex::set_target( Node* target )
   }
   target_ = target_lid;
 }
-
-
 } // namespace nest
-
-
 #endif

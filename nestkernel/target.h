@@ -377,8 +377,6 @@ Target::mark_for_removal()
 {
   set_status( TARGET_ID_PROCESSED );
 }
-
-
 class OffGridTarget : public Target
 {
 private:

@@ -296,8 +296,6 @@ EllipseMask< D >::get_dict() const
   def< double >( maskd, names::polar_angle, polar_angle_ );
   return d;
 }
-
-
 template < int D >
 bool
 IntersectionMask< D >::inside( const Position< D >& p ) const

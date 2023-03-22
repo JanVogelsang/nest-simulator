@@ -119,8 +119,6 @@ MusicRateInHandler::publish_port()
     LOG( M_INFO, "music_rate_in_handler::publish_port()", msg.c_str() );
   }
 }
-
-
 void
 MusicRateInHandler::update( Time const&, const long, const long )
 {

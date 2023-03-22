@@ -166,8 +166,6 @@ NestModule::parameter_factory_()
   static GenericFactory< Parameter > factory;
   return factory;
 }
-
-
 GenericFactory< AbstractMask >&
 NestModule::mask_factory_()
 {
@@ -307,8 +305,6 @@ create_doughnut( const DictionaryDatum& d )
 
   return new DifferenceMask< 2 >( outer_circle, inner_circle );
 }
-
-
 /** @BeginDocumentation
    Name: SetStatus - sets the value of properties of a node, connection, or object
 
@@ -719,8 +715,6 @@ NestModule::RunFunction::execute( SLIInterpreter* i ) const
   i->OStack.pop();
   i->EStack.pop();
 }
-
-
 /** @BeginDocumentation
    Name: Prepare - prepare the network for a simulation
 
@@ -1188,8 +1182,6 @@ NestModule::TimeCommunicationv_i_iFunction::execute( SLIInterpreter* i ) const
   i->assert_stack_load( 2 );
   long samples = getValue< long >( i->OStack.pick( 1 ) );
   long num_bytes = getValue< long >( i->OStack.pick( 0 ) );
-
-
   double time = 0.0;
 
   time = kernel().mpi_manager.time_communicatev( num_bytes, samples );
@@ -1218,8 +1210,6 @@ NestModule::TimeCommunicationAlltoall_i_iFunction::execute( SLIInterpreter* i ) 
   i->assert_stack_load( 2 );
   long samples = getValue< long >( i->OStack.pick( 1 ) );
   long num_bytes = getValue< long >( i->OStack.pick( 0 ) );
-
-
   double time = 0.0;
 
   time = kernel().mpi_manager.time_communicate_alltoall( num_bytes, samples );
@@ -1249,8 +1239,6 @@ NestModule::TimeCommunicationAlltoallv_i_iFunction::execute( SLIInterpreter* i )
   i->assert_stack_load( 2 );
   long samples = getValue< long >( i->OStack.pick( 1 ) );
   long num_bytes = getValue< long >( i->OStack.pick( 0 ) );
-
-
   double time = 0.0;
 
   time = kernel().mpi_manager.time_communicate_alltoallv( num_bytes, samples );
@@ -1630,8 +1618,6 @@ NestModule::Take_g_aFunction::execute( SLIInterpreter* i ) const
   i->OStack.push( sliced_nc );
   i->EStack.pop();
 }
-
-
 #ifdef HAVE_MUSIC
 /** @BeginDocumentation
    Name: SetAcceptableLatency - set the acceptable latency of a MUSIC input port
@@ -1723,8 +1709,6 @@ NestModule::SetStdpEps_dFunction::execute( SLIInterpreter* i ) const
   i->OStack.pop();
   i->EStack.pop();
 }
-
-
 /** @BeginDocumentation
   Name: CreateParameter
 */
@@ -1857,8 +1841,6 @@ NestModule::Sub_P_PFunction::execute( SLIInterpreter* i ) const
   i->OStack.push( newparam );
   i->EStack.pop();
 }
-
-
 void
 NestModule::Compare_P_P_DFunction::execute( SLIInterpreter* i ) const
 {
@@ -1874,8 +1856,6 @@ NestModule::Compare_P_P_DFunction::execute( SLIInterpreter* i ) const
   i->OStack.push( newparam );
   i->EStack.pop();
 }
-
-
 void
 NestModule::Conditional_P_P_PFunction::execute( SLIInterpreter* i ) const
 {
@@ -2549,8 +2529,6 @@ NestModule::Sub_M_MFunction::execute( SLIInterpreter* i ) const
   the size of the source or target region equal to one. The connection
   type has particular effect on the connection pattern when used together
   with the number_of_connections variable.
-
-
   Parameter name: mask
 
   Type: dictionary
@@ -2565,8 +2543,6 @@ NestModule::Sub_M_MFunction::execute( SLIInterpreter* i ) const
   The grid region takes an optional anchor parameter. The anchor
   parameter indicates which node of the grid region is aligned with
   the source node.
-
-
   Parameter name: weights, delays and kernel
 
   Type: dictionary
@@ -2577,8 +2553,6 @@ NestModule::Sub_M_MFunction::execute( SLIInterpreter* i ) const
   value, with the help of a dictionary, or in an array (only for fixed
   grid layers). The dictionary can be of type gaussian, 2D gaussian,
   linear, exponential and other.
-
-
   Parameter name: source
 
   Type: dictionary
@@ -2597,8 +2571,6 @@ NestModule::Sub_M_MFunction::execute( SLIInterpreter* i ) const
   in the layer. All nodes are used if this variable isn't set.
   ^Nesting depth of nodes that should be connected to. All layers are used
   if this variable isn't set.
-
-
   Parameter name: target
 
   Type: dictionary
@@ -2606,8 +2578,6 @@ NestModule::Sub_M_MFunction::execute( SLIInterpreter* i ) const
   Parameter description:
 
   See description for source dictionary.
-
-
   Parameter name: number_of_connections
 
   Type: integer
@@ -2617,8 +2587,6 @@ NestModule::Sub_M_MFunction::execute( SLIInterpreter* i ) const
   Maximum number of connections that each iterating node is allowed.
   The actual connections being created are picked at random from all
   the candidate connections.
-
-
       Parameter name: synapse_model
 
       Type: literal
@@ -2633,8 +2601,6 @@ NestModule::Sub_M_MFunction::execute( SLIInterpreter* i ) const
 
   Parameter description: Used together with the number_of_connections option to
   indicate if autapses are allowed.
-
-
   Parameter name: allow_multapses
 
   Type: bool
@@ -2844,8 +2810,6 @@ NestModule::Cvdict_MFunction::execute( SLIInterpreter* i ) const
   i->OStack.push( dict );
   i->EStack.pop();
 }
-
-
 void
 NestModule::SelectNodesByMask_g_a_MFunction::execute( SLIInterpreter* i ) const
 {
@@ -2904,8 +2868,6 @@ NestModule::SelectNodesByMask_g_a_MFunction::execute( SLIInterpreter* i ) const
   i->OStack.push( mask_node_ids );
   i->EStack.pop();
 }
-
-
 void
 NestModule::init( SLIInterpreter* i )
 {
@@ -3056,8 +3018,6 @@ NestModule::init( SLIInterpreter* i )
   i->createcommand( "DumpLayerConnections_os_g_g_l", &dumplayerconnections_os_g_g_lfunction );
   i->createcommand( "cvdict_M", &cvdict_Mfunction );
   i->createcommand( "SelectNodesByMask_g_a_M", &selectnodesbymask_g_a_Mfunction );
-
-
   // Add connection rules
   kernel().connection_manager.register_conn_builder< OneToOneBuilder >( "one_to_one" );
   kernel().connection_manager.register_conn_builder< AllToAllBuilder >( "all_to_all" );

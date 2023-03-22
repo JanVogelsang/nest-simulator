@@ -93,8 +93,6 @@ nest::TargetTable::add_target( const thread tid, const thread target_rank, const
   if ( target_data.is_primary() )
   {
     const TargetDataFields& target_fields = target_data.target_data;
-
-
 #ifdef USE_ADJACENCY_LIST
     targets_[ tid ][ lid ].push_back(
       Target( target_fields.get_tid(), target_rank, target_fields.get_adjacency_list_index() ) );

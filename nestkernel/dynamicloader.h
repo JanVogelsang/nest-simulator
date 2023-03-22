@@ -46,8 +46,6 @@ struct sDynModule;
 typedef std::vector< sDynModule > vecDynModules;
 
 typedef std::vector< SLIModule* > vecLinkedModules;
-
-
 /**
  * SLI interface of the Ddynamic module loader.
  * This class implements the SLI functions which allow for
@@ -64,8 +62,6 @@ public:
 
   const std::string commandstring() const override;
   const std::string name() const override;
-
-
   /**
    * This static member is called by the constructor of a loadable module that
    * was linked at compile time into the application to circumvent dynamic

@@ -68,7 +68,7 @@ NodeManager::initialize()
   wfr_network_size_ = 0;
   local_nodes_.resize( kernel().vp_manager.get_num_threads() );
   num_thread_local_devices_.resize( kernel().vp_manager.get_num_threads(), 0 );
-  ensure_valid_thread_local_ids();
+  // ensure_valid_thread_local_ids();  // TODO JV (pt): Check this
 
   sw_construction_create_.reset();
 }
@@ -179,8 +179,6 @@ NodeManager::add_node( index model_id, long n )
 
   return nc_ptr;
 }
-
-
 void
 NodeManager::add_neurons_( Model& model, index min_node_id, index max_node_id, NodeCollectionPTR nc_ptr )
 {
@@ -596,8 +594,7 @@ NodeManager::set_status_single_node_( Node& target, const DictionaryDatum& d, bo
 void
 NodeManager::prepare_node_( Node* n )
 {
-  // Frozen nodes are initialized and calibrated, so that they
-  // have ring buffers and can accept incoming spikes.
+  // Frozen nodes are initialized and calibrated, so that they have ring buffers and can accept incoming spikes.
   n->init();
   n->pre_run_hook();
 }
@@ -680,8 +677,7 @@ NodeManager::post_run_cleanup()
 }
 
 /**
- * This function is called only if the thread data structures are properly set
- * up.
+ * This function is called only if the thread data structures are properly set up.
  */
 void
 NodeManager::finalize_nodes()

@@ -46,8 +46,6 @@ struct SourceTablePosition
     const long local_target_connection_id );
   SourceTablePosition( const SourceTablePosition& rhs ) = default;
   SourceTablePosition& operator=( const SourceTablePosition& rhs ) = default;
-
-
   /**
    * Decreases the position.
    */

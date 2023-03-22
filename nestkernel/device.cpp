@@ -68,8 +68,6 @@ nest::Device::Parameters_::operator=( const Parameters_& p )
 
   return *this;
 }
-
-
 /* ----------------------------------------------------------------
  * Parameter extraction and manipulation functions
  * ---------------------------------------------------------------- */
@@ -119,8 +117,6 @@ nest::Device::Parameters_::set( const DictionaryDatum& d )
     throw BadProperty( "stop >= start required." );
   }
 }
-
-
 /* ----------------------------------------------------------------
  * Default and copy constructor for device
  * ---------------------------------------------------------------- */
@@ -134,8 +130,6 @@ nest::Device::Device( const Device& n )
   : P_( n.P_ )
 {
 }
-
-
 /* ----------------------------------------------------------------
  * Device initialization functions
  * ---------------------------------------------------------------- */

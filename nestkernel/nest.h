@@ -137,6 +137,7 @@ void connect_arrays( long* sources,
   long* targets,
   double* weights,
   double* delays,
+  double* axonal_delays,
   std::vector< std::string >& p_keys,
   double* p_values,
   size_t n,
@@ -214,6 +215,4 @@ Datum* node_collection_array_index( const Datum* datum, const bool* array, unsig
  */
 void slice_positions_if_sliced_nc( DictionaryDatum& dict, const NodeCollectionDatum& nc );
 }
-
-
 #endif /* NEST_H */

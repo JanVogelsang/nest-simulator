@@ -42,8 +42,8 @@ ArchivingNode::ArchivingNode()
   , tau_minus_inv_( 1. / tau_minus_ )
   , tau_minus_triplet_( 110.0 )
   , tau_minus_triplet_inv_( 1. / tau_minus_triplet_ )
-  , max_delay_( 0 )
   , trace_( 0.0 )
+  , max_dendritic_delay_( 0 )
   , last_spike_( -1.0 )
   , has_stdp_ax_delay_( false )
 {
@@ -61,8 +61,8 @@ ArchivingNode::ArchivingNode( const ArchivingNode& n )
   , tau_minus_inv_( n.tau_minus_inv_ )
   , tau_minus_triplet_( n.tau_minus_triplet_ )
   , tau_minus_triplet_inv_( n.tau_minus_triplet_inv_ )
-  , max_delay_( n.max_delay_ )
   , trace_( n.trace_ )
+  , max_dendritic_delay_( n.max_dendritic_delay_ )
   , last_spike_( n.last_spike_ )
   , has_stdp_ax_delay_( false )
 {
@@ -83,7 +83,7 @@ ArchivingNode::pre_run_hook_()
 }
 
 void
-ArchivingNode::register_stdp_connection( double t_first_read, double delay )
+ArchivingNode::register_stdp_connection( double t_first_read, delay dendritic_delay )
 {
   // Mark all entries in the deque, which we will not read in future as read by
   // this input, so that we safely increment the incoming number of
@@ -100,7 +100,7 @@ ArchivingNode::register_stdp_connection( double t_first_read, double delay )
 
   n_incoming_++;
 
-  max_delay_ = std::max( delay, max_delay_ );
+  max_dendritic_delay_ = std::max( dendritic_delay, max_dendritic_delay_ );
 }
 
 double
@@ -194,35 +194,17 @@ ArchivingNode::get_history( double t1,
   *start = runner.base();
 }
 
-void
-ArchivingNode::deliver_event( const thread tid,
-  const synindex syn_id,
-  const index local_target_connection_id,
-  const std::vector< ConnectorModel* >& cm,
-  SpikeEvent& se )
-{
-  // TODO JV (pt): Think about removing access to connections_ in derived classes of node
-  ConnectorBase* conn = connections_[ syn_id ];
-
-  // STDP synapses need to make sure all post-synaptic spikes are known when delivering the spike to the synapse.
-  // Spikes will therefore be stored in an intermediate spike buffer until no more post-synaptic spike could reach the
-  // synapse before this spike will.
-
-  // Only specific synapse types need to postpone the delivery
-  /*if ( cm[ syn_id ]->requires_postponed_delivery() ) {
-    if ( const double t_spike = se.get_stamp().get_ms(), delay dendritic_delay = 0, const Time& ori =
-  kernel().simulation_manager.get_slice_origin(); t_spike + axonal - conn->get_connection_delay() < now ) {
-      dynamic_spike_buffer_.push_back(se);
-      return;
-    }
-  }*/
-
-  // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
-  // event by adding a weight.
-  conn->send( tid, local_target_connection_id, cm, se, this );
-
-  handle( se );
-}
+//void
+//ArchivingNode::deliver_event( const synindex syn_id,
+//  const index local_target_connection_id,
+//  const std::vector< ConnectorModel* >& cm,
+//  const delay axonal_delay,
+//  SpikeEvent& se )
+//{
+//  connections_[ syn_id ]->send( thread_, local_target_connection_id, axonal_delay, cm, se, this );
+//
+//  handle( se );
+//}
 
 void
 ArchivingNode::set_spiketime( Time const& t_sp, double offset )
@@ -238,13 +220,13 @@ ArchivingNode::set_spiketime( Time const& t_sp, double offset )
     // - its access counter indicates it has been read out by all connected
     //   STDP synapses, and
     // - there is another, later spike, that is strictly more than
-    //   (max_delay_ + eps) away from the new spike (at t_sp_ms)
+    //   (2 * max_dendritic_delay_ + eps) away from the new spike (at t_sp_ms)
     // [4.6, 5.4] -> 5.9, 6.3  --- 6.4+eps
     while ( history_.size() > 1 )
     {
       const double next_t_sp = history_[ 1 ].t_;
       if ( history_.front().access_counter_ >= n_incoming_
-        and t_sp_ms - next_t_sp > 2 * max_delay_ + kernel().connection_manager.get_stdp_eps() )
+        and t_sp_ms - next_t_sp > 2 * max_dendritic_delay_ + kernel().connection_manager.get_stdp_eps() )
       {
         history_.pop_front();
       }
@@ -326,6 +308,7 @@ void
 ArchivingNode::add_correction_entry_stdp_ax_delay( SpikeEvent& spike_event,
   const double t_last_pre_spike,
   const double weight_revert,
+  const double axonal_delay,
   const double dendritic_delay )
 {
   if ( not has_stdp_ax_delay_ )
@@ -353,6 +336,7 @@ ArchivingNode::add_correction_entry_stdp_ax_delay( SpikeEvent& spike_event,
     CorrectionEntrySTDPAxDelay( spike_event.get_sender_spike_data().syn_id,
       spike_event.get_sender_spike_data().local_connection_id,
       t_last_pre_spike,
+      axonal_delay,
       weight_revert ) );
 }
 
@@ -397,6 +381,7 @@ ArchivingNode::correct_synapses_stdp_ax_delay_( const Time& t_spike )
       {
         connections_[ it_corr_entry->syn_id_ ]->correct_synapse_stdp_ax_delay( it_corr_entry->local_connection_id_,
           it_corr_entry->t_last_pre_spike_,
+          it_corr_entry->axonal_delay_,
           &it_corr_entry->weight_revert_,
           t_spike.get_ms(),
           this );
