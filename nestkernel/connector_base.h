@@ -240,17 +240,17 @@ public:
   }
 
   ~Connector() override = default;
-//  ~Connector() override
-//  {
-//    std::vector< ConnectionT >().swap( C_ );
-//    std::vector< index >().swap( sources_ );
-//    std::map< delay, DelayRegion >().swap( dendritic_delay_regions_ );
-//    // std::map< delay, std::vector< index > >().swap( connection_indices_by_delay_ );
-//    connection_indices_by_delay_.clear();
-//#ifndef USE_ADJACNECY_LIST
-//    std::vector< delay >().swap( axonal_delays_ );
-//#endif
-//  }
+  //  ~Connector() override
+  //  {
+  //    std::vector< ConnectionT >().swap( C_ );
+  //    std::vector< index >().swap( sources_ );
+  //    std::map< delay, DelayRegion >().swap( dendritic_delay_regions_ );
+  //    // std::map< delay, std::vector< index > >().swap( connection_indices_by_delay_ );
+  //    connection_indices_by_delay_.clear();
+  //#ifndef USE_ADJACNECY_LIST
+  //    std::vector< delay >().swap( axonal_delays_ );
+  //#endif
+  //  }
 
   synindex
   get_syn_id() const override
@@ -321,7 +321,8 @@ public:
     return sources_[ lcid ];
   }
 
-  const index add_device_connection( ConnectionT& c, const index source_node_id )
+  const index
+  add_device_connection( ConnectionT& c, const index source_node_id )
   {
     C_.push_back( c );
     sources_.push_back( source_node_id );
@@ -336,9 +337,13 @@ public:
   }
 
   void
-  add_connection( const ConnectionT& c, const index source_node_id, const delay axonal_delay, const delay dendritic_delay )
+  add_connection( const ConnectionT& c,
+    const index source_node_id,
+    const delay axonal_delay,
+    const delay dendritic_delay )
   {
-    connection_indices_by_delay_[ dendritic_delay ].push_back( C_.size() );  // TODO JV: Save continuous indices as start and end instead of each individual
+    connection_indices_by_delay_[ dendritic_delay ].push_back(
+      C_.size() ); // TODO JV: Save continuous indices as start and end instead of each individual
     axonal_delays_.push_back( axonal_delay );
     C_.push_back( c );
     sources_.push_back( source_node_id );
@@ -515,8 +520,7 @@ public:
     }
   }
 
-  void
-  prepare_connections( const thread tid, const index target_lid ) override;
+  void prepare_connections( const thread tid, const index target_lid ) override;
 
   void
   disable_connection( const index lcid ) override

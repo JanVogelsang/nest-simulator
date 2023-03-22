@@ -775,10 +775,12 @@ ConnectionManager::connect_( Node& source,
   switch ( connection_type )
   {
   case CONNECT_FROM_DEVICE:
-    target_table_devices_.add_connection_from_device( source, target, local_target_connection_id, actual_dendritic_delay, tid, syn_id );
+    target_table_devices_.add_connection_from_device(
+      source, target, local_target_connection_id, actual_dendritic_delay, tid, syn_id );
     break;
   case CONNECT_TO_DEVICE:
-    target_table_devices_.add_connection_to_device( source, target, local_target_connection_id, actual_dendritic_delay, tid, syn_id );
+    target_table_devices_.add_connection_to_device(
+      source, target, local_target_connection_id, actual_dendritic_delay, tid, syn_id );
     break;
   default:
     break;

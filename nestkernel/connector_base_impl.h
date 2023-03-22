@@ -140,26 +140,21 @@ Connector< ConnectionT >::prepare_connections( const thread tid, const index tar
   temp_sources.reserve( C_.size() );
   for ( const auto& region : connection_indices_by_delay_ )
   {
-    index region_start = static_cast< index >(std::distance( temp_sources.cbegin(), temp_sources.cend() ) );
+    index region_start = static_cast< index >( std::distance( temp_sources.cbegin(), temp_sources.cend() ) );
     for ( auto idx : region.second )
     {
 #ifdef USE_ADJACENCY_LIST
       // Add an entry to the adjacency list with the new (sorted) index
-      kernel().connection_manager.add_adjacency_list_target( tid,
-        syn_id_,
-        sources_[idx],
-        target_lid,
-        temp_connections.size(),
-        axonal_delays_[ idx ] );
+      kernel().connection_manager.add_adjacency_list_target(
+        tid, syn_id_, sources_[ idx ], target_lid, temp_connections.size(), axonal_delays_[ idx ] );
 #endif
 
       temp_connections.push_back( C_.at( idx ) );
       temp_sources.push_back( sources_.at( idx ) );
     }
-    dendritic_delay_regions_[ region.first ] = { region_start,
-      static_cast< index >( std::distance( temp_sources.cbegin(), temp_sources.cend() ) ),
-      0,
-      -1 };
+    dendritic_delay_regions_[ region.first ] = {
+      region_start, static_cast< index >( std::distance( temp_sources.cbegin(), temp_sources.cend() ) ), 0, -1
+    };
   }
   C_.swap( temp_connections );
   sources_.swap( temp_sources );

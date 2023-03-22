@@ -26,8 +26,8 @@
 #include "node.h"
 
 // Includes from nestkernel:
-#include "connector_base.h"
 #include "connection_type_enum.h"
+#include "connector_base.h"
 
 namespace nest
 {
@@ -79,7 +79,8 @@ Node::add_connection( Node& source_node,
       // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
       connections_from_devices_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id );
     }
-    Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connections_from_devices_.at( syn_id ).get() );
+    Connector< ConnectionT >* vc =
+      static_cast< Connector< ConnectionT >* >( connections_from_devices_.at( syn_id ).get() );
     return vc->add_device_connection( connection, source_node.get_node_id() );
   }
   else
@@ -94,9 +95,10 @@ Node::add_connection( Node& source_node,
     {
       return vc->add_device_connection( connection, source_node.get_node_id() );
     }
-    else{
+    else
+    {
       vc->add_connection( connection, source_node.get_node_id(), axonal_delay, dendritic_delay );
-      return invalid_index;  // TODO JV (pt): This index should never be used as it will change after sorting
+      return invalid_index; // TODO JV (pt): This index should never be used as it will change after sorting
     }
   }
 }

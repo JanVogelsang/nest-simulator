@@ -49,8 +49,8 @@ TargetTableDevices::add_connection_from_device( Node& source,
   assert( ldid != invalid_index );
   assert( ldid < targets_from_devices_[ tid ].size() );
 
-  targets_from_devices_[ tid ][ ldid ].push_back( Target(
-    target.get_thread(), dendritic_delay, syn_id, target.get_thread_lid(), local_target_connection_id ) );
+  targets_from_devices_[ tid ][ ldid ].push_back(
+    Target( target.get_thread(), dendritic_delay, syn_id, target.get_thread_lid(), local_target_connection_id ) );
 
   // store node ID of sending device
   sending_devices_node_ids_[ tid ][ ldid ] = source.get_node_id();
@@ -114,7 +114,8 @@ TargetTableDevices::send_from_device( const thread tid, const index ldid, EventT
         ++it )
   {
     Node* target_node = kernel().node_manager.thread_lid_to_node( tid, it->get_local_target_node_id() );
-    target_node->deliver_event_from_device( tid, it->get_syn_id(), it->get_local_target_connection_id(), it->get_dendritic_delay(), cm, e );
+    target_node->deliver_event_from_device(
+      tid, it->get_syn_id(), it->get_local_target_connection_id(), it->get_dendritic_delay(), cm, e );
   }
 }
 

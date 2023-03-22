@@ -30,8 +30,8 @@
 
 // Includes from nestkernel:
 #include "archived_spike.h"
-#include "connector_base.h"
 #include "connection_type_enum.h"
+#include "connector_base.h"
 #include "deprecation_warning.h"
 #include "event.h"
 #include "nest_names.h"
@@ -1332,7 +1332,7 @@ Node::deliver_event( const synindex syn_id,
 inline void
 Node::prepare_connections()
 {
-  if ( this->has_proxies() )  // devices store dendritic delay in target_table and thus need no additional preparation
+  if ( this->has_proxies() ) // devices store dendritic delay in target_table and thus need no additional preparation
   {
     for ( std::unique_ptr< ConnectorBase >& conn : connections_ )
     {
