@@ -192,20 +192,6 @@ public:
    * Remove disabled connections from the connector.
    */
   virtual void remove_disabled_connections( const index first_disabled_index ) = 0;
-
-
-protected:
-  /**
-   * This data structure stores the node IDs of presynaptic neurons connected to this neuron. If structural plasticity
-   * is disabled, it is only relevant during postsynaptic connection creation, before the connection information has
-   * been transferred to the presynaptic side.
-   * Arranged in a 2d array:
-   * 1st dimension: synapse types
-   * 2nd dimension: source node IDs
-   * After all connections have been created, the information stored in this structure is transferred to the presynaptic
-   * side and the sources vector can be cleared, unless further required for structural plasticity.
-   */
-  std::vector< Source > sources_; // TODO JV: Move to Connector
 };
 
 /**
@@ -229,6 +215,18 @@ private:
   std::map< delay, DelayRegion > dendritic_delay_regions_;
   std::map< delay, std::vector< index > > connection_indices_by_delay_;
   std::vector< ConnectionT > C_;
+
+  /**
+   * This data structure stores the node IDs of presynaptic neurons connected to this neuron. If structural plasticity
+   * is disabled, it is only relevant during postsynaptic connection creation, before the connection information has
+   * been transferred to the presynaptic side.
+   * Arranged in a 2d array:
+   * 1st dimension: synapse types
+   * 2nd dimension: source node IDs
+   * After all connections have been created, the information stored in this structure is transferred to the presynaptic
+   * side and the sources vector can be cleared, unless further required for structural plasticity.
+   */
+  std::vector< Source > sources_; // TODO JV: Move to Connector
 
 public:
   explicit Connector( const synindex syn_id )
