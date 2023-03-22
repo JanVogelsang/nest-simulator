@@ -29,8 +29,8 @@
 #include <vector>
 
 // Includes from nestkernel:
-#include "connector_base.h"
 #include "connection_type_enum.h"
+#include "connector_base.h"
 #include "deprecation_warning.h"
 #include "event.h"
 #include "histentry.h"

@@ -203,7 +203,12 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, const rport receptor_type, const delay dendritic_delay, const delay axonal_delay, const CommonPropertiesType& )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
 
@@ -263,8 +268,10 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e, thread t, const STDPPLHomAxDelayCo
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
   std::deque< histentry >::iterator start;
   std::deque< histentry >::iterator finish;
-  target->get_history(
-    t_lastspike_ - dendritic_delay_ms + axonal_delay_ms, t_spike - dendritic_delay_ms + axonal_delay_ms, &start, &finish );
+  target->get_history( t_lastspike_ - dendritic_delay_ms + axonal_delay_ms,
+    t_spike - dendritic_delay_ms + axonal_delay_ms,
+    &start,
+    &finish );
 
   // facilitation due to postsynaptic spikes since last pre-synaptic spike
   double minus_dt;
@@ -294,7 +301,7 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e, thread t, const STDPPLHomAxDelayCo
   // std::endl;
 
   e.set_weight( weight_ );
-  e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay_ms )  );
+  e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay_ms ) );
   e();
 
   if ( ( axonal_delay_ms - dendritic_delay_ms ) > kernel().connection_manager.get_stdp_eps() )

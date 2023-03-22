@@ -274,7 +274,12 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, const rport receptor_type, const delay dendritic_delay, const delay axonal_delay, const CommonPropertiesType& cp )
+  check_connection( Node& s,
+    Node& t,
+    const rport receptor_type,
+    const delay dendritic_delay,
+    const delay axonal_delay,
+    const CommonPropertiesType& cp )
   {
     if ( not cp.vt_ )
     {

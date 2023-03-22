@@ -306,16 +306,10 @@ GenericConnectorModel< ConnectionT >::add_connection( Node& src,
   connection.check_connection(
     src, tgt, actual_receptor_type, actual_dendritic_delay, actual_axonal_delay, get_common_properties() );
 
-  return {
-    tgt.add_connection< ConnectionT >( src,
-    syn_id,
-    connection,
-    actual_receptor_type,
-    is_primary,
-    connection_type ),
-     actual_dendritic_delay,
-     actual_axonal_delay
-  };
+  return { tgt.add_connection< ConnectionT >(
+             src, syn_id, connection, actual_receptor_type, is_primary, connection_type ),
+    actual_dendritic_delay,
+    actual_axonal_delay };
 }
 
 } // namespace nest
