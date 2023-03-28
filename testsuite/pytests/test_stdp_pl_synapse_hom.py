@@ -321,6 +321,7 @@ class TestSTDPPlSynapse:
                         fname_snip += "_[dend_delay=" + str(self.dendritic_delay) + "]"
                         fname_snip += "_[ax_delay=" + str(self.axonal_delay) + "]"
                         fname_snip += "_[t_ref=" + str(self.neuron_parameters["t_ref"]) + "]"
+                        print(self.axonal_delay, self.dendritic_delay)
                         self.do_nest_simulation_and_compare_to_reproduced_weight(fname_snip=fname_snip)
 
 

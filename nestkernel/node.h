@@ -551,14 +551,14 @@ public:
   void
   clear_sources()
   {
-    for ( std::unique_ptr< ConnectorBase >& connections_per_syn_type : connections_ )
+    for ( std::shared_ptr< ConnectorBase >& connections_per_syn_type : connections_ )
     {
       if ( connections_per_syn_type )
       {
         connections_per_syn_type->clear_sources();
       }
     }
-    for ( std::unique_ptr< ConnectorBase >& connections_per_syn_type : connections_from_devices_ )
+    for ( std::shared_ptr< ConnectorBase >& connections_per_syn_type : connections_from_devices_ )
     {
       if ( connections_per_syn_type )
       {
@@ -1093,14 +1093,14 @@ protected:
    * to this node. Corresponds to a two dimensional structure:
    * synapse types|connections
    */
-  std::vector< std::unique_ptr< ConnectorBase > > connections_;
+  std::vector< std::shared_ptr< ConnectorBase > > connections_;
 
   /**
    * A structure to hold the Connector objects which in turn hold the connection information of all incoming connections
    * from devices to this node. Corresponds to a two dimensional structure:
    * synapse types|connections
    */
-  std::vector< std::unique_ptr< ConnectorBase > > connections_from_devices_;
+  std::vector< std::shared_ptr< ConnectorBase > > connections_from_devices_;
 };
 
 inline bool

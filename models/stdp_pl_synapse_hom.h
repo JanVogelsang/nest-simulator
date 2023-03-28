@@ -201,20 +201,14 @@ public:
   {
     ConnTestDummyNode dummy_target;
 
-
-    const double delay = get_dendritic_delay();
-    if ( cp.axonal_delay_ > delay )
-    {
-      throw BadProperty( "Axonal delay should not exceed total synaptic delay." );
-    }
-    if ( cp.axonal_delay_ > ( delay - cp.axonal_delay_ ) )
+    if ( cp.axonal_delay_ > dendritic_delay )
     {
       LOG( M_WARNING,
         "stdp_pl_synapse_hom::check_connection",
         "Axonal delay is greater than dendritic delay, "
         "which can lead to omission of post-synaptic spikes in this synapse type." );
     }
-    t.register_stdp_connection( t_lastspike_ - delay + 2.0 * cp.axonal_delay_, delay );
+    t.register_stdp_connection( t_lastspike_ - Time::delay_steps_to_ms( dendritic_delay ) + Time::delay_steps_to_ms( cp.axonal_delay_ ), dendritic_delay );
   }
 
   void

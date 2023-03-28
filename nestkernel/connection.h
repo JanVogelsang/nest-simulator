@@ -114,7 +114,7 @@ public:
   // connections not used in primary connectors
   typedef SecondaryEvent EventType;
 
-  Connection()
+  Connection() : delay_( 0 )
   {
   }
 
@@ -240,7 +240,7 @@ public:
     // return syn_id_delay_.is_disabled();
   }
 
-protected:
+private:
   delay delay_;
 };
 

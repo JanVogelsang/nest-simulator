@@ -256,7 +256,9 @@ public:
   {
     C_.push_back( c );
     sources_.push_back( source_node_id );
+#ifndef USE_ADJACENCY_LIST
     axonal_delays_.push_back( axonal_delay );
+#endif
     if ( C_.size() > MAX_LOCAL_CONNECTION_ID )
     {
       throw KernelException(
@@ -341,6 +343,8 @@ public:
     Event& e,
     Node* target ) override
   {
+    assert( C_.size() > lcid );
+
     typename ConnectionT::CommonPropertiesType const& cp =
       static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties();
 

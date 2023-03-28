@@ -771,7 +771,7 @@ ConnectionManager::connect_( Node& source,
       source.get_node_id(),
       target.get_thread_lid(),
       local_target_connection_id,
-      0,
+      actual_axonal_delay,
       use_compressed_spikes_ );
     break;
 #endif

@@ -207,7 +207,7 @@ public:
     const rport receptor_type,
     const synindex syn_id,
     const delay dendritic_delay,
-    const double axonal_delay,
+    const delay axonal_delay,
     const CommonPropertiesType& cp )
   {
     ConnTestDummyNode dummy_target;
@@ -217,7 +217,7 @@ public:
       throw BadProperty(
         "Combination of axonal and dendritic delay has to be more than 0." ); // TODO JV (pt): Or does it actually?
     }
-    t.register_stdp_connection( t_lastspike_ - dendritic_delay + axonal_delay, dendritic_delay );
+    t.register_stdp_connection( t_lastspike_ - Time::delay_steps_to_ms( dendritic_delay ) + Time::delay_steps_to_ms( axonal_delay ), dendritic_delay );
   }
 
   void
@@ -266,19 +266,20 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e,
 
   const double t_spike = e.get_stamp().get_ms();
 
-  const double dendritic_delay = get_dendritic_delay();
+  const double axonal_delay_ms = Time::delay_steps_to_ms( axonal_delay );
+  const double dendritic_delay_ms = get_dendritic_delay();
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
   std::deque< histentry >::iterator start;
   std::deque< histentry >::iterator finish;
   target->get_history(
-    t_lastspike_ - dendritic_delay + axonal_delay, t_spike - dendritic_delay + axonal_delay, &start, &finish );
+    t_lastspike_ - dendritic_delay_ms + axonal_delay_ms, t_spike - dendritic_delay_ms + axonal_delay_ms, &start, &finish );
 
   // facilitation due to postsynaptic spikes since last pre-synaptic spike
   double minus_dt;
   while ( start != finish )
   {
-    minus_dt = t_lastspike_ + axonal_delay - ( start->t_ + dendritic_delay );
+    minus_dt = t_lastspike_ + axonal_delay_ms - ( start->t_ + dendritic_delay_ms );
     // get_history() should make sure that
     // start->t_ > t_lastspike - dendritic_delay, i.e. minus_dt < 0
     assert( minus_dt < -1.0 * kernel().connection_manager.get_stdp_eps() );
@@ -295,20 +296,20 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e,
   const double weight_revert = weight_;
 
   // depression due to new pre-synaptic spike
-  const double K_minus = target->get_K_value( t_spike + axonal_delay - dendritic_delay );
+  const double K_minus = target->get_K_value( t_spike + axonal_delay_ms - dendritic_delay_ms );
   weight_ = depress_( weight_, K_minus, cp );
 
   // std::cout << std::setprecision( 17 ) << "Pre " << t_spike + axonal_delay << " " << K_minus << " " << weight_ <<
   // std::endl;
 
   e.set_weight( weight_ );
-  e.set_delay_steps( dendritic_delay + axonal_delay );
+  e.set_delay_steps( Time::delay_ms_to_steps( dendritic_delay_ms ) + axonal_delay );
   e();
 
-  if ( ( axonal_delay - dendritic_delay ) > kernel().connection_manager.get_stdp_eps() )
+  if ( ( axonal_delay_ms - dendritic_delay_ms ) > kernel().connection_manager.get_stdp_eps() )
   {
     target->add_correction_entry_stdp_ax_delay(
-      dynamic_cast< SpikeEvent& >( e ), t_lastspike_, weight_revert, axonal_delay, dendritic_delay );
+      dynamic_cast< SpikeEvent& >( e ), t_lastspike_, weight_revert, axonal_delay_ms, dendritic_delay_ms );
   }
 
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) * cp.tau_plus_inv_ ) + 1.0;

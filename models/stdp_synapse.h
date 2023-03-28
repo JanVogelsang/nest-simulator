@@ -175,7 +175,7 @@ public:
   {
     ConnTestDummyNode dummy_target;
 
-    t.register_stdp_connection( t_lastspike_ - dendritic_delay, dendritic_delay );
+    t.register_stdp_connection( t_lastspike_ - Time::delay_steps_to_ms( dendritic_delay ), dendritic_delay );
   }
 
   void
