@@ -261,11 +261,11 @@ ArchivingNode::prepare_update()
       // TODO JV (pt): This needs some more debugging, as the time module seems to do mysterious things with floats
       //  sometimes which leads to wrong values here (seems to be due to rounding).
       const tic_t time_since_post_spike_tics = ( t_now - Time::ms( *archived_spike_it ) ).get_tics();
+      // Only process post-synaptic spike if it was emitted after the current lag step
       if ( time_since_post_spike_tics >= 0 )
       {
         // TODO JV (pt): Precise spike times will lead to a wrong delay here, as Time::ms does a round while a ceil
-        // would
-        //  be required to "remove" the offset from the spike time.
+        //  would be required to "remove" the offset from the spike time.
         const delay dendritic_delay = Time( Time::tic( time_since_post_spike_tics ) ).get_steps();
         for ( const synindex stdp_syn_id : stdp_synapse_types_ )
         {

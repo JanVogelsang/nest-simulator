@@ -79,7 +79,7 @@ public:
    * omitted, NAN indicates this and weight/delay are set only if they are
    * valid.
    */
-  virtual const std::tuple< index, double, double > add_connection( Node& src,
+  virtual const std::tuple< index, delay, delay > add_connection( Node& src,
     Node& tgt,
     const synindex syn_id,
     const DictionaryDatum& d,
@@ -228,7 +228,7 @@ public:
   {
   }
 
-  const std::tuple< index, double, double > add_connection( Node& src,
+  const std::tuple< index, delay, delay > add_connection( Node& src,
     Node& tgt,
     const synindex syn_id,
     const DictionaryDatum& d,

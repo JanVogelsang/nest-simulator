@@ -948,14 +948,14 @@ nest::SimulationManager::update_()
 
       for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
       {
-        // We update in a parallel region. Therefore, we need to catch
-        // exceptions here and then handle them after the parallel region.
+        // We update in a parallel region. Therefore, we need to catch exceptions here and then handle them after the
+        // parallel region.
         try
         {
           Node* node = n->get_node();
-          if ( not( node )->is_frozen() )
+          if ( not node->is_frozen() )
           {
-            ( node )->update( clock_, from_step_, to_step_ );
+            node->update( clock_, from_step_, to_step_ );
           }
         }
         catch ( std::exception& e )
@@ -1054,7 +1054,6 @@ nest::SimulationManager::update_()
         throw KernelException();
       }
       start_current_update = end_current_update;
-
     } while ( to_do_ > 0 and not update_time_limit_exceeded and not exceptions_raised.at( tid ) );
 
     // End of the slice, we update the number of synaptic elements

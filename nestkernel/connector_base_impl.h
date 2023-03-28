@@ -141,7 +141,7 @@ Connector< ConnectionT >::prepare_connections( const thread tid, const index tar
   for ( const auto& region : connection_indices_by_delay_ )
   {
     index region_start = static_cast< index >( std::distance( temp_sources.cbegin(), temp_sources.cend() ) );
-    for ( auto idx : region.second )
+    for ( index idx : region.second )
     {
 #ifdef USE_ADJACENCY_LIST
       // Add an entry to the adjacency list with the new (sorted) index
@@ -158,9 +158,9 @@ Connector< ConnectionT >::prepare_connections( const thread tid, const index tar
   }
   C_.swap( temp_connections );
   sources_.swap( temp_sources );
-  // std::map< delay, std::vector< index > >().swap( connection_indices_by_delay_ );  // TODO JV
+  std::map< delay, std::vector< index > >().swap( connection_indices_by_delay_ );
 #ifdef USE_ADJACENCY_LIST
-  // std::vector< delay >().swap( axonal_delays_ );
+  std::vector< delay >().swap( axonal_delays_ );
 #endif
 }
 

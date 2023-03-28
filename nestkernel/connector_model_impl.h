@@ -205,7 +205,7 @@ GenericConnectorModel< ConnectionT >::set_syn_id( synindex syn_id )
 }
 
 template < typename ConnectionT >
-const std::tuple< index, double, double >
+const std::tuple< index, delay, delay >
 GenericConnectorModel< ConnectionT >::add_connection( Node& src,
   Node& tgt,
   const synindex syn_id,

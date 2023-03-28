@@ -239,18 +239,17 @@ public:
     sources_.reserve( 11250 );
   }
 
-  ~Connector() override = default;
-  //  ~Connector() override
-  //  {
-  //    std::vector< ConnectionT >().swap( C_ );
-  //    std::vector< index >().swap( sources_ );
-  //    std::map< delay, DelayRegion >().swap( dendritic_delay_regions_ );
-  //    // std::map< delay, std::vector< index > >().swap( connection_indices_by_delay_ );
-  //    connection_indices_by_delay_.clear();
-  //#ifndef USE_ADJACNECY_LIST
-  //    std::vector< delay >().swap( axonal_delays_ );
-  //#endif
-  //  }
+  ~Connector() override
+  {
+    std::vector< ConnectionT >().swap( C_ );
+    auto s = connection_indices_by_delay_.begin()->second;
+    std::vector< index >().swap( sources_ );
+    std::map< delay, DelayRegion >().swap( dendritic_delay_regions_ );
+    std::map< delay, std::vector< index > >().swap( connection_indices_by_delay_ );
+#ifndef USE_ADJACNECY_LIST
+    std::vector< delay >().swap( axonal_delays_ );
+#endif
+  }
 
   synindex
   get_syn_id() const override
@@ -495,13 +494,16 @@ public:
   {
     auto group_it = dendritic_delay_regions_.find( dendritic_delay );
 
-    // update post-synaptic trace
-    group_it->second.Kminus = group_it->second.Kminus
-        * std::exp(
-          ( group_it->second.last_post_spike - ( post_spike_time + Time::delay_steps_to_ms( dendritic_delay ) ) )
-          * tau_minus_inv )
-      + 1;
-    group_it->second.last_post_spike = post_spike_time + Time::delay_steps_to_ms( dendritic_delay );
+    if ( group_it != dendritic_delay_regions_.end() )
+    {
+      // update post-synaptic trace
+      group_it->second.Kminus = group_it->second.Kminus
+          * std::exp(
+            ( group_it->second.last_post_spike - ( post_spike_time + Time::delay_steps_to_ms( dendritic_delay ) ) )
+            * tau_minus_inv )
+        + 1;
+      group_it->second.last_post_spike = post_spike_time + Time::delay_steps_to_ms( dendritic_delay );
+    }
   }
 
   double get_trace( const double pre_spike_time,
