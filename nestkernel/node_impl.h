@@ -77,7 +77,7 @@ Node::add_connection( Node& source_node,
     if ( not connections_from_devices_.at( syn_id ) )
     {
       // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
-      connections_from_devices_.at( syn_id ) = std::make_shared< Connector< ConnectionT > >( syn_id );
+      connections_from_devices_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id );
     }
     Connector< ConnectionT >* vc =
       static_cast< Connector< ConnectionT >* >( connections_from_devices_.at( syn_id ).get() );
@@ -88,7 +88,7 @@ Node::add_connection( Node& source_node,
     if ( not connections_.at( syn_id ) )
     {
       // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
-      connections_.at( syn_id ) = std::make_shared< Connector< ConnectionT > >( syn_id );
+      connections_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id );
     }
     Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() );
     if ( connection_type == ConnectionType::CONNECT_TO_DEVICE )

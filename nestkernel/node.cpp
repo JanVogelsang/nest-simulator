@@ -257,11 +257,11 @@ Node::register_stdp_connection( double, delay )
 void
 Node::delete_connections()
 {
-  for ( std::shared_ptr< ConnectorBase >& syn_type_connections : connections_ )
+  for ( std::unique_ptr< ConnectorBase >& syn_type_connections : connections_ )
   {
     syn_type_connections.reset();
   }
-  for ( std::shared_ptr< ConnectorBase >& syn_type_connections : connections_from_devices_ )
+  for ( std::unique_ptr< ConnectorBase >& syn_type_connections : connections_from_devices_ )
   {
     syn_type_connections.reset();
   }

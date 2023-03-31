@@ -424,8 +424,8 @@ private:
 
   // size_t get_num_connections_( const thread tid, const synindex syn_id ) const;
 
-  void
-  get_source_node_ids_( const thread tid, const synindex syn_id, const index tnode_id, std::vector< index >& sources );
+  std::vector< index >
+  get_source_node_ids_( const thread tid, const synindex syn_id, const index tnode_id );
 
   /**
    * Splits a TokenArray of node IDs to two vectors containing node IDs of neurons and
