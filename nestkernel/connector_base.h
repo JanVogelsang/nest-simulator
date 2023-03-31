@@ -28,6 +28,7 @@
 
 // Includes from nestkernel:
 #include "common_synapse_properties.h"
+#include "connection_label.h"
 #include "nest_datums.h"
 #include "nest_names.h"
 #include "spikecounter.h"
@@ -96,31 +97,35 @@ public:
 #endif
 
   /**
-   * Get information about the source node of a specific connection.
+   * Get the source node id of a specific connection.
    */
   virtual index get_source( const index lcid ) = 0;
 
   /**
-   * Get the indices of all connection corresponding to a specific source node.
+   * Get all source node ids.
    */
-  virtual std::vector< index > get_connection_indices( const index source_node_id ) const = 0;
+  virtual std::vector< index > get_sources() = 0;
+
+  /**
+   * Get the indices of all connections corresponding to a specific source node id with specific label.
+   */
+  virtual std::vector< index > get_connection_indices( const index source_node_id, const long connection_label = UNLABELED_CONNECTION ) const = 0;
+
+    /**
+     * Get the indices of all connections with specific label.
+     */
+  virtual std::vector< index > get_connection_indices( const long connection_label = UNLABELED_CONNECTION ) const = 0;
 
   /**
    * Remove source information of all connections in this container.
    */
   virtual void clear_sources() = 0;
 
-  /**
-   * Add ConnectionID with given source_node_id and lcid to conns. If
-   * target_neuron_node_ids is given, only add connection if
-   * target_neuron_node_ids contains the node ID of the target of the connection.
-   */
-  virtual void get_connection_with_specified_targets( const index source_node_id,
-    const std::vector< size_t >& target_neuron_node_ids,
-    const thread tid,
-    const index lcid,
-    const long synapse_label,
-    std::deque< ConnectionID >& conns ) const = 0;
+  virtual long
+  get_connection_label( const index lcid ) const = 0;
+
+  virtual bool
+  is_connection_disabled( const index lcid ) const = 0;
 
   /**
    * Send the event e to the connection at position lcid. Return bool
@@ -320,6 +325,12 @@ public:
     return sources_[ lcid ];
   }
 
+  std::vector< index >
+  get_sources() override
+  {
+    return sources_;
+  }
+
   const index
   add_device_connection( ConnectionT& c, const index source_node_id )
   {
@@ -356,7 +367,7 @@ public:
   }
 
   std::vector< index >
-  get_connection_indices( const index source_node_id ) const override
+  get_connection_indices( const index source_node_id, const long connection_label = UNLABELED_CONNECTION ) const override
   {
     // binary search in sorted sources
     std::vector< index >::const_iterator it = sources_.cbegin();
@@ -365,11 +376,14 @@ public:
     std::vector< index > indices;
     while ( ( it = std::find( it, end, source_node_id ) ) != sources_.end() )
     {
-      const index connection_index = std::distance( sources_.cbegin(), it );
+      const index lcid = std::distance( sources_.cbegin(), it );
       // Connection is disabled
-      if ( not C_[ connection_index ].is_disabled() )
+      if ( not C_[ lcid ].is_disabled() )
       {
-        indices.push_back( connection_index );
+        if ( connection_label == UNLABELED_CONNECTION or C_[ lcid ].get_label() == connection_label )
+        {
+          indices.push_back( lcid );
+        }
       }
       ++it;
     }
@@ -377,29 +391,35 @@ public:
     return indices;
   }
 
-  void
-  get_connection_with_specified_targets( const index source_node_id,
-    const std::vector< size_t >& target_neuron_node_ids,
-    const thread tid,
-    const index lcid,
-    const long synapse_label,
-    std::deque< ConnectionID >& conns ) const override
+  std::vector< index >
+  get_connection_indices( const long connection_label = UNLABELED_CONNECTION ) const override
   {
-    assert( false ); // TODO JV (pt): Structural plasticity
-
-    /*if ( not C_[ lcid ].is_disabled() )
+    std::vector< index > indices;
+    for ( auto conn_it = C_.cbegin(); conn_it != C_.cend(); ++conn_it )
     {
-      if ( synapse_label == UNLABELED_CONNECTION or C_[ lcid ].get_label() == synapse_label )
+      const index lcid = std::distance( C_.cbegin(), conn_it );
+      // Connection is disabled
+      if ( not C_[ lcid ].is_disabled() )
       {
-        const index current_target_node_id = C_[ lcid ].get_target( tid )->get_node_id();
-        if ( std::find( target_neuron_node_ids.begin(), target_neuron_node_ids.end(), current_target_node_id )
-          != target_neuron_node_ids.end() )
+        if ( connection_label == UNLABELED_CONNECTION or C_[ lcid ].get_label() == connection_label )
         {
-          conns.push_back(
-            ConnectionDatum( ConnectionID( source_node_id, current_target_node_id, tid, syn_id_, lcid ) ) );
+          indices.push_back( lcid );
         }
       }
-    }*/
+    }
+    return indices;
+  }
+
+  long
+  get_connection_label( const index lcid ) const override
+  {
+    return C_[ lcid ].get_label();
+  }
+
+  bool
+  is_connection_disabled( const index lcid ) const override
+  {
+    return C_[ lcid ].is_disabled();
   }
 
   void
