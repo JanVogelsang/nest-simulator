@@ -31,6 +31,8 @@
 // Includes from nestkernel:
 #include "connection_type_enum.h"
 #include "connector_base.h"
+#include "connection_label.h"
+#include "connection_type_enum.h"
 #include "deprecation_warning.h"
 #include "event.h"
 #include "histentry.h"
@@ -477,19 +479,6 @@ public:
   }
 
   /**
-   * Get all connection indices by source node id.
-   */
-  std::vector< index >
-  get_connection_indices( const synindex syn_id, const index source_node_id ) const
-  {
-    if ( connections_[ syn_id ] )
-    {
-      return connections_[ syn_id ]->get_connection_indices( source_node_id );
-    }
-    return std::vector< index >();
-  }
-
-  /**
    * Get the number of connections to this neuron of a specific connection type.
    */
   size_t
@@ -535,16 +524,84 @@ public:
     return connections_[ syn_id ]->get_source( local_connection_id );
   }
 
-  void
-  get_all_connections( const index source_node_id,
-    const synindex syn_id,
-    const long synapse_label,
-    std::deque< ConnectionID >& conns ) const
+  std::vector< Source > get_sources( const synindex syn_id )
   {
-    for ( index lcid : get_connection_indices( syn_id, source_node_id ) )
+    assert( connections_[ syn_id ] );
+
+    return connections_[ syn_id ]->get_sources();
+  }
+
+  Source&
+  get_source_from_devices( const synindex syn_id, const index local_connection_id )
+  {
+    assert( connections_[ syn_id ] );
+
+    return connections_[ syn_id ]->get_source( local_connection_id );
+  }
+
+  std::vector< Source > get_sources_from_devices( const synindex syn_id )
+  {
+    assert( connections_[ syn_id ] );
+
+    return connections_[ syn_id ]->get_sources();
+  }
+
+  void get_connections( std::deque< ConnectionID > conns,
+    const synindex syn_id,
+    const index source_node_id = DISABLED_NODE_ID,
+    const long connection_label = UNLABELED_CONNECTION )
+  {
+    for ( const index lcid : get_connection_indices( syn_id, source_node_id, connection_label ) )
     {
-      conns.push_back( ConnectionDatum( ConnectionID( source_node_id, get_node_id(), get_thread(), syn_id, lcid ) ) );
+      conns.push_back( ConnectionDatum( ConnectionID( connections_[ syn_id ]->get_source( lcid ).get_node_id(), node_id_, thread_, syn_id, lcid ) ) );
     }
+  }
+
+  std::vector< index > get_connection_indices( const synindex syn_id,
+    const index source_node_id = DISABLED_NODE_ID,
+    const long connection_label = UNLABELED_CONNECTION ) const
+  {
+    if ( connections_[ syn_id ] )
+    {
+      if ( source_node_id != DISABLED_NODE_ID )
+      {
+        return connections_[ syn_id ]->get_connection_indices( source_node_id, connection_label );
+      }
+      else
+      {
+        return connections_[ syn_id ]->get_connection_indices( connection_label );
+      }
+    }
+    return std::vector< index >();
+  }
+
+  void get_connections_from_devices( std::deque< ConnectionID > conns,
+    const synindex syn_id,
+    const index source_node_id = DISABLED_NODE_ID,
+    const long connection_label = UNLABELED_CONNECTION )
+  {
+    for ( const index lcid : get_connection_indices_from_devices( syn_id, source_node_id, connection_label ) )
+    {
+      conns.push_back( ConnectionDatum( ConnectionID( connections_from_devices_[ syn_id ]->get_source( lcid ).get_node_id(), node_id_, thread_, syn_id, lcid ) ) );
+    }
+  }
+
+  std::vector< index > get_connection_indices_from_devices( const synindex syn_id,
+    const index source_node_id = DISABLED_NODE_ID,
+    const long connection_label = UNLABELED_CONNECTION ) const
+  {
+    if ( connections_from_devices_[ syn_id ] )
+    {
+      if ( source_node_id != DISABLED_NODE_ID )
+      {
+        return connections_from_devices_[ syn_id ]->get_connection_indices( source_node_id, connection_label );
+      }
+      else
+      {
+        return connections_from_devices_[ syn_id ]->get_connection_indices( connection_label );
+      }
+    }
+    return std::vector< index >();
   }
 
   /**
