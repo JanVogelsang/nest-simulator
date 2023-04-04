@@ -211,10 +211,10 @@ public:
       requires_clopath_archiving,
       requires_urbanczik_archiving,
       requires_postponed_delivery )
-    , default_delay_( 1.0 )
     , default_axonal_delay_( 0.0 )
     , receptor_type_( 0 )
   {
+    default_delay_ = Time::delay_ms_to_steps( 1.0 );
   }
 
   GenericConnectorModel( const GenericConnectorModel& cm, const std::string name )
