@@ -49,12 +49,12 @@ Parameters
 ++++++++++
 
 =========  ======  ====================================================
-tau_plus  ms      Time constant of STDP window, potentiation
-                  (tau_minus defined in postsynaptic neuron)
-lambda    real    Learning rate
-alpha     real    Asymmetry parameter (scales depressing increments as
-                  alpha*lambda)
-mu        real    Weight dependence exponent, potentiation
+ tau_plus  ms      Time constant of STDP window, potentiation
+                   (tau_minus defined in postsynaptic neuron)
+ lambda    real    Learning rate
+ alpha     real    Asymmetry parameter (scales depressing increments as
+                   alpha*lambda)
+ mu        real    Weight dependence exponent, potentiation
 =========  ======  ====================================================
 
 The parameters can only be set by SetDefaults and apply to all synapses of
@@ -62,10 +62,10 @@ the model.
 
 .. warning::
 
-  This synaptic plasticity rule does not take
-  :ref:`precise spike timing <sim_precise_spike_times>` into
-  account. When calculating the weight update, the precise spike time part
-  of the timestamp is ignored.
+   This synaptic plasticity rule does not take
+   :ref:`precise spike timing <sim_precise_spike_times>` into
+   account. When calculating the weight update, the precise spike time part
+   of the timestamp is ignored.
 
 References
 ++++++++++
