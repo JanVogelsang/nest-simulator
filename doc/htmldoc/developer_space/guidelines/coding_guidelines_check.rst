@@ -38,7 +38,7 @@ From the source directory call:
 
 
 The code has to compile without warnings (in the default settings of the build
-infrastructure). We restrict ourselves to the C++11 standard for a larger support of
+infrastructure). We restrict ourselves to the C++17 standard for a larger support of
 compilers on various cluster systems and supercomputers.
 
 We use clang-format version 13 in our CI. If your `clang-format` executable is not version 13, you need to specify an executable with version 13 explicitly with the `--clang-format` option to ensure consistency with the NEST CI.

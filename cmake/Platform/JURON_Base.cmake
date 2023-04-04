@@ -132,7 +132,7 @@ macro( __juron_common_setup compiler_id lang )
     set( CMAKE_SHARED_LIBRARY_${lang}_FLAGS "-qpic" )
     set( CMAKE_SHARED_LIBRARY_CREATE_${lang}_FLAGS "-qmkshrobj -qnostaticlink" )
   elseif ( ${compiler_id} STREQUAL LLVM )
-    set( CMAKE_SHARED_LIBRARY_${lang}_FLAGS "-std=c++11" )
+    set( CMAKE_SHARED_LIBRARY_${lang}_FLAGS "-std=c++17" )
   else ()
     # Assume flags for GNU compilers (if the ID is GNU *or* anything else).
     set( CMAKE_SHARED_LIBRARY_${lang}_FLAGS "-fPIC" )
