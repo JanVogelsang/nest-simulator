@@ -95,7 +95,7 @@ GenericConnectorModel< ConnectionT >::calibrate( const TimeConverter& tc )
 
   if ( default_delay_ + default_axonal_delay_ == 0 )
   {
-    default_delay_ = 1;
+    default_delay_ = Time::delay_ms_to_steps( 1. );
   }
 
   // Calibrate will be called after a change in resolution, when there are no
@@ -115,8 +115,8 @@ GenericConnectorModel< ConnectionT >::get_status( DictionaryDatum& d ) const
 
   // then get default properties for individual synapses
   default_connection_.get_status( d );
-  ( *d )[ names::delay ] = default_delay_;
-  ( *d )[ names::axonal_delay ] = default_axonal_delay_;
+  ( *d )[ names::delay ] = Time::delay_steps_to_ms( default_delay_ );
+  ( *d )[ names::axonal_delay ] = Time::delay_steps_to_ms( default_axonal_delay_ );
 
   ( *d )[ names::receptor_type ] = receptor_type_;
   ( *d )[ names::synapse_model ] = LiteralDatum( name_ );
@@ -146,10 +146,14 @@ GenericConnectorModel< ConnectionT >::set_status( const DictionaryDatum& d )
   cp_.set_status( d, *this );
   default_connection_.set_status( d, *this );
 
-  if ( updateValue< double >( d, names::delay, default_delay_ )
-    or updateValue< double >( d, names::axonal_delay, default_axonal_delay_ ) )
+  double new_default_delay = Time::delay_steps_to_ms( default_delay_ );
+  double new_default_axonal_delay = Time::delay_steps_to_ms( default_axonal_delay_ );
+  if ( updateValue< double >( d, names::delay, new_default_delay )
+    or updateValue< double >( d, names::axonal_delay, new_default_axonal_delay ) )
   {
-    kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( default_delay_ + default_axonal_delay_ );
+    kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( new_default_delay + new_default_axonal_delay );
+    default_delay_ = Time::delay_ms_to_steps( new_default_delay );
+    default_axonal_delay_ = Time::delay_ms_to_steps( new_default_axonal_delay );
   }
 
   kernel().connection_manager.get_delay_checker().enable_delay_update();
@@ -186,9 +190,13 @@ GenericConnectorModel< ConnectionT >::used_default_delay()
     }
     catch ( BadDelay& e )
     {
-      throw BadDelay( default_delay_,
-        String::compose( "Default delay of '%1' must be between min_delay %2 and max_delay %3.",
+      throw BadDelay( Time::delay_steps_to_ms( default_delay_ + default_axonal_delay_ ),
+        String::compose( "Default delay of '%1' (total: %2, axonal: %3, dendritic: %4) must be between min_delay %5 "
+                         "and max_delay %6.",
           get_name(),
+          Time::delay_steps_to_ms( default_delay_ + default_axonal_delay_ ),
+          Time::delay_steps_to_ms( default_axonal_delay_ ),
+          Time::delay_steps_to_ms( default_delay_ ),
           Time::delay_steps_to_ms( kernel().connection_manager.get_min_delay() ),
           Time::delay_steps_to_ms( kernel().connection_manager.get_max_delay() ) ) );
     }
@@ -227,7 +235,7 @@ GenericConnectorModel< ConnectionT >::add_connection( Node& src,
     else
     {
       used_default_delay(); // TODO JV (pt): This might now not be correct anymore after introducing axonal delays
-      actual_dendritic_delay = Time::delay_ms_to_steps( default_delay_ );
+      actual_dendritic_delay = default_delay_;
     }
   }
   else // dendritic delay provided
@@ -250,7 +258,7 @@ GenericConnectorModel< ConnectionT >::add_connection( Node& src,
     else
     {
       used_default_delay(); // TODO JV (pt): This might now not be correct anymore after introducing axonal delays
-      actual_axonal_delay = Time::delay_ms_to_steps( default_axonal_delay_ );
+      actual_axonal_delay = default_axonal_delay_;
     }
   }
   else // axonal delay provided
