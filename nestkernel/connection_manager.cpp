@@ -94,7 +94,7 @@ ConnectionManager::initialize()
   connections_have_changed_ = false;
 
 #ifdef USE_ADJACENCY_LIST
-  adjacency_list_.resize( num_threads );
+  adjacency_list_.resize( num_threads, kernel().mpi_manager.get_num_processes(), use_compressed_spikes_ );
 #endif
 
   check_primary_connections_.initialize( num_threads, false );
@@ -159,8 +159,14 @@ ConnectionManager::set_status( const DictionaryDatum& d )
       "to false." );
   }
 
+#ifdef USE_ADJACENCY_LIST
+  if ( updateValue< bool >( d, names::use_compressed_spikes, use_compressed_spikes_ ) )
+  {
+    adjacency_list_.resize(
+      kernel().vp_manager.get_num_threads(), kernel().mpi_manager.get_num_processes(), use_compressed_spikes_ );
+  }
+#else
   updateValue< bool >( d, names::use_compressed_spikes, use_compressed_spikes_ );
-#ifndef USE_ADJACENCY_LIST
   if ( use_compressed_spikes_ )
   {
     throw KernelException( "Spike compression requires NEST to be compiled with adjacency list support." );
@@ -1046,10 +1052,11 @@ ConnectionManager::get_connections( std::deque< ConnectionID >& connectome,
       {
         if ( source.get() )
         {
-          for ( const NodeIDTriple& source_node : *source)
+          for ( const NodeIDTriple& source_node : *source )
           {
             n->get_node()->get_connections( conns_in_thread, syn_id, source_node.node_id, connection_label );
-            n->get_node()->get_connections_from_devices( conns_in_thread, syn_id, source_node.node_id, connection_label );
+            n->get_node()->get_connections_from_devices(
+              conns_in_thread, syn_id, source_node.node_id, connection_label );
           }
         }
         else
@@ -1071,9 +1078,7 @@ ConnectionManager::get_connections( std::deque< ConnectionID >& connectome,
 }
 
 std::vector< index >
-ConnectionManager::get_source_node_ids_( const thread tid,
-  const synindex syn_id,
-  const index target_node_id )
+ConnectionManager::get_source_node_ids_( const thread tid, const synindex syn_id, const index target_node_id )
 {
   return kernel().node_manager.get_node_or_proxy( target_node_id, tid )->get_sources( syn_id );
 }
@@ -1482,63 +1487,47 @@ ConnectionManager::clear_source_table( const thread tid )
 
 #ifdef USE_ADJACENCY_LIST
 // Implementations when using adjacency list
+
 void
-ConnectionManager::reject_last_target_data( const thread tid )
+ConnectionManager::prepare_compressed_targets()
 {
-  adjacency_list_.reject_last_target_data( tid );
+  adjacency_list_.prepare_compressed_targets(
+    kernel().vp_manager.get_num_threads(), kernel().mpi_manager.get_num_processes() );
 }
 
 void
-ConnectionManager::save_source_table_entry_point( const thread )
+ConnectionManager::add_adjacency_list_target( const thread tid,
+  const synindex syn_id,
+  const index source_node_id,
+  const index target_node_id,
+  const index target_connection_id,
+  const delay axonal_delay )
 {
+  thread source_rank = kernel().mpi_manager.get_process_id_of_node_id( source_node_id );
+  adjacency_list_.add_target(
+    tid, syn_id, source_node_id, source_rank, target_node_id, target_connection_id, axonal_delay );
 }
 
 void
-ConnectionManager::reset_source_table_entry_point( const thread )
+ConnectionManager::reset_source_table_entry_points()
 {
-  adjacency_list_.reset_entry_point( kernel().vp_manager.get_num_threads() );
+  adjacency_list_.reset_entry_points( kernel().mpi_manager.get_num_processes(), use_compressed_spikes_ );
 }
 
 void
-ConnectionManager::restore_source_table_entry_point( const thread )
-{
-}
-
-void
-ConnectionManager::no_targets_to_process( const thread tid )
-{
-  adjacency_list_.no_targets_to_process( tid );
-}
-
-bool
-ConnectionManager::get_next_target_data( const thread tid,
-  const thread rank_start,
-  const thread rank_end,
-  thread& source_rank,
-  TargetData& next_target_data )
+ConnectionManager::get_next_target_data( thread source_rank, TargetData& next_target_data )
 {
   std::pair< index, size_t > next_target;
   thread target_thread = 0;
-  bool valid;
-  do
+
+  if ( use_compressed_spikes_ )
   {
-    if ( use_compressed_spikes_ )
-    {
-      std::tie( next_target, valid ) = adjacency_list_.get_next_compressed_target( tid );
-    }
-    else
-    {
-      std::tie( next_target, target_thread, valid ) = adjacency_list_.get_next_target( tid );
-    }
-
-    if ( not valid ) // TODO JV (pt): Too much branching here
-    {
-      return false;
-    }
-
-    source_rank = kernel().mpi_manager.get_process_id_of_node_id( next_target.first );
-  } while (
-    source_rank < rank_start or rank_end <= source_rank ); // get first source for which this thread is responsible
+    next_target = adjacency_list_.get_next_compressed_target( source_rank );
+  }
+  else
+  {
+    std::tie( next_target, target_thread ) = adjacency_list_.get_next_target( source_rank );
+  }
 
   next_target_data.set_is_primary( true ); // TODO JV (pt): Secondary events
   next_target_data.set_source_lid( kernel().vp_manager.node_id_to_lid( next_target.first ) );
@@ -1547,49 +1536,52 @@ ConnectionManager::get_next_target_data( const thread tid,
   next_target_data.reset_marker();
   next_target_data.target_data.set_tid( target_thread );
   next_target_data.target_data.set_adjacency_list_index( next_target.second );
-
-  return true;
-}
-#else
-// Implementations when communicating every single connection
-void
-ConnectionManager::reject_last_target_data( const thread tid )
-{
-  kernel().source_manager.reject_last_target_data( tid );
-}
-
-void
-ConnectionManager::save_source_table_entry_point( const thread tid )
-{
-  kernel().source_manager.save_entry_point( tid );
-}
-
-void
-ConnectionManager::reset_source_table_entry_point( const thread tid )
-{
-  kernel().source_manager.reset_entry_point( tid );
-}
-
-void
-ConnectionManager::restore_source_table_entry_point( const thread tid )
-{
-  kernel().source_manager.restore_entry_point( tid );
-}
-
-void
-ConnectionManager::no_targets_to_process( const thread tid )
-{
-  kernel().source_manager.no_targets_to_process( tid );
 }
 
 bool
-ConnectionManager::get_next_target_data( const thread tid,
-  const thread rank_start,
-  const thread rank_end,
-  thread& target_rank,
-  TargetData& next_target_data )
+ConnectionManager::has_more_target_data( const thread source_rank )
 {
-  return kernel().source_manager.get_next_target_data( tid, rank_start, rank_end, target_rank, next_target_data );
+  if ( use_compressed_spikes_ )
+  {
+    return adjacency_list_.seek_next_compressed_target( source_rank );
+  }
+  else
+  {
+    return adjacency_list_.seek_next_target( source_rank );
+  }
+}
+
+bool
+ConnectionManager::reached_last_target( const thread source_rank ) const
+{
+  return adjacency_list_.reached_last_target( source_rank, use_compressed_spikes_ );
+}
+
+#else
+// Implementations when communicating every single connection
+
+void
+ConnectionManager::reset_source_table_entry_points()
+{
+  kernel().source_manager.reset_entry_points();
+}
+
+bool
+ConnectionManager::has_more_target_data( const thread source_rank )
+{
+  return kernel().source_manager.is_next_target_valid( source_rank );
+}
+
+bool
+ConnectionManager::reached_last_target( const thread source_rank ) const
+{
+  return not kernel().source_manager.is_next_target_valid( source_rank );
+}
+
+void
+ConnectionManager::get_next_target_data( const thread source_rank, TargetData& next_target_data )
+{
+  kernel().source_manager.get_next_target_data( source_rank, next_target_data );
 }
 #endif
 

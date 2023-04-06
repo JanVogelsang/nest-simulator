@@ -24,7 +24,7 @@
 #define SOURCE_TABLE_POSITION_H
 
 // Includes from nestkernel:
-// #include "kernel_manager.h"
+#include "nest_types.h"
 
 namespace nest
 {
@@ -38,6 +38,7 @@ struct SourceTablePosition
   long syn_id;                     //!< synapse-type index
   long local_target_node_id;       //!< thread-local target node index
   long local_target_connection_id; //!< node-local target connection index
+  index current_source;            //!< Stores the current source that will be processed next
 
   SourceTablePosition();
   SourceTablePosition( const long tid,
@@ -51,12 +52,12 @@ struct SourceTablePosition
   /**
    * Decreases the position.
    */
-  void decrease();
+  void decrease( const thread source_rank );
 
   /**
    * Increases the position.
    */
-  void increase();
+  void increase( const thread source_rank );
 
   /**
    * Returns true if the indices point outside the SourceTable to signal that the end was reached.
@@ -69,6 +70,7 @@ inline SourceTablePosition::SourceTablePosition()
   , syn_id( -1 )
   , local_target_node_id( -1 )
   , local_target_connection_id( -1 )
+  , current_source( 0 )
 {
 }
 
@@ -80,6 +82,7 @@ inline SourceTablePosition::SourceTablePosition( const long tid,
   , syn_id( syn_id )
   , local_target_node_id( local_target_node_id )
   , local_target_connection_id( local_target_connection_id )
+  , current_source( 0 )
 {
 }
 

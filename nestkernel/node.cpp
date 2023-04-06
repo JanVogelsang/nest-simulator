@@ -84,6 +84,8 @@ Node::init_state_()
 void
 Node::init()
 {
+  // Only initialize Nodes once as buffers must not change after the start of the simulation because they could be
+  // filled with spikes by that time already.
   if ( initialized_ )
   {
     return;

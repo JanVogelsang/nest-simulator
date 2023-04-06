@@ -294,19 +294,13 @@ public:
 
   void resize_target_table_devices_to_number_of_neurons();
 
-  bool get_next_target_data( const thread tid,
-    const thread rank_start,
-    const thread rank_end,
-    thread& target_rank,
-    TargetData& next_target_data );
+  void get_next_target_data( const thread source_rank, TargetData& next_target_data );
 
-  void reject_last_target_data( const thread tid );
+  bool has_more_target_data( const thread source_rank );
 
-  void save_source_table_entry_point( const thread tid );
+  bool reached_last_target( const thread source_rank ) const;
 
-  void reset_source_table_entry_point( const thread tid );
-
-  void restore_source_table_entry_point( const thread tid );
+  void reset_source_table_entry_points();
 
   void add_target( const thread tid, const thread target_rank, const TargetData& target_data );
 
@@ -343,8 +337,6 @@ public:
    * all information only exists on the postsynaptic side.
    */
   void restructure_connection_tables( const thread tid );
-
-  void no_targets_to_process( const thread tid );
 
   const std::vector< size_t >&
   get_secondary_send_buffer_positions( const thread tid, const index lid, const synindex syn_id ) const;
@@ -387,9 +379,9 @@ public:
 
   //! Clears all intermediate source information in the adjacency list
   void
-  clear_adjacency_list_sources( const thread tid )
+  clear_adjacency_list_sources()
   {
-    adjacency_list_.clear_sources( tid );
+    adjacency_list_.clear_sources();
   }
 
   //! Clears all intermediate compressed information in the adjacency list
@@ -414,6 +406,11 @@ public:
     const index target_node_id,
     const index target_connection_id,
     const delay axonal_delay );
+
+  /**
+   * Prepare compression of target data in adjacency list.
+   */
+  void prepare_compressed_targets();
 #endif
 
   double get_stdp_eps() const;
@@ -429,8 +426,7 @@ private:
 
   // size_t get_num_connections_( const thread tid, const synindex syn_id ) const;
 
-  std::vector< index >
-  get_source_node_ids_( const thread tid, const synindex syn_id, const index tnode_id );
+  std::vector< index > get_source_node_ids_( const thread tid, const synindex syn_id, const index tnode_id );
 
   /**
    * Splits a TokenArray of node IDs to two vectors containing node IDs of neurons and
@@ -676,20 +672,6 @@ ConnectionManager::get_device_connected( const thread tid, const index lcid ) co
 {
   return target_table_devices_.is_device_connected( tid, lcid );
 }
-
-#ifdef USE_ADJACENCY_LIST
-inline void
-ConnectionManager::add_adjacency_list_target( const thread tid,
-  const synindex syn_id,
-  const index source_node_id,
-  const index target_node_id,
-  const index target_connection_id,
-  const delay axonal_delay )
-{
-  adjacency_list_.add_target(
-    tid, syn_id, source_node_id, target_node_id, target_connection_id, axonal_delay, use_compressed_spikes_ );
-}
-#endif
 
 } // namespace nest
 

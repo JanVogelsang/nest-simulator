@@ -113,7 +113,7 @@ set ( nestkernel_sources
       spatial.h spatial.cpp
       stimulation_backend.h
       adjacency_list.h
-      dynamic_spike_buffer.cpp dynamic_spike_buffer.h )
+      dynamic_spike_buffer.cpp dynamic_spike_buffer.h)
 
 
 if ( HAVE_SIONLIB )

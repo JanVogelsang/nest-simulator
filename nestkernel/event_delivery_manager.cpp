@@ -673,7 +673,17 @@ EventDeliveryManager::gather_target_data( const thread tid )
   const AssignedRanks assigned_ranks = kernel().vp_manager.get_assigned_ranks( tid );
 
   kernel().connection_manager.prepare_target_table( tid );
-  kernel().connection_manager.reset_source_table_entry_point( tid );
+
+#pragma omp single
+  {
+#ifdef USE_ADJACENCY_LIST
+    if ( kernel().connection_manager.use_compressed_spikes() )
+    {
+      kernel().connection_manager.prepare_compressed_targets();
+    }
+#endif
+    kernel().connection_manager.reset_source_table_entry_points();
+  }
 
   while ( gather_completed_checker_.any_false() )
   {
@@ -689,8 +699,6 @@ EventDeliveryManager::gather_target_data( const thread tid )
       }
     } // of omp single; implicit barrier
 
-    kernel().connection_manager.restore_source_table_entry_point( tid );
-
     SendBufferPosition send_buffer_position(
       assigned_ranks, kernel().mpi_manager.get_send_recv_count_target_data_per_rank() );
 
@@ -701,7 +709,6 @@ EventDeliveryManager::gather_target_data( const thread tid )
     {
       set_complete_marker_target_data_( assigned_ranks, send_buffer_position );
     }
-    kernel().connection_manager.save_source_table_entry_point( tid );
 #pragma omp barrier
     kernel().connection_manager.clean_source_table( tid );
 
@@ -715,7 +722,6 @@ EventDeliveryManager::gather_target_data( const thread tid )
       sw_communicate_target_data_.stop();
 #endif
     } // of omp single (implicit barrier)
-
 
     const bool distribute_completed = distribute_target_data_buffers_( tid );
     gather_completed_checker_[ tid ].logical_and( distribute_completed );
@@ -732,7 +738,10 @@ EventDeliveryManager::gather_target_data( const thread tid )
 
   kernel().connection_manager.clear_source_table( tid );
 #ifdef USE_ADJACENCY_LIST
-  kernel().connection_manager.clear_adjacency_list_sources( tid );
+#pragma omp single
+  {
+    kernel().connection_manager.clear_adjacency_list_sources();
+  }
 #endif
 }
 
@@ -741,74 +750,51 @@ EventDeliveryManager::collocate_target_data_buffers_( const thread tid,
   const AssignedRanks& assigned_ranks,
   SendBufferPosition& send_buffer_position )
 {
-  thread source_rank;
   TargetData next_target_data;
-  bool valid_next_target_data;
   bool is_source_table_read = true;
 
   // no ranks to process for this thread
   if ( assigned_ranks.begin == assigned_ranks.end )
   {
-    kernel().connection_manager.no_targets_to_process( tid );
     return is_source_table_read;
   }
 
-  // reset markers
-  for ( thread rank = assigned_ranks.begin; rank < assigned_ranks.end; ++rank )
+  for ( thread source_rank = assigned_ranks.begin; source_rank != assigned_ranks.end; ++source_rank )
   {
     // reset last entry to avoid accidentally communicating done marker
-    send_buffer_target_data_[ send_buffer_position.end( rank ) - 1 ].reset_marker();
+    send_buffer_target_data_[ send_buffer_position.end( source_rank ) - 1 ].reset_marker();
     // set first entry to invalid to avoid accidentally reading uninitialized parts of the receive buffer
-    send_buffer_target_data_[ send_buffer_position.begin( rank ) ].set_invalid_marker();
-  }
+    send_buffer_target_data_[ send_buffer_position.begin( source_rank ) ].set_invalid_marker();
 
-  while ( true ) // TODO JV (pt): This loop design is not ideal, refactoring needed (check first, then get target data)
-  {
-    valid_next_target_data = kernel().connection_manager.get_next_target_data(
-      tid, assigned_ranks.begin, assigned_ranks.end, source_rank, next_target_data );
-    if ( valid_next_target_data ) // add valid entry to MPI buffer
+    if ( kernel().connection_manager.reached_last_target( source_rank ) )
+    {
+      continue;
+    }
+
+    // Add more targets to MPI buffer until the chunk for this source rank is either filled or there are no more targets
+    while ( kernel().connection_manager.has_more_target_data( source_rank ) )
     {
       if ( send_buffer_position.is_chunk_filled( source_rank ) )
       {
-        // entry does not fit in this part of the MPI buffer anymore, so we need to reject it
-        kernel().connection_manager.reject_last_target_data( tid );
-        // after rejecting the last target, we need to save the position to start at this point again next communication
-        // round
-        kernel().connection_manager.save_source_table_entry_point( tid );
-        // we have just rejected an entry, so source table can not be fully read
+        // there is more target data to communicate to this source rank, but buffer is full
         is_source_table_read = false;
-        if ( send_buffer_position.are_all_chunks_filled() ) // buffer is full
-        {
-          return is_source_table_read;
-        }
-        else
-        {
-          continue;
-        }
+        break;
       }
       else
       {
+        kernel().connection_manager.get_next_target_data( source_rank, next_target_data );
+        // add valid entry to MPI buffer
         send_buffer_target_data_[ send_buffer_position.idx( source_rank ) ] = next_target_data;
         send_buffer_position.increase( source_rank );
       }
     }
-    else // all connections have been processed
+    // at least one target will be communicated to this source rank
+    if ( send_buffer_position.idx( source_rank ) > send_buffer_position.begin( source_rank ) )
     {
-      // mark end of valid data for each rank
-      for ( thread rank = assigned_ranks.begin; rank < assigned_ranks.end; ++rank )
-      {
-        if ( send_buffer_position.idx( rank ) > send_buffer_position.begin( rank ) )
-        {
-          send_buffer_target_data_[ send_buffer_position.idx( rank ) - 1 ].set_end_marker();
-        }
-        else
-        {
-          send_buffer_target_data_[ send_buffer_position.begin( rank ) ].set_invalid_marker();
-        }
-      }
-      return is_source_table_read;
-    } // of else
-  }   // of while(true)
+      send_buffer_target_data_[ send_buffer_position.idx( source_rank ) - 1 ].set_end_marker();
+    }
+  }
+  return is_source_table_read;
 }
 
 void

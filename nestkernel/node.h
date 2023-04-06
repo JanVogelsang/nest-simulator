@@ -529,7 +529,8 @@ public:
     return connections_[ syn_id ]->get_source( local_connection_id );
   }
 
-  std::vector< index > get_sources( const synindex syn_id )
+  std::vector< index >
+  get_sources( const synindex syn_id )
   {
     assert( connections_[ syn_id ] );
 
@@ -544,25 +545,29 @@ public:
     return connections_[ syn_id ]->get_source( local_connection_id );
   }
 
-  std::vector< index > get_sources_from_devices( const synindex syn_id )
+  std::vector< index >
+  get_sources_from_devices( const synindex syn_id )
   {
     assert( connections_[ syn_id ] );
 
     return connections_[ syn_id ]->get_sources();
   }
 
-  void get_connections( std::deque< ConnectionID > conns,
+  void
+  get_connections( std::deque< ConnectionID > conns,
     const synindex syn_id,
     const index source_node_id = DISABLED_NODE_ID,
     const long connection_label = UNLABELED_CONNECTION )
   {
     for ( const index lcid : get_connection_indices( syn_id, source_node_id, connection_label ) )
     {
-      conns.push_back( ConnectionDatum( ConnectionID( connections_[ syn_id ]->get_source( lcid ), node_id_, thread_, syn_id, lcid ) ) );
+      conns.push_back( ConnectionDatum(
+        ConnectionID( connections_[ syn_id ]->get_source( lcid ), node_id_, thread_, syn_id, lcid ) ) );
     }
   }
 
-  std::vector< index > get_connection_indices( const synindex syn_id,
+  std::vector< index >
+  get_connection_indices( const synindex syn_id,
     const index source_node_id = DISABLED_NODE_ID,
     const long connection_label = UNLABELED_CONNECTION ) const
   {
@@ -580,18 +585,21 @@ public:
     return std::vector< index >();
   }
 
-  void get_connections_from_devices( std::deque< ConnectionID > conns,
+  void
+  get_connections_from_devices( std::deque< ConnectionID > conns,
     const synindex syn_id,
     const index source_node_id = DISABLED_NODE_ID,
     const long connection_label = UNLABELED_CONNECTION )
   {
     for ( const index lcid : get_connection_indices_from_devices( syn_id, source_node_id, connection_label ) )
     {
-      conns.push_back( ConnectionDatum( ConnectionID( connections_from_devices_[ syn_id ]->get_source( lcid ), node_id_, thread_, syn_id, lcid ) ) );
+      conns.push_back( ConnectionDatum(
+        ConnectionID( connections_from_devices_[ syn_id ]->get_source( lcid ), node_id_, thread_, syn_id, lcid ) ) );
     }
   }
 
-  std::vector< index > get_connection_indices_from_devices( const synindex syn_id,
+  std::vector< index >
+  get_connection_indices_from_devices( const synindex syn_id,
     const index source_node_id = DISABLED_NODE_ID,
     const long connection_label = UNLABELED_CONNECTION ) const
   {

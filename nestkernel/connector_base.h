@@ -82,7 +82,7 @@ public:
   /**
    * Get the proportion of the transmission delay attributed to the dendrite of a connection.
    */
-  virtual double get_dendritic_delay( const index lcid ) const = 0;
+  virtual delay get_dendritic_delay( const index lcid ) const = 0;
 
   /**
    * Get the time of the last pre-synaptic spike that was emitted over the specified connection.
@@ -109,11 +109,12 @@ public:
   /**
    * Get the indices of all connections corresponding to a specific source node id with specific label.
    */
-  virtual std::vector< index > get_connection_indices( const index source_node_id, const long connection_label = UNLABELED_CONNECTION ) const = 0;
+  virtual std::vector< index > get_connection_indices( const index source_node_id,
+    const long connection_label = UNLABELED_CONNECTION ) const = 0;
 
-    /**
-     * Get the indices of all connections with specific label.
-     */
+  /**
+   * Get the indices of all connections with specific label.
+   */
   virtual std::vector< index > get_connection_indices( const long connection_label = UNLABELED_CONNECTION ) const = 0;
 
   /**
@@ -121,11 +122,9 @@ public:
    */
   virtual void clear_sources() = 0;
 
-  virtual long
-  get_connection_label( const index lcid ) const = 0;
+  virtual long get_connection_label( const index lcid ) const = 0;
 
-  virtual bool
-  is_connection_disabled( const index lcid ) const = 0;
+  virtual bool is_connection_disabled( const index lcid ) const = 0;
 
   /**
    * Send the event e to the connection at position lcid. Return bool
@@ -288,19 +287,19 @@ public:
     C_[ lcid ].set_status( dict, static_cast< GenericConnectorModel< ConnectionT >& >( cm ) );
   }
 
-  double
+  delay
   get_dendritic_delay( const index lcid ) const override
   {
     assert( lcid < C_.size() );
 
     // TODO JV: Profiling - lower bound vs find vs simply iterating
     // TODO JV (pt): Further optimize this as much as possible (after additional profiling)
-    return std::lower_bound( dendritic_delay_regions_.begin(),
+    auto v = std::lower_bound( dendritic_delay_regions_.begin(),
       dendritic_delay_regions_.end(),
       lcid,
       []( const std::pair< const delay, DelayRegion >& r, const index idx ) -> const bool
-      { return r.second.start < idx; } )
-      ->first;
+      { return r.second.end < idx; } );
+    return v->first;
   }
 
   double
@@ -367,7 +366,8 @@ public:
   }
 
   std::vector< index >
-  get_connection_indices( const index source_node_id, const long connection_label = UNLABELED_CONNECTION ) const override
+  get_connection_indices( const index source_node_id,
+    const long connection_label = UNLABELED_CONNECTION ) const override
   {
     // binary search in sorted sources
     std::vector< index >::const_iterator it = sources_.cbegin();

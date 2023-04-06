@@ -24,7 +24,6 @@
 
 // Includes from nestkernel:
 #include "kernel_manager.h"
-#include "mpi_manager_impl.h"
 #include "vp_manager_impl.h"
 
 namespace nest
@@ -58,10 +57,8 @@ SourceManager::change_number_of_threads()
 void
 SourceManager::initialize()
 {
-  const thread num_threads = kernel().vp_manager.get_num_threads();
-  is_cleared_.initialize( num_threads, false );
-  current_positions_.resize( num_threads );
-  saved_positions_.resize( num_threads );
+  is_cleared_.initialize( kernel().vp_manager.get_num_threads(), false );
+  current_positions_.resize( kernel().mpi_manager.get_num_processes() );
 }
 
 void
@@ -81,7 +78,6 @@ SourceManager::finalize()
   }
 
   current_positions_.clear();
-  saved_positions_.clear();
 }
 
 bool
@@ -94,11 +90,11 @@ SourceTablePosition
 SourceManager::find_maximal_position() const
 {
   SourceTablePosition max_position( -1, -1, -1, -1 );
-  for ( thread tid = 0; tid < kernel().vp_manager.get_num_threads(); ++tid )
+  for ( thread source_rank = 0; source_rank < kernel().mpi_manager.get_num_processes(); ++source_rank )
   {
-    if ( max_position < saved_positions_[ tid ] )
+    if ( max_position < current_positions_[ source_rank ] )
     {
-      max_position = saved_positions_[ tid ];
+      max_position = current_positions_[ source_rank ];
     }
   }
   return max_position;
@@ -163,112 +159,82 @@ SourceManager::get_node_id( const thread tid,
 
 #ifndef USE_ADJACENCY_LIST
 void
-SourceManager::reset_entry_point( const thread tid )
+SourceManager::reset_entry_points()
 {
   // Since we read the source table backwards, we need to set saved values to the biggest possible value. These will be
   // used to initialize current_positions_ correctly upon calling restore_entry_point. However, this can only be done if
   // other values have valid values.
 
   const thread num_threads = kernel().vp_manager.get_num_threads();
+  const thread num_ranks = kernel().mpi_manager.get_num_processes();
   if ( num_threads > 0 )
   {
     // The saved position is explicitly set to an invalid position with the thread id being set one value too high, so
     // the decrease call looks for the next valid position
-    saved_positions_[ tid ].tid = num_threads;
-    saved_positions_[ tid ].syn_id = -1;
-    saved_positions_[ tid ].local_target_node_id = -1;
-    saved_positions_[ tid ].local_target_connection_id = -1;
-    saved_positions_[ tid ].decrease();
+    for ( thread source_rank = 0; source_rank != num_ranks; ++source_rank )
+    {
+      current_positions_[ source_rank ].tid = num_threads;
+      current_positions_[ source_rank ].syn_id = -1;
+      current_positions_[ source_rank ].local_target_node_id = -1;
+      current_positions_[ source_rank ].local_target_connection_id = -1;
+      current_positions_[ source_rank ].decrease( source_rank );
+    }
   }
   else
   {
-    saved_positions_[ tid ].tid = -1;
-    saved_positions_[ tid ].syn_id = -1;
-    saved_positions_[ tid ].local_target_node_id = -1;
-    saved_positions_[ tid ].local_target_connection_id = -1;
+    for ( thread source_rank = 0; source_rank != num_ranks; ++source_rank )
+    {
+      current_positions_[ source_rank ].tid = -1;
+      current_positions_[ source_rank ].syn_id = -1;
+      current_positions_[ source_rank ].local_target_node_id = -1;
+      current_positions_[ source_rank ].local_target_connection_id = -1;
+    }
   }
-}
-
-void
-SourceManager::reject_last_target_data( const thread tid )
-{
-  // The last target data returned by get_next_target_data() could not be inserted into MPI buffer due to overflow.
-  // We hence need to correct the processed flag of the last entry
-  current_positions_[ tid ].increase();
-  //  kernel()
-  //    .node_manager.get_local_nodes( current_positions_[ tid ].tid )
-  //    .get_node_by_index( current_positions_[ tid ].local_target_node_id )
-  //    ->get_source( current_positions_[ tid ].syn_id, current_positions_[ tid ].local_target_connection_id )
-  //    .set_processed( false );
 }
 
 bool
-SourceManager::get_next_target_data( const thread tid,
-  const thread rank_start,
-  const thread rank_end,
-  thread& source_rank,
-  TargetData& next_target_data )
+SourceManager::is_next_target_valid( const thread source_rank )
 {
-  SourceTablePosition& current_position = current_positions_[ tid ];
+  return not current_positions_[ source_rank ].reached_end();
+}
 
-  // we stay in this loop either until we can return a valid TargetData object or we have reached the end of all
-  // sources tables
-  while ( not current_position.reached_end() )
-  {
+void
+SourceManager::get_next_target_data( const thread source_rank, TargetData& next_target_data )
+{
+  SourceTablePosition& current_position = current_positions_[ source_rank ];
+  index source_node_id = current_position.current_source;
 
-    // the current position contains an entry, so we retrieve it
-    index source_node_id = kernel()
-                             .node_manager.get_local_nodes( current_position.tid )
-                             .get_node_by_index( current_position.local_target_node_id )
-                             ->get_source( current_position.syn_id, current_position.local_target_connection_id );
+  // if ( primary ) {
+  next_target_data.set_is_primary( true );
+  next_target_data.set_source_lid( kernel().vp_manager.node_id_to_lid( source_node_id ) );
+  // we store the thread index of the target neuron, not our own tid!
+  next_target_data.set_source_tid(
+    kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( source_node_id ) ) );
+  next_target_data.reset_marker();
+  next_target_data.target_data.set_tid( current_position.tid );
+  next_target_data.target_data.set_syn_id( current_position.syn_id );
+  next_target_data.target_data.set_local_target_node_id( current_position.local_target_node_id );
+  next_target_data.target_data.set_local_target_connection_id( current_position.local_target_connection_id );
+  // TODO JV (pt): Secondary events. Secondary event can't be combined yet with the adjacency-list-based
+  //  delivery which offers quite straightforward compression. In general, the adjacency list is not built
+  //  for secondary events yet, so one would have to rethink the whole handling of secondary events here. In theory,
+  //  there should not even be a strict difference between secondary and primary events, as they can be delivered the
+  //  exact same way (afaik). Simply using the adjacency-list-based delivery with all sorts of events (from node to
+  //  node) should actually work.
+  // } else {  // -> secondary
+  /*next_target_data.set_is_primary( false );
 
-    // set the source rank
-    source_rank = kernel().mpi_manager.get_process_id_of_node_id( source_node_id );
+  // the source rank will write to the buffer position relative to the first position from the absolute position in
+  // the receive buffer
+  const size_t relative_recv_buffer_pos = kernel().connection_manager.get_secondary_recv_buffer_position(
+                                            current_position.tid, current_position.syn_id, current_position.lcid )
+    - kernel().mpi_manager.get_recv_displacement_secondary_events_in_int( source_rank );
 
-    if ( source_rank < rank_start or rank_end <= source_rank or source_node_id == DISABLED_NODE_ID )
-    {
-      current_position.decrease();
-      continue;
-    }
-
-    // reaching this means we found an entry that should be communicated via MPI, so we prepare to return the relevant
-    // data
-
-    // if ( primary ) {
-    // we store the thread index of the source table, not our own tid!
-    next_target_data.set_is_primary( true );
-    next_target_data.set_source_lid( kernel().vp_manager.node_id_to_lid( source_node_id ) );
-    next_target_data.set_source_tid(
-      kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( source_node_id ) ) );
-    next_target_data.reset_marker();
-    next_target_data.target_data.set_tid( current_position.tid );
-    next_target_data.target_data.set_syn_id( current_position.syn_id );
-    next_target_data.target_data.set_local_target_node_id( current_position.local_target_node_id );
-    next_target_data.target_data.set_local_target_connection_id( current_position.local_target_connection_id );
-    // TODO JV (pt): Secondary events. Secondary event can't be combined yet with the adjacency-list-based
-    //  delivery which offers quite straigtforward compression. In general, the adjacency list is not built
-    //  for secondary events yet, so one would have to rethink the whole handling of secondary events here. In theory,
-    //  there should not even be a strict difference between secondary and primary events, as they can be delivered the
-    //  exact same way (afaik). Simply using the adjacency-list-based delivery with all sorts of events (from node to
-    //  node) should actually work.
-    // } else {  // -> secondary
-    /*next_target_data.set_is_primary( false );
-
-    // the source rank will write to the buffer position relative to the first position from the absolute position in
-    // the receive buffer
-    const size_t relative_recv_buffer_pos = kernel().connection_manager.get_secondary_recv_buffer_position(
-                                              current_position.tid, current_position.syn_id, current_position.lcid )
-      - kernel().mpi_manager.get_recv_displacement_secondary_events_in_int( source_rank );
-
-    SecondaryTargetDataFields& secondary_fields = next_target_data.secondary_data;
-    secondary_fields.set_recv_buffer_pos( relative_recv_buffer_pos );
-    secondary_fields.set_syn_id( current_position.syn_id );
-     }*/
-
-    current_position.decrease();
-    return true; // found a valid entry
-  }
-  return false; // reached the end of all sources tables
+  SecondaryTargetDataFields& secondary_fields = next_target_data.secondary_data;
+  secondary_fields.set_recv_buffer_pos( relative_recv_buffer_pos );
+  secondary_fields.set_syn_id( current_position.syn_id );
+   }*/
+  current_position.decrease( source_rank );
 }
 #endif
 

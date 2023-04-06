@@ -79,11 +79,12 @@ class AdjacencyList
   /**
    * Intermediate structure to map source neurons to the corresponding index in the adjacency_list for each thread.
    * Deleted after communication of targets to pre-synaptic processes.
-   * Two dimensional object:
-   *   - first dim: threads
-   *   - second dim: map of source node id to index in adjacency_list
+   * Three dimensional object:
+   *   - first dim: target threads
+   *   - second dim: source ranks
+   *   - third dim: map of source node id to index in adjacency_list
    */
-  std::vector< std::map< index, size_t > > sources_;
+  std::vector< std::vector< std::map< index, size_t > > > sources_;
 
   /**
    * A structure to map incoming spikes to the adjacency list entry for each thread on the postsynaptic side if spike
@@ -93,67 +94,85 @@ class AdjacencyList
   std::vector< std::map< thread, index > > compressed_indices_;
 
   /**
-   * Intermediate structure. For each source node id, the "compressed" index in the structure which stores all adjacency
-   * list indices for each source node, one for each thread. See compressed_indices_.
+   * Intermediate two-dimensional structure. For each source rank, map all source node ids to the "compressed" index in
+   * the structure which stores all adjacency list indices, one for each thread. See compressed_indices_.
    */
-  std::map< index, size_t > source_to_compressed_index_;
+  std::vector< std::map< index, size_t > > source_to_compressed_index_;
 
   /**
-   * For each reading thread, save the position of the next pair that is going to be retrieved. Required to communicate
+   * For each source rank, save the position of the next pair that is going to be retrieved. Required to communicate
    * target data for compressed spikes.
    */
   std::vector< std::map< index, size_t >::const_iterator > next_compressed_index_;
 
   /**
-   * For each reading thread, save the position of the next pair that is going to be retrieved. Required to communicate
+   * For each source rank, save the position of the next pair that is going to be retrieved. Required to communicate
    * target data.
    */
   std::vector< std::map< index, index >::const_iterator > next_source_index_;
   /**
-   * For each reading thread, save the thread that owns the next pair that is going to be retrieved. Required to
-   * communicate target data.
+   * For each source rank, save the current target thread position. Required to communicate target data.
    */
   std::vector< size_t > next_source_index_thread_;
 
 public:
-  void
-  resize( const thread num_threads )
-  {
-    sources_.resize( num_threads );
-    adjacency_list_.resize( num_threads );
-  }
+  void resize( const thread num_threads, const thread num_ranks, const bool compressed );
 
   void add_target( const thread tid,
     const synindex syn_id,
     const index source_node_id,
+    const thread source_rank,
     const index target_node_id,
     const index target_connection_id,
-    const delay axonal_delay,
-    const bool prepare_for_compression );
+    const delay axonal_delay );
 
   std::pair< std::vector< AdjacencyListTarget >::const_iterator, std::vector< AdjacencyListTarget >::const_iterator >
   get_iterators( const thread tid, const index adjacency_list_index ) const;
 
   const std::map< thread, index >& get_compressed_spike_data( const index idx ) const;
 
-  void clear_sources( const thread tid );
+  void clear_sources();
 
   void finalize();
 
   size_t num_unique_sources( const thread tid ) const;
 
-  void reset_entry_point( const thread num_threads );
+  void reset_entry_points( const thread num_ranks, const bool compressed );
 
-  void reject_last_target_data( const thread tid );
+  //! Return the current compressed target and increment the current compressed target index
+  std::pair< index, size_t > get_next_compressed_target( const thread source_rank );
 
-  void no_targets_to_process( const thread tid );
+  //! Return the current target and increment the current target index
+  std::tuple< std::pair< index, size_t >, thread > get_next_target( const thread source_rank );
 
-  std::tuple< std::pair< index, size_t >, bool > get_next_compressed_target( const thread tid );
+  //! Return if the last target for this source rank has been processed already
+  bool reached_last_target( const thread source_rank, const bool compressed ) const;
 
-  std::tuple< std::pair< index, size_t >, thread, bool > get_next_target( const thread tid );
+  //! Make sure the current compressed target index points to a valid target
+  bool seek_next_compressed_target( const thread source_rank );
+
+  //! Make sure the current target index points to a valid target
+  bool seek_next_target( const thread source_rank );
+
+  void prepare_compressed_targets( const thread num_threads, const thread num_ranks );
 
   void clear_compressed_indices();
 };
+
+inline void
+AdjacencyList::resize( const thread num_threads, const thread num_ranks, const bool compressed )
+{
+  adjacency_list_.resize( num_threads );
+  sources_.resize( num_threads, std::vector< std::map< index, size_t > >( num_ranks ) );
+  if ( compressed )
+  {
+    source_to_compressed_index_.resize( num_ranks );
+  }
+  else
+  {
+    clear_compressed_indices();
+  }
+}
 
 inline std::pair< std::vector< AdjacencyListTarget >::const_iterator,
   std::vector< AdjacencyListTarget >::const_iterator >
@@ -168,69 +187,24 @@ AdjacencyList::get_iterators( const thread tid, const index adjacency_list_index
 }
 
 inline void
-AdjacencyList::add_target( const thread tid,
-  const synindex syn_id,
-  const index source_node_id,
-  const index local_target_node_id,
-  const index local_target_connection_id,
-  const delay axonal_delay,
-  const bool prepare_for_compression )
+AdjacencyList::clear_sources()
 {
-  assert( tid >= 0 );
-  assert( static_cast< size_t >( tid ) < adjacency_list_.size() );
-  assert( static_cast< size_t >( tid ) < sources_.size() );
-
-  auto source_index = sources_[ tid ].find( source_node_id );
-
-  // Check if this is the first connection from this source node to any target node managed by this thread
-  if ( source_index != sources_[ tid ].end() ) // not the first connection
-  {
-    adjacency_list_[ tid ][ ( *source_index ).second ].emplace_back(
-      local_target_node_id, local_target_connection_id, syn_id, axonal_delay );
-  }
-  else // actually the first connection
-  {
-    const index new_index = adjacency_list_[ tid ].size(); // set index for this source node id
-    sources_[ tid ][ source_node_id ] = new_index;
-    adjacency_list_[ tid ].emplace_back( std::initializer_list< AdjacencyListTarget > {
-      { local_target_node_id, local_target_connection_id, syn_id, axonal_delay } } );
-
-    // if spike compression is enabled, fill the compression data structures as well
-    if ( prepare_for_compression )
-    {
-      // first check if there has already been another thread with a connection from this source node
-      const auto it = source_to_compressed_index_.find( source_node_id );
-
-      if ( it == source_to_compressed_index_.end() ) // this source node id is not yet known to any thread
-      {
-        source_to_compressed_index_[ source_node_id ] = compressed_indices_.size();
-        compressed_indices_.emplace_back(); // append empty map
-      }
-      // add the index to the adjacency list for this thread for the new source
-      compressed_indices_[ it->second ][ tid ] = new_index;
-    }
-  }
-}
-
-inline void
-AdjacencyList::clear_sources( const thread tid )
-{
-  std::map< index, index >().swap( sources_[ tid ] );
+  std::vector< std::vector< std::map< index, index > > >().swap( sources_ );
 }
 
 inline void
 AdjacencyList::clear_compressed_indices()
 {
-  std::map< index, size_t >().swap( source_to_compressed_index_ );
+  std::vector< std::map< index, size_t > >().swap( source_to_compressed_index_ );
 }
 
 inline void
 AdjacencyList::finalize()
 {
   std::vector< std::vector< std::vector< AdjacencyListTarget > > >().swap( adjacency_list_ );
-  std::vector< std::map< index, index > >().swap( sources_ );
+  std::vector< std::vector< std::map< index, index > > >().swap( sources_ );
   std::vector< std::map< thread, index > >().swap( compressed_indices_ );
-  std::map< index, size_t >().swap( source_to_compressed_index_ );
+  std::vector< std::map< index, size_t > >().swap( source_to_compressed_index_ );
   std::vector< std::map< index, size_t >::const_iterator >().swap( next_compressed_index_ );
   std::vector< std::map< index, index >::const_iterator >().swap( next_source_index_ );
   std::vector< size_t >().swap( next_source_index_thread_ );
@@ -249,64 +223,152 @@ AdjacencyList::get_compressed_spike_data( const index idx ) const
 }
 
 inline void
-AdjacencyList::reset_entry_point( const thread num_threads )
+AdjacencyList::reset_entry_points( const thread num_ranks, const bool compressed )
 {
-  next_compressed_index_.assign( num_threads, source_to_compressed_index_.cbegin() );
-  next_source_index_.assign( num_threads, sources_[ 0 ].cbegin() );
-  next_source_index_thread_.assign( num_threads, 0 );
+  if ( compressed )
+  {
+    next_compressed_index_.clear();
+    next_compressed_index_.reserve( num_ranks );
+    for ( thread source_rank = 0; source_rank != num_ranks; ++source_rank )
+    {
+      next_compressed_index_.push_back( source_to_compressed_index_[ source_rank ].cbegin() );
+    }
+  }
+  else
+  {
+    next_source_index_thread_.assign( num_ranks, 0 );
+    next_source_index_.clear();
+    next_source_index_.reserve( num_ranks );
+    for ( thread source_rank = 0; source_rank != num_ranks; ++source_rank )
+    {
+      next_source_index_.push_back( sources_[ 0 ][ source_rank ].cbegin() );
+    }
+  }
 }
 
-inline void
-AdjacencyList::reject_last_target_data( const thread tid )
-{
-  // just update both indices, as this is less costly than another branch and won't hurt
-  --next_compressed_index_[ tid ];
-  --next_source_index_[ tid ];
-}
-
-inline void
-AdjacencyList::no_targets_to_process( const thread tid )
-{
-  next_compressed_index_[ tid ] = source_to_compressed_index_.cend();
-  next_source_index_thread_[ tid ] = sources_.size() - 1;
-  next_source_index_[ tid ] = sources_[ next_source_index_thread_[ tid ] ].cbegin();
-}
-
-inline std::tuple< std::pair< index, size_t >, bool >
-AdjacencyList::get_next_compressed_target( const thread tid )
+inline bool
+AdjacencyList::seek_next_compressed_target( const thread source_rank )
 {
   // check if the last target has been reached already
-  if ( next_compressed_index_[ tid ] == source_to_compressed_index_.cend() )
+  if ( reached_last_target( source_rank, true ) )
   {
-    return { { 0, 0 }, false };
+    return false;
   }
-
-  // return next pair of source and compressed index and afterwards increase index
-  return { *( next_compressed_index_[ tid ]++ ), true };
+  return true;
 }
 
-inline std::tuple< std::pair< index, size_t >, thread, bool >
-AdjacencyList::get_next_target( const thread tid )
+inline std::pair< index, size_t >
+AdjacencyList::get_next_compressed_target( const thread source_rank )
 {
-  // ensure valid iterator
-  while ( next_source_index_[ tid ] == sources_[ next_source_index_thread_[ tid ] ].cend() )
+  // return next pair of source and compressed index and afterward increase index
+  return *( next_compressed_index_[ source_rank ]++ );
+}
+
+inline bool
+AdjacencyList::reached_last_target( const thread source_rank, const bool compressed ) const
+{
+  if ( compressed )
   {
-    ++next_source_index_thread_[ tid ];
-
-    // check if the last target has been reached already
-    if ( next_source_index_thread_[ tid ] == sources_.size() )
-    {
-      return { { 0, 0 }, -1, false };
-    }
-
-    next_source_index_[ tid ] = sources_[ next_source_index_thread_[ tid ] ].cbegin();
+    return next_compressed_index_[ source_rank ] == source_to_compressed_index_[ source_rank ].cend();
   }
+  else
+  {
+    return next_source_index_thread_[ source_rank ] == sources_.size();
+  }
+}
 
-  std::pair< index, index > next_target = *( next_source_index_[ tid ] );
-  thread next_target_thread = next_source_index_thread_[ tid ];
+inline bool
+AdjacencyList::seek_next_target( const thread source_rank )
+{
+  while (
+    next_source_index_[ source_rank ] == sources_[ next_source_index_thread_[ source_rank ] ][ source_rank ].cend() )
+  {
+    ++next_source_index_thread_[ source_rank ];
+    // check if the last target has been reached already (i.e., the next thread id equals the total number of threads)
+    if ( reached_last_target( source_rank, false ) )
+    {
+      return false;
+    }
+    next_source_index_[ source_rank ] = sources_[ next_source_index_thread_[ source_rank ] ][ source_rank ].cbegin();
+  }
+  return true;
+}
 
-  ++next_source_index_[ tid ];
-  return { next_target, next_target_thread, true };
+inline std::tuple< std::pair< index, size_t >, thread >
+AdjacencyList::get_next_target( const thread source_rank )
+{
+  std::pair< index, index > next_target = *( next_source_index_[ source_rank ] );
+  thread next_target_thread = next_source_index_thread_[ source_rank ];
+
+  ++next_source_index_[ source_rank ];
+
+  return { next_target, next_target_thread };
+}
+
+inline void
+AdjacencyList::prepare_compressed_targets( const thread num_threads, const thread num_ranks )
+{
+  index source_node_id;
+  size_t adjacency_list_index;
+  for ( thread tid = 0; tid != num_threads; ++tid )
+  {
+    for ( thread source_rank = 0; source_rank != num_ranks; ++source_rank )
+    {
+      for ( auto& source : sources_[ tid ][ source_rank ] )
+      {
+        std::tie( source_node_id, adjacency_list_index ) = source;
+        // first check if there has already been another thread with a connection from this source node
+        const auto it = source_to_compressed_index_[ source_rank ].find( source_node_id );
+
+        size_t source_node_idx;
+        if ( it
+          == source_to_compressed_index_[ source_rank ].end() ) // this source node id is not yet known to any thread
+        {
+          source_to_compressed_index_[ source_rank ][ source_node_id ] = compressed_indices_.size();
+          source_node_idx = compressed_indices_.size();
+          // TODO JV: Combine the following two lines to a single one
+          compressed_indices_.emplace_back(); // append empty map
+          compressed_indices_[ source_node_idx ].emplace( tid, adjacency_list_index );
+        }
+        else
+        {
+          compressed_indices_[ it->second ][ tid ] = adjacency_list_index;
+        }
+      }
+    }
+  }
+}
+
+inline void
+AdjacencyList::add_target( const thread tid,
+  const synindex syn_id,
+  const index source_node_id,
+  const thread source_rank,
+  const index local_target_node_id,
+  const index local_target_connection_id,
+  const delay axonal_delay )
+{
+  assert( tid >= 0 );
+  assert( static_cast< size_t >( tid ) < adjacency_list_.size() );
+
+  assert( static_cast< size_t >( tid ) < sources_.size() );
+  assert( static_cast< size_t >( source_rank ) < sources_[ tid ].size() );
+
+  // without compression, the sources data structure has to be filled to map to adjacency list positions
+  auto source_index = sources_[ tid ][ source_rank ].find( source_node_id );
+  // Check if this is the first connection from this source node to any target node managed by this thread
+  if ( source_index != sources_[ tid ][ source_rank ].end() ) // not the first connection
+  {
+    adjacency_list_[ tid ][ source_index->second ].emplace_back(
+      local_target_node_id, local_target_connection_id, syn_id, axonal_delay );
+  }
+  else // actually the first connection
+  {
+    const index new_index = adjacency_list_[ tid ].size(); // set index for this source node id
+    sources_[ tid ][ source_rank ][ source_node_id ] = new_index;
+    adjacency_list_[ tid ].emplace_back( std::initializer_list< AdjacencyListTarget > {
+      { local_target_node_id, local_target_connection_id, syn_id, axonal_delay } } );
+  }
 }
 
 } // nest

@@ -220,7 +220,7 @@ public:
   bool
   is_disabled() const
   {
-    return false;  // TODO JV (pt)
+    return false; // TODO JV (pt)
     // return syn_id_delay_.is_disabled();
   }
 };
