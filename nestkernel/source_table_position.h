@@ -23,9 +23,6 @@
 #ifndef SOURCE_TABLE_POSITION_H
 #define SOURCE_TABLE_POSITION_H
 
-// Includes from nestkernel:
-// #include "kernel_manager.h"
-
 namespace nest
 {
 

@@ -65,7 +65,7 @@ SourceTablePosition::decrease()
         }
 
         node = kernel().node_manager.get_local_nodes( tid ).get_node_by_index( local_target_node_id );
-      } while ( not node->has_proxies() ); // skip devices
+      } while ( not node->has_proxies() or node->get_node_id() == DISABLED_NODE_ID ); // skip devices
 
       syn_id = kernel().model_manager.get_num_connection_models() - 1;
     }
@@ -124,7 +124,7 @@ SourceTablePosition::increase()
           }
 
           node = kernel().node_manager.get_local_nodes( tid ).get_node_by_index( local_target_node_id );
-        } while ( not node->has_proxies() ); // skip devices
+        } while ( not node->has_proxies() or node->get_node_id() == DISABLED_NODE_ID  ); // skip devices
 
         syn_id = 0;
       }
