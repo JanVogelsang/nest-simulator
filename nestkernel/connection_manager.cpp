@@ -68,8 +68,8 @@ ConnectionManager::ConnectionManager()
   , keep_source_table_( true )
   , connections_have_changed_( false )
   , get_connections_has_been_called_( false )
-  , sort_connections_by_source_( false ) // TODO JV
-  , use_compressed_spikes_( false )      // TODO JV
+  , sort_connections_by_source_( false )
+  , use_compressed_spikes_( false )
   , has_primary_connections_( false )
   , check_primary_connections_()
   , secondary_connections_exist_( false )
@@ -93,7 +93,6 @@ ConnectionManager::initialize()
 {
   const thread num_threads = kernel().vp_manager.get_num_threads();
   secondary_recv_buffer_pos_.resize( num_threads );
-  sort_connections_by_source_ = true;
   connections_have_changed_ = false;
 
   compressed_spike_data_.resize( 0 );
