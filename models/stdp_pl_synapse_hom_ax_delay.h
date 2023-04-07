@@ -217,7 +217,9 @@ public:
       throw BadProperty(
         "Combination of axonal and dendritic delay has to be more than 0." ); // TODO JV (pt): Or does it actually?
     }
-    t.register_stdp_connection( t_lastspike_ - Time::delay_steps_to_ms( dendritic_delay ) + Time::delay_steps_to_ms( axonal_delay ), dendritic_delay );
+    t.register_stdp_connection(
+      t_lastspike_ - Time::delay_steps_to_ms( dendritic_delay ) + Time::delay_steps_to_ms( axonal_delay ),
+      dendritic_delay );
   }
 
   void
@@ -272,8 +274,10 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e,
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
   std::deque< histentry >::iterator start;
   std::deque< histentry >::iterator finish;
-  target->get_history(
-    t_lastspike_ - dendritic_delay_ms + axonal_delay_ms, t_spike - dendritic_delay_ms + axonal_delay_ms, &start, &finish );
+  target->get_history( t_lastspike_ - dendritic_delay_ms + axonal_delay_ms,
+    t_spike - dendritic_delay_ms + axonal_delay_ms,
+    &start,
+    &finish );
 
   // facilitation due to postsynaptic spikes since last pre-synaptic spike
   double minus_dt;

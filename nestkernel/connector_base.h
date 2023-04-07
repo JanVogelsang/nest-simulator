@@ -103,11 +103,12 @@ public:
   /**
    * Get the indices of all connections corresponding to a specific source node id with specific label.
    */
-  virtual std::vector< index > get_connection_indices( const index source_node_id, const long connection_label = UNLABELED_CONNECTION ) const = 0;
+  virtual std::vector< index > get_connection_indices( const index source_node_id,
+    const long connection_label = UNLABELED_CONNECTION ) const = 0;
 
-    /**
-     * Get the indices of all connections with specific label.
-     */
+  /**
+   * Get the indices of all connections with specific label.
+   */
   virtual std::vector< index > get_connection_indices( const long connection_label = UNLABELED_CONNECTION ) const = 0;
 
   /**
@@ -115,11 +116,9 @@ public:
    */
   virtual void clear_sources() = 0;
 
-  virtual long
-  get_connection_label( const index lcid ) const = 0;
+  virtual long get_connection_label( const index lcid ) const = 0;
 
-  virtual bool
-  is_connection_disabled( const index lcid ) const = 0;
+  virtual bool is_connection_disabled( const index lcid ) const = 0;
 
   /**
    * Send the event e to the connection at position lcid. Return bool
@@ -288,7 +287,8 @@ public:
   }
 
   std::vector< index >
-  get_connection_indices( const index source_node_id, const long connection_label = UNLABELED_CONNECTION ) const override
+  get_connection_indices( const index source_node_id,
+    const long connection_label = UNLABELED_CONNECTION ) const override
   {
     // binary search in sorted sources
     std::vector< index >::const_iterator it = sources_.cbegin();

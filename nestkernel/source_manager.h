@@ -59,8 +59,6 @@ private:
 
   //! Needed during readout of sources_.
   std::vector< SourceTablePosition > current_positions_;
-  //! Needed during readout of sources_.
-  std::vector< SourceTablePosition > saved_positions_;
 
   // TODO JV (pt): This needs some proper thoughts, as this might cause high memory utilization with many threads
   //! Flag for each possible source neuron, if it has a target on this thread
@@ -106,40 +104,19 @@ public:
 
 #ifndef USE_ADJACENCY_LIST
   /**
+   * Returns if the current target position points to a valid entry.
+   */
+  bool is_next_target_valid( const thread source_rank );
+
+  /**
    * Returns the next target data, according to the current_positions_.
    */
-  bool get_next_target_data( const thread tid,
-    const thread rank_start,
-    const thread rank_end,
-    thread& source_rank,
-    TargetData& next_target_data );
-
-  /**
-   * Rejects the last target data, and resets the current_positions_
-   * accordingly.
-   */
-  void reject_last_target_data( const thread tid );
-
-  /**
-   * Stores current_positions_ in saved_positions_.
-   */
-  void save_entry_point( const thread tid );
-
-  /**
-   * Restores current_positions_ from saved_positions_.
-   */
-  void restore_entry_point( const thread tid );
-
-  /**
-   * Sets current_positions_ for this thread to minimal values so that
-   * these are not considered in find_maximal_position().
-   */
-  void no_targets_to_process( const thread tid );
+  void get_next_target_data( const thread source_rank, TargetData& next_target_data );
 
   /**
    * Resets saved_positions_ to end of sources_.
    */
-  void reset_entry_point( const thread tid );
+  void reset_entry_points();
 #endif
 
   /**
@@ -214,29 +191,6 @@ public:
    */
   index pack_source_node_id_and_syn_id( const index source_node_id, const synindex syn_id ) const;
 };
-
-#ifndef USE_ADJACENCY_LIST
-inline void
-SourceManager::save_entry_point( const thread tid )
-{
-  saved_positions_[ tid ] = current_positions_[ tid ];
-}
-
-inline void
-SourceManager::restore_entry_point( const thread tid )
-{
-  current_positions_[ tid ] = saved_positions_[ tid ];
-}
-
-inline void
-SourceManager::no_targets_to_process( const thread tid )
-{
-  current_positions_[ tid ].tid = -1;
-  current_positions_[ tid ].syn_id = -1;
-  current_positions_[ tid ].local_target_node_id = -1;
-  current_positions_[ tid ].local_target_connection_id = -1;
-}
-#endif
 
 inline index
 SourceManager::find_first_source( const thread tid, const synindex syn_id, const index snode_id ) const

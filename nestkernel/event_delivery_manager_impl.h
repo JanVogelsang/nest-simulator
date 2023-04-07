@@ -191,8 +191,6 @@ EventDeliveryManager::deliver_to_adjacency_list( const thread tid,
     se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id );
     Node* target_node = kernel().node_manager.thread_lid_to_node( tid, local_target_node_id );
     target_node->deliver_event( syn_id, local_target_connection_id, adjacency_list_it->axonal_delay, cm, se );
-    // TODO JV: Let node handle delivery differently when delay is already provided (needs a way to know if total or
-    //  only axonal-dendritic delay is sent)
   }
 }
 #endif

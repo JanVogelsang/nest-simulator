@@ -312,12 +312,14 @@ class TestSTDPPlSynapse:
     def test_stdp_synapse(self):
         self.init_params()
         for self.dendritic_delay, self.axonal_delay in (
-        (1., 0.), (.5, .5), (0., 1.), (self.resolution, 0.), (0., self.resolution)):
+        (1., 0.), (.5, .5), (0., 1.), (self.resolution, 0.), (0., self.resolution), (0.3, 0.6)):
             self.synapse_parameters["delay"] = self.dendritic_delay
             self.synapse_parameters["axonal_delay"] = self.axonal_delay
 
-            for self.min_delay in (3., .4, self.resolution):
-                for self.max_delay in (3., .4, self.resolution):
+            for self.min_delay in (1., .4, self.resolution):
+                for self.max_delay in (3., 1.):
+                    self.min_delay = min(self.min_delay, self.max_delay)
+                    self.max_delay = max(self.min_delay, self.max_delay)
                     for self.nest_neuron_model in ("iaf_psc_alpha_ax_delay",):
                         for self.neuron_parameters["t_ref"] in (self.resolution, .5, 1., 1.1, 2.5):
                             fname_snip = "_[nest_neuron_mdl=" + self.nest_neuron_model + "]"

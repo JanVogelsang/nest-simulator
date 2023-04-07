@@ -22,6 +22,7 @@
 
 #include "kernel_manager.h"
 
+
 nest::KernelManager* nest::KernelManager::kernel_manager_instance_ = nullptr;
 
 void

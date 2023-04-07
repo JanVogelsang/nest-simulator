@@ -114,7 +114,8 @@ public:
   // connections not used in primary connectors
   typedef SecondaryEvent EventType;
 
-  Connection() : delay_( 0 )
+  Connection()
+    : delay_( 0 )
   {
   }
 
@@ -236,7 +237,7 @@ public:
   bool
   is_disabled() const
   {
-    return false;  // TODO JV (pt)
+    return false; // TODO JV (pt)
     // return syn_id_delay_.is_disabled();
   }
 

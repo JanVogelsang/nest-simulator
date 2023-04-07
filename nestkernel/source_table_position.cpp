@@ -24,92 +24,39 @@
 
 // Includes from nestkernel:
 #include "kernel_manager.h"
+#include "mpi_manager_impl.h"
+
+
 namespace nest
 {
 
 void
-SourceTablePosition::decrease()
+SourceTablePosition::decrease( const thread source_rank )
 {
-  // first try finding a valid index by only decreasing target-local connection id
-  --local_target_connection_id;
-
-  // keep decreasing until a valid index is found
-  while ( local_target_connection_id < 0 )
+  // we stay in this loop either until we can found a valid target or we have reached the end of all sources tables
+  do
   {
-    // then try finding a valid index by decreasing synapse index
-    --syn_id;
-    if ( syn_id < 0 )
+    // first try finding a valid index by only decreasing target-local connection id
+    --local_target_connection_id;
+
+    // keep decreasing until a valid index is found
+    while ( local_target_connection_id < 0 )
     {
-      Node* node;
-      // then try finding a valid index by decreasing target node id
-      do
+      // then try finding a valid index by decreasing synapse index
+      --syn_id;
+      if ( syn_id < 0 )
       {
-        --local_target_node_id;
-
-        while ( local_target_node_id < 0 )
-        {
-          // then try finding a valid index by decreasing thread index
-          --tid;
-          if ( tid < 0 )
-          {
-            tid = -1;
-            local_target_node_id = -1;
-            syn_id = -1;
-            local_target_connection_id = -1;
-            return; // reached the end without finding a valid entry
-          }
-
-          local_target_node_id = kernel().node_manager.get_local_nodes( tid ).size() - 1;
-        }
-
-        node = kernel().node_manager.get_local_nodes( tid ).get_node_by_index( local_target_node_id );
-      } while ( not node->has_proxies() ); // skip devices
-
-      syn_id = kernel().model_manager.get_num_connection_models() - 1;
-    }
-
-    local_target_connection_id = kernel()
-                                   .node_manager.get_local_nodes( tid )
-                                   .get_node_by_index( local_target_node_id )
-                                   ->get_num_conn_type_sources( syn_id )
-      - 1;
-  }
-}
-
-void
-SourceTablePosition::increase()
-{
-  // first try finding a valid index by only increasing target-local connection id
-  ++local_target_connection_id;
-
-  // keep increasing until a valid index is found
-  while ( local_target_connection_id
-    == static_cast< long >( kernel()
-                              .node_manager.get_local_nodes( tid )
-                              .get_node_by_index( local_target_node_id )
-                              ->get_num_conn_type_sources( syn_id ) ) )
-  {
-    if ( local_target_connection_id
-      == static_cast< long >( kernel()
-                                .node_manager.get_local_nodes( tid )
-                                .get_node_by_index( local_target_node_id )
-                                ->get_num_conn_type_sources( syn_id ) ) )
-    {
-      // then try finding a valid index by increasing synapse index
-      ++syn_id;
-      if ( syn_id == static_cast< long >( kernel().model_manager.get_num_connection_models() ) )
-      {
-        Node* node;
-        // then try finding a valid index by increasing target node id
+        Node* target_node;
+        // then try finding a valid index by decreasing target node id
         do
         {
-          ++local_target_node_id;
+          --local_target_node_id;
 
-          while ( local_target_node_id == static_cast< long >( kernel().node_manager.get_local_nodes( tid ).size() ) )
+          while ( local_target_node_id < 0 )
           {
-            // then try finding a valid index by increasing thread index
-            ++tid;
-            if ( tid == static_cast< long >( kernel().vp_manager.get_num_threads() ) )
+            // then try finding a valid index by decreasing thread index
+            --tid;
+            if ( tid < 0 )
             {
               tid = -1;
               local_target_node_id = -1;
@@ -118,18 +65,102 @@ SourceTablePosition::increase()
               return; // reached the end without finding a valid entry
             }
 
-            local_target_node_id = 0;
+            local_target_node_id = kernel().node_manager.get_local_nodes( tid ).size() - 1;
           }
 
-          node = kernel().node_manager.get_local_nodes( tid ).get_node_by_index( local_target_node_id );
-        } while ( not node->has_proxies() ); // skip devices
+          target_node = kernel().node_manager.get_local_nodes( tid ).get_node_by_index( local_target_node_id );
+        } while ( not target_node->has_proxies() or target_node->get_node_id() == DISABLED_NODE_ID ); // skip devices
 
-        syn_id = 0;
+        syn_id = kernel().model_manager.get_num_connection_models() - 1;
       }
 
-      local_target_connection_id = 0;
+      local_target_connection_id = kernel()
+                                     .node_manager.get_local_nodes( tid )
+                                     .get_node_by_index( local_target_node_id )
+                                     ->get_num_conn_type_sources( syn_id )
+        - 1;
     }
-  }
+    current_source = kernel()
+                       .node_manager.get_local_nodes( tid )
+                       .get_node_by_index( local_target_node_id )
+                       ->get_source( syn_id, local_target_connection_id );
+
+    thread current_source_rank = kernel().mpi_manager.get_process_id_of_node_id( current_source );
+    if ( source_rank == current_source_rank and current_source != DISABLED_NODE_ID )
+    {
+      return; // found a valid entry
+    }
+  } while ( not reached_end() );
+}
+
+void
+SourceTablePosition::increase( const thread source_rank )
+{
+  do
+  {
+    // first try finding a valid index by only increasing target-local connection id
+    ++local_target_connection_id;
+
+    // keep increasing until a valid index is found
+    while ( local_target_connection_id
+      == static_cast< long >( kernel()
+                                .node_manager.get_local_nodes( tid )
+                                .get_node_by_index( local_target_node_id )
+                                ->get_num_conn_type_sources( syn_id ) ) )
+    {
+      if ( local_target_connection_id
+        == static_cast< long >( kernel()
+                                  .node_manager.get_local_nodes( tid )
+                                  .get_node_by_index( local_target_node_id )
+                                  ->get_num_conn_type_sources( syn_id ) ) )
+      {
+        // then try finding a valid index by increasing synapse index
+        ++syn_id;
+        if ( syn_id == static_cast< long >( kernel().model_manager.get_num_connection_models() ) )
+        {
+          Node* target_node;
+          // then try finding a valid index by increasing target node id
+          do
+          {
+            ++local_target_node_id;
+
+            while ( local_target_node_id == static_cast< long >( kernel().node_manager.get_local_nodes( tid ).size() ) )
+            {
+              // then try finding a valid index by increasing thread index
+              ++tid;
+              if ( tid == static_cast< long >( kernel().vp_manager.get_num_threads() ) )
+              {
+                tid = -1;
+                local_target_node_id = -1;
+                syn_id = -1;
+                local_target_connection_id = -1;
+                return; // reached the end without finding a valid entry
+              }
+
+              local_target_node_id = 0;
+            }
+
+            target_node = kernel().node_manager.get_local_nodes( tid ).get_node_by_index( local_target_node_id );
+          } while ( not target_node->has_proxies() or target_node->get_node_id() == DISABLED_NODE_ID ); // skip devices
+
+          syn_id = 0;
+        }
+
+        local_target_connection_id = 0;
+      }
+    }
+    // the current position contains an entry, so we retrieve it
+    current_source = kernel()
+                       .node_manager.get_local_nodes( tid )
+                       .get_node_by_index( local_target_node_id )
+                       ->get_source( syn_id, local_target_connection_id );
+
+    thread current_source_rank = kernel().mpi_manager.get_process_id_of_node_id( current_source );
+    if ( source_rank == current_source_rank and current_source != DISABLED_NODE_ID )
+    {
+      return; // found a valid entry
+    }
+  } while ( not reached_end() );
 }
 
 }
