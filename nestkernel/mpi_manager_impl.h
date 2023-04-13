@@ -34,6 +34,7 @@
 
 // Includes from nestkernel:
 #include "kernel_manager.h"
+#include "vp_manager_impl.h"
 
 inline nest::thread
 nest::MPIManager::get_process_id_of_vp( const thread vp ) const
