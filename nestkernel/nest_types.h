@@ -103,7 +103,7 @@ constexpr uint8_t NUM_BITS_NODE_ID = 62U;
  */
 constexpr uint64_t MAX_LOCAL_NODE_ID = generate_max_value( NUM_BITS_LOCAL_NODE_ID );
 constexpr uint64_t MAX_LOCAL_CONNECTION_ID = generate_max_value( NUM_BITS_LOCAL_CONNECTION_ID );
-constexpr uint64_t MAX_ADJACENCY_LIST_INDEX = generate_max_value( NUM_BITS_LOCAL_CONNECTION_ID );
+constexpr uint64_t MAX_ADJACENCY_LIST_INDEX = generate_max_value( NUM_BITS_ADJACENCY_LIST_INDEX );
 constexpr int64_t MAX_RANK = generate_max_value( NUM_BITS_RANK );
 constexpr int64_t MAX_TID = generate_max_value( NUM_BITS_TID );
 constexpr uint64_t MAX_SYN_ID = generate_max_value( NUM_BITS_SYN_ID );
