@@ -237,10 +237,6 @@ public:
   explicit Connector( const synindex syn_id )
     : syn_id_( syn_id )
   {
-    // TODO JV: Benchmark this both with and without reserve
-    axonal_delays_.reserve( 11250 );
-    C_.reserve( 11250 );
-    sources_.reserve( 11250 );
   }
 
   ~Connector() override
@@ -328,6 +324,14 @@ public:
   get_sources() override
   {
     return sources_;
+  }
+
+  const void
+  resize_debug( const size_t num )
+  {
+    axonal_delays_.reserve( num );
+    C_.reserve( num );
+    sources_.reserve( num );
   }
 
   const index

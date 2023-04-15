@@ -74,6 +74,7 @@ class AdjacencyList
    *   - second dim: source neuron
    *   - third dim: targets of source neuron
    */
+  // TODO JV (pt): Evaluate if adding local target node id as another dimension might make sense for a low number of VPs
   std::vector< std::vector< std::vector< AdjacencyListTarget > > > adjacency_list_;
 
   /**

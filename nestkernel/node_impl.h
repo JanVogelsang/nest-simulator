@@ -85,18 +85,56 @@ Node::add_connection( Node& source_node,
   }
   else
   {
-    if ( not connections_.at( syn_id ) )
-    {
-      // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
-      connections_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id );
-    }
-    Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() );
+//    if ( not connections_.at( syn_id ) )
+//    {
+//      // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
+//      connections_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id );
+//    }
+//    Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() );
+//    if ( connection_type == ConnectionType::CONNECT_TO_DEVICE )
+//    {
+//      return vc->add_device_connection( connection, source_node.get_node_id() );
+//    }
+//    else
+//    {
+//      vc->add_connection( connection, source_node.get_node_id(), axonal_delay, dendritic_delay );
+//      return invalid_index; // TODO JV (pt): This index should never be used as it will change after sorting
+//    }
+
     if ( connection_type == ConnectionType::CONNECT_TO_DEVICE )
     {
+      if ( not connections_.at( syn_id ) )
+      {
+        // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
+        connections_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id );
+      }
+      Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() );
       return vc->add_device_connection( connection, source_node.get_node_id() );
     }
     else
     {
+      Connector< ConnectionT >* vc;
+      if ( not connections_.at( syn_id ) )
+      {
+        // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
+        connections_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id );
+        vc = static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() );
+        // TODO JV: Benchmark this both with and without reserve
+        size_t num;
+        if ( syn_id == 54 or syn_id == 32 )
+        {
+          num = 9000;
+        }
+        else
+        {
+          num = 2250;
+        }
+        vc->resize_debug( num );
+      }
+      else
+      {
+        vc = static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() );
+      }
       vc->add_connection( connection, source_node.get_node_id(), axonal_delay, dendritic_delay );
       return invalid_index; // TODO JV (pt): This index should never be used as it will change after sorting
     }
