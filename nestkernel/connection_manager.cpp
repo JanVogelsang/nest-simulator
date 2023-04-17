@@ -67,7 +67,7 @@ ConnectionManager::ConnectionManager()
   , keep_source_table_( true )
   , connections_have_changed_( false )
   , get_connections_has_been_called_( false )
-  , use_compressed_spikes_( false ) // TODO JV (pt): Check if compression should be default or not
+  , use_compressed_spikes_( true )
   , has_primary_connections_( false )
   , check_primary_connections_()
   , secondary_connections_exist_( false )

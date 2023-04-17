@@ -207,16 +207,31 @@ class Connector : public ConnectorBase
   //! A region of connections in the Connector where all connections share the same dendritic delay
   struct DelayRegion
   {
-    index start; //!< first connection of delay region
+    delay dendritic_delay;  //!< Dendritic delay of this region
+    index start;  //!< first connection of delay region
     index end;   //!< last connection of relay region
     //! the post-synaptic trace in synapse time, i.e. the trace of the neuron "dendritic delay"-milliseconds ago
     double Kminus;
-    double last_post_spike; //!< time of the last update in synapse time
+    double last_post_spike;  //!< time of the last update in synapse time
+
+    DelayRegion( delay dendritic_delay, index start, index end )
+    : dendritic_delay( dendritic_delay )
+    , start( start )
+    , end( end )
+    , Kminus( 0 )
+    , last_post_spike( -1 )
+    {}
   };
 
 private:
   const synindex syn_id_;
-  std::map< delay, DelayRegion > dendritic_delay_regions_;
+
+  // TODO JV (pt): There will usually be very few elements in the map and no insertions at runtime, so using an ordered
+  //  vector can speed up performance in this case. However, this might actually yield worse performance when having
+  //  many different delays in the network. Requires benchmarking.
+  std::vector< DelayRegion > dendritic_delay_regions_;
+  // std::map< delay, DelayRegion > dendritic_delay_regions_;
+
   std::map< delay, std::vector< index > > connection_indices_by_delay_;
   std::vector< delay > axonal_delays_;
   std::vector< ConnectionT > C_;
@@ -242,11 +257,10 @@ public:
   ~Connector() override
   {
     std::vector< ConnectionT >().swap( C_ );
-    auto s = connection_indices_by_delay_.begin()->second;
     std::vector< index >().swap( sources_ );
-    std::map< delay, DelayRegion >().swap( dendritic_delay_regions_ );
     std::map< delay, std::vector< index > >().swap( connection_indices_by_delay_ );
-#ifndef USE_ADJACNECY_LIST
+    std::vector< DelayRegion >().swap( dendritic_delay_regions_ );
+#ifndef USE_ADJACENCY_LIST
     std::vector< delay >().swap( axonal_delays_ );
 #endif
   }
@@ -288,14 +302,15 @@ public:
   {
     assert( lcid < C_.size() );
 
-    // TODO JV: Profiling - lower bound vs find vs simply iterating
-    // TODO JV (pt): Further optimize this as much as possible (after additional profiling)
-    auto v = std::lower_bound( dendritic_delay_regions_.begin(),
-      dendritic_delay_regions_.end(),
-      lcid,
-      []( const std::pair< const delay, DelayRegion >& r, const index idx ) -> const bool
-      { return r.second.end < idx; } );
-    return v->first;
+    // TODO JV (pt): Optimize this as much as possible
+    for ( const DelayRegion& region : dendritic_delay_regions_ )
+    {
+      if ( lcid < region.end )
+      {
+        return region.dendritic_delay;
+      }
+    }
+    return 0;
   }
 
   double
@@ -468,8 +483,8 @@ public:
   {
     // get the post-synaptic trace in synapse time, i.e. the trace of the neuron "dendritic delay"-milliseconds ago
     const delay dendritic_delay_steps = Time::delay_ms_to_steps( dendritic_delay );
-    const DelayRegion& delay_region = dendritic_delay_regions_.find( dendritic_delay_steps )->second;
-    return { delay_region.last_post_spike, delay_region.Kminus };
+    const auto delay_region_it = std::lower_bound( dendritic_delay_regions_.cbegin(), dendritic_delay_regions_.cend(), dendritic_delay_steps, []( const DelayRegion& lhs, const delay d ) -> const bool { return lhs.dendritic_delay < d; });
+    return { delay_region_it->last_post_spike, delay_region_it->Kminus };
   }
 
   void send_weight_event( const thread tid,
@@ -516,17 +531,13 @@ public:
   void
   update_trace( const double post_spike_time, const delay dendritic_delay, const double tau_minus_inv ) override
   {
-    auto group_it = dendritic_delay_regions_.find( dendritic_delay );
+    auto delay_region_it = std::lower_bound( dendritic_delay_regions_.begin(), dendritic_delay_regions_.end(), dendritic_delay, []( const DelayRegion& lhs, const delay d ) -> const bool { return lhs.dendritic_delay < d; });
 
-    if ( group_it != dendritic_delay_regions_.end() )
+    if ( delay_region_it != dendritic_delay_regions_.end() and delay_region_it->dendritic_delay == dendritic_delay )
     {
       // update post-synaptic trace
-      group_it->second.Kminus = group_it->second.Kminus
-          * std::exp(
-            ( group_it->second.last_post_spike - ( post_spike_time + Time::delay_steps_to_ms( dendritic_delay ) ) )
-            * tau_minus_inv )
-        + 1;
-      group_it->second.last_post_spike = post_spike_time + Time::delay_steps_to_ms( dendritic_delay );
+      delay_region_it->Kminus = delay_region_it->Kminus * std::exp( ( delay_region_it->last_post_spike - ( post_spike_time + Time::delay_steps_to_ms( dendritic_delay ) ) ) * tau_minus_inv ) + 1;
+      delay_region_it->last_post_spike = post_spike_time + Time::delay_steps_to_ms( dendritic_delay );
     }
   }
 
@@ -539,10 +550,10 @@ public:
   void
   clear_history() override
   {
-    for ( auto& group : dendritic_delay_regions_ )
+    for ( DelayRegion& delay_region : dendritic_delay_regions_ )
     {
-      group.second.Kminus = 0;
-      group.second.last_post_spike = -1;
+      delay_region.Kminus = 0;
+      delay_region.last_post_spike = -1;
     }
   }
 

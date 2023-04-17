@@ -59,10 +59,7 @@ void
 ArchivingNode::init()
 {
   Node::init();
-  if ( max_axonal_delay_ )
-  {
-    intermediate_spike_buffer_.resize( max_axonal_delay_ );
-  }
+  intermediate_spike_buffer_.resize( max_axonal_delay_ );
 }
 
 void
@@ -178,7 +175,7 @@ ArchivingNode::has_stdp_connections() const
 void
 ArchivingNode::update_stdp_connections( const delay lag )
 {
-  if ( max_axonal_delay_ )
+  if ( max_axonal_delay_ > 0 )
   {
     const std::vector< ConnectorModel* >& cm = kernel().model_manager.get_connection_models( get_thread() );
     auto [ current_pre_synaptic_spike, last_pre_synaptic_spike ] = intermediate_spike_buffer_.get_next_spikes();
@@ -248,7 +245,7 @@ ArchivingNode::prepare_update()
 
   const std::vector< ConnectorModel* >& cm = kernel().model_manager.get_connection_models( get_thread() );
   // Process all pre- and post-synaptic spikes in relative order. Processes all pre-synaptic spikes that were just
-  // communicated and all post-synaptic spikes in the current archive.
+  // communicated and all post-synaptic spikes in the archive.
   auto [ current_pre_synaptic_spike, last_pre_synaptic_spike ] = intermediate_spike_buffer_.get_next_spikes();
   const Time origin = kernel().simulation_manager.get_slice_origin();
   const delay min_delay = kernel().connection_manager.get_min_delay();
@@ -312,10 +309,7 @@ ArchivingNode::prepare_update()
 void
 ArchivingNode::end_update()
 {
-  if ( max_axonal_delay_ > 0 ) // no need to clean the intermediate spike buffer if there is no axonal delay
-  {
-    intermediate_spike_buffer_.clean_slice();
-  }
+  intermediate_spike_buffer_.clean_slice();
 }
 
 void
@@ -326,34 +320,40 @@ ArchivingNode::deliver_event( const synindex syn_id,
   const delay axonal_delay,
   const double offset )
 {
-  const delay t_syn = lag.get_steps() + axonal_delay;
-  const delay min_delay = kernel().connection_manager.get_min_delay();
-  const delay t_now = kernel().simulation_manager.get_slice_origin().get_steps() + min_delay;
-  const delay time_until_reaching_synapse = t_syn - t_now;
-
-  // STDP synapses need to make sure all post-synaptic spikes are known when delivering the spike to the synapse.
+  // If the connection requires postponed delivery due to STDP for example, don't delivery the spike immediately as STDP
+  // synapses need to make sure all post-synaptic spikes are known when delivering the spike to the synapse.
   // If we need to postpone the delivery, we need to check for how long. Furthermore, even if it was safe to deliver the
   // spike already, the weight would be incorrect if read out at the next possible time (i.e., after end of delivery).
   // The earliest possible time a spike can be delivered is right before the start of the next update cycle in which the
-  // spike would reach the synapse.
-  // However, dendritic delays smaller than min_delay add even more complexity here. If the dendritic delay is smaller
-  // than the remaining time in the target slice (the "lag"), there might be a future post-synaptic slice that needs to
-  // be processed before the pre-synaptic one, not known before the following update cycle. The pre-synaptic spike might
-  // have to be delivered in that update cycle however, when the dendritic delay is small enough. Thus, these spikes
-  // have to be handled during the actual update cycle instead of before.To handle all postponed spikes in the same
-  // way, all spikes will therefore be processed during the update of the neuron at the correct times.
-  // If a spike reached the synapse already at the current point in time, i.e. the end (inclusive) of the current slice,
-  // the spike has to be processed instantly, but in the correct order relative to any possible post-synaptic spikes
-  // which reached the synapse before the pre-synaptic spike. These spikes will be temporarily stored in the first slot
-  // of the intermediate buffer which was previously occupied by the spikes of the last update cycle.
+  // spike would reach the synapse. However, dendritic delays smaller than min_delay add even more complexity here. If
+  // the dendritic delay is smaller than the remaining time in the target slice (the "lag"), there might be a future
+  // post-synaptic slice that needs to be processed before the pre-synaptic one, not known before the following update
+  // cycle. The pre-synaptic spike might have to be delivered in that update cycle however, when the dendritic delay is
+  // small enough. Thus, these spikes have to be handled during the actual update cycle instead of before.
+  // To handle all postponed spikes in the same way, all spikes will therefore be processed during the update of the
+  // neuron at the correct times. If a spike reached the synapse already at the current point in time, i.e. the end
+  // (inclusive) of the current slice, the spike has to be processed instantly, but in the correct order relative to any
+  // possible post-synaptic spikes which reached the synapse before the pre-synaptic spike. These spikes will be
+  // temporarily stored in the first slot of the intermediate buffer which was previously occupied by the spikes of the
+  // last update cycle.
+  if ( cm[ syn_id ]->requires_postponed_delivery() )
+  {
+    const delay t_syn = lag.get_steps() + axonal_delay;
+    const delay min_delay = kernel().connection_manager.get_min_delay();
+    const delay t_now = kernel().simulation_manager.get_slice_origin().get_steps() + min_delay;
+    const delay time_until_reaching_synapse = t_syn - t_now;
 
-
-  // end of slice is inclusive, therefore subtract 1
-  const unsigned long slices_to_postpone =
-    static_cast< unsigned long >( ( time_until_reaching_synapse + min_delay - 1 ) / min_delay );
-  const delay t_syn_lag = time_until_reaching_synapse + min_delay - slices_to_postpone * min_delay;
-  intermediate_spike_buffer_.push_back(
-    slices_to_postpone, lag, axonal_delay, syn_id, local_target_connection_id, t_syn_lag );
+    // end of slice is inclusive, therefore subtract 1
+    const unsigned long slices_to_postpone =
+      static_cast< unsigned long >( ( time_until_reaching_synapse + min_delay - 1 ) / min_delay );
+    const delay t_syn_lag = time_until_reaching_synapse + min_delay - slices_to_postpone * min_delay;
+    intermediate_spike_buffer_.push_back(
+      slices_to_postpone, lag, axonal_delay, syn_id, local_target_connection_id, t_syn_lag );
+  }
+  else
+  {
+    Node::deliver_event( syn_id, local_target_connection_id, cm, lag, axonal_delay, offset );
+  }
 }
 
 void

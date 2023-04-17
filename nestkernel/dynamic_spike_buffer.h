@@ -122,11 +122,7 @@ DynamicSpikeBuffer::push_back( const unsigned long slices_to_postpone,
 {
   const size_t spike_buffer_index = ( current_slice_ + slices_to_postpone ) % spike_buffer_.size();
   // insert into sorted vector at correct position to keep it sorted
-  const auto it = std::upper_bound( spike_buffer_[ spike_buffer_index ].cbegin(),
-    spike_buffer_[ spike_buffer_index ].cend(),
-    t_syn_lag,
-    []( const delay lhs_t_syn_lag, const SpikeBufferEntry& rhs ) { return lhs_t_syn_lag < rhs.t_syn_lag; } );
-  spike_buffer_[ spike_buffer_index ].emplace( it, t_stamp, axonal_delay, syn_id, local_connection_id, t_syn_lag );
+  spike_buffer_[ spike_buffer_index ].emplace_back( t_stamp, axonal_delay, syn_id, local_connection_id, t_syn_lag );
 }
 
 inline std::pair< std::vector< SpikeBufferEntry >::const_iterator&,
@@ -140,11 +136,15 @@ inline void
 DynamicSpikeBuffer::prepare_next_slice()
 {
   current_spike_ = spike_buffer_[ current_slice_ ].cbegin();
+  std::sort( spike_buffer_[ current_slice_ ].begin(),
+    spike_buffer_[ current_slice_ ].end(),
+    []( const SpikeBufferEntry& lhs, const SpikeBufferEntry& rhs ) { return lhs.t_syn_lag < rhs.t_syn_lag; } );
 }
 
 inline void
 DynamicSpikeBuffer::clean_slice()
 {
+  // TODO JV (pt): It might make sense to free the memory here instead of just clearing
   spike_buffer_[ current_slice_ ].clear();
 }
 

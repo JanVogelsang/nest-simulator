@@ -194,7 +194,8 @@ protected:
   void update_stdp_connections( const delay lag );
 
   /**
-   * Prepare the node for the next update cycle.
+   * Prepare the node for the next update cycle. This includes any cleanup after the past update cycle or any state
+   * updates that make sure any get_status call after this cycle yields the correct results (e.g. STDP weight updates).
    */
   void prepare_update() override;
 
@@ -211,7 +212,7 @@ protected:
   /**
    * Return if the node has any incoming stdp connections.
    */
-  virtual bool has_stdp_connections() const;
+  bool has_stdp_connections() const override;
 
 private:
   // sum exp(-(t-ti)/tau_minus)

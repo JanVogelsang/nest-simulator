@@ -44,6 +44,8 @@ struct AdjacencyListTarget
   index local_target_connection_id : NUM_BITS_LOCAL_CONNECTION_ID;
   synindex syn_id : NUM_BITS_SYN_ID;
   delay axonal_delay : NUM_BITS_DELAY;
+  // bool disabled : 1;  // TODO JV (pt): The disabled flag could be added here. Would still need it somewhere else for
+  // HPC version, though.
   // TODO JV (pt): Still some bits to spare here
 
   AdjacencyListTarget( const index local_target_node_id,
@@ -157,7 +159,8 @@ public:
 
   void prepare_compressed_targets( const thread num_threads, const thread num_ranks );
 
-  void clear_compressed_indices();
+  //! Clear all data structures required to communicate target data
+  void clear_target_data();
 };
 
 inline void
@@ -171,7 +174,7 @@ AdjacencyList::resize( const thread num_threads, const thread num_ranks, const b
   }
   else
   {
-    clear_compressed_indices();
+    std::vector< std::map< index, size_t > >().swap( source_to_compressed_index_ );
   }
 }
 
@@ -194,9 +197,12 @@ AdjacencyList::clear_sources()
 }
 
 inline void
-AdjacencyList::clear_compressed_indices()
+AdjacencyList::clear_target_data()
 {
+  std::vector< std::map< index, size_t >::const_iterator >().swap( next_compressed_index_ );
   std::vector< std::map< index, size_t > >().swap( source_to_compressed_index_ );
+  std::vector< std::map< index, index >::const_iterator >().swap( next_source_index_ );
+  std::vector< size_t >().swap( next_source_index_thread_ );
 }
 
 inline void

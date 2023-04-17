@@ -495,10 +495,7 @@ nest::SimulationManager::prepare()
 #ifdef USE_ADJACENCY_LIST
 #pragma omp master
     {
-      if ( kernel().connection_manager.use_compressed_spikes() )
-      {
-        kernel().connection_manager.clear_compressed_indices();
-      }
+      kernel().connection_manager.clear_target_data();
     }
 #endif
   }

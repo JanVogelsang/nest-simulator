@@ -44,11 +44,11 @@ Connector< ConnectionT >::update_stdp_connections( const double post_spike_time_
   const double eps = kernel().connection_manager.get_stdp_eps();
   const auto begin = C_.begin();
   // TODO JV (pt): Verify for precise spike times
-  auto group_it = dendritic_delay_regions_.find( dendritic_delay );
-  if ( group_it != dendritic_delay_regions_.end() ) // check if there are connections with given dendritic delay
+  const auto delay_region_it = std::lower_bound( dendritic_delay_regions_.cbegin(), dendritic_delay_regions_.cend(), dendritic_delay, []( const DelayRegion& lhs, const delay d ) -> const bool { return lhs.dendritic_delay < d; });
+  if ( delay_region_it != dendritic_delay_regions_.end() and delay_region_it->dendritic_delay == dendritic_delay ) // check if there are connections with given dendritic delay
   {
-    const auto end = begin + group_it->second.end;
-    for ( auto it = begin + group_it->second.start; it != end; ++it )
+    const auto end = begin + delay_region_it->end;
+    for ( auto it = begin + delay_region_it->start; it != end; ++it )
     {
       // Check if synapse has been updated to this point in time already and ignore the post-spike if that is the case
       const double last_presynaptic_spike_time_ms = it->get_last_presynaptic_spike();
@@ -152,16 +152,15 @@ Connector< ConnectionT >::prepare_connections( const thread tid, const index tar
       temp_connections.push_back( C_.at( idx ) );
       temp_sources.push_back( sources_.at( idx ) );
     }
-    dendritic_delay_regions_[ region.first ] = {
-      region_start, static_cast< index >( std::distance( temp_sources.cbegin(), temp_sources.cend() ) ), 0, -1
-    };
+    dendritic_delay_regions_.emplace_back( region.first, region_start, static_cast< index >( std::distance( temp_sources.cbegin(), temp_sources.cend() ) ) );
   }
   C_.swap( temp_connections );
   sources_.swap( temp_sources );
-  std::map< delay, std::vector< index > >().swap( connection_indices_by_delay_ );
+  // std::map< delay, std::vector< index > >().swap( connection_indices_by_delay_ );
 #ifdef USE_ADJACENCY_LIST
   std::vector< delay >().swap( axonal_delays_ );
 #endif
+  std::sort( dendritic_delay_regions_.begin(), dendritic_delay_regions_.end(), []( const DelayRegion& lhs, const DelayRegion& rhs ) -> const bool { return lhs.dendritic_delay < rhs.dendritic_delay; } );
 }
 
 } // of namespace nest
