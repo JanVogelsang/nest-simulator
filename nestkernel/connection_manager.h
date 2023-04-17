@@ -384,11 +384,11 @@ public:
     adjacency_list_.clear_sources();
   }
 
-  //! Clears all intermediate compressed information in the adjacency list
+  //! Clears all intermediate target information in the adjacency list
   void
-  clear_compressed_indices()
+  clear_target_data()
   {
-    adjacency_list_.clear_compressed_indices();
+    adjacency_list_.clear_target_data();
   }
 
   const std::map< thread, index >&
