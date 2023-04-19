@@ -145,6 +145,10 @@ public:
     return requires_urbanczik_archiving_;
   }
 
+  /**
+   * States whether the connection type requires delivery of spikes to be postponed until the spike would actually
+   * arrive at the synapse.
+   */
   bool
   requires_postponed_delivery() const
   {

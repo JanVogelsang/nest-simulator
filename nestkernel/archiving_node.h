@@ -189,6 +189,13 @@ protected:
   double get_spiketime_ms() const;
 
   /**
+   * Makes a connection process all post-synaptic spikes until the specified time t.
+   */
+  void prepare_connection_for_spike( const synindex syn_id, const delay axonal_delay, const delay dendritic_delay,
+    const index local_connection_id, const double t, const double last_communication_time_ms,
+    const ConnectorModel* cm );
+
+  /**
    * Inform all incoming STDP connections of a post-synaptic spike to update the synaptic weight.
    */
   void update_stdp_connections( const delay lag );
@@ -280,6 +287,47 @@ ArchivingNode::get_trace( const double pre_spike_time, const double dendritic_de
 {
   return connections_[ syn_id ]->get_trace(
     pre_spike_time, dendritic_delay, tau_minus_inv_, history_.cbegin(), history_.cend() );
+}
+
+inline void
+ArchivingNode::prepare_connection_for_spike( const synindex syn_id, const delay axonal_delay,
+  const delay dendritic_delay, const index local_connection_id, const double t, const double last_communication_time_ms,
+  const ConnectorModel* cm )
+{
+  const double eps = kernel().connection_manager.get_stdp_eps();
+  const double last_pre_spike_time_ms = connections_[ syn_id ]->get_last_presynaptic_spike( local_connection_id );
+  // If a pre-synaptic spike is about to be processed, make sure to process all post-synaptic spikes first, which
+  // are due before or at the same time of the pre-synaptic spike.
+  for ( std::deque< double >::const_iterator archived_spike_it = history_.cbegin();
+        archived_spike_it != history_.cend();
+        ++archived_spike_it )
+  {
+    const double post_spike_time_ms = *archived_spike_it + Time::delay_steps_to_ms( dendritic_delay );
+    // Skip post-synaptic spikes which have been processed by the dendritic delay region already after the last
+    // communication round.
+    if ( last_communication_time_ms > post_spike_time_ms + eps
+      or std::abs( last_communication_time_ms - post_spike_time_ms ) < eps )
+    {
+      continue;
+    }
+
+    // Only process spikes which reached the synapse after the last (already processed) pre-synaptic spike.
+    if ( last_pre_spike_time_ms > post_spike_time_ms + eps
+      or std::abs( last_pre_spike_time_ms - post_spike_time_ms ) < eps )
+    {
+      continue;
+    }
+
+    // TODO JV (pt): Check if this works for precise spikes
+    // Don't process spikes which didn't reach the synapse yet.
+    if ( post_spike_time_ms > t + Time::delay_steps_to_ms( axonal_delay ) + eps )
+    {
+      break;
+    }
+
+    // TODO JV (pt): Weight recorder event
+    connections_[ syn_id ]->process_post_synaptic_spike( local_connection_id, post_spike_time_ms, cm );
+  }
 }
 
 } // of namespace
