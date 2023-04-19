@@ -203,6 +203,15 @@ AdjacencyList::clear_target_data()
   std::vector< std::map< index, size_t > >().swap( source_to_compressed_index_ );
   std::vector< std::map< index, index >::const_iterator >().swap( next_source_index_ );
   std::vector< size_t >().swap( next_source_index_thread_ );
+  // TODO JV (pt): This will create many holes in memory which is not desirable. Think of a way to make the memory less
+  //  scattered.
+  for ( auto& entries_per_thread : adjacency_list_ )
+  {
+    for ( auto& entries_per_source : entries_per_thread )
+    {
+      entries_per_source.shrink_to_fit();
+    }
+  }
 }
 
 inline void

@@ -144,8 +144,13 @@ DynamicSpikeBuffer::prepare_next_slice()
 inline void
 DynamicSpikeBuffer::clean_slice()
 {
-  // TODO JV (pt): It might make sense to free the memory here instead of just clearing
-  spike_buffer_[ current_slice_ ].clear();
+  // TODO JV: It might make sense to free the memory here instead of just clearing
+  // spike_buffer_[ current_slice_ ].clear();
+  std::vector< SpikeBufferEntry >().swap( spike_buffer_[ current_slice_ ] );
+  // TODO JV: Instead of clearing completely, it might make sense to just reduce the size by a certain factor to
+  //  not allocate new space all the time again, but at the same time freeing memory after phases of high activity
+  // spike_buffer_[ current_slice_ ].clear();
+  // spike_buffer_[ current_slice_ ].resize( spike_buffer_[ current_slice_ ] / 2 );
 }
 
 inline void

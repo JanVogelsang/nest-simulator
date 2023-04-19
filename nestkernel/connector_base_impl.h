@@ -134,10 +134,11 @@ template < typename ConnectionT >
 void
 Connector< ConnectionT >::prepare_connections( const thread tid, const index target_lid )
 {
+  // TODO JV: Benchmark if using std::array would be faster here (stack vs. heap)
   std::vector< ConnectionT > temp_connections;
   std::vector< index > temp_sources;
   temp_connections.reserve( C_.size() );
-  temp_sources.reserve( C_.size() );
+  temp_sources.reserve( sources_.size() );
   for ( const auto& region : connection_indices_by_delay_ )
   {
     index region_start = static_cast< index >( std::distance( temp_sources.cbegin(), temp_sources.cend() ) );
@@ -156,7 +157,7 @@ Connector< ConnectionT >::prepare_connections( const thread tid, const index tar
   }
   C_.swap( temp_connections );
   sources_.swap( temp_sources );
-  // std::map< delay, std::vector< index > >().swap( connection_indices_by_delay_ );
+  std::map< delay, std::vector< index > >().swap( connection_indices_by_delay_ );
 #ifdef USE_ADJACENCY_LIST
   std::vector< delay >().swap( axonal_delays_ );
 #endif

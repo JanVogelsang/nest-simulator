@@ -338,6 +338,9 @@ ArchivingNode::deliver_event( const synindex syn_id,
   // last update cycle.
   if ( cm[ syn_id ]->requires_postponed_delivery() )
   {
+    // TODO JV (pt): STDP synapses without axonal delay might get simplified delivery without having to temporarily save
+    //  them in the intermediate_spike_buffer.
+    // If there is axonal delay, spikes have to be postponed
     const delay t_syn = lag.get_steps() + axonal_delay;
     const delay min_delay = kernel().connection_manager.get_min_delay();
     const delay t_now = kernel().simulation_manager.get_slice_origin().get_steps() + min_delay;
