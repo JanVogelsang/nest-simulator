@@ -276,9 +276,6 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e,
   // depression due to new pre-synaptic spike
   weight_ = depress_( weight_, K_minus, cp );
 
-  // std::cout << std::setprecision( 17 ) << "Pre " << t_spike + axonal_delay << " " << K_minus << " " << weight_ <<
-  // std::endl;
-
   e.set_weight( weight_ );
   e.set_delay_steps( dendritic_delay + axonal_delay );
   e();

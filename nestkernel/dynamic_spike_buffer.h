@@ -120,6 +120,7 @@ DynamicSpikeBuffer::push_back( const unsigned long slices_to_postpone,
   const size_t local_connection_id,
   const delay t_syn_lag )
 {
+  // TODO JV: Precompute moduli
   const size_t spike_buffer_index = ( current_slice_ + slices_to_postpone ) % spike_buffer_.size();
   // insert into sorted vector at correct position to keep it sorted
   spike_buffer_[ spike_buffer_index ].emplace_back( t_stamp, axonal_delay, syn_id, local_connection_id, t_syn_lag );

@@ -775,16 +775,25 @@ ConnectionManager::connect_( Node& source,
     throw NotImplemented( "This synapse model is not supported by the neuron model of at least one connection." );
   }
 
+  // TODO JV (pt): Devices and connections with no axonal delay must not allow dendritic delays of 0.
   ConnectorModel& conn_model = kernel().model_manager.get_connection_model( syn_id, tid );
-  const auto [ local_target_connection_id, actual_dendritic_delay, actual_axonal_delay ] = conn_model.add_connection(
+  auto [ local_target_connection_id, actual_dendritic_delay, actual_axonal_delay ] = conn_model.add_connection(
     source, target, syn_id, params, delay, axonal_delay, weight, is_primary, connection_type );
   switch ( connection_type )
   {
   case CONNECT_FROM_DEVICE:
+    if ( actual_dendritic_delay == 0 )
+    {
+      actual_dendritic_delay = Time::delay_ms_to_steps( 1.0 );
+    }
     target_table_devices_.add_connection_from_device(
       source, target, local_target_connection_id, actual_dendritic_delay, tid, syn_id );
     break;
   case CONNECT_TO_DEVICE:
+    if ( actual_dendritic_delay == 0 )
+    {
+      actual_dendritic_delay = Time::delay_ms_to_steps( 1.0 );
+    }
     target_table_devices_.add_connection_to_device(
       source, target, local_target_connection_id, actual_dendritic_delay, tid, syn_id );
     break;

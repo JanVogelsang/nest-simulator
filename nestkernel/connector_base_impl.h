@@ -34,7 +34,8 @@ namespace nest
 
 template < typename ConnectionT >
 inline void
-Connector< ConnectionT >::update_stdp_connections( const double post_spike_time_syn,
+Connector< ConnectionT >::update_stdp_connections( const index node_id, const thread tid,  // TODO JV: Debug - Remove tid again
+  const double post_spike_time_syn,
   const delay dendritic_delay,
   const ConnectorModel* cm )
 {

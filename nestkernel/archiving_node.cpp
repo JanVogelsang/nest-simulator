@@ -189,19 +189,11 @@ ArchivingNode::update_stdp_connections( const delay lag )
 
       const delay dendritic_delay = connections_[ syn_id ]->get_dendritic_delay( local_connection_id );
       const delay axonal_delay = current_pre_synaptic_spike->axonal_delay;
-      const double pre_spike_time_ms = pre_spike_time.get_ms();
       // Time of the last communication round, which can be easily calculated from the pre-synaptic spikes arrival time
       // at the synapse using the current lag (instead of querying the simulation manager).
-      const double last_communication_time_ms = pre_spike_time_ms + Time::delay_steps_to_ms( axonal_delay - lag - 1 );
-      prepare_connection_for_spike( syn_id, axonal_delay, dendritic_delay, local_connection_id, pre_spike_time_ms, last_communication_time_ms, cm[ syn_id ] );
-
-      Node::deliver_event( syn_id,
-        local_connection_id,
-        cm,
-        pre_spike_time,
-        axonal_delay,
-        dendritic_delay,
-        0 ); // TODO JV (pt): Precise spikes
+      const double last_communication_time_steps = pre_spike_time.get_steps() + axonal_delay - lag - 1;
+      // TODO JV (pt): Precise spikes
+      process_spikes_until_pre_synaptic_spike( syn_id, axonal_delay, dendritic_delay, local_connection_id, pre_spike_time, last_communication_time_steps, 0, cm );
       ++current_pre_synaptic_spike;
     }
   }
@@ -250,7 +242,7 @@ ArchivingNode::prepare_update()
         // process all pending post-synaptic spikes
         for ( const synindex stdp_syn_id : stdp_synapse_types_ )
         {
-          connections_[ stdp_syn_id ]->update_stdp_connections( t_now.get_ms(), dendritic_delay, cm[ stdp_syn_id ] );
+          connections_[ stdp_syn_id ]->update_stdp_connections( get_node_id(), get_thread(), t_now.get_ms(), dendritic_delay, cm[ stdp_syn_id ] );
         }
       }
       ++archived_spike_it;
@@ -336,8 +328,7 @@ ArchivingNode::deliver_event( const synindex syn_id,
       // If there is no axonal delay, all post-synaptic spikes until the time of the spike have to be processed by the
       // synapse before processing the pre-synaptic spike.
       const delay dendritic_delay = connections_[ syn_id ]->get_dendritic_delay( local_target_connection_id );
-      prepare_connection_for_spike( syn_id, axonal_delay, dendritic_delay, local_target_connection_id, lag.get_ms(), kernel().simulation_manager.get_slice_origin().get_ms(), cm[ syn_id ] );
-      Node::deliver_event( syn_id, local_target_connection_id, cm, lag, axonal_delay, dendritic_delay, offset );
+      process_spikes_until_pre_synaptic_spike( syn_id, axonal_delay, dendritic_delay, local_target_connection_id, lag, kernel().simulation_manager.get_slice_origin().get_steps(), offset, cm );
     }
   }
   else

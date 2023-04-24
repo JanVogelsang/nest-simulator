@@ -152,7 +152,9 @@ public:
     const CommonSynapseProperties& cp,
     Node* target ) = 0;
 
-  virtual void update_stdp_connections( const double post_spike_time_syn,
+  virtual void update_stdp_connections( const index node_id,
+    const thread tid,
+    const double post_spike_time_syn,
     const delay dendritic_delay,
     const ConnectorModel* cm ) = 0;
 
@@ -516,7 +518,9 @@ public:
     }
   }
 
-  void update_stdp_connections( const double post_spike_time_syn,
+  void update_stdp_connections( const index node_id,
+    const thread tid,
+    const double post_spike_time_syn,
     const delay dendritic_delay,
     const ConnectorModel* cm ) override;
 
