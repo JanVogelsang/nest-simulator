@@ -96,7 +96,7 @@ nest::UrbanczikArchivingNode< urbanczik_parameters >::get_urbanczik_history( dou
 
 template < class urbanczik_parameters >
 void
-nest::UrbanczikArchivingNode< urbanczik_parameters >::write_urbanczik_history( Time const& t_sp,
+nest::UrbanczikArchivingNode< urbanczik_parameters >::write_urbanczik_history( const Time& t_sp,
   double V_W,
   int n_spikes,
   int comp )

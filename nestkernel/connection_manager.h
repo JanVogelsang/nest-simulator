@@ -269,11 +269,6 @@ public:
   void calibrate( const TimeConverter& );
 
   /**
-   * Sort all STDP connections by dendritic delay for better vectorization.
-   */
-  void prepare_connections( const thread tid );
-
-  /**
    * Returns the delay checker for the current thread.
    */
   DelayChecker& get_delay_checker();
@@ -396,16 +391,6 @@ public:
   {
     return adjacency_list_.get_compressed_spike_data( idx );
   }
-
-  /**
-   * Add a target to the adjacency list.
-   */
-  void add_adjacency_list_target( const thread tid,
-    const synindex syn_id,
-    const index source_node_id,
-    const index target_node_id,
-    const index target_connection_id,
-    const delay axonal_delay );
 
   /**
    * Prepare compression of target data in adjacency list.

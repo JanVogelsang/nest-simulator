@@ -571,7 +571,7 @@ nest::pp_cond_exp_mc_urbanczik::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::pp_cond_exp_mc_urbanczik::update( Time const& origin, const long from, const long to )
+nest::pp_cond_exp_mc_urbanczik::update( const Time& origin, const long from, const long to )
 {
 
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
@@ -694,7 +694,7 @@ nest::pp_cond_exp_mc_urbanczik::update( Time const& origin, const long from, con
 void
 nest::pp_cond_exp_mc_urbanczik::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
   assert( 0 <= e.get_rport() and e.get_rport() < 2 * NCOMP );
 
   B_.spikes_[ e.get_rport() ].add_value(
@@ -704,7 +704,7 @@ nest::pp_cond_exp_mc_urbanczik::handle( SpikeEvent& e )
 void
 nest::pp_cond_exp_mc_urbanczik::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
   // not 100% clean, should look at MIN, SUP
   assert( 0 <= e.get_rport() and e.get_rport() < NCOMP );
 

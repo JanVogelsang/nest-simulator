@@ -234,7 +234,7 @@ nest::inhomogeneous_poisson_generator::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::inhomogeneous_poisson_generator::update( Time const& origin, const long from, const long to )
+nest::inhomogeneous_poisson_generator::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
@@ -266,14 +266,14 @@ nest::inhomogeneous_poisson_generator::update( Time const& origin, const long fr
     // create spikes
     if ( B_.rate_ > 0 and StimulationDevice::is_active( Time::step( curr_time ) ) )
     {
-      DSSpikeEvent se;
-      kernel().event_delivery_manager.send( *this, se, offs );
+      SpikeEvent se;
+      kernel().event_delivery_manager.send_device_spike( *this, se, offs );
     }
   }
 }
 
 void
-nest::inhomogeneous_poisson_generator::event_hook( DSSpikeEvent& e )
+nest::inhomogeneous_poisson_generator::event_hook( SpikeEvent& e )
 {
   poisson_distribution::param_type param( B_.rate_ * V_.h_ );
   long n_spikes = V_.poisson_dist_( get_vp_specific_rng( get_thread() ), param );

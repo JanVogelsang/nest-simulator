@@ -108,7 +108,7 @@ public:
   //! Allow multimeter to connect to local instances
   bool local_receiver() const override;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   using Node::handle;
   using Node::handles_test_event;
@@ -129,7 +129,7 @@ private:
   void init_buffers_() override;
   void pre_run_hook() override;
 
-  void update( Time const&, long, long ) override;
+  void update( const Time&, const long, const long );
 
   struct Buffers_;
 
@@ -209,7 +209,7 @@ private:
 };
 
 inline port
-step_current_generator::send_test_event( Node& target, const rport receptor_type, synindex syn_id, bool )
+step_current_generator::send_test_event( Node& target, const rport receptor_type, synindex syn_id )
 {
   StimulationDevice::enforce_single_syn_type( syn_id );
 

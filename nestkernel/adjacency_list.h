@@ -42,22 +42,11 @@ struct AdjacencyListTarget
 {
   index local_target_node_id : NUM_BITS_LOCAL_NODE_ID;
   index local_target_connection_id : NUM_BITS_LOCAL_CONNECTION_ID;
+  size_t dendritic_delay_id : NUM_BITS_DENDRITIC_DELAY_ID;
   synindex syn_id : NUM_BITS_SYN_ID;
   delay axonal_delay : NUM_BITS_DELAY;
-  // bool disabled : 1;  // TODO JV (pt): The disabled flag could be added here. Would still need it somewhere else for
-  // HPC version, though.
-  // TODO JV (pt): Still some bits to spare here
-
-  AdjacencyListTarget( const index local_target_node_id,
-    const index local_target_connection_id,
-    const synindex syn_id,
-    const delay axonal_delay )
-    : local_target_node_id( local_target_node_id )
-    , local_target_connection_id( local_target_connection_id )
-    , syn_id( syn_id )
-    , axonal_delay( axonal_delay )
-  {
-  }
+  // TODO JV (pt): The disabled flag could be added here. Would still need it somewhere else for HPC version, though.
+  // bool disabled : 1;
 };
 
 //! check legal size
@@ -127,6 +116,7 @@ public:
     const thread source_rank,
     const index target_node_id,
     const index target_connection_id,
+    const size_t dendritic_delay_id,
     const delay axonal_delay );
 
   std::pair< std::vector< AdjacencyListTarget >::const_iterator, std::vector< AdjacencyListTarget >::const_iterator >
@@ -362,6 +352,7 @@ AdjacencyList::add_target( const thread tid,
   const thread source_rank,
   const index local_target_node_id,
   const index local_target_connection_id,
+  const size_t dendritic_delay_id,
   const delay axonal_delay )
 {
   assert( tid >= 0 );
@@ -375,15 +366,17 @@ AdjacencyList::add_target( const thread tid,
   // Check if this is the first connection from this source node to any target node managed by this thread
   if ( source_index != sources_[ tid ][ source_rank ].end() ) // not the first connection
   {
-    adjacency_list_[ tid ][ source_index->second ].emplace_back(
-      local_target_node_id, local_target_connection_id, syn_id, axonal_delay );
+    // TODO JV (pt): This line shows an extreme number of allocations in Heaptrack, while it doesn't for master. The
+    //  number of allocations makes sense, but it is strange that
+    adjacency_list_[ tid ][ source_index->second ].push_back({
+      local_target_node_id, local_target_connection_id, dendritic_delay_id, syn_id, axonal_delay });
   }
   else // actually the first connection
   {
     const index new_index = adjacency_list_[ tid ].size(); // set index for this source node id
     sources_[ tid ][ source_rank ][ source_node_id ] = new_index;
     adjacency_list_[ tid ].emplace_back( std::initializer_list< AdjacencyListTarget > {
-      { local_target_node_id, local_target_connection_id, syn_id, axonal_delay } } );
+      { local_target_node_id, local_target_connection_id, dendritic_delay_id, syn_id, axonal_delay } } );
   }
 }
 

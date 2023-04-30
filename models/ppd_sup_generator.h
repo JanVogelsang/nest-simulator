@@ -115,9 +115,8 @@ public:
    * @see Technical Issues / Virtual Functions: Overriding, Overloading, and
    * Hiding
    */
-  using Node::event_hook;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
@@ -134,19 +133,18 @@ private:
    * Update state.
    * Update cannot send spikes directly, since we need to identify each
    * target to know the age distribution of the component processes.
-   * Since target information is in the Connectors, we send a DSSpikeEvent
+   * Since target information is in the Connectors, we send a SpikeEvent
    * to all targets, which is reflected to this->event_hook() with target
    * information.
-   * @see event_hook, DSSpikeEvent
    */
-  void update( Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
 
   /**
    * Send out spikes.
    * Called once per target to dispatch actual output spikes.
    * @param contains target information.
    */
-  void event_hook( DSSpikeEvent& ) override;
+  void event_hook( SpikeEvent& ) override;
 
   // ------------------------------------------------------------
 
@@ -236,27 +234,18 @@ private:
 };
 
 inline port
-ppd_sup_generator::send_test_event( Node& target, const rport receptor_type, synindex syn_id, bool dummy_target )
+ppd_sup_generator::send_test_event( Node& target, const rport receptor_type, synindex syn_id )
 {
   StimulationDevice::enforce_single_syn_type( syn_id );
 
-  if ( dummy_target )
+  SpikeEvent e;
+  e.set_sender( *this );
+  const port p = target.handles_test_event( e, receptor_type );
+  if ( p != invalid_port and not is_model_prototype() )
   {
-    DSSpikeEvent e;
-    e.set_sender( *this );
-    return target.handles_test_event( e, receptor_type );
+    ++P_.num_targets_; // count number of targets
   }
-  else
-  {
-    SpikeEvent e;
-    e.set_sender( *this );
-    const port p = target.handles_test_event( e, receptor_type );
-    if ( p != invalid_port and not is_model_prototype() )
-    {
-      ++P_.num_targets_; // count number of targets
-    }
-    return p;
-  }
+  return p;
 }
 
 inline void

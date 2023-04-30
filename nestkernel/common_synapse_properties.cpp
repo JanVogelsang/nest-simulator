@@ -62,7 +62,7 @@ CommonSynapseProperties::get_status( DictionaryDatum& d ) const
 }
 
 void
-CommonSynapseProperties::set_status( const DictionaryDatum& d, ConnectorModel& )
+CommonSynapseProperties::set_status( const DictionaryDatum& d, const ConnectorModel& )
 {
   const bool update_wr = updateValue< NodeCollectionDatum >( d, names::weight_recorder, weight_recorder_ );
   if ( update_wr and weight_recorder_->size() > 1 )

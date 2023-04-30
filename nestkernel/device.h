@@ -89,7 +89,7 @@ public:
    *  Returns true if the device is active at the given time stamp.
    *  Semantics are implemented by subclasses.
    */
-  virtual bool is_active( Time const& T ) const = 0;
+  virtual bool is_active( const Time& T ) const = 0;
 
   /**
    * Return lower limit in steps.
@@ -105,9 +105,9 @@ public:
    */
   long get_t_max_() const;
 
-  Time const& get_origin() const;
-  Time const& get_start() const;
-  Time const& get_stop() const;
+  const Time& get_origin() const;
+  const Time& get_start() const;
+  const Time& get_stop() const;
 
 private:
   // ----------------------------------------------------------------
@@ -193,19 +193,19 @@ nest::Device::set_status( const DictionaryDatum& d )
   P_ = ptmp;
 }
 
-inline nest::Time const&
+inline const nest::Time&
 nest::Device::get_origin() const
 {
   return P_.origin_;
 }
 
-inline nest::Time const&
+inline const nest::Time&
 nest::Device::get_start() const
 {
   return P_.start_;
 }
 
-inline nest::Time const&
+inline const nest::Time&
 nest::Device::get_stop() const
 {
   return P_.stop_;

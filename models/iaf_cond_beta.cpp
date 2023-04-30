@@ -380,7 +380,7 @@ nest::iaf_cond_beta::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::iaf_cond_beta::update( Time const& origin, const long from, const long to )
+nest::iaf_cond_beta::update( const Time& origin, const long from, const long to )
 {
 
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
@@ -454,7 +454,7 @@ nest::iaf_cond_beta::update( Time const& origin, const long from, const long to 
 void
 nest::iaf_cond_beta::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   if ( e.get_weight() > 0.0 )
   {
@@ -471,7 +471,7 @@ nest::iaf_cond_beta::handle( SpikeEvent& e )
 void
 nest::iaf_cond_beta::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   // add weighted current; HEP 2002-10-04
   B_.currents_.add_value(

@@ -59,33 +59,55 @@ ModelManager::register_connection_model( const std::string& name, const Register
 {
   // register normal version of the synapse
   ConnectorModel* cf = new GenericConnectorModel< ConnectionT >( name,
-    enumFlagSet( flags, RegisterConnectionModelFlags::IS_PRIMARY ),
     enumFlagSet( flags, RegisterConnectionModelFlags::HAS_DELAY ),
     enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_SYMMETRIC ),
     enumFlagSet( flags, RegisterConnectionModelFlags::SUPPORTS_WFR ),
     enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_CLOPATH_ARCHIVING ),
-    enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_URBANCZIK_ARCHIVING ),
-    enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_POSTPONED_DELIVERY ) );
+    enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_URBANCZIK_ARCHIVING ) );
   register_connection_model_( cf );
 
   // register the "lbl" (labeled) version with the same parameters but a different connection type
   if ( enumFlagSet( flags, RegisterConnectionModelFlags::REGISTER_LBL ) )
   {
     cf = new GenericConnectorModel< ConnectionLabel< ConnectionT > >( name + "_lbl",
-      enumFlagSet( flags, RegisterConnectionModelFlags::IS_PRIMARY ),
       enumFlagSet( flags, RegisterConnectionModelFlags::HAS_DELAY ),
       enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_SYMMETRIC ),
       enumFlagSet( flags, RegisterConnectionModelFlags::SUPPORTS_WFR ),
       enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_CLOPATH_ARCHIVING ),
-      enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_URBANCZIK_ARCHIVING ),
-      enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_POSTPONED_DELIVERY ) );
+      enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_URBANCZIK_ARCHIVING ) );
+
+    register_connection_model_( cf );
+  }
+}
+
+template < class ConnectionT >
+void
+ModelManager::register_axonal_delay_connection_model( const std::string& name,
+  const RegisterConnectionModelFlags flags )
+{
+  // register normal version of the synapse
+  ConnectorModel* cf = new GenericAxonalDelayConnectorModel< ConnectionT >( name,
+    enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_SYMMETRIC ),
+    enumFlagSet( flags, RegisterConnectionModelFlags::SUPPORTS_WFR ),
+    enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_CLOPATH_ARCHIVING ),
+    enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_URBANCZIK_ARCHIVING ) );
+  register_connection_model_( cf );
+
+  // register the "lbl" (labeled) version with the same parameters but a different connection type
+  if ( enumFlagSet( flags, RegisterConnectionModelFlags::REGISTER_LBL ) )
+  {
+    cf = new GenericAxonalDelayConnectorModel< ConnectionLabel< ConnectionT > >( name + "_lbl",
+      enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_SYMMETRIC ),
+      enumFlagSet( flags, RegisterConnectionModelFlags::SUPPORTS_WFR ),
+      enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_CLOPATH_ARCHIVING ),
+      enumFlagSet( flags, RegisterConnectionModelFlags::REQUIRES_URBANCZIK_ARCHIVING ) );
 
     register_connection_model_( cf );
   }
 }
 
 /**
- * Register a synape with default Connector and without any common properties.
+ * Register a synapse with default Connector and without any common properties.
  */
 template < class ConnectionT >
 void

@@ -174,7 +174,7 @@ public:
   using Node::handle;
   using Node::handles_test_event;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   port handles_test_event( SpikeEvent&, rport ) override;
   port handles_test_event( CurrentEvent&, rport ) override;
@@ -232,7 +232,7 @@ private:
    * While the neuron is refractory, membrane potential (y3_) is
    * clamped to U_reset_.
    */
-  void update( Time const& origin, const long from, const long to ) override;
+  void update( const Time& origin, const long from, const long to ) override;
 
   //@}
 
@@ -254,7 +254,7 @@ private:
    * @param t0      Beginning of mini-timestep
    * @param dt      Duration of mini-timestep
    */
-  void emit_spike_( Time const& origin, const long lag, const double t0, const double dt );
+  void emit_spike_( const Time& origin, const long lag, const double t0, const double dt );
 
   /**
    * Instantaneously emit a spike at the precise time defined by
@@ -264,7 +264,7 @@ private:
    * @param lag           Time step within slice
    * @param spike_offset  Time offset for spike
    */
-  void emit_instant_spike_( Time const& origin, const long lag, const double spike_offset );
+  void emit_instant_spike_( const Time& origin, const long lag, const double spike_offset );
 
   /** Propagator object for updating synaptic components */
   IAFPropagatorAlpha propagator_ex_;
@@ -459,7 +459,7 @@ private:
 };
 
 inline port
-nest::iaf_psc_alpha_ps::send_test_event( Node& target, const rport receptor_type, synindex, bool )
+nest::iaf_psc_alpha_ps::send_test_event( Node& target, const rport receptor_type, synindex )
 {
   SpikeEvent e;
   e.set_sender( *this );

@@ -20,13 +20,6 @@
  *
  */
 
-/**
- *  @file event.cpp
- *  Implementation of Event::operator() for all event types.
- *  @note Must be isolated here, since it requires full access to
- *  classes Node and Scheduler.
- */
-
 #include "event.h"
 
 // Includes from nestkernel:
@@ -39,7 +32,7 @@ Event::Event()
   : sender_node_id_( 0 ) // initializing to 0 as this is an unsigned type
                          // node ID 0 is network, can never send an event, so
                          // this is safe
-  , sender_spike_data_()
+  , spike_data_()
   , sender_( nullptr )
   , p_( -1 )
   , d_( 1 )
@@ -59,23 +52,10 @@ Event::retrieve_sender_node_id_from_source_table() const
   }
   else
   {
-    const index node_id = kernel().connection_manager.get_source_node_id( sender_spike_data_.tid,
-      sender_spike_data_.syn_id,
-      sender_spike_data_.local_node_id,
-      sender_spike_data_.local_connection_id );
+    const index node_id = kernel().connection_manager.get_source_node_id(
+      spike_data_.tid, spike_data_.syn_id, spike_data_.local_node_id, spike_data_.local_connection_id );
     return node_id;
   }
 }
 
-void
-DSSpikeEvent::operator()()
-{
-  sender_->event_hook( *this );
-}
-
-void
-DSCurrentEvent::operator()()
-{
-  sender_->event_hook( *this );
-}
 } // namespace nest

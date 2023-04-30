@@ -59,7 +59,7 @@ nest::spin_detector::pre_run_hook()
 }
 
 void
-nest::spin_detector::update( Time const&, const long, const long )
+nest::spin_detector::update( const Time&, const long, const long )
 {
   if ( last_in_node_id_ != 0 ) // if last_* is empty we dont write
   {

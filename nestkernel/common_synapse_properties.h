@@ -69,7 +69,7 @@ public:
   /**
    * Set properties from the values given in dictionary.
    */
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
 
   /**

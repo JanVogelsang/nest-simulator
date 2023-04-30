@@ -108,14 +108,18 @@ template < typename EventT >
 inline void
 TargetTableDevices::send_from_device( const thread tid, const index ldid, EventT& e )
 {
-  const std::vector< ConnectorModel* > cm = kernel().model_manager.get_connection_models( tid );
+  const std::vector< ConnectorModel* >& cm = kernel().model_manager.get_connection_models( tid );
   for ( std::vector< Target >::iterator it = targets_from_devices_[ tid ][ ldid ].begin();
         it != targets_from_devices_[ tid ][ ldid ].end();
         ++it )
   {
     Node* target_node = kernel().node_manager.thread_lid_to_node( tid, it->get_local_target_node_id() );
-    target_node->deliver_event_from_device(
-      tid, it->get_syn_id(), it->get_local_target_connection_id(), it->get_dendritic_delay(), cm, e );
+    target_node->deliver_event_from_device( tid,
+      it->get_syn_id(),
+      it->get_local_target_connection_id(),
+      it->get_dendritic_delay(),
+      cm[ it->get_syn_id() ],
+      e );
   }
 }
 
@@ -123,15 +127,19 @@ template < typename EventT >
 inline void
 TargetTableDevices::send_to_devices( const thread tid, const index source_node_lid, EventT& e )
 {
-  const std::vector< ConnectorModel* > cm = kernel().model_manager.get_connection_models( tid );
+  const std::vector< ConnectorModel* >& cm = kernel().model_manager.get_connection_models( tid );
   for ( std::vector< Target >::iterator it = targets_to_devices_[ tid ][ source_node_lid ].begin();
         it != targets_to_devices_[ tid ][ source_node_lid ].end();
         ++it )
   {
     DeviceNode* target_node =
       static_cast< DeviceNode* >( kernel().node_manager.thread_lid_to_node( tid, it->get_local_target_node_id() ) );
-    target_node->deliver_event_to_device(
-      tid, it->get_syn_id(), it->get_local_target_connection_id(), it->get_dendritic_delay(), cm, e );
+    target_node->deliver_event_to_device( tid,
+      it->get_syn_id(),
+      it->get_local_target_connection_id(),
+      it->get_dendritic_delay(),
+      cm[ it->get_syn_id() ],
+      e );
   }
 }
 

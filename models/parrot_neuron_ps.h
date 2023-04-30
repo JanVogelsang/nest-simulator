@@ -92,7 +92,7 @@ public:
   using Node::handles_test_event;
 
   void handle( SpikeEvent& ) override;
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
   port handles_test_event( SpikeEvent&, rport ) override;
 
   void get_status( DictionaryDatum& ) const override;
@@ -112,7 +112,7 @@ private:
   {
   } // no variables
 
-  void update( Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
 
   /** Queue for incoming events. */
   struct Buffers_
@@ -124,7 +124,7 @@ private:
 };
 
 inline port
-parrot_neuron_ps::send_test_event( Node& target, const rport receptor_type, synindex, bool )
+parrot_neuron_ps::send_test_event( Node& target, const rport receptor_type, synindex )
 {
   SpikeEvent e;
   e.set_sender( *this );

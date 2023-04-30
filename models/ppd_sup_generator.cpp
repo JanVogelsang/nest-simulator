@@ -229,7 +229,7 @@ nest::ppd_sup_generator::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::ppd_sup_generator::update( Time const& T, const long from, const long to )
+nest::ppd_sup_generator::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
@@ -241,7 +241,7 @@ nest::ppd_sup_generator::update( Time const& T, const long from, const long to )
 
   for ( long lag = from; lag < to; ++lag )
   {
-    Time t = T + Time::step( lag );
+    Time t = origin + Time::step( lag );
 
     if ( not StimulationDevice::is_active( t ) )
     {
@@ -259,14 +259,14 @@ nest::ppd_sup_generator::update( Time const& T, const long from, const long to )
       V_.hazard_step_t_ = V_.hazard_step_;
     }
 
-    DSSpikeEvent se;
-    kernel().event_delivery_manager.send( *this, se, lag );
+    SpikeEvent se;
+    kernel().event_delivery_manager.send_device_spike( *this, se, lag );
   }
 }
 
 
 void
-nest::ppd_sup_generator::event_hook( DSSpikeEvent& e )
+nest::ppd_sup_generator::event_hook( SpikeEvent& e )
 {
   // get port number
   const port prt = e.get_port();

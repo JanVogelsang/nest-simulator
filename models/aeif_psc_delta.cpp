@@ -516,7 +516,7 @@ nest::aeif_psc_delta::update( const Time& origin, const long from, const long to
 void
 nest::aeif_psc_delta::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   B_.spikes_.add_value(
     e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_multiplicity() );
@@ -525,7 +525,7 @@ nest::aeif_psc_delta::handle( SpikeEvent& e )
 void
 nest::aeif_psc_delta::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();

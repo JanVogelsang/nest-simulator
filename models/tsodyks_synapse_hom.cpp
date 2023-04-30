@@ -53,7 +53,7 @@ TsodyksHomCommonProperties::get_status( DictionaryDatum& d ) const
 }
 
 void
-TsodyksHomCommonProperties::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+TsodyksHomCommonProperties::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   CommonPropertiesHomW::set_status( d, cm );
 
@@ -103,7 +103,7 @@ tsodyks_synapse_hom::get_status( DictionaryDatum& d ) const
 }
 
 void
-tsodyks_synapse_hom::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+tsodyks_synapse_hom::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   // Handle parameters that may throw an exception first, so we can leave the
   // synapse untouched in case of invalid parameter values

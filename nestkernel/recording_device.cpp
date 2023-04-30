@@ -201,7 +201,7 @@ nest::RecordingDevice::get_status( DictionaryDatum& d ) const
 }
 
 bool
-nest::RecordingDevice::is_active( Time const& T ) const
+nest::RecordingDevice::is_active( const Time& T ) const
 {
   const long stamp = T.get_steps();
 

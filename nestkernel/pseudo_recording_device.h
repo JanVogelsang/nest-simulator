@@ -89,7 +89,7 @@ public:
    *  The argument is the time stamp of the event, and the
    *  device is active if start_ < T <= stop_.
    */
-  bool is_active( Time const& T ) const override;
+  bool is_active( const Time& T ) const override;
 };
 
 inline PseudoRecordingDevice::PseudoRecordingDevice()
@@ -103,7 +103,7 @@ inline PseudoRecordingDevice::PseudoRecordingDevice( const PseudoRecordingDevice
 }
 
 inline bool
-PseudoRecordingDevice::is_active( Time const& T ) const
+PseudoRecordingDevice::is_active( const Time& T ) const
 {
   const long stamp = T.get_steps();
 

@@ -105,13 +105,7 @@ public:
   }
 
   void
-  check_connection( Node& s,
-    Node& t,
-    const rport receptor_type,
-    const synindex syn_id,
-    const delay dendritic_delay,
-    const delay axonal_delay,
-    const CommonPropertiesType& )
+  check_connection( Node& s, Node&, const rport, const synindex, const delay, const CommonPropertiesType& )
   {
     EventType ge;
 
@@ -125,21 +119,15 @@ public:
    * \param p The port under which this connection is stored in the Connector.
    */
   void
-  send( Event& e,
-    const thread t,
-    const delay axonal_delay,
-    const delay dendritic_delay,
-    const CommonSynapseProperties&,
-    Node* target )
+  send( Event& e, const thread, const double, const CommonSynapseProperties& )
   {
     e.set_drift_factor( drift_factor_ );
     e.set_diffusion_factor( diffusion_factor_ );
-    e();
   }
 
   void get_status( DictionaryDatum& d ) const;
 
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   void
   set_weight( double )
@@ -172,7 +160,7 @@ DiffusionConnection::get_status( DictionaryDatum& d ) const
 }
 
 void
-DiffusionConnection::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+DiffusionConnection::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   // If the delay is set, we throw a BadProperty
   if ( d->known( names::delay ) )

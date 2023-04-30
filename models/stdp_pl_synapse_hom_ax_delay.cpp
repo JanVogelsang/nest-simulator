@@ -60,7 +60,7 @@ STDPPLHomAxDelayCommonProperties::get_status( DictionaryDatum& d ) const
 }
 
 void
-STDPPLHomAxDelayCommonProperties::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+STDPPLHomAxDelayCommonProperties::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   CommonSynapseProperties::set_status( d, cm );
 
@@ -101,7 +101,7 @@ stdp_pl_synapse_hom_ax_delay::get_status( DictionaryDatum& d ) const
 }
 
 void
-stdp_pl_synapse_hom_ax_delay::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+stdp_pl_synapse_hom_ax_delay::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   // base class properties
   ConnectionBase::set_status( d, cm );

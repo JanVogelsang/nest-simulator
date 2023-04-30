@@ -254,7 +254,7 @@ StructuralPlasticityNode::connect_synaptic_element( Name name, int n )
 }
 
 void
-StructuralPlasticityNode::set_spiketime( Time const& t_sp, double offset )
+StructuralPlasticityNode::set_spiketime( const Time& t_sp, double offset )
 {
   const double t_sp_ms = t_sp.get_ms() - offset;
   update_synaptic_elements( t_sp_ms );

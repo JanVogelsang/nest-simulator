@@ -255,7 +255,7 @@ iaf_psc_delta_ps::pre_run_hook()
 }
 
 void
-iaf_psc_delta_ps::update( Time const& origin, const long from, const long to )
+iaf_psc_delta_ps::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 );
   assert( static_cast< delay >( from ) < kernel().connection_manager.get_min_delay() );
@@ -458,7 +458,7 @@ nest::iaf_psc_delta_ps::propagate_( const double dt )
 }
 
 void
-nest::iaf_psc_delta_ps::emit_spike_( Time const& origin, const long lag, const double offset_U )
+nest::iaf_psc_delta_ps::emit_spike_( const Time& origin, const long lag, const double offset_U )
 {
   assert( S_.U_ >= P_.U_th_ ); // ensure we are superthreshold
 
@@ -482,7 +482,7 @@ nest::iaf_psc_delta_ps::emit_spike_( Time const& origin, const long lag, const d
 }
 
 void
-nest::iaf_psc_delta_ps::emit_instant_spike_( Time const& origin, const long lag, const double spike_offs )
+nest::iaf_psc_delta_ps::emit_instant_spike_( const Time& origin, const long lag, const double spike_offs )
 {
   assert( S_.U_ >= P_.U_th_ ); // ensure we are superthreshold
 
@@ -504,7 +504,7 @@ nest::iaf_psc_delta_ps::emit_instant_spike_( Time const& origin, const long lag,
 void
 iaf_psc_delta_ps::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   /* We need to compute the absolute time stamp of the delivery time
      of the spike, since spikes might spend longer than min_delay_
@@ -520,7 +520,7 @@ iaf_psc_delta_ps::handle( SpikeEvent& e )
 void
 iaf_psc_delta_ps::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();

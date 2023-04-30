@@ -322,7 +322,7 @@ iaf_psc_alpha_multisynapse::pre_run_hook()
 }
 
 void
-iaf_psc_alpha_multisynapse::update( Time const& origin, const long from, const long to )
+iaf_psc_alpha_multisynapse::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
@@ -396,7 +396,7 @@ iaf_psc_alpha_multisynapse::handles_test_event( SpikeEvent&, rport receptor_type
 void
 iaf_psc_alpha_multisynapse::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   B_.spikes_[ e.get_rport() - 1 ].add_value(
     e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_multiplicity() );
@@ -405,7 +405,7 @@ iaf_psc_alpha_multisynapse::handle( SpikeEvent& e )
 void
 iaf_psc_alpha_multisynapse::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double I = e.get_current();
   const double w = e.get_weight();

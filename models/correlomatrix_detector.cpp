@@ -281,7 +281,7 @@ nest::correlomatrix_detector::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::correlomatrix_detector::update( Time const&, const long, const long )
+nest::correlomatrix_detector::update( const Time&, const long, const long )
 {
 }
 

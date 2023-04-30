@@ -64,7 +64,7 @@ ConnectionManager::ConnectionManager()
   , connbuilder_factories_()
   , min_delay_( 1 )
   , max_delay_( 1 )
-  , keep_source_table_( true )
+  , keep_source_table_( false )
   , connections_have_changed_( false )
   , get_connections_has_been_called_( false )
   , use_compressed_spikes_( true )
@@ -373,16 +373,6 @@ ConnectionManager::calibrate( const TimeConverter& tc )
   for ( thread tid = 0; tid < kernel().vp_manager.get_num_threads(); ++tid )
   {
     delay_checkers_[ tid ].calibrate( tc );
-  }
-}
-
-void
-ConnectionManager::prepare_connections( const thread tid )
-{
-  const SparseNodeArray& thread_local_nodes = kernel().node_manager.get_local_nodes( tid );
-  for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
-  {
-    n->get_node()->prepare_connections();
   }
 }
 
@@ -775,12 +765,35 @@ ConnectionManager::connect_( Node& source,
     throw NotImplemented( "This synapse model is not supported by the neuron model of at least one connection." );
   }
 
-  // TODO JV (pt): Devices and connections with no axonal delay must not allow dendritic delays of 0.
   ConnectorModel& conn_model = kernel().model_manager.get_connection_model( syn_id, tid );
-  auto [ local_target_connection_id, actual_dendritic_delay, actual_axonal_delay ] = conn_model.add_connection(
-    source, target, syn_id, params, delay, axonal_delay, weight, is_primary, connection_type );
+  auto [ local_target_connection_id, dendritic_delay_id, actual_dendritic_delay, actual_axonal_delay ] =
+    conn_model.add_connection( source, target, syn_id, params, delay, axonal_delay, weight, connection_type );
   switch ( connection_type )
   {
+  case CONNECT:
+    if ( conn_model.requires_postponed_delivery() )
+    {
+      adjacency_list_.add_target( tid,
+        syn_id,
+        source.get_node_id(),
+        kernel().mpi_manager.get_process_id_of_node_id( source.get_node_id() ),
+        target.get_thread_lid(),
+        local_target_connection_id,
+        dendritic_delay_id,
+        actual_axonal_delay );
+    }
+    else
+    {
+      adjacency_list_.add_target( tid,
+        syn_id,
+        source.get_node_id(),
+        kernel().mpi_manager.get_process_id_of_node_id( source.get_node_id() ),
+        target.get_thread_lid(),
+        local_target_connection_id,
+        dendritic_delay_id,
+        actual_dendritic_delay + actual_axonal_delay );
+    }
+    break;
   case CONNECT_FROM_DEVICE:
     if ( actual_dendritic_delay == 0 )
     {
@@ -1502,19 +1515,6 @@ ConnectionManager::prepare_compressed_targets()
 {
   adjacency_list_.prepare_compressed_targets(
     kernel().vp_manager.get_num_threads(), kernel().mpi_manager.get_num_processes() );
-}
-
-void
-ConnectionManager::add_adjacency_list_target( const thread tid,
-  const synindex syn_id,
-  const index source_node_id,
-  const index target_node_id,
-  const index target_connection_id,
-  const delay axonal_delay )
-{
-  thread source_rank = kernel().mpi_manager.get_process_id_of_node_id( source_node_id );
-  adjacency_list_.add_target(
-    tid, syn_id, source_node_id, source_rank, target_node_id, target_connection_id, axonal_delay );
 }
 
 void

@@ -183,7 +183,7 @@ public:
   /**
    * Set properties from the values given in dictionary.
    */
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   // overloaded for all supported event types
   void
@@ -253,32 +253,14 @@ public:
   /**
    * Set properties of this connection from the values given in dictionary.
    */
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   /**
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void send( Event& e,
-    const thread t,
-    const delay axonal_delay,
-    const delay dendritic_delay,
-    const STDPFACETSHWHomCommonProperties&,
-    Node* target );
+  void send( Event& e, const thread t, const double Kminus, const STDPFACETSHWHomCommonProperties& );
 
-
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
 
 
   /*
@@ -295,17 +277,8 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s,
-    Node& t,
-    const rport receptor_type,
-    const synindex syn_id,
-    const delay dendritic_delay,
-    const delay axonal_delay,
-    const CommonPropertiesType& )
+  check_connection( Node&, Node&, const rport, const synindex, const delay, const CommonPropertiesType& )
   {
-    ConnTestDummyNode dummy_target;
-
-    t.register_stdp_connection( axonal_delay, dendritic_delay, syn_id );
   }
 
   void
@@ -386,130 +359,128 @@ stdp_facetshw_synapse_hom::lookup_( unsigned int discrete_weight_, std::vector< 
 inline void
 stdp_facetshw_synapse_hom::send( Event& e,
   const thread t,
-  const delay axonal_delay,
-  const delay dendritic_delay,
-  const STDPFACETSHWHomCommonProperties& cp,
-  Node* target )
+  const double Kminus,
+  const STDPFACETSHWHomCommonProperties& cp )
 {
-  // synapse STDP dynamics
-
-  double t_spike = e.get_stamp().get_ms();
-
-  // remove const-ness of common properties
-  // this is not a nice solution, but only a workaround
-  // anyway the current implementation will presumably
-  // generate wring results on distributed systems,
-  // because the number of synapses counted is only
-  // the number of synapses local to the current machine
-  STDPFACETSHWHomCommonProperties& cp_nonconst = const_cast< STDPFACETSHWHomCommonProperties& >( cp );
-
-  // init the readout time
-  if ( not init_flag_ )
-  {
-    synapse_id_ = cp.no_synapses_;
-    ++cp_nonconst.no_synapses_;
-    cp_nonconst.calc_readout_cycle_duration_();
-    next_readout_time_ = int( synapse_id_ / cp_nonconst.synapses_per_driver_ ) * cp_nonconst.driver_readout_time_;
-    std::cout << "init synapse " << synapse_id_ << " - first readout time: " << next_readout_time_ << std::endl;
-    init_flag_ = true;
-  }
-
-  // STDP controller is processing this synapse (synapse driver)?
-  if ( t_spike > next_readout_time_ )
-  {
-    // transform weight to discrete representation
-    discrete_weight_ = weight_to_entry_( weight_, cp_nonconst.weight_per_lut_entry_ );
-
-    // obtain evaluation bits
-    bool eval_0 = eval_function_( a_causal_, a_acausal_, a_thresh_th_, a_thresh_tl_, cp.configbit_0_ );
-    bool eval_1 = eval_function_( a_causal_, a_acausal_, a_thresh_th_, a_thresh_tl_, cp.configbit_1_ );
-
-    // select LUT, update weight and reset capacitors
-    if ( eval_0 == true and eval_1 == false )
-    {
-      discrete_weight_ = lookup_( discrete_weight_, cp.lookuptable_0_ );
-      if ( cp.reset_pattern_[ 0 ] )
-      {
-        a_causal_ = 0;
-      }
-      if ( cp.reset_pattern_[ 1 ] )
-      {
-        a_acausal_ = 0;
-      }
-    }
-    else if ( eval_0 == false and eval_1 == true )
-    {
-      discrete_weight_ = lookup_( discrete_weight_, cp.lookuptable_1_ );
-      if ( cp.reset_pattern_[ 2 ] )
-      {
-        a_causal_ = 0;
-      }
-      if ( cp.reset_pattern_[ 3 ] )
-      {
-        a_acausal_ = 0;
-      }
-    }
-    else if ( eval_0 == true and eval_1 == true )
-    {
-      discrete_weight_ = lookup_( discrete_weight_, cp.lookuptable_2_ );
-      if ( cp.reset_pattern_[ 4 ] )
-      {
-        a_causal_ = 0;
-      }
-      if ( cp.reset_pattern_[ 5 ] )
-      {
-        a_acausal_ = 0;
-      }
-    }
-    // do nothing, if eval_0 == false and eval_1 == false
-
-    while ( t_spike > next_readout_time_ )
-    {
-      next_readout_time_ += cp_nonconst.readout_cycle_duration_;
-    }
-    // std::cout << "synapse " << synapse_id_ << " updated at " << t_spike << ",
-    // next readout time:
-    // " << next_readout_time_ << std::endl;
-
-    // back-transformation to continuous weight space
-    weight_ = entry_to_weight_( discrete_weight_, cp.weight_per_lut_entry_ );
-  }
-
-  // t_lastspike_ = 0 initially
-
-  double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
-
-  // get spike history in relevant range (t1, t2] from postsynaptic neuron
-  std::deque< ArchivedSpikeTrace >::iterator start;
-  std::deque< ArchivedSpikeTrace >::iterator finish;
-  // TOOD JV get_target( t )->get_history( t_lastspike_ - dendritic_delay, t_spike - dendritic_delay, &start, &finish );
-
-  // facilitation due to the first postsynaptic spike since the last
-  // pre-synaptic spike
-  if ( start != finish )
-  {
-    double minus_dt_causal = t_lastspike_ - ( start->t + dendritic_delay_ms );
-
-    // get_history() should make sure that
-    // start->t > t_lastspike_ - dendritic_delay, i.e. minus_dt < 0
-    assert( minus_dt_causal < -1.0 * kernel().connection_manager.get_stdp_eps() );
-
-    a_causal_ += std::exp( minus_dt_causal / cp.tau_plus_ );
-
-    // take only last postspike before current spike
-    double minus_dt_acausal;
-
-    --finish;
-    minus_dt_acausal = ( finish->t + dendritic_delay_ms ) - t_spike;
-
-    a_acausal_ += std::exp( minus_dt_acausal / cp.tau_minus_ );
-  }
-
-  e.set_weight( weight_ );
-  e.set_delay_steps( dendritic_delay );
-  e();
-
-  t_lastspike_ = t_spike;
+  //  // synapse STDP dynamics
+  //
+  //  double t_spike = e.get_stamp().get_ms();
+  //
+  //  // remove const-ness of common properties
+  //  // this is not a nice solution, but only a workaround
+  //  // anyway the current implementation will presumably
+  //  // generate wring results on distributed systems,
+  //  // because the number of synapses counted is only
+  //  // the number of synapses local to the current machine
+  //  STDPFACETSHWHomCommonProperties& cp_nonconst = const_cast< STDPFACETSHWHomCommonProperties& >( cp );
+  //
+  //  // init the readout time
+  //  if ( not init_flag_ )
+  //  {
+  //    synapse_id_ = cp.no_synapses_;
+  //    ++cp_nonconst.no_synapses_;
+  //    cp_nonconst.calc_readout_cycle_duration_();
+  //    next_readout_time_ = int( synapse_id_ / cp_nonconst.synapses_per_driver_ ) * cp_nonconst.driver_readout_time_;
+  //    std::cout << "init synapse " << synapse_id_ << " - first readout time: " << next_readout_time_ << std::endl;
+  //    init_flag_ = true;
+  //  }
+  //
+  //  // STDP controller is processing this synapse (synapse driver)?
+  //  if ( t_spike > next_readout_time_ )
+  //  {
+  //    // transform weight to discrete representation
+  //    discrete_weight_ = weight_to_entry_( weight_, cp_nonconst.weight_per_lut_entry_ );
+  //
+  //    // obtain evaluation bits
+  //    bool eval_0 = eval_function_( a_causal_, a_acausal_, a_thresh_th_, a_thresh_tl_, cp.configbit_0_ );
+  //    bool eval_1 = eval_function_( a_causal_, a_acausal_, a_thresh_th_, a_thresh_tl_, cp.configbit_1_ );
+  //
+  //    // select LUT, update weight and reset capacitors
+  //    if ( eval_0 == true and eval_1 == false )
+  //    {
+  //      discrete_weight_ = lookup_( discrete_weight_, cp.lookuptable_0_ );
+  //      if ( cp.reset_pattern_[ 0 ] )
+  //      {
+  //        a_causal_ = 0;
+  //      }
+  //      if ( cp.reset_pattern_[ 1 ] )
+  //      {
+  //        a_acausal_ = 0;
+  //      }
+  //    }
+  //    else if ( eval_0 == false and eval_1 == true )
+  //    {
+  //      discrete_weight_ = lookup_( discrete_weight_, cp.lookuptable_1_ );
+  //      if ( cp.reset_pattern_[ 2 ] )
+  //      {
+  //        a_causal_ = 0;
+  //      }
+  //      if ( cp.reset_pattern_[ 3 ] )
+  //      {
+  //        a_acausal_ = 0;
+  //      }
+  //    }
+  //    else if ( eval_0 == true and eval_1 == true )
+  //    {
+  //      discrete_weight_ = lookup_( discrete_weight_, cp.lookuptable_2_ );
+  //      if ( cp.reset_pattern_[ 4 ] )
+  //      {
+  //        a_causal_ = 0;
+  //      }
+  //      if ( cp.reset_pattern_[ 5 ] )
+  //      {
+  //        a_acausal_ = 0;
+  //      }
+  //    }
+  //    // do nothing, if eval_0 == false and eval_1 == false
+  //
+  //    while ( t_spike > next_readout_time_ )
+  //    {
+  //      next_readout_time_ += cp_nonconst.readout_cycle_duration_;
+  //    }
+  //    // std::cout << "synapse " << synapse_id_ << " updated at " << t_spike << ",
+  //    // next readout time:
+  //    // " << next_readout_time_ << std::endl;
+  //
+  //    // back-transformation to continuous weight space
+  //    weight_ = entry_to_weight_( discrete_weight_, cp.weight_per_lut_entry_ );
+  //  }
+  //
+  //  // t_lastspike_ = 0 initially
+  //
+  //  double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
+  //
+  //  // get spike history in relevant range (t1, t2] from postsynaptic neuron
+  //  std::deque< ArchivedSpikeTrace >::iterator start;
+  //  std::deque< ArchivedSpikeTrace >::iterator finish;
+  //  // TOOD JV get_target( t )->get_history( t_lastspike_ - dendritic_delay, t_spike - dendritic_delay, &start,
+  //  &finish );
+  //
+  //  // facilitation due to the first postsynaptic spike since the last
+  //  // pre-synaptic spike
+  //  if ( start != finish )
+  //  {
+  //    double minus_dt_causal = t_lastspike_ - ( start->t + dendritic_delay_ms );
+  //
+  //    // get_history() should make sure that
+  //    // start->t > t_lastspike_ - dendritic_delay, i.e. minus_dt < 0
+  //    assert( minus_dt_causal < -1.0 * kernel().connection_manager.get_stdp_eps() );
+  //
+  //    a_causal_ += std::exp( minus_dt_causal / cp.tau_plus_ );
+  //
+  //    // take only last postspike before current spike
+  //    double minus_dt_acausal;
+  //
+  //    --finish;
+  //    minus_dt_acausal = ( finish->t + dendritic_delay_ms ) - t_spike;
+  //
+  //    a_acausal_ += std::exp( minus_dt_acausal / cp.tau_minus_ );
+  //  }
+  //
+  //  e.set_weight( weight_ );
+  //
+  //
+  //  t_lastspike_ = t_spike;
 }
 } // of namespace nest
 

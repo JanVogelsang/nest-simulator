@@ -62,7 +62,7 @@ STDPPLHomCommonProperties::get_status( DictionaryDatum& d ) const
 }
 
 void
-STDPPLHomCommonProperties::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+STDPPLHomCommonProperties::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   CommonSynapseProperties::set_status( d, cm );
 
@@ -79,10 +79,6 @@ STDPPLHomCommonProperties::set_status( const DictionaryDatum& d, ConnectorModel&
   updateValue< double >( d, names::alpha, alpha_ );
   updateValue< double >( d, names::mu, mu_ );
   updateValue< double >( d, names::axonal_delay, axonal_delay_ );
-  if ( axonal_delay_ < 0.0 ) // consistency with overall delay is checked in check_connection()
-  {
-    throw BadProperty( "Axonal delay should not be negative." );
-  }
 }
 
 stdp_pl_synapse_hom::stdp_pl_synapse_hom()
@@ -107,7 +103,7 @@ stdp_pl_synapse_hom::get_status( DictionaryDatum& d ) const
 }
 
 void
-stdp_pl_synapse_hom::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+stdp_pl_synapse_hom::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   // base class properties
   ConnectionBase::set_status( d, cm );

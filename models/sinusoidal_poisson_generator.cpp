@@ -227,7 +227,7 @@ nest::sinusoidal_poisson_generator::pre_run_hook()
 }
 
 void
-nest::sinusoidal_poisson_generator::update( Time const& origin, const long from, const long to )
+nest::sinusoidal_poisson_generator::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
@@ -265,8 +265,8 @@ nest::sinusoidal_poisson_generator::update( Time const& origin, const long from,
     {
       if ( P_.individual_spike_trains_ )
       {
-        DSSpikeEvent se;
-        kernel().event_delivery_manager.send( *this, se, lag );
+        SpikeEvent se;
+        kernel().event_delivery_manager.send_device_spike( *this, se, lag );
       }
       else
       {
@@ -274,7 +274,7 @@ nest::sinusoidal_poisson_generator::update( Time const& origin, const long from,
         long n_spikes = V_.poisson_dist_( rng, param );
         SpikeEvent se;
         se.set_multiplicity( n_spikes );
-        kernel().event_delivery_manager.send( *this, se, lag );
+        kernel().event_delivery_manager.send_device_spike( *this, se, lag );
       }
     }
     // store rate in Hz
@@ -283,7 +283,7 @@ nest::sinusoidal_poisson_generator::update( Time const& origin, const long from,
 }
 
 void
-nest::sinusoidal_poisson_generator::event_hook( DSSpikeEvent& e )
+nest::sinusoidal_poisson_generator::event_hook( SpikeEvent& e )
 {
   poisson_distribution::param_type param( S_.rate_ * V_.h_ );
   long n_spikes = V_.poisson_dist_( get_vp_specific_rng( get_thread() ), param );

@@ -354,7 +354,7 @@ nest::pp_psc_delta::pre_run_hook()
  */
 
 void
-nest::pp_psc_delta::update( Time const& origin, const long from, const long to )
+nest::pp_psc_delta::update( const Time& origin, const long from, const long to )
 {
 
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
@@ -464,7 +464,7 @@ nest::pp_psc_delta::update( Time const& origin, const long from, const long to )
 void
 nest::pp_psc_delta::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   // EX: We must compute the arrival time of the incoming spike
   //     explicitly, since it depends on delay and offset within
@@ -477,7 +477,7 @@ nest::pp_psc_delta::handle( SpikeEvent& e )
 void
 nest::pp_psc_delta::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();

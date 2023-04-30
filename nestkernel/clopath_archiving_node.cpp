@@ -192,7 +192,7 @@ nest::ClopathArchivingNode::get_LTP_history( double t1,
 }
 
 void
-nest::ClopathArchivingNode::write_clopath_history( Time const& t_sp,
+nest::ClopathArchivingNode::write_clopath_history( const Time& t_sp,
   double u,
   double u_bar_plus,
   double u_bar_minus,

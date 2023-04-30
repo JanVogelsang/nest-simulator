@@ -154,10 +154,10 @@ private:
   /** This is the actual update function. The additional boolean parameter
    * determines if the function is called by update (false) or wfr_update (true)
    */
-  bool update_( Time const&, const long, const long, const bool );
+  bool update_( const Time&, const long, const long, const bool );
 
-  void update( Time const&, const long, const long ) override;
-  bool wfr_update( Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
+  bool wfr_update( const Time&, const long, const long ) override;
 
   // The next two classes need to be friends to access the State_ class/member
   friend class RecordablesMap< rate_neuron_opn< TNonlinearities > >;
@@ -295,14 +295,14 @@ private:
 
 template < class TNonlinearities >
 inline void
-rate_neuron_opn< TNonlinearities >::update( Time const& origin, const long from, const long to )
+rate_neuron_opn< TNonlinearities >::update( const Time& origin, const long from, const long to )
 {
   update_( origin, from, to, false );
 }
 
 template < class TNonlinearities >
 inline bool
-rate_neuron_opn< TNonlinearities >::wfr_update( Time const& origin, const long from, const long to )
+rate_neuron_opn< TNonlinearities >::wfr_update( const Time& origin, const long from, const long to )
 {
   State_ old_state = S_; // save state before wfr update
   const bool wfr_tol_exceeded = update_( origin, from, to, true );

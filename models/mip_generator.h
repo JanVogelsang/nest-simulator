@@ -115,9 +115,8 @@ public:
    * @see Technical Issues / Virtual Functions: Overriding, Overloading, and
    * Hiding
    */
-  using Node::event_hook;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
@@ -130,12 +129,12 @@ private:
   void init_buffers_() override;
   void pre_run_hook() override;
 
-  void update( Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
 
   /**
    * @todo Should use binomial distribution
    */
-  void event_hook( DSSpikeEvent& ) override;
+  void event_hook( SpikeEvent& ) override;
 
   // ------------------------------------------------------------
 
@@ -167,22 +166,13 @@ private:
 };
 
 inline port
-mip_generator::send_test_event( Node& target, const rport receptor_type, synindex syn_id, bool dummy_target )
+mip_generator::send_test_event( Node& target, const rport receptor_type, synindex syn_id )
 {
   StimulationDevice::enforce_single_syn_type( syn_id );
 
-  if ( dummy_target )
-  {
-    DSSpikeEvent e;
-    e.set_sender( *this );
-    return target.handles_test_event( e, receptor_type );
-  }
-  else
-  {
-    SpikeEvent e;
-    e.set_sender( *this );
-    return target.handles_test_event( e, receptor_type );
-  }
+  SpikeEvent e;
+  e.set_sender( *this );
+  return target.handles_test_event( e, receptor_type );
 }
 
 inline void

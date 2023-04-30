@@ -164,13 +164,13 @@ nest::pulsepacket_generator::pre_run_hook()
 
 
 void
-nest::pulsepacket_generator::update( Time const& T, const long from, const long to )
+nest::pulsepacket_generator::update( const Time& origin, const long from, const long to )
 {
   assert( to >= from );
   assert( ( to - from ) <= kernel().connection_manager.get_min_delay() );
 
   if ( ( V_.start_center_idx_ == P_.pulse_times_.size() and B_.spiketimes_.empty() )
-    or ( not StimulationDevice::is_active( T ) ) )
+    or ( not StimulationDevice::is_active( origin ) ) )
   {
     return; // nothing left to do
   }
@@ -179,7 +179,7 @@ nest::pulsepacket_generator::update( Time const& T, const long from, const long 
   if ( V_.stop_center_idx_ < P_.pulse_times_.size() )
   {
     while ( V_.stop_center_idx_ < P_.pulse_times_.size()
-      and ( Time( Time::ms( P_.pulse_times_.at( V_.stop_center_idx_ ) ) ) - T ).get_ms() <= V_.tolerance )
+      and ( Time( Time::ms( P_.pulse_times_.at( V_.stop_center_idx_ ) ) ) - origin ).get_ms() <= V_.tolerance )
     {
       V_.stop_center_idx_++;
     }
@@ -196,7 +196,7 @@ nest::pulsepacket_generator::update( Time const& T, const long from, const long 
       for ( int i = 0; i < P_.a_; i++ )
       {
         double x = P_.sdev_ * V_.normal_dist_( rng ) + P_.pulse_times_.at( V_.start_center_idx_ );
-        if ( Time( Time::ms( x ) ) >= T )
+        if ( Time( Time::ms( x ) ) >= origin )
         {
           B_.spiketimes_.push_back( Time( Time::ms( x ) ).get_steps() );
         }
@@ -214,7 +214,7 @@ nest::pulsepacket_generator::update( Time const& T, const long from, const long 
 
   // Since we have an ordered list of spiketimes,
   // we can compute the histogram on the fly.
-  while ( not B_.spiketimes_.empty() and B_.spiketimes_.front() < ( T.get_steps() + to ) )
+  while ( not B_.spiketimes_.empty() and B_.spiketimes_.front() < ( origin.get_steps() + to ) )
   {
     n_spikes++;
     long prev_spike = B_.spiketimes_.front();
@@ -224,7 +224,7 @@ nest::pulsepacket_generator::update( Time const& T, const long from, const long 
     {
       SpikeEvent se;
       se.set_multiplicity( n_spikes );
-      kernel().event_delivery_manager.send( *this, se, prev_spike - T.get_steps() );
+      kernel().event_delivery_manager.send_device_spike( *this, se, prev_spike - origin.get_steps() );
       n_spikes = 0;
     }
   }

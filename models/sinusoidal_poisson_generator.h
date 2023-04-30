@@ -127,14 +127,13 @@ public:
   sinusoidal_poisson_generator();
   sinusoidal_poisson_generator( const sinusoidal_poisson_generator& );
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   /**
    * Import sets of overloaded virtual functions.
    * @see Technical Issues / Virtual Functions: Overriding, Overloading, and
    * Hiding
    */
-  using Node::event_hook;
   using Node::handle;
   using Node::handles_test_event;
 
@@ -177,9 +176,9 @@ private:
   void init_state_() override;
   void init_buffers_() override;
   void pre_run_hook() override;
-  void event_hook( DSSpikeEvent& ) override;
+  void event_hook( SpikeEvent& ) override;
 
-  void update( Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
 
   struct Parameters_
   {
@@ -271,27 +270,13 @@ private:
 };
 
 inline port
-sinusoidal_poisson_generator::send_test_event( Node& target,
-  const rport receptor_type,
-  synindex syn_id,
-  bool dummy_target )
+sinusoidal_poisson_generator::send_test_event( Node& target, const rport receptor_type, synindex syn_id )
 {
   StimulationDevice::enforce_single_syn_type( syn_id );
 
-  // to ensure correct overloading resolution, we need explicit event types
-  // therefore, we need to duplicate the code here
-  if ( dummy_target )
-  {
-    DSSpikeEvent e;
-    e.set_sender( *this );
-    return target.handles_test_event( e, receptor_type );
-  }
-  else
-  {
-    SpikeEvent e;
-    e.set_sender( *this );
-    return target.handles_test_event( e, receptor_type );
-  }
+  SpikeEvent e;
+  e.set_sender( *this );
+  return target.handles_test_event( e, receptor_type );
 }
 
 inline port

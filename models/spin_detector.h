@@ -149,7 +149,7 @@ private:
    *
    * @see RecordingDevice
    */
-  void update( Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
 
   index last_in_node_id_;
   SpikeEvent last_event_;

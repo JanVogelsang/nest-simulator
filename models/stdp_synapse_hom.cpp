@@ -60,7 +60,7 @@ STDPHomCommonProperties::get_status( DictionaryDatum& d ) const
 }
 
 void
-STDPHomCommonProperties::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+STDPHomCommonProperties::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   CommonSynapseProperties::set_status( d, cm );
 
@@ -94,7 +94,7 @@ stdp_synapse_hom::get_status( DictionaryDatum& d ) const
 }
 
 void
-stdp_synapse_hom::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+stdp_synapse_hom::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   // base class properties
   ConnectionBase::set_status( d, cm );

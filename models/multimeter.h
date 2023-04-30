@@ -161,7 +161,7 @@ public:
   using Node::handles_test_event;
   using Node::sends_signal;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   void handle( DataLoggingReply& ) override;
 
@@ -183,7 +183,7 @@ protected:
    * that information. The sampled nodes must provide data from
    * the previous time slice.
    */
-  void update( Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
 
 private:
   struct Buffers_;

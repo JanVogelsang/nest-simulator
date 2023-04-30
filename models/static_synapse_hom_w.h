@@ -69,67 +69,11 @@ public:
   typedef CommonPropertiesHomW CommonPropertiesType;
   typedef Connection ConnectionBase;
 
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( RateEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( DataLoggingRequest&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( CurrentEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( ConductanceEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( DoubleDataEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( DSSpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( DSCurrentEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
-
-
   void get_status( DictionaryDatum& d ) const;
 
   void
-  check_connection( Node& s,
-    Node& t,
-    const rport receptor_type,
-    const synindex syn_id,
-    const delay dendritic_delay,
-    const delay axonal_delay,
-    const CommonPropertiesType& )
+  check_connection( Node&, Node&, const rport, const synindex, const delay, const CommonPropertiesType& )
   {
-    ConnTestDummyNode dummy_target;
   }
 
   /**
@@ -153,16 +97,9 @@ public:
    * \param cp Common properties-object of the synapse
    */
   void
-  send( Event& e,
-    const thread,
-    const delay axonal_delay,
-    const delay dendritic_delay,
-    const CommonPropertiesHomW& cp,
-    Node* )
+  send( Event& e, const thread, const double, const CommonPropertiesHomW& cp )
   {
     e.set_weight( cp.get_weight() );
-    e.set_delay_steps( dendritic_delay );
-    e();
   }
 
   void

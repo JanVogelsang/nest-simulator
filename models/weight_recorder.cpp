@@ -135,7 +135,7 @@ nest::weight_recorder::pre_run_hook()
 }
 
 void
-nest::weight_recorder::update( Time const&, const long, const long )
+nest::weight_recorder::update( const Time&, const long, const long )
 {
 }
 

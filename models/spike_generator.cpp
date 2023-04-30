@@ -317,7 +317,7 @@ nest::spike_generator::pre_run_hook()
  * Other functions
  * ---------------------------------------------------------------- */
 void
-nest::spike_generator::update( Time const& sliceT0, const long from, const long to )
+nest::spike_generator::update( const Time& sliceT0, const long from, const long to )
 {
   if ( P_.spike_stamps_.empty() )
   {
@@ -350,36 +350,23 @@ nest::spike_generator::update( Time const& sliceT0, const long from, const long 
 
     if ( StimulationDevice::is_active( tnext_stamp ) )
     {
-      SpikeEvent* se;
-
-      // if we have to deliver weighted spikes, we need to get the
-      // event back to set its weight according to the entry in
-      // spike_weights_, so we use a DSSpike event and event_hook()
-      if ( not P_.spike_weights_.empty() )
-      {
-        se = new DSSpikeEvent;
-      }
-      else
-      {
-        se = new SpikeEvent;
-      }
+      SpikeEvent se;
 
       if ( P_.precise_times_ )
       {
-        se->set_offset( P_.spike_offsets_[ S_.position_ ] );
+        se.set_offset( P_.spike_offsets_[ S_.position_ ] );
       }
 
       if ( not P_.spike_multiplicities_.empty() )
       {
-        se->set_multiplicity( P_.spike_multiplicities_[ S_.position_ ] );
+        se.set_multiplicity( P_.spike_multiplicities_[ S_.position_ ] );
       }
 
       // we need to subtract one from stamp which is added again in send()
       long lag = Time( tnext_stamp - sliceT0 ).get_steps() - 1;
 
       // all spikes are sent locally, so offset information is always preserved
-      kernel().event_delivery_manager.send( *this, *se, lag );
-      delete se;
+      kernel().event_delivery_manager.send_device_spike( *this, se, lag );
     }
 
     ++S_.position_;
@@ -387,9 +374,16 @@ nest::spike_generator::update( Time const& sliceT0, const long from, const long 
 }
 
 void
-nest::spike_generator::event_hook( DSSpikeEvent& e )
+nest::spike_generator::event_hook( SpikeEvent& e )
 {
-  e.set_weight( P_.spike_weights_[ S_.position_ ] * e.get_weight() );
+  // if we have to deliver weighted spikes, we need to get the
+  // event back to set its weight according to the entry in
+  // spike_weights_, so we use a DSSpike event and event_hook()
+  // TODO JV (pt): Rework devices
+  if ( not P_.spike_weights_.empty() )
+  {
+    e.set_weight( P_.spike_weights_[ S_.position_ ] * e.get_weight() );
+  }
 }
 
 /* ----------------------------------------------------------------

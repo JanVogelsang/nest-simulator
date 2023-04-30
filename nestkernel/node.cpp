@@ -148,18 +148,49 @@ Node::get_connection_status( const synindex syn_id, const index lcid, Dictionary
   // synapses from neurons to neurons and from neurons to globally receiving devices
   if ( connections_[ syn_id ] )
   {
-    connections_[ syn_id ]->get_synapse_status( thread_, lcid, dict );
+    connections_[ syn_id ]->get_synapse_status( lcid, dict );
+  }
+  return dict;
+}
+
+DictionaryDatum
+Node::get_connection_status( const synindex syn_id,
+  const index lcid,
+  const size_t dendritic_delay_id,
+  DictionaryDatum& dict ) const
+{
+  // synapses from neurons to neurons and from neurons to globally receiving devices
+  if ( connections_[ syn_id ] )
+  {
+    connections_[ syn_id ]->get_synapse_status( lcid, dict, dendritic_delay_id );
   }
   return dict;
 }
 
 void
-Node::set_connection_status( const synindex syn_id, const index lcid, const DictionaryDatum& dict, ConnectorModel& cm )
+Node::set_connection_status( const synindex syn_id,
+  const index lcid,
+  const DictionaryDatum& dict,
+  const ConnectorModel& cm )
 {
   // synapses from neurons to neurons and from neurons to globally receiving devices
   if ( connections_[ syn_id ] )
   {
     connections_[ syn_id ]->set_synapse_status( lcid, dict, cm );
+  }
+}
+
+void
+Node::set_connection_status( const synindex syn_id,
+  const index lcid,
+  const size_t dendritic_delay_id,
+  const DictionaryDatum& dict,
+  ConnectorModel& cm )
+{
+  // synapses from neurons to neurons and from neurons to globally receiving devices
+  if ( connections_[ syn_id ] )
+  {
+    connections_[ syn_id ]->set_synapse_status( lcid, dict, cm, dendritic_delay_id );
   }
 }
 
@@ -230,7 +261,7 @@ Node::set_status_base( const DictionaryDatum& dict )
  * throws UnexpectedEvent
  */
 bool
-Node::wfr_update( Time const&, const long, const long )
+Node::wfr_update( const Time&, const long, const long )
 {
   throw UnexpectedEvent( "Waveform relaxation not supported." );
 }
@@ -239,7 +270,7 @@ Node::wfr_update( Time const&, const long, const long )
  * Default implementation of check_connection just throws IllegalConnection
  */
 port
-Node::send_test_event( Node&, rport, synindex, bool )
+Node::send_test_event( Node&, rport, synindex )
 {
   throw IllegalConnection(
     "Source node does not send output.\n"
@@ -291,26 +322,6 @@ Node::remove_disabled_connections()
 
     connections_[ syn_id ]->remove_disabled_connections();
   }*/
-}
-
-template <>
-void
-Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
-  const synindex syn_id,
-  const index local_target_connection_id,
-  const delay dendritic_delay,
-  const std::vector< ConnectorModel* >& cm,
-  DSSpikeEvent& e )
-{
-  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, 0, dendritic_delay, cm, e, this );
-
-  // TODO JV (pt): Make this cleaner, as only needed for poisson generators probably
-  if ( not e.get_multiplicity() )
-  {
-    return;
-  }
-
-  handle( e );
 }
 
 /**
@@ -409,18 +420,6 @@ port
 Node::handles_test_event( DoubleDataEvent&, rport )
 {
   throw IllegalConnection( "The target node or synapse model does not support double data event." );
-}
-
-port
-Node::handles_test_event( DSSpikeEvent&, rport )
-{
-  throw IllegalConnection( "The target node or synapse model does not support spike input." );
-}
-
-port
-Node::handles_test_event( DSCurrentEvent&, rport )
-{
-  throw IllegalConnection( "The target node or synapse model does not support DS current input." );
 }
 
 void
@@ -587,18 +586,6 @@ double
 nest::Node::get_tau_syn_in( int )
 {
   throw UnexpectedEvent();
-}
-
-void
-Node::event_hook( DSSpikeEvent& e )
-{
-  // e.get_receiver().handle( e );
-}
-
-void
-Node::event_hook( DSCurrentEvent& e )
-{
-  // e.get_receiver().handle( e );
 }
 
 } // namespace

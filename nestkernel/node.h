@@ -286,25 +286,23 @@ public:
 
   /**
    * Finalize node.
-   * Override this function if a node needs to "wrap up" things after a
-   * full simulation, i.e., a cycle of Prepare, Run, Cleanup. Typical
-   * use-cases are devices that need to close files.
+   * Override this function if a node needs to "wrap up" things after a full simulation, i.e., a cycle of Prepare, Run,
+   * Cleanup. Typical use-cases are devices that need to close files.
    */
   virtual void finalize();
 
   /**
    * Bring the node from state $t$ to $t+n*dt$.
    *
-   * n->update(T, from, to) performs the update steps beginning
-   * at T+from .. T+to-1, ie, emitting events with time stamps
-   * T+from+1 .. T+to.
+   * n->update(T, from, to) performs the update steps beginning at T+from .. T+to-1, ie, emitting events with time
+   * stamps T+from+1 .. T+to.
    *
    * @param Time   network time at beginning of time slice.
    * @param long initial step inside time slice
    * @param long post-final step inside time slice
    *
    */
-  virtual void update( Time const&, const long, const long ) = 0;
+  virtual void update( const Time&, const long, const long ) = 0;
 
   /**
    * Prepare the node for the next update cycle.
@@ -330,7 +328,7 @@ public:
    * @param long post-final step inside time slice
    *
    */
-  virtual bool wfr_update( Time const&, const long, const long );
+  virtual bool wfr_update( const Time&, const long, const long );
 
   /**
    * @defgroup status_interface Configuration interface.
@@ -366,8 +364,22 @@ public:
 
   DictionaryDatum get_connection_status( const synindex syn_id, const index lcid, DictionaryDatum& dict ) const;
 
-  void
-  set_connection_status( const synindex syn_id, const index lcid, const DictionaryDatum& dict, ConnectorModel& cm );
+  DictionaryDatum get_connection_status( const synindex syn_id,
+    const index lcid,
+    const size_t dendritic_delay_id,
+    DictionaryDatum& dict ) const;
+
+  void set_connection_status( const synindex syn_id,
+    const index lcid,
+    const DictionaryDatum& dict,
+    const ConnectorModel& cm );
+
+  void set_connection_status( const synindex syn_id,
+    const index lcid,
+    const size_t dendritic_delay_id,
+    const DictionaryDatum& dict,
+    ConnectorModel& cm );
+
 
 public:
   /**
@@ -389,6 +401,7 @@ public:
    * if the receiving_node can handle the event type and receptor_type sent
    * by the source node.
    *
+   * // TODO JV (pt): Still needed?
    * If dummy_target is true, this indicates that receiving_node is derived from
    * ConnTestDummyNodeBase and used in the first call to send_test_event().
    * This can be ignored in most cases, but Nodes sending DS*Events to their
@@ -396,7 +409,7 @@ public:
    * DS*Events when called with the dummy target, and *Events when called with
    * the real target, see #478.
    */
-  virtual port send_test_event( Node& receiving_node, const rport receptor_type, synindex syn_id, bool dummy_target );
+  virtual port send_test_event( Node& receiving_node, const rport receptor_type, synindex syn_id );
 
   /**
    * Check if the node can handle a particular event and receptor type.
@@ -423,8 +436,6 @@ public:
   virtual port handles_test_event( CurrentEvent&, rport receptor_type );
   virtual port handles_test_event( ConductanceEvent&, rport receptor_type );
   virtual port handles_test_event( DoubleDataEvent&, rport receptor_type );
-  virtual port handles_test_event( DSSpikeEvent&, rport receptor_type );
-  virtual port handles_test_event( DSCurrentEvent&, rport receptor_type );
   virtual port handles_test_event( GapJunctionEvent&, rport receptor_type );
   virtual port handles_test_event( InstantaneousRateConnectionEvent&, rport receptor_type );
   virtual port handles_test_event( DiffusionConnectionEvent&, rport receptor_type );
@@ -627,14 +638,14 @@ public:
     {
       if ( connections_per_syn_type )
       {
-        connections_per_syn_type->clear_sources();
+        // connections_per_syn_type->clear_sources();  // TODO JV (pt)
       }
     }
     for ( std::unique_ptr< ConnectorBase >& connections_per_syn_type : connections_from_devices_ )
     {
       if ( connections_per_syn_type )
       {
-        connections_per_syn_type->clear_sources();
+        // connections_per_syn_type->clear_sources();  // TODO JV (pt)
       }
     }
   }
@@ -662,13 +673,14 @@ public:
    * \param receptor The ID of the requested receptor type
    */
   template < typename ConnectionT >
-  void check_connection( Node& source, const synindex syn_id, const rport receptor_type );
+  void check_connection( Node& source, ConnectionT& connection, const synindex syn_id, const rport receptor_type,
+    const delay total_delay, const typename ConnectionT::CommonPropertiesType& cp );
 
   /**
    * Adds a connection to this node of a specific connection type.
    */
   template < typename ConnectionT >
-  const index add_connection( Node& source_node,
+  const std::pair< index, size_t > add_connection( Node& source_node,
     const synindex syn_id,
     ConnectionT& connection,
     const rport receptor_type,
@@ -685,35 +697,20 @@ public:
   void deliver_event_from_device( const thread tid,
     const synindex syn_id,
     const index local_target_connection_id,
-    const delay dendritic_delay,
-    const std::vector< ConnectorModel* >& cm,
+    const delay d,
+    const ConnectorModel* cm,
     EventT& e );
 
   /**
    * When receiving an incoming spike event, forward it to the corresponding connection and handle the event previously
    * updated by the connection.
    */
-#ifndef USE_ADJACENCY_LIST
   virtual void deliver_event( const synindex syn_id,
     const index local_target_connection_id,
-    const std::vector< ConnectorModel* >& cm,
+    const size_t dendritic_delay_id,
+    const ConnectorModel* cm,
     const Time lag,
-    const double offset );
-#endif
-  //! Same as regular deliver event, but also providing cached axonal delay
-  virtual void deliver_event( const synindex syn_id,
-    const index local_target_connection_id,
-    const std::vector< ConnectorModel* >& cm,
-    const Time lag,
-    const delay axonal_delay,
-    const double offset );
-  //! Same as regular deliver event with axonal delay provided, but also providing cached dendritic delay
-  virtual void deliver_event( const synindex syn_id,
-    const index local_target_connection_id,
-    const std::vector< ConnectorModel* >& cm,
-    const Time lag,
-    const delay axonal_delay,
-    const delay dendritic_delay,
+    const delay d,
     const double offset );
 
   /**
@@ -960,23 +957,6 @@ public:
   virtual double get_tau_syn_in( int comp );
 
   /**
-   * Modify Event object parameters during event delivery.
-   * Some Nodes want to perform a function on an event for each
-   * of their targets. An example is the poisson_generator which
-   * needs to draw a random number for each target. The DSSpikeEvent,
-   * DirectSendingSpikeEvent, calls sender->event_hook(thread, *this)
-   * in its operator() function instead of calling target->handle().
-   * The default implementation of Node::event_hook() just calls
-   * target->handle(DSSpikeEvent&). Any reimplementation must also
-   * execute this call. Otherwise the event will not be delivered.
-   * If needed, target->handle(DSSpikeEvent) may be called more than
-   * once.
-   */
-  virtual void event_hook( DSSpikeEvent& );
-
-  virtual void event_hook( DSCurrentEvent& );
-
-  /**
    * Store the number of the thread to which the node is assigned.
    * The assignment is done after node creation by the Network class.
    * @see: NodeManager::add_node().
@@ -1088,11 +1068,6 @@ public:
   virtual bool has_stdp_connections() const;
 
   /**
-   * Sort all connections by dendritic delay for better vectorization.
-   */
-  void prepare_connections();
-
-  /**
    * Member of DeprecationWarning class to be used by models if parameters are
    * deprecated.
    */
@@ -1184,7 +1159,8 @@ protected:
    * to this node. Corresponds to a two dimensional structure:
    * synapse types|connections
    */
-  std::vector< std::unique_ptr< ConnectorBase > > connections_;
+  std::vector< std::unique_ptr< ConnectorBase > >
+    connections_; // TODO JV (pt): Only store entries of syn_ids that are in use
 
   /**
    * A structure to hold the Connector objects which in turn hold the connection information of all incoming connections
@@ -1342,38 +1318,13 @@ Node::get_thread_lid() const
   return thread_lid_;
 }
 
-#ifndef USE_ADJACENCY_LIST
 inline void
 Node::deliver_event( const synindex syn_id,
   const index local_target_connection_id,
-  const std::vector< ConnectorModel* >& cm,
+  const size_t dendritic_delay_id,
+  const ConnectorModel* cm,
   const Time lag,
-  const double offset )
-{
-  const delay axonal_delay = connections_[ syn_id ]->get_axonal_delay( local_target_connection_id );
-  deliver_event( syn_id, local_target_connection_id, cm, lag, axonal_delay, offset );
-}
-#endif
-
-inline void
-Node::deliver_event( const synindex syn_id,
-  const index local_target_connection_id,
-  const std::vector< ConnectorModel* >& cm,
-  const Time lag,
-  const delay axonal_delay,
-  const double offset )
-{
-  const delay dendritic_delay = connections_[ syn_id ]->get_dendritic_delay( local_target_connection_id );
-  deliver_event( syn_id, local_target_connection_id, cm, lag, axonal_delay, dendritic_delay, offset );
-}
-
-inline void
-Node::deliver_event( const synindex syn_id,
-  const index local_target_connection_id,
-  const std::vector< ConnectorModel* >& cm,
-  const Time lag,
-  const delay axonal_delay,
-  const delay dendritic_delay,
+  const delay total_delay,
   const double offset )
 {
   SpikeEvent se;
@@ -1383,28 +1334,13 @@ Node::deliver_event( const synindex syn_id,
 
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight and optionally updates its internal state as well.
-  connections_[ syn_id ]->send( thread_, local_target_connection_id, axonal_delay, dendritic_delay, cm, se, this );
+  connections_[ syn_id ]->send( thread_, node_id_, local_target_connection_id, total_delay, cm, se );
 
   // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
   //  handle, or just handing the entire local connection id to the handle function (and storing an array of rports
   //  which can be indexed by the local connection id).
 
   handle( se );
-}
-
-inline void
-Node::prepare_connections()
-{
-  if ( this->has_proxies() ) // devices store dendritic delay in target_table and thus need no additional preparation
-  {
-    for ( std::unique_ptr< ConnectorBase >& conn : connections_ )
-    {
-      if ( conn )
-      {
-        conn->prepare_connections( thread_, thread_lid_ );
-      }
-    }
-  }
 }
 
 } // namespace

@@ -432,7 +432,7 @@ nest::aeif_psc_alpha::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::aeif_psc_alpha::update( Time const& origin, const long from, const long to )
+nest::aeif_psc_alpha::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
@@ -522,7 +522,7 @@ nest::aeif_psc_alpha::update( Time const& origin, const long from, const long to
 void
 nest::aeif_psc_alpha::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   if ( e.get_weight() > 0.0 )
   {
@@ -539,7 +539,7 @@ nest::aeif_psc_alpha::handle( SpikeEvent& e )
 void
 nest::aeif_psc_alpha::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();

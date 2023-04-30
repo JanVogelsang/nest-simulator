@@ -217,7 +217,7 @@ nest::music_cont_out_proxy::finalize()
 }
 
 nest::port
-nest::music_cont_out_proxy::send_test_event( Node& target, const rport receptor_type, synindex, bool )
+nest::music_cont_out_proxy::send_test_event( Node& target, const rport receptor_type, synindex )
 {
 
   DataLoggingRequest e( P_.interval_, P_.record_from_ );
@@ -334,7 +334,7 @@ nest::music_cont_out_proxy::set_status( const DictionaryDatum& d )
 }
 
 void
-nest::music_cont_out_proxy::update( Time const& origin, const long from, const long )
+nest::music_cont_out_proxy::update( const Time& origin, const long from, const long to )
 {
   /* There is nothing to request during the first time slice. For
      each subsequent slice, we collect all data generated during
@@ -354,7 +354,7 @@ nest::music_cont_out_proxy::update( Time const& origin, const long from, const l
   //
   // Note that not all nodes receiving the request will necessarily answer.
   DataLoggingRequest req;
-  kernel().event_delivery_manager.send( *this, req );
+  kernel().event_delivery_manager.send_device_spike( *this, req );
 }
 
 void

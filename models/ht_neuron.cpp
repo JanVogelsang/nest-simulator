@@ -768,7 +768,7 @@ nest::ht_neuron::set_status( const DictionaryDatum& d )
  * ---------------------------------------------------------------- */
 
 void
-ht_neuron::update( Time const& origin, const long from, const long to )
+ht_neuron::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
@@ -849,7 +849,7 @@ ht_neuron::update( Time const& origin, const long from, const long to )
 void
 nest::ht_neuron::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
   assert( e.get_rport() < static_cast< int >( B_.spike_inputs_.size() ) );
 
   B_.spike_inputs_[ e.get_rport() ].add_value(
@@ -859,7 +859,7 @@ nest::ht_neuron::handle( SpikeEvent& e )
 void
 nest::ht_neuron::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double I = e.get_current();
   const double w = e.get_weight();

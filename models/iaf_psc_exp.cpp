@@ -349,7 +349,7 @@ nest::iaf_psc_exp::update( const Time& origin, const long from, const long to )
 void
 nest::iaf_psc_exp::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const index input_buffer_slot = kernel().event_delivery_manager.get_modulo(
     e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ) );
@@ -363,7 +363,7 @@ nest::iaf_psc_exp::handle( SpikeEvent& e )
 void
 nest::iaf_psc_exp::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();

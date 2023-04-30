@@ -572,7 +572,7 @@ nest::iaf_cond_alpha_mc::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::iaf_cond_alpha_mc::update( Time const& origin, const long from, const long to )
+nest::iaf_cond_alpha_mc::update( const Time& origin, const long from, const long to )
 {
 
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
@@ -654,7 +654,7 @@ nest::iaf_cond_alpha_mc::update( Time const& origin, const long from, const long
 void
 nest::iaf_cond_alpha_mc::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
   assert( 0 <= e.get_rport() and e.get_rport() < 2 * NCOMP );
 
   B_.spikes_[ e.get_rport() ].add_value(
@@ -664,7 +664,7 @@ nest::iaf_cond_alpha_mc::handle( SpikeEvent& e )
 void
 nest::iaf_cond_alpha_mc::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
   // not 100% clean, should look at MIN, SUP
   assert( 0 <= e.get_rport() and e.get_rport() < NCOMP );
 

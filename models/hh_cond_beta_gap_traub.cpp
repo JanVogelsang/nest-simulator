@@ -465,7 +465,7 @@ nest::hh_cond_beta_gap_traub::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 bool
-nest::hh_cond_beta_gap_traub::update_( Time const& origin,
+nest::hh_cond_beta_gap_traub::update_( const Time& origin,
   const long from,
   const long to,
   const bool called_from_wfr_update )
@@ -631,7 +631,7 @@ nest::hh_cond_beta_gap_traub::update_( Time const& origin,
 void
 nest::hh_cond_beta_gap_traub::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   if ( e.get_weight() > 0.0 )
   {
@@ -650,7 +650,7 @@ nest::hh_cond_beta_gap_traub::handle( SpikeEvent& e )
 void
 nest::hh_cond_beta_gap_traub::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();

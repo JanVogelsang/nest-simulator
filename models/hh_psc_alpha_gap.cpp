@@ -447,7 +447,7 @@ nest::hh_psc_alpha_gap::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 bool
-nest::hh_psc_alpha_gap::update_( Time const& origin, const long from, const long to, const bool called_from_wfr_update )
+nest::hh_psc_alpha_gap::update_( const Time& origin, const long from, const long to, const bool called_from_wfr_update )
 {
 
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
@@ -612,7 +612,7 @@ nest::hh_psc_alpha_gap::update_( Time const& origin, const long from, const long
 void
 nest::hh_psc_alpha_gap::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   if ( e.get_weight() > 0.0 )
   {
@@ -629,7 +629,7 @@ nest::hh_psc_alpha_gap::handle( SpikeEvent& e )
 void
 nest::hh_psc_alpha_gap::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();

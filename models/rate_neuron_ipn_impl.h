@@ -259,7 +259,7 @@ nest::rate_neuron_ipn< TNonlinearities >::pre_run_hook()
 
 template < class TNonlinearities >
 bool
-nest::rate_neuron_ipn< TNonlinearities >::update_( Time const& origin,
+nest::rate_neuron_ipn< TNonlinearities >::update_( const Time& origin,
   const long from,
   const long to,
   const bool called_from_wfr_update )

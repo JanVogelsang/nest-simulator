@@ -174,10 +174,10 @@ private:
   /** This is the actual update function. The additional boolean parameter
    * determines if the function is called by update (false) or wfr_update (true)
    */
-  bool update_( Time const&, const long, const long, const bool );
+  bool update_( const Time&, const long, const long, const bool );
 
-  void update( Time const&, const long, const long ) override;
-  bool wfr_update( Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
+  bool wfr_update( const Time&, const long, const long ) override;
 
   // siegert function
   double siegert( double, double );
@@ -287,13 +287,13 @@ private:
 };
 
 inline void
-siegert_neuron::update( Time const& origin, const long from, const long to )
+siegert_neuron::update( const Time& origin, const long from, const long to )
 {
   update_( origin, from, to, false );
 }
 
 inline bool
-siegert_neuron::wfr_update( Time const& origin, const long from, const long to )
+siegert_neuron::wfr_update( const Time& origin, const long from, const long to )
 {
   State_ old_state = S_; // save state before wfr update
   const bool wfr_tol_exceeded = update_( origin, from, to, true );

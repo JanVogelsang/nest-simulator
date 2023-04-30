@@ -83,16 +83,6 @@ public:
   void init() override;
 
   /**
-   * \fn double get_K_value(long t)
-   * return the Kminus (synaptic trace) value at t (in ms). When the trace is
-   * requested at the exact same time that the neuron emits a spike, the trace
-   * value as it was just before the spike is returned.
-   */
-  // double get_K_value( double t ) override;
-
-  double get_trace( const double pre_spike_time, const double dendritic_delay, const synindex syn_id ) override;
-
-  /**
    * \fn void get_K_values( double t,
    *   double& Kminus,
    *   double& nearest_neighbor_Kminus,
@@ -155,10 +145,10 @@ public:
    * Postponed delivery is required for STDP synapses with predominantly axonal delay. The archiving node supports this
    * feature by utilizing an intermediate spike buffer.
    */
-  inline virtual bool
-  supports_postponed_delivery() const
+  inline bool
+  supports_postponed_delivery() const override
   {
-    return false;
+    return true;
   }
 
   /**
@@ -167,10 +157,18 @@ public:
    */
   void deliver_event( const synindex syn_id,
     const index local_target_connection_id,
-    const std::vector< ConnectorModel* >& cm,
+    const size_t dendritic_delay_id,
+    const ConnectorModel* cm,
     const Time lag,
     const delay axonal_delay,
     const double offset ) override;
+  void deliver_event_with_trace( const synindex syn_id,
+    const index local_target_connection_id,
+    const size_t dendritic_delay_id,
+    const ConnectorModel* cm,
+    const Time lag,
+    const delay axonal_delay,
+    const double offset );
 
   void get_status( DictionaryDatum& d ) const override;
   void set_status( const DictionaryDatum& d ) override;
@@ -180,25 +178,13 @@ protected:
    * \fn void set_spiketime(Time const & t_sp, double offset)
    * record spike history
    */
-  void set_spiketime( Time const& t_sp, double offset = 0.0 );
+  void set_spiketime( const Time& t_sp, double offset = 0.0 );
 
   /**
    * \fn double get_spiketime()
    * return most recent spike time in ms
    */
   double get_spiketime_ms() const;
-
-  /**
-   * Makes a connection process all post-synaptic spikes until the specified time t.
-   */
-  void process_spikes_until_pre_synaptic_spike( const synindex syn_id, const delay axonal_delay,
-    const delay dendritic_delay, const index local_connection_id, const Time t,
-    const delay last_communication_time_steps, const double offset, const std::vector< ConnectorModel* >& cm );
-
-  /**
-   * Inform all incoming STDP connections of a post-synaptic spike to update the synaptic weight.
-   */
-  void update_stdp_connections( const delay lag );
 
   /**
    * Prepare the node for the next update cycle. This includes any cleanup after the past update cycle or any state
@@ -221,12 +207,23 @@ protected:
    */
   bool has_stdp_connections() const override;
 
-private:
-  // sum exp(-(t-ti)/tau_minus)
-  // double Kminus_;
+  /**
+   * Inform all incoming STDP connections of a post-synaptic spike to update the synaptic weight.
+   */
+  void update_stdp_connections( const delay lag );
 
-  // sum exp(-(t-ti)/tau_minus_triplet)
-  // double Kminus_triplet_;
+private:
+  /**
+   * Makes a connection process all post-synaptic spikes until the specified time t.
+   */
+  void process_spikes_until_pre_synaptic_spike( const synindex syn_id,
+    const delay axonal_delay,
+    const index local_connection_id,
+    const size_t dendritic_delay_id,
+    const Time t,
+    const delay last_communication_time_steps,
+    const double offset,
+    const ConnectorModel* cm );
 
   double tau_minus_;
   double tau_minus_inv_;
@@ -282,31 +279,32 @@ ArchivingNode::get_spiketime_ms() const
   // return last_spike_;
 }
 
-inline double
-ArchivingNode::get_trace( const double pre_spike_time, const double dendritic_delay, const synindex syn_id )
-{
-  return connections_[ syn_id ]->get_trace(
-    pre_spike_time, dendritic_delay, tau_minus_inv_, history_.cbegin(), history_.cend() );
-}
-
 inline void
-ArchivingNode::process_spikes_until_pre_synaptic_spike( const synindex syn_id, const delay axonal_delay,
-  const delay dendritic_delay, const index local_connection_id, const Time t,
-  const delay last_communication_time_steps, const double offset, const std::vector< ConnectorModel* >& cm )
+ArchivingNode::process_spikes_until_pre_synaptic_spike( const synindex syn_id,
+  const delay axonal_delay,
+  const index local_connection_id,
+  const index dendritic_delay_id,
+  const Time t,
+  const delay last_communication_time_steps,
+  const double offset,
+  const ConnectorModel* cm )
 {
   // TODO JV (pt): Precise spikes
 
   const double last_communication_time_ms = Time::delay_steps_to_ms( last_communication_time_steps );
 
   const double eps = kernel().connection_manager.get_stdp_eps();
-  const double last_pre_spike_time_ms = connections_[ syn_id ]->get_last_presynaptic_spike( local_connection_id );
+  const delay dendritic_delay = connections_[ syn_id ]->get_dendritic_delay( dendritic_delay_id );
+  const double last_pre_spike_time_ms =
+    connections_[ syn_id ]->get_last_presynaptic_spike( local_connection_id, dendritic_delay_id );
   const double pre_spike_time_ms = t.get_ms() + Time::delay_steps_to_ms( axonal_delay );
   // If a pre-synaptic spike is about to be processed, make sure to process all post-synaptic spikes first, which
   // are due before or at the same time of the pre-synaptic spike.
 
   double post_spike_time_ms;
   for ( std::deque< double >::const_iterator archived_spike_it = history_.cbegin();
-        archived_spike_it != history_.cend(); ++archived_spike_it )
+        archived_spike_it != history_.cend();
+        ++archived_spike_it )
   {
     post_spike_time_ms = *archived_spike_it + Time::delay_steps_to_ms( dendritic_delay );
     // Skip post-synaptic spikes which have been processed by the dendritic delay region already after the last
@@ -334,16 +332,10 @@ ArchivingNode::process_spikes_until_pre_synaptic_spike( const synindex syn_id, c
     }
 
     // TODO JV (pt): Weight recorder event
-    connections_[ syn_id ]->process_post_synaptic_spike( local_connection_id, post_spike_time_ms, cm[ syn_id ] );
+    connections_[ syn_id ]->process_post_synaptic_spike( local_connection_id, post_spike_time_ms, cm );
   }
   // Process pre-synaptic spike after processing all post-synaptic ones
-  Node::deliver_event( syn_id,
-    local_connection_id,
-    cm,
-    t,
-    axonal_delay,
-    dendritic_delay,
-    offset );
+  deliver_event_with_trace( syn_id, local_connection_id, dendritic_delay_id, cm, t, axonal_delay, offset );
 }
 
 } // of namespace

@@ -126,7 +126,7 @@ public:
 
 private:
   void pre_run_hook() override;
-  void update( Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
 
   struct Parameters_
   {

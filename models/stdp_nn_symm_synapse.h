@@ -147,46 +147,19 @@ public:
   /**
    * Set properties of this connection from the values given in dictionary.
    */
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   /**
    * Send an event to the receiver of this connection.
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e,
-    const thread t,
-    const delay axonal_delay,
-    const delay dendritic_delay,
-    const CommonSynapseProperties& cp,
-    Node* target );
+  void send( Event& e, const thread t, const double Kminus, const CommonSynapseProperties& cp );
 
-
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
 
   void
-  check_connection( Node& s,
-    Node& t,
-    const rport receptor_type,
-    const synindex syn_id,
-    const delay dendritic_delay,
-    const delay axonal_delay,
-    const CommonPropertiesType& )
+  check_connection( Node&, Node&, const rport, const synindex, const delay, const CommonPropertiesType& )
   {
-    ConnTestDummyNode dummy_target;
-
-    t.register_stdp_connection( axonal_delay, dendritic_delay, syn_id );
   }
 
   void
@@ -230,61 +203,53 @@ private:
  * \param cp Common properties object, containing the stdp parameters.
  */
 inline void
-stdp_nn_symm_synapse::send( Event& e,
-  const thread t,
-  const delay axonal_delay,
-  const delay dendritic_delay,
-  const CommonSynapseProperties&,
-  Node* target )
+stdp_nn_symm_synapse::send( Event& e, const thread t, const double Kminus, const CommonSynapseProperties& )
 {
-  // synapse STDP depressing/facilitation dynamics
-  double t_spike = e.get_stamp().get_ms();
-
-  // use accessor functions (inherited from Connection< >) to obtain delay and
-  // target
-  double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
-
-  // get spike history in relevant range (t1, t2] from postsynaptic neuron
-  std::deque< ArchivedSpikeTrace >::iterator start;
-  std::deque< ArchivedSpikeTrace >::iterator finish;
-
-  // For a new synapse, t_lastspike_ contains the point in time of the last
-  // spike. So we initially read the
-  // history(t_last_spike - dendritic_delay, ..., T_spike-dendritic_delay]
-  // which increases the access counter for these entries.
-  // At registration, all entries' access counters of
-  // history[0, ..., t_last_spike - dendritic_delay] have been
-  // incremented by ArchivingNode::register_stdp_connection(). See bug #218 for
-  // details.
-  target->get_history( t_lastspike_ - dendritic_delay_ms, t_spike - dendritic_delay_ms, &start, &finish );
-  // facilitation due to postsynaptic spikes since the last pre-synaptic spike
-  double minus_dt;
-  while ( start != finish )
-  {
-    minus_dt = t_lastspike_ - ( start->t + dendritic_delay_ms );
-    ++start;
-
-    // get_history() should make sure that
-    // start->t > t_lastspike_ - dendritic_delay, i.e. minus_dt < 0
-    assert( minus_dt < -1.0 * kernel().connection_manager.get_stdp_eps() );
-
-    weight_ = facilitate_( weight_, std::exp( minus_dt / tau_plus_ ) );
-  }
-
-  // depression due to the new pre-synaptic spike
-  double nearest_neighbor_Kminus;
-  double value_to_throw_away; // discard Kminus and Kminus_triplet here
-  target->get_K_values(
-    t_spike - dendritic_delay_ms, value_to_throw_away, nearest_neighbor_Kminus, value_to_throw_away );
-  weight_ = depress_( weight_, nearest_neighbor_Kminus );
-
-  e.set_weight( weight_ );
-  // use accessor functions (inherited from Connection< >) to obtain delay in
-  // steps and rport
-  e.set_delay_steps( dendritic_delay );
-  e();
-
-  t_lastspike_ = t_spike;
+  //  // synapse STDP depressing/facilitation dynamics
+  //  double t_spike = e.get_stamp().get_ms();
+  //
+  //  // use accessor functions (inherited from Connection< >) to obtain delay and
+  //  // target
+  //  double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
+  //
+  //  // get spike history in relevant range (t1, t2] from postsynaptic neuron
+  //  std::deque< ArchivedSpikeTrace >::iterator start;
+  //  std::deque< ArchivedSpikeTrace >::iterator finish;
+  //
+  //  // For a new synapse, t_lastspike_ contains the point in time of the last
+  //  // spike. So we initially read the
+  //  // history(t_last_spike - dendritic_delay, ..., T_spike-dendritic_delay]
+  //  // which increases the access counter for these entries.
+  //  // At registration, all entries' access counters of
+  //  // history[0, ..., t_last_spike - dendritic_delay] have been
+  //  // incremented by ArchivingNode::register_stdp_connection(). See bug #218 for
+  //  // details.
+  //  target->get_history( t_lastspike_ - dendritic_delay_ms, t_spike - dendritic_delay_ms, &start, &finish );
+  //  // facilitation due to postsynaptic spikes since the last pre-synaptic spike
+  //  double minus_dt;
+  //  while ( start != finish )
+  //  {
+  //    minus_dt = t_lastspike_ - ( start->t + dendritic_delay_ms );
+  //    ++start;
+  //
+  //    // get_history() should make sure that
+  //    // start->t > t_lastspike_ - dendritic_delay, i.e. minus_dt < 0
+  //    assert( minus_dt < -1.0 * kernel().connection_manager.get_stdp_eps() );
+  //
+  //    weight_ = facilitate_( weight_, std::exp( minus_dt / tau_plus_ ) );
+  //  }
+  //
+  //  // depression due to the new pre-synaptic spike
+  //  double nearest_neighbor_Kminus;
+  //  double value_to_throw_away; // discard Kminus and Kminus_triplet here
+  //  target->get_K_values(
+  //    t_spike - dendritic_delay_ms, value_to_throw_away, nearest_neighbor_Kminus, value_to_throw_away );
+  //  weight_ = depress_( weight_, nearest_neighbor_Kminus );
+  //
+  //  e.set_weight( weight_ );
+  //
+  //
+  //  t_lastspike_ = t_spike;
 }
 
 
@@ -316,7 +281,7 @@ stdp_nn_symm_synapse::get_status( DictionaryDatum& d ) const
 }
 
 void
-stdp_nn_symm_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+stdp_nn_symm_synapse::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   ConnectionBase::set_status( d, cm );
   updateValue< double >( d, names::weight, weight_ );

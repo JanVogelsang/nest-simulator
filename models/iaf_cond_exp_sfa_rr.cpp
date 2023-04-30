@@ -378,7 +378,7 @@ nest::iaf_cond_exp_sfa_rr::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::iaf_cond_exp_sfa_rr::update( Time const& origin, const long from, const long to )
+nest::iaf_cond_exp_sfa_rr::update( const Time& origin, const long from, const long to )
 {
 
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
@@ -453,7 +453,7 @@ nest::iaf_cond_exp_sfa_rr::update( Time const& origin, const long from, const lo
 void
 nest::iaf_cond_exp_sfa_rr::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   if ( e.get_weight() > 0.0 )
   {
@@ -470,7 +470,7 @@ nest::iaf_cond_exp_sfa_rr::handle( SpikeEvent& e )
 void
 nest::iaf_cond_exp_sfa_rr::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();

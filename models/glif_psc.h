@@ -191,25 +191,25 @@ EndUserDocs */
 namespace nest
 {
 
-class glif_psc : public nest::ArchivingNode
+class glif_psc : public ArchivingNode
 {
 public:
   glif_psc();
 
   glif_psc( const glif_psc& );
 
-  using nest::Node::handle;
-  using nest::Node::handles_test_event;
+  using Node::handle;
+  using Node::handles_test_event;
 
-  nest::port send_test_event( nest::Node&, nest::port, nest::synindex, bool ) override;
+  port send_test_event( Node&, port, synindex ) override;
 
-  void handle( nest::SpikeEvent& ) override;
-  void handle( nest::CurrentEvent& ) override;
-  void handle( nest::DataLoggingRequest& ) override;
+  void handle( SpikeEvent& ) override;
+  void handle( CurrentEvent& ) override;
+  void handle( DataLoggingRequest& ) override;
 
-  nest::port handles_test_event( nest::SpikeEvent&, nest::port ) override;
-  nest::port handles_test_event( nest::CurrentEvent&, nest::port ) override;
-  nest::port handles_test_event( nest::DataLoggingRequest&, nest::port ) override;
+  port handles_test_event( SpikeEvent&, port ) override;
+  port handles_test_event( CurrentEvent&, port ) override;
+  port handles_test_event( DataLoggingRequest&, port ) override;
 
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
@@ -222,11 +222,11 @@ private:
   void pre_run_hook() override;
 
   //! Take neuron through given time interval
-  void update( nest::Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
 
   // The next two classes need to be friends to access the State_ class/member
-  friend class nest::RecordablesMap< glif_psc >;
-  friend class nest::UniversalDataLogger< glif_psc >;
+  friend class RecordablesMap< glif_psc >;
+  friend class UniversalDataLogger< glif_psc >;
 
   struct Parameters_
   {
@@ -296,11 +296,11 @@ private:
     Buffers_( glif_psc& );
     Buffers_( const Buffers_&, glif_psc& );
 
-    std::vector< nest::RingBuffer > spikes_; //!< Buffer incoming spikes through delay, as sum
-    nest::RingBuffer currents_;              //!< Buffer incoming currents through delay,
+    std::vector< RingBuffer > spikes_; //!< Buffer incoming spikes through delay, as sum
+    RingBuffer currents_;              //!< Buffer incoming currents through delay,
 
     //! Logger for all analog data
-    nest::UniversalDataLogger< glif_psc > logger_;
+    UniversalDataLogger< glif_psc > logger_;
   };
 
   struct Variables_
@@ -379,40 +379,40 @@ private:
   Buffers_ B_;
 
   //! Mapping of recordables names to access functions
-  static nest::RecordablesMap< glif_psc > recordablesMap_;
+  static RecordablesMap< glif_psc > recordablesMap_;
 };
 
 
 inline size_t
-nest::glif_psc::Parameters_::n_receptors_() const
+glif_psc::Parameters_::n_receptors_() const
 {
   return tau_syn_.size();
 }
 
-inline nest::port
-nest::glif_psc::send_test_event( nest::Node& target, nest::port receptor_type, nest::synindex, bool )
+inline port
+glif_psc::send_test_event( Node& target, port receptor_type, synindex )
 {
-  nest::SpikeEvent e;
+  SpikeEvent e;
   e.set_sender( *this );
   return target.handles_test_event( e, receptor_type );
 }
 
-inline nest::port
-nest::glif_psc::handles_test_event( nest::CurrentEvent&, nest::port receptor_type )
+inline port
+glif_psc::handles_test_event( CurrentEvent&, port receptor_type )
 {
   if ( receptor_type != 0 )
   {
-    throw nest::UnknownReceptorType( receptor_type, get_name() );
+    throw UnknownReceptorType( receptor_type, get_name() );
   }
   return 0;
 }
 
-inline nest::port
-nest::glif_psc::handles_test_event( nest::DataLoggingRequest& dlr, nest::port receptor_type )
+inline port
+glif_psc::handles_test_event( DataLoggingRequest& dlr, port receptor_type )
 {
   if ( receptor_type != 0 )
   {
-    throw nest::UnknownReceptorType( receptor_type, get_name() );
+    throw UnknownReceptorType( receptor_type, get_name() );
   }
   return B_.logger_.connect_logging_device( dlr, recordablesMap_ );
 }
@@ -427,7 +427,7 @@ glif_psc::get_status( DictionaryDatum& d ) const
   // get information managed by parent class
   ArchivingNode::get_status( d );
 
-  ( *d )[ nest::names::recordables ] = recordablesMap_.get_list();
+  ( *d )[ names::recordables ] = recordablesMap_.get_list();
 }
 
 inline void

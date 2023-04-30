@@ -108,7 +108,7 @@ public:
   /**
    * Set properties from the values given in dictionary.
    */
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   // data members common to all connections
   double tau_plus_;
@@ -153,31 +153,13 @@ public:
   /**
    * Set properties of this connection from the values given in dictionary.
    */
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   /**
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void send( Event& e,
-    const thread t,
-    const delay axonal_delay,
-    const delay dendritic_delay,
-    const STDPPLHomCommonProperties&,
-    Node* target );
-
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
+  void send( Event& e, const thread t, const double Kminus, const STDPPLHomCommonProperties& );
 
   /*
    * This function calls check_connection on the sender and checks if the
@@ -193,29 +175,8 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node&,
-    Node& t,
-    const rport,
-    const synindex syn_id,
-    const delay dendritic_delay,
-    const delay axonal_delay,
-    const CommonPropertiesType& cp )
+  check_connection( Node&, Node&, const rport, const synindex, const delay, const CommonPropertiesType& )
   {
-    ConnTestDummyNode dummy_target;
-
-    if ( axonal_delay + dendritic_delay < kernel().connection_manager.get_stdp_eps() )
-    {
-      throw BadProperty(
-        "Combination of axonal and dendritic delay has to be more than 0." ); // TODO JV (pt): Or does it actually?
-    }
-    if ( axonal_delay > Time::delay_steps_to_ms( dendritic_delay ) )
-    {
-      LOG( M_WARNING,
-        "stdp_pl_synapse_hom::check_connection",
-        "Axonal delay is greater than dendritic delay, "
-        "which can lead to omission of post-synaptic spikes in this synapse type." );
-    }
-    t.register_stdp_connection( axonal_delay, dendritic_delay, syn_id );
   }
 
   void
@@ -253,52 +214,46 @@ private:
  * \param e The event to send
  */
 inline void
-stdp_pl_synapse_hom::send( Event& e,
-  const thread t,
-  const delay axonal_delay,
-  const delay dendritic_delay,
-  const STDPPLHomCommonProperties& cp,
-  Node* target )
+stdp_pl_synapse_hom::send( Event& e, const thread t, const double Kminus, const STDPPLHomCommonProperties& cp )
 {
-  // synapse STDP depressing/facilitation dynamics
-
-  const double t_spike = e.get_stamp().get_ms();
-
-  // t_lastspike_ = 0 initially
-  const double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
-
-  // get spike history in relevant range (t1, t2] from postsynaptic neuron
-  std::deque< ArchivedSpikeTrace >::iterator start;
-  std::deque< ArchivedSpikeTrace >::iterator finish;
-  target->get_history( t_lastspike_ - dendritic_delay_ms + cp.axonal_delay_,
-    t_spike - dendritic_delay_ms + cp.axonal_delay_,
-    &start,
-    &finish );
-
-  // facilitation due to postsynaptic spikes since last pre-synaptic spike
-  double minus_dt;
-  while ( start != finish )
-  {
-    minus_dt = t_lastspike_ + cp.axonal_delay_ - ( start->t + dendritic_delay_ms );
-    // get_history() should make sure that
-    // start->t > t_lastspike - dendritic_delay, i.e. minus_dt < 0
-    assert( minus_dt < -1.0 * kernel().connection_manager.get_stdp_eps() );
-    weight_ = facilitate_( weight_, Kplus_ * std::exp( minus_dt * cp.tau_plus_inv_ ), cp );
-
-    start++;
-  }
-
-  // depression due to new pre-synaptic spike
-  const double K_minus = target->get_K_value( dendritic_delay_ms, t_spike, e.get_sender_spike_data().syn_id );
-  weight_ = depress_( weight_, K_minus, cp );
-
-  e.set_weight( weight_ );
-  e.set_delay_steps( dendritic_delay );
-  e();
-
-  Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) * cp.tau_plus_inv_ ) + 1.0;
-
-  t_lastspike_ = t_spike;
+  //  // synapse STDP depressing/facilitation dynamics
+  //
+  //  const double t_spike = e.get_stamp().get_ms();
+  //
+  //  // t_lastspike_ = 0 initially
+  //  const double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
+  //
+  //  // get spike history in relevant range (t1, t2] from postsynaptic neuron
+  //  std::deque< ArchivedSpikeTrace >::iterator start;
+  //  std::deque< ArchivedSpikeTrace >::iterator finish;
+  //  target->get_history( t_lastspike_ - dendritic_delay_ms + cp.axonal_delay_,
+  //    t_spike - dendritic_delay_ms + cp.axonal_delay_,
+  //    &start,
+  //    &finish );
+  //
+  //  // facilitation due to postsynaptic spikes since last pre-synaptic spike
+  //  double minus_dt;
+  //  while ( start != finish )
+  //  {
+  //    minus_dt = t_lastspike_ + cp.axonal_delay_ - ( start->t + dendritic_delay_ms );
+  //    // get_history() should make sure that
+  //    // start->t > t_lastspike - dendritic_delay, i.e. minus_dt < 0
+  //    assert( minus_dt < -1.0 * kernel().connection_manager.get_stdp_eps() );
+  //    weight_ = facilitate_( weight_, Kplus_ * std::exp( minus_dt * cp.tau_plus_inv_ ), cp );
+  //
+  //    start++;
+  //  }
+  //
+  //  // depression due to new pre-synaptic spike
+  //  const double K_minus = target->get_K_value( dendritic_delay_ms, t_spike, e.get_sender_spike_data().syn_id );
+  //  weight_ = depress_( weight_, K_minus, cp );
+  //
+  //  e.set_weight( weight_ );
+  //
+  //
+  //  Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) * cp.tau_plus_inv_ ) + 1.0;
+  //
+  //  t_lastspike_ = t_spike;
 }
 
 } // of namespace nest

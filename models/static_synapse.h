@@ -82,75 +82,20 @@ public:
   static_synapse( const static_synapse& rhs ) = default;
   static_synapse& operator=( const static_synapse& rhs ) = default;
 
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( RateEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( DataLoggingRequest&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( CurrentEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( ConductanceEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( DoubleDataEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( DSSpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( DSCurrentEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
-
   void
-  check_connection( Node&, Node&, rport, const synindex, const delay, const delay, const CommonPropertiesType& )
+  check_connection( Node&, Node&, rport, const synindex, const delay, const CommonPropertiesType& )
   {
   }
 
   void
-  send( Event& e,
-    const thread,
-    const delay axonal_delay,
-    const delay dendritic_delay,
-    const CommonSynapseProperties&,
-    Node* )
+  send( Event& e, const thread, const double, const CommonSynapseProperties& )
   {
     e.set_weight( weight_ );
-    e.set_delay_steps( dendritic_delay );
-    e();
   }
 
   void get_status( DictionaryDatum& d ) const;
 
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   void
   set_weight( double w )
@@ -169,7 +114,7 @@ static_synapse::get_status( DictionaryDatum& d ) const
 }
 
 void
-static_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+static_synapse::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   ConnectionBase::set_status( d, cm );
   updateValue< double >( d, names::weight, weight_ );

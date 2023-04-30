@@ -296,7 +296,7 @@ nest::iaf_psc_alpha_ps::get_next_event_( const long T, double& ev_offset, double
 }
 
 void
-nest::iaf_psc_alpha_ps::update( Time const& origin, const long from, const long to )
+nest::iaf_psc_alpha_ps::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 );
   assert( static_cast< delay >( from ) < kernel().connection_manager.get_min_delay() );
@@ -457,7 +457,7 @@ nest::iaf_psc_alpha_ps::update( Time const& origin, const long from, const long 
 void
 nest::iaf_psc_alpha_ps::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   /* We need to compute the absolute time stamp of the delivery time
      of the spike, since spikes might spend longer than min_delay_
@@ -474,7 +474,7 @@ nest::iaf_psc_alpha_ps::handle( SpikeEvent& e )
 void
 nest::iaf_psc_alpha_ps::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();
@@ -527,7 +527,7 @@ nest::iaf_psc_alpha_ps::propagate_( const double dt )
 }
 
 void
-nest::iaf_psc_alpha_ps::emit_spike_( Time const& origin, const long lag, const double t0, const double dt )
+nest::iaf_psc_alpha_ps::emit_spike_( const Time& origin, const long lag, const double t0, const double dt )
 {
   // we know that the potential is subthreshold at t0, super at t0+dt
 
@@ -551,7 +551,7 @@ nest::iaf_psc_alpha_ps::emit_spike_( Time const& origin, const long lag, const d
 }
 
 void
-nest::iaf_psc_alpha_ps::emit_instant_spike_( Time const& origin, const long lag, const double spike_offs )
+nest::iaf_psc_alpha_ps::emit_instant_spike_( const Time& origin, const long lag, const double spike_offs )
 {
   assert( S_.V_m_ >= P_.U_th_ ); // ensure we are superthreshold
 

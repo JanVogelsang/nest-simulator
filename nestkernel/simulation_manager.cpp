@@ -502,7 +502,7 @@ nest::SimulationManager::prepare()
 }
 
 void
-nest::SimulationManager::assert_valid_simtime( Time const& t )
+nest::SimulationManager::assert_valid_simtime( const Time& t )
 {
   if ( t == Time::ms( 0.0 ) )
   {
@@ -543,7 +543,7 @@ nest::SimulationManager::assert_valid_simtime( Time const& t )
 }
 
 void
-nest::SimulationManager::run( Time const& t )
+nest::SimulationManager::run( const Time& t )
 {
   assert_valid_simtime( t );
 
@@ -688,7 +688,6 @@ nest::SimulationManager::update_connection_infrastructure( const thread tid )
   }
 
   kernel().connection_manager.restructure_connection_tables( tid );
-  kernel().connection_manager.prepare_connections( tid );
 
 #pragma omp barrier // wait for all threads to finish sorting
 

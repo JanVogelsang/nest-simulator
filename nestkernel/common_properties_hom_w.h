@@ -78,7 +78,7 @@ public:
    * Set properties from the values given in dictionary.
    */
   void
-  set_status( const DictionaryDatum& d, ConnectorModel& cm )
+  set_status( const DictionaryDatum& d, const ConnectorModel& cm )
   {
     CommonSynapseProperties::set_status( d, cm );
     updateValue< double >( d, names::weight, weight_ );

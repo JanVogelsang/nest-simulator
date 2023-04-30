@@ -409,7 +409,7 @@ nest::hh_psc_alpha_clopath::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::hh_psc_alpha_clopath::update( Time const& origin, const long from, const long to )
+nest::hh_psc_alpha_clopath::update( const Time& origin, const long from, const long to )
 {
 
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
@@ -488,7 +488,7 @@ nest::hh_psc_alpha_clopath::update( Time const& origin, const long from, const l
 void
 nest::hh_psc_alpha_clopath::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   if ( e.get_weight() > 0.0 )
   {
@@ -505,7 +505,7 @@ nest::hh_psc_alpha_clopath::handle( SpikeEvent& e )
 void
 nest::hh_psc_alpha_clopath::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();

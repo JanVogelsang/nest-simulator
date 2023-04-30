@@ -125,43 +125,18 @@ public:
   /**
    * Set properties of this connection from the values given in dictionary.
    */
-  virtual void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  virtual void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   /**
    * Send an event to the receiver of this connection.
    * \param e The event to send
    * \param cp Common properties to all synapses (empty).
    */
-  void send( Event& e,
-    const thread t,
-    const delay axonal_delay,
-    const delay dendritic_delay,
-    const CommonSynapseProperties& cp,
-    Node* target );
-
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
+  void send( Event& e, const thread t, const double, const CommonSynapseProperties& cp );
 
   void
-  check_connection( Node& s,
-    Node& t,
-    const rport receptor_type,
-    const synindex syn_id,
-    const delay dendritic_delay,
-    const delay axonal_delay,
-    const CommonPropertiesType& )
+  check_connection( Node&, Node&, const rport, const synindex, const delay, const CommonPropertiesType& )
   {
-    ConnTestDummyNode dummy_target;
   }
 
   //! allows efficient initialization from ConnectorModel::add_connection()
@@ -188,12 +163,7 @@ private:
  * \param e The event to send
  */
 inline void
-ht_synapse::send( Event& e,
-  const thread t,
-  const delay axonal_delay,
-  const delay dendritic_delay,
-  const CommonSynapseProperties&,
-  Node* target )
+ht_synapse::send( Event& e, const thread t, const double, const CommonSynapseProperties& )
 {
   // propagation t_lastspike -> t_spike, t_lastspike_ = 0 initially, p_ = 1
   const double t_spike = e.get_stamp().get_ms();
@@ -202,8 +172,7 @@ ht_synapse::send( Event& e,
 
   // send the spike to the target
   e.set_weight( weight_ * p_ );
-  e.set_delay_steps( dendritic_delay );
-  e();
+
 
   // reduce pool after spike is sent
   p_ *= ( 1 - delta_P_ );
@@ -233,7 +202,7 @@ ht_synapse::get_status( DictionaryDatum& d ) const
 }
 
 void
-ht_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+ht_synapse::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   ConnectionBase::set_status( d, cm );
 

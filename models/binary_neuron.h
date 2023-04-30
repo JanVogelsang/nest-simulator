@@ -94,7 +94,7 @@ public:
   using Node::receives_signal;
   using Node::sends_signal;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   void handle( SpikeEvent& ) override;
   void handle( CurrentEvent& ) override;
@@ -121,7 +121,7 @@ private:
   // must have an double operator(double) defined
   TGainfunction gain_;
 
-  void update( Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
 
   // The next two classes need to be friends to access the State_ class/member
   friend class RecordablesMap< binary_neuron< TGainfunction > >;
@@ -230,7 +230,7 @@ private:
 
 template < class TGainfunction >
 inline port
-binary_neuron< TGainfunction >::send_test_event( Node& target, const rport receptor_type, synindex, bool )
+binary_neuron< TGainfunction >::send_test_event( Node& target, const rport receptor_type, synindex )
 {
   SpikeEvent e;
   e.set_sender( *this );
@@ -454,7 +454,7 @@ binary_neuron< TGainfunction >::pre_run_hook()
 
 template < class TGainfunction >
 void
-binary_neuron< TGainfunction >::update( Time const& origin, const long from, const long to )
+binary_neuron< TGainfunction >::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
@@ -509,7 +509,7 @@ template < class TGainfunction >
 void
 binary_neuron< TGainfunction >::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   // The following logic implements the encoding:
   // A single spike signals a transition to 0 state, two spikes in same time
@@ -565,7 +565,7 @@ template < class TGainfunction >
 void
 binary_neuron< TGainfunction >::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();

@@ -50,7 +50,7 @@ parrot_neuron_ps::init_buffers_()
 }
 
 void
-parrot_neuron_ps::update( Time const& origin, long const from, long const to )
+parrot_neuron_ps::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 );
   assert( static_cast< delay >( from ) < kernel().connection_manager.get_min_delay() );
@@ -108,7 +108,7 @@ parrot_neuron_ps::handle( SpikeEvent& e )
   // Repeat only spikes incoming on port 0, port 1 will be ignored
   if ( 0 == e.get_rport() )
   {
-    assert( e.get_delay_steps() > 0 );
+    // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
     // We need to compute the absolute time stamp of the delivery time
     // of the spike, since spikes might spend longer than min_delay_

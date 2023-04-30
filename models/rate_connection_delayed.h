@@ -91,13 +91,7 @@ public:
   }
 
   void
-  check_connection( Node& s,
-    Node& t,
-    const rport receptor_type,
-    const synindex syn_id,
-    const delay dendritic_delay,
-    const delay axonal_delay,
-    const CommonPropertiesType& )
+  check_connection( Node& s, Node&, const rport, const synindex, const delay, const CommonPropertiesType& )
   {
     EventType ge;
 
@@ -111,21 +105,14 @@ public:
    * \param p The port under which this connection is stored in the Connector.
    */
   void
-  send( Event& e,
-    const thread,
-    const delay axonal_delay,
-    const delay dendritic_delay,
-    const CommonSynapseProperties&,
-    Node* )
+  send( Event& e, const thread, const double, const CommonSynapseProperties& )
   {
     e.set_weight( weight_ );
-    e.set_delay_steps( dendritic_delay );
-    e();
   }
 
   void get_status( DictionaryDatum& d ) const;
 
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   void
   set_weight( double w )
@@ -146,7 +133,7 @@ RateConnectionDelayed::get_status( DictionaryDatum& d ) const
 }
 
 void
-RateConnectionDelayed::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+RateConnectionDelayed::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   ConnectionBase::set_status( d, cm );
   updateValue< double >( d, names::weight, weight_ );

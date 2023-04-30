@@ -302,7 +302,7 @@ nest::cm_default::pre_run_hook()
  * Update and spike handling functions
  */
 void
-nest::cm_default::update( Time const& origin, const long from, const long to )
+nest::cm_default::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
@@ -335,7 +335,7 @@ nest::cm_default::handle( SpikeEvent& e )
     throw BadProperty( "Synaptic weights must be positive." );
   }
 
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
   assert( ( e.get_rport() >= 0 ) and ( ( size_t ) e.get_rport() < syn_buffers_.size() ) );
 
   syn_buffers_[ e.get_rport() ].add_value(
@@ -345,7 +345,7 @@ nest::cm_default::handle( SpikeEvent& e )
 void
 nest::cm_default::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();

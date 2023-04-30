@@ -137,46 +137,18 @@ public:
   /**
    * Set properties of this connection from the values given in dictionary.
    */
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   /**
    * Send an event to the receiver of this connection.
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e,
-    const thread t,
-    const delay axonal_delay,
-    const delay dendritic_delay,
-    const CommonSynapseProperties& cp,
-    Node* target );
-
-
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
+  void send( Event& e, const thread t, const double Kminus, const CommonSynapseProperties& cp );
 
   void
-  check_connection( Node& s,
-    Node& t,
-    const rport receptor_type,
-    const synindex syn_id,
-    const delay dendritic_delay,
-    const delay axonal_delay,
-    const CommonPropertiesType& )
+  check_connection( Node&, Node&, const rport, const synindex, const delay, const CommonPropertiesType& )
   {
-    ConnTestDummyNode dummy_target;
-
-    t.register_stdp_connection( axonal_delay, dendritic_delay, syn_id );
   }
 
   void
@@ -218,52 +190,44 @@ private:
  * \param cp Common properties object, containing the stdp parameters.
  */
 inline void
-clopath_synapse::send( Event& e,
-  const thread t,
-  const delay axonal_delay,
-  const delay dendritic_delay,
-  const CommonSynapseProperties&,
-  Node* target )
+clopath_synapse::send( Event& e, const thread t, const double Kminus, const CommonSynapseProperties& )
 {
-  double t_spike = e.get_stamp().get_ms();
-  // use accessor functions (inherited from Connection< >) to obtain delay and
-  // target
-  double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
-
-  // get spike history in relevant range (t1, t2] from postsynaptic neuron
-  std::deque< ArchivedSpikeGeneric >::iterator start;
-  std::deque< ArchivedSpikeGeneric >::iterator finish;
-
-  // For a new synapse, t_lastspike_ contains the point in time of the last
-  // spike. So we initially read the
-  // history(t_last_spike - dendritic_delay, ..., T_spike-dendritic_delay]
-  // which increases the access counter for these entries.
-  // At registration, all entries' access counters of
-  // history[0, ..., t_last_spike - dendritic_delay] have been
-  // incremented by ArchivingNode::register_stdp_connection(). See bug #218 for
-  // details.
-  target->get_LTP_history( t_lastspike_ - dendritic_delay_ms, t_spike - dendritic_delay_ms, &start, &finish );
-  // facilitation due to postsynaptic activity since last pre-synaptic spike
-  while ( start != finish )
-  {
-    const double minus_dt = t_lastspike_ - ( start->t + dendritic_delay_ms );
-    weight_ = facilitate_( weight_, start->value, x_bar_ * exp( minus_dt / tau_x_ ) );
-    ++start;
-  }
-
-  // depression due to new pre-synaptic spike
-  weight_ = depress_( weight_, target->get_LTD_value( t_spike - dendritic_delay_ms ) );
-
-  e.set_weight( weight_ );
-  // use accessor functions (inherited from Connection< >) to obtain delay in
-  // steps and rport
-  e.set_delay_steps( dendritic_delay );
-  e();
-
-  // compute the trace of the presynaptic spike train
-  x_bar_ = x_bar_ * std::exp( ( t_lastspike_ - t_spike ) / tau_x_ ) + 1.0 / tau_x_;
-
-  t_lastspike_ = t_spike;
+  //  double t_spike = e.get_stamp().get_ms();
+  //  // use accessor functions (inherited from Connection< >) to obtain delay and
+  //  // target
+  //  double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
+  //
+  //  // get spike history in relevant range (t1, t2] from postsynaptic neuron
+  //  std::deque< ArchivedSpikeGeneric >::iterator start;
+  //  std::deque< ArchivedSpikeGeneric >::iterator finish;
+  //
+  //  // For a new synapse, t_lastspike_ contains the point in time of the last
+  //  // spike. So we initially read the
+  //  // history(t_last_spike - dendritic_delay, ..., T_spike-dendritic_delay]
+  //  // which increases the access counter for these entries.
+  //  // At registration, all entries' access counters of
+  //  // history[0, ..., t_last_spike - dendritic_delay] have been
+  //  // incremented by ArchivingNode::register_stdp_connection(). See bug #218 for
+  //  // details.
+  //  target->get_LTP_history( t_lastspike_ - dendritic_delay_ms, t_spike - dendritic_delay_ms, &start, &finish );
+  //  // facilitation due to postsynaptic activity since last pre-synaptic spike
+  //  while ( start != finish )
+  //  {
+  //    const double minus_dt = t_lastspike_ - ( start->t + dendritic_delay_ms );
+  //    weight_ = facilitate_( weight_, start->value, x_bar_ * exp( minus_dt / tau_x_ ) );
+  //    ++start;
+  //  }
+  //
+  //  // depression due to new pre-synaptic spike
+  //  weight_ = depress_( weight_, target->get_LTD_value( t_spike - dendritic_delay_ms ) );
+  //
+  //  e.set_weight( weight_ );
+  //
+  //
+  //  // compute the trace of the presynaptic spike train
+  //  x_bar_ = x_bar_ * std::exp( ( t_lastspike_ - t_spike ) / tau_x_ ) + 1.0 / tau_x_;
+  //
+  //  t_lastspike_ = t_spike;
 }
 
 
@@ -291,7 +255,7 @@ clopath_synapse::get_status( DictionaryDatum& d ) const
 }
 
 void
-clopath_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+clopath_synapse::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   ConnectionBase::set_status( d, cm );
   updateValue< double >( d, names::weight, weight_ );

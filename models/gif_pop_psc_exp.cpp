@@ -486,7 +486,7 @@ nest::gif_pop_psc_exp::get_history_size()
 
 
 void
-nest::gif_pop_psc_exp::update( Time const& origin, const long from, const long to )
+nest::gif_pop_psc_exp::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
@@ -647,7 +647,7 @@ nest::gif_pop_psc_exp::update( Time const& origin, const long from, const long t
 void
 gif_pop_psc_exp::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double s = e.get_weight() * e.get_multiplicity();
 
@@ -664,7 +664,7 @@ gif_pop_psc_exp::handle( SpikeEvent& e )
 void
 nest::gif_pop_psc_exp::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();

@@ -307,7 +307,7 @@ nest::sinusoidal_gamma_generator::hazard_( port tgt_idx ) const
 }
 
 void
-nest::sinusoidal_gamma_generator::update( Time const& origin, const long from, const long to )
+nest::sinusoidal_gamma_generator::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
@@ -325,15 +325,15 @@ nest::sinusoidal_gamma_generator::update( Time const& origin, const long from, c
     {
       if ( P_.individual_spike_trains_ )
       {
-        DSSpikeEvent se;
-        kernel().event_delivery_manager.send( *this, se, lag );
+        SpikeEvent se;
+        kernel().event_delivery_manager.send_device_spike( *this, se, lag );
       }
       else
       {
         if ( V_.rng_->drand() < hazard_( 0 ) )
         {
           SpikeEvent se;
-          kernel().event_delivery_manager.send( *this, se, lag );
+          kernel().event_delivery_manager.send_device_spike( *this, se, lag );
           B_.t0_ms_[ 0 ] = V_.t_ms_;
           B_.Lambda_t0_[ 0 ] = 0;
         }
@@ -344,7 +344,7 @@ nest::sinusoidal_gamma_generator::update( Time const& origin, const long from, c
 }
 
 void
-nest::sinusoidal_gamma_generator::event_hook( DSSpikeEvent& e )
+nest::sinusoidal_gamma_generator::event_hook( SpikeEvent& e )
 {
   // get port number --- see #737
   const port tgt_idx = e.get_port();

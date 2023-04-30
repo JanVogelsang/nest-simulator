@@ -176,7 +176,7 @@ nest::rate_transformer_node< TNonlinearities >::pre_run_hook()
 
 template < class TNonlinearities >
 bool
-nest::rate_transformer_node< TNonlinearities >::update_( Time const& origin,
+nest::rate_transformer_node< TNonlinearities >::update_( const Time& origin,
   const long from,
   const long to,
   const bool called_from_wfr_update )

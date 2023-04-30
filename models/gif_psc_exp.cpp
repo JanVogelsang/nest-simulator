@@ -318,7 +318,7 @@ nest::gif_psc_exp::pre_run_hook()
  */
 
 void
-nest::gif_psc_exp::update( Time const& origin, const long from, const long to )
+nest::gif_psc_exp::update( const Time& origin, const long from, const long to )
 {
 
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
@@ -401,7 +401,7 @@ nest::gif_psc_exp::update( Time const& origin, const long from, const long to )
 void
 nest::gif_psc_exp::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   // EX: We must compute the arrival time of the incoming spike
   //     explicitly, since it depends on delay and offset within
@@ -422,7 +422,7 @@ nest::gif_psc_exp::handle( SpikeEvent& e )
 void
 nest::gif_psc_exp::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();

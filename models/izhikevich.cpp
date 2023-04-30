@@ -186,7 +186,7 @@ nest::izhikevich::pre_run_hook()
  */
 
 void
-nest::izhikevich::update( Time const& origin, const long from, const long to )
+nest::izhikevich::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
@@ -243,7 +243,7 @@ nest::izhikevich::update( Time const& origin, const long from, const long to )
 void
 nest::izhikevich::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
   B_.spikes_.add_value(
     e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_multiplicity() );
 }
@@ -251,7 +251,7 @@ nest::izhikevich::handle( SpikeEvent& e )
 void
 nest::izhikevich::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();

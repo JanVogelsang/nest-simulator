@@ -61,12 +61,12 @@ public:
     const synindex syn_id,
     const index local_target_connection_id,
     const delay dendritic_delay,
-    const std::vector< ConnectorModel* >& cm,
+    const ConnectorModel* cm,
     EventT& e )
   {
     // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
     // event by adding a weight and optionally updates its internal state as well.
-    connections_[ syn_id ]->send( tid, local_target_connection_id, 0, dendritic_delay, cm, e, this );
+    connections_[ syn_id ]->send( tid, node_id_, local_target_connection_id, dendritic_delay, cm, e );
 
     // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
     //  handle, or just handing the entire local connection id to the handle function.
@@ -77,12 +77,16 @@ public:
   void
   deliver_event( const synindex,
     const index,
-    const std::vector< ConnectorModel* >&,
+    const size_t,
+    const ConnectorModel*,
     const Time,
     const delay,
     const double ) override
   {
   }
+
+  virtual void event_hook( SpikeEvent& e ) {};
+  virtual void event_hook( CurrentEvent& e ) {};
 
 protected:
   index local_device_id_;

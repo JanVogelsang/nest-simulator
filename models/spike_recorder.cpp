@@ -51,7 +51,7 @@ nest::spike_recorder::pre_run_hook()
 }
 
 void
-nest::spike_recorder::update( Time const&, const long, const long )
+nest::spike_recorder::update( const Time&, const long, const long )
 {
   // Nothing to do. Writing to the backend happens in handle().
 }

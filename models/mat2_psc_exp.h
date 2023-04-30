@@ -156,7 +156,7 @@ public:
   using Node::handle;
   using Node::handles_test_event;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   port handles_test_event( SpikeEvent&, rport ) override;
   port handles_test_event( CurrentEvent&, rport ) override;
@@ -172,7 +172,7 @@ public:
 private:
   void init_buffers_() override;
   void pre_run_hook() override;
-  void update( Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
 
   // The next two classes need to be friends to access private members
   friend class RecordablesMap< mat2_psc_exp >;
@@ -346,7 +346,7 @@ private:
 
 
 inline port
-mat2_psc_exp::send_test_event( Node& target, const rport receptor_type, synindex, bool )
+mat2_psc_exp::send_test_event( Node& target, const rport receptor_type, synindex )
 {
   SpikeEvent e;
   e.set_sender( *this );

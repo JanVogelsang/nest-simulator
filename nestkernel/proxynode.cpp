@@ -43,10 +43,10 @@ proxynode::proxynode( index node_id, index model_id, index vp )
 }
 
 port
-proxynode::send_test_event( Node& target, const rport receptor_type, synindex syn_id, bool dummy_target )
+proxynode::send_test_event( Node& target, const rport receptor_type, synindex syn_id )
 {
   Model* model = kernel().model_manager.get_node_model( get_model_id() );
-  return model->send_test_event( target, receptor_type, syn_id, dummy_target );
+  return model->send_test_event( target, receptor_type, syn_id );
 }
 
 void

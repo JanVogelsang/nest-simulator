@@ -108,7 +108,7 @@ public:
   /**
    * Set properties from the values given in dictionary.
    */
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   // data members common to all connections
   double tau_plus_;
@@ -152,37 +152,19 @@ public:
   /**
    * Set properties of this connection from the values given in dictionary.
    */
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   /**
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void send( Event& e,
-    const thread t,
-    const delay axonal_delay,
-    const delay dendritic_delay,
-    const STDPPLHomAxDelayCommonProperties&,
-    Node* target );
+  void send( Event& e, const thread t, const double Kminus, const STDPPLHomAxDelayCommonProperties& );
 
   /**
    * Process a post-synaptic spike after it is backpropagated to the synapse.
    * @param t_syn The time the post-synaptic spike arrives at this synapse
    */
   void process_post_synaptic_spike( double t_syn, const STDPPLHomAxDelayCommonProperties& cp );
-
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
 
   /*
    * This function calls check_connection on the sender and checks if the
@@ -198,22 +180,8 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node&,
-    Node& t,
-    const rport,
-    const synindex syn_id,
-    const delay dendritic_delay,
-    const delay axonal_delay,
-    const CommonPropertiesType& cp )
+  check_connection( Node&, Node&, const rport, const synindex, const delay, const CommonPropertiesType& )
   {
-    ConnTestDummyNode dummy_target;
-
-    if ( axonal_delay + dendritic_delay < kernel().connection_manager.get_stdp_eps() )
-    {
-      throw BadProperty(
-        "Combination of axonal and dendritic delay has to be more than 0." ); // TODO JV (pt): Or does it actually?
-    }
-    t.register_stdp_connection( axonal_delay, dendritic_delay, syn_id );
   }
 
   double
@@ -252,37 +220,19 @@ private:
 // Implementation of class stdp_pl_synapse_hom_ax_delay.
 //
 
-/**
- * Send an event to the receiver of this connection.
- * \param e The event to send
- */
 inline void
 stdp_pl_synapse_hom_ax_delay::send( Event& e,
   const thread,
-  const delay axonal_delay,
-  const delay dendritic_delay,
-  const STDPPLHomAxDelayCommonProperties& cp,
-  Node* target )
+  const double Kminus,
+  const STDPPLHomAxDelayCommonProperties& cp )
 {
-  const double t_spike = e.get_stamp().get_ms() + Time::delay_steps_to_ms( axonal_delay );
-
-  // Todo JV (help): Move this to ConnectorBase. This would require a common base class for all STDP synapses.
-  // Process all post-synaptic spikes which have to be processed before this pre-synaptic spike. The post-synaptic
-  // spikes could not be processed before, as this connection might have an axonal delay lower than min_delay. Hence,
-  // the order at which pre- and post-synaptic spikes have to be processed can only be known after the communication.
-  const double K_minus =
-    target->get_trace( t_spike, Time::delay_steps_to_ms( dendritic_delay ), e.get_sender_spike_data().syn_id );
+  const double t_spike = e.get_stamp().get_ms();
 
   // depression due to new pre-synaptic spike
-  weight_ = depress_( weight_, K_minus, cp );
-
-  e.set_weight( weight_ );
-  e.set_delay_steps( dendritic_delay + axonal_delay );
-  e();
-
+  weight_ = depress_( weight_, Kminus, cp );
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) * cp.tau_plus_inv_ ) + 1.0;
-
   t_lastspike_ = t_spike;
+  e.set_weight( weight_ );
 }
 
 inline void

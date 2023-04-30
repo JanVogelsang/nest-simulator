@@ -115,7 +115,7 @@ nest::poisson_generator::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::poisson_generator::update( Time const& T, const long from, const long to )
+nest::poisson_generator::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
@@ -127,18 +127,18 @@ nest::poisson_generator::update( Time const& T, const long from, const long to )
 
   for ( long lag = from; lag < to; ++lag )
   {
-    if ( not StimulationDevice::is_active( T + Time::step( lag ) ) )
+    if ( not StimulationDevice::is_active( origin + Time::step( lag ) ) )
     {
       continue; // no spike at this lag
     }
 
-    DSSpikeEvent se;
-    kernel().event_delivery_manager.send( *this, se, lag );
+    SpikeEvent se;
+    kernel().event_delivery_manager.send_device_spike( *this, se, lag );
   }
 }
 
 void
-nest::poisson_generator::event_hook( DSSpikeEvent& e )
+nest::poisson_generator::event_hook( SpikeEvent& e )
 {
   // TODO JV (pt): Why not set the multiplicity when sending the event?
   long n_spikes = V_.poisson_dist_( get_vp_specific_rng( get_thread() ) );

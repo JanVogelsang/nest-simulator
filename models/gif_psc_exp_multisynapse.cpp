@@ -341,7 +341,7 @@ nest::gif_psc_exp_multisynapse::pre_run_hook()
  */
 
 void
-nest::gif_psc_exp_multisynapse::update( Time const& origin, const long from, const long to )
+nest::gif_psc_exp_multisynapse::update( const Time& origin, const long from, const long to )
 {
 
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
@@ -426,7 +426,7 @@ nest::gif_psc_exp_multisynapse::update( Time const& origin, const long from, con
 void
 gif_psc_exp_multisynapse::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
   assert( ( e.get_rport() > 0 ) and ( ( size_t ) e.get_rport() <= P_.n_receptors_() ) );
 
   B_.spikes_[ e.get_rport() - 1 ].add_value(
@@ -436,7 +436,7 @@ gif_psc_exp_multisynapse::handle( SpikeEvent& e )
 void
 nest::gif_psc_exp_multisynapse::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();

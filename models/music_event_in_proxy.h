@@ -114,7 +114,7 @@ public:
   using Node::handles_test_event;
 
   void handle( SpikeEvent& );
-  port send_test_event( Node&, rport, synindex, bool );
+  port send_test_event( Node&, rport, synindex );
 
   void get_status( DictionaryDatum& ) const;
   void set_status( const DictionaryDatum& );
@@ -124,7 +124,7 @@ private:
   void pre_run_hook();
 
   void
-  update( Time const&, const long, const long )
+  update( const Time&, const long, const long )
   {
   }
 
@@ -167,7 +167,7 @@ private:
 };
 
 inline port
-music_event_in_proxy::send_test_event( Node& target, const rport receptor_type, synindex, bool )
+music_event_in_proxy::send_test_event( Node& target, const rport receptor_type, synindex )
 {
   SpikeEvent e;
   e.set_sender( *this );

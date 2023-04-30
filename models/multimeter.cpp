@@ -46,7 +46,7 @@ multimeter::multimeter( const multimeter& n )
 }
 
 port
-multimeter::send_test_event( Node& target, const rport receptor_type, synindex, bool )
+multimeter::send_test_event( Node& target, const rport receptor_type, synindex )
 {
   DataLoggingRequest e( P_.interval_, P_.offset_, P_.record_from_ );
   e.set_sender( *this );
@@ -176,7 +176,7 @@ multimeter::pre_run_hook()
 }
 
 void
-multimeter::update( Time const& origin, const long from, const long )
+multimeter::update( const Time& origin, const long from, const long to )
 {
   /* There is nothing to request during the first time slice.
      For each subsequent slice, we collect all data generated during the

@@ -155,7 +155,7 @@ public:
   /**
    * Set properties from the values given in dictionary.
    */
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   Node* get_node();
 
@@ -217,7 +217,7 @@ public:
   /**
    * Set properties of this connection from the values given in dictionary.
    */
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   /**
    * Checks to see if illegal parameters are given in syn_spec.
@@ -232,31 +232,13 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  void send( Event& e,
-    const thread t,
-    const delay axonal_delay,
-    const delay dendritic_delay,
-    const STDPDopaCommonProperties& cp,
-    Node* target );
+  void send( Event& e, const thread t, const double Kminus, const STDPDopaCommonProperties& cp );
 
   void trigger_update_weight( thread t,
     const std::vector< spikecounter >& dopa_spikes,
     double t_trig,
     const delay dendritic_delay,
     const STDPDopaCommonProperties& cp );
-
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
 
   /*
    * This function calls check_connection on the sender and checks if the
@@ -274,21 +256,12 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s,
-    Node& t,
-    const rport receptor_type,
-    const synindex syn_id,
-    const delay dendritic_delay,
-    const delay axonal_delay,
-    const CommonPropertiesType& cp )
+  check_connection( Node&, Node&, const rport, const synindex, const delay, const CommonPropertiesType& cp )
   {
     if ( not cp.vt_ )
     {
       throw BadProperty( "No volume transmitter has been assigned to the dopamine synapse." );
     }
-
-    ConnTestDummyNode dummy_target;
-    t.register_stdp_connection( axonal_delay, dendritic_delay, syn_id );
   }
 
   void
@@ -434,56 +407,49 @@ stdp_dopamine_synapse::depress_( double kminus, const STDPDopaCommonProperties& 
  * \param e The event to send
  */
 inline void
-stdp_dopamine_synapse::send( Event& e,
-  const thread t,
-  const delay axonal_delay,
-  const delay dendritic_delay,
-  const STDPDopaCommonProperties& cp,
-  Node* target )
+stdp_dopamine_synapse::send( Event& e, const thread t, const double Kminus, const STDPDopaCommonProperties& cp )
 {
-
-  // purely dendritic delay
-  double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
-
-  double t_spike = e.get_stamp().get_ms();
-
-  // get history of dopamine spikes
-  const std::vector< spikecounter >& dopa_spikes = cp.vt_->deliver_spikes();
-
-  // get spike history in relevant range (t_last_update, t_spike] from
-  // postsynaptic neuron
-  std::deque< ArchivedSpikeTrace >::iterator start;
-  std::deque< ArchivedSpikeTrace >::iterator finish;
-  target->get_history( t_last_update_ - dendritic_delay_ms, t_spike - dendritic_delay_ms, &start, &finish );
-
-  // facilitation due to postsynaptic spikes since last update
-  double t0 = t_last_update_;
-  double minus_dt;
-  while ( start != finish )
-  {
-    process_dopa_spikes_( dopa_spikes, t0, start->t + dendritic_delay_ms, cp );
-    t0 = start->t + dendritic_delay_ms;
-    minus_dt = t_last_update_ - t0;
-    // facilitate only in case of post- after presyn. spike
-    // skip facilitation if pre- and postsyn. spike occur at the same time
-    if ( t_spike - start->t > kernel().connection_manager.get_stdp_eps() )
-    {
-      facilitate_( Kplus_ * std::exp( minus_dt / cp.tau_plus_ ), cp );
-    }
-    ++start;
-  }
-
-  // depression due to new pre-synaptic spike
-  process_dopa_spikes_( dopa_spikes, t0, t_spike, cp );
-  depress_( target->get_K_value( dendritic_delay_ms, t_spike, e.get_sender_spike_data().syn_id ), cp );
-
-  e.set_weight( weight_ );
-  e.set_delay_steps( dendritic_delay );
-  e();
-
-  Kplus_ = Kplus_ * std::exp( ( t_last_update_ - t_spike ) / cp.tau_plus_ ) + 1.0;
-  t_last_update_ = t_spike;
-  t_lastspike_ = t_spike;
+  //  // purely dendritic delay
+  //  double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
+  //
+  //  double t_spike = e.get_stamp().get_ms();
+  //
+  //  // get history of dopamine spikes
+  //  const std::vector< spikecounter >& dopa_spikes = cp.vt_->deliver_spikes();
+  //
+  //  // get spike history in relevant range (t_last_update, t_spike] from
+  //  // postsynaptic neuron
+  //  std::deque< ArchivedSpikeTrace >::iterator start;
+  //  std::deque< ArchivedSpikeTrace >::iterator finish;
+  //  target->get_history( t_last_update_ - dendritic_delay_ms, t_spike - dendritic_delay_ms, &start, &finish );
+  //
+  //  // facilitation due to postsynaptic spikes since last update
+  //  double t0 = t_last_update_;
+  //  double minus_dt;
+  //  while ( start != finish )
+  //  {
+  //    process_dopa_spikes_( dopa_spikes, t0, start->t + dendritic_delay_ms, cp );
+  //    t0 = start->t + dendritic_delay_ms;
+  //    minus_dt = t_last_update_ - t0;
+  //    // facilitate only in case of post- after presyn. spike
+  //    // skip facilitation if pre- and postsyn. spike occur at the same time
+  //    if ( t_spike - start->t > kernel().connection_manager.get_stdp_eps() )
+  //    {
+  //      facilitate_( Kplus_ * std::exp( minus_dt / cp.tau_plus_ ), cp );
+  //    }
+  //    ++start;
+  //  }
+  //
+  //  // depression due to new pre-synaptic spike
+  //  process_dopa_spikes_( dopa_spikes, t0, t_spike, cp );
+  //  depress_( target->get_K_value( dendritic_delay_ms, t_spike, e.get_sender_spike_data().syn_id ), cp );
+  //
+  //  e.set_weight( weight_ );
+  //
+  //
+  //  Kplus_ = Kplus_ * std::exp( ( t_last_update_ - t_spike ) / cp.tau_plus_ ) + 1.0;
+  //  t_last_update_ = t_spike;
+  //  t_lastspike_ = t_spike;
 }
 
 inline void

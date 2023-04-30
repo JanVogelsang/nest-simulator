@@ -113,37 +113,13 @@ public:
   bernoulli_synapse( const bernoulli_synapse& rhs ) = default;
   bernoulli_synapse& operator=( const bernoulli_synapse& rhs ) = default;
 
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
-
   void
-  check_connection( Node& s,
-    Node& t,
-    const rport receptor_type,
-    const synindex syn_id,
-    const delay dendritic_delay,
-    const delay axonal_delay,
-    const CommonPropertiesType& )
+  check_connection( Node&, Node&, const rport, const synindex, const delay, const CommonPropertiesType& )
   {
   }
 
   void
-  send( Event& e,
-    const thread t,
-    const delay axonal_delay,
-    const delay dendritic_delay,
-    const CommonSynapseProperties&,
-    Node* target )
+  send( Event& e, const thread t, const double, const CommonSynapseProperties& )
   {
     SpikeEvent e_spike = static_cast< SpikeEvent& >( e );
 
@@ -162,8 +138,6 @@ public:
     {
       e_spike.set_multiplicity( n_spikes_out );
       e.set_weight( weight_ );
-      e.set_delay_steps( dendritic_delay );
-      e();
     }
 
     // Resets multiplicity for consistency
@@ -172,7 +146,7 @@ public:
 
   void get_status( DictionaryDatum& d ) const;
 
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   void
   set_weight( double w )
@@ -195,7 +169,7 @@ bernoulli_synapse::get_status( DictionaryDatum& d ) const
 }
 
 void
-bernoulli_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+bernoulli_synapse::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   ConnectionBase::set_status( d, cm );
   updateValue< double >( d, names::weight, weight_ );

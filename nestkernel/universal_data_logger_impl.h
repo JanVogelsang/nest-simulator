@@ -231,7 +231,7 @@ nest::DynamicUniversalDataLogger< HostNode >::DataLogger_::handle( HostNode& hos
   reply.set_port( request.get_port() );
 
   // send it off
-  kernel().event_delivery_manager.send_to_node( reply );
+  // kernel().event_delivery_manager.send_to_node( reply );  // TODO JV
 }
 
 template < typename HostNode >

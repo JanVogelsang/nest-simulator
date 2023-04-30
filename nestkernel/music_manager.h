@@ -180,7 +180,7 @@ public:
    * Call update() for each of the registered MUSIC event handlers
    * to deliver all queued events to the target music_in_proxies.
    */
-  void update_music_event_handlers( Time const&, const long, const long );
+  void update_music_event_handlers( const Time&, const long, const long );
 #endif
 
 private:

@@ -180,7 +180,7 @@ public:
   using Node::handle;
   using Node::handles_test_event;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   port handles_test_event( SpikeEvent&, rport ) override;
   port handles_test_event( CurrentEvent&, rport ) override;
@@ -208,7 +208,7 @@ private:
   void init_buffers_() override;
 
   void pre_run_hook() override;
-  void update( Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
 
   /**
    * Calculate the precise spike time, emit the spike and reset the
@@ -219,7 +219,7 @@ private:
    * @param offset_U  Time offset for U value, i.e. for time when threshold
    *                  crossing was detected
    */
-  void emit_spike_( Time const& origin, const long lag, const double offset_U );
+  void emit_spike_( const Time& origin, const long lag, const double offset_U );
 
   /**
    * Instantaneously emit a spike at the precise time defined by
@@ -229,7 +229,7 @@ private:
    * @param lag           Time step within slice
    * @param spike_offset  Time offset for spike
    */
-  void emit_instant_spike_( Time const& origin, const long lag, const double spike_offset );
+  void emit_instant_spike_( const Time& origin, const long lag, const double spike_offset );
 
   /**
    * Propagate neuron state.
@@ -399,7 +399,7 @@ private:
 
 
 inline port
-nest::iaf_psc_delta_ps::send_test_event( Node& target, const rport receptor_type, synindex, bool )
+nest::iaf_psc_delta_ps::send_test_event( Node& target, const rport receptor_type, synindex )
 {
   SpikeEvent e;
   e.set_sender( *this );

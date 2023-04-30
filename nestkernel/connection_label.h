@@ -67,7 +67,7 @@ public:
    * @note Target and Rport cannot be changed after a connection has been
    * created.
    */
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   long get_label() const;
 
@@ -96,7 +96,7 @@ ConnectionLabel< ConnectionT >::get_status( DictionaryDatum& d ) const
 
 template < typename ConnectionT >
 void
-ConnectionLabel< ConnectionT >::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+ConnectionLabel< ConnectionT >::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   long lbl;
   if ( updateValue< long >( d, names::synapse_label, lbl ) )

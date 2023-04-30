@@ -34,34 +34,31 @@ namespace nest
 
 template < typename ConnectionT >
 inline void
-Node::check_connection( Node& source, const synindex syn_id, const rport receptor_type )
+Node::check_connection( Node& source, ConnectionT& connection, const synindex syn_id, const rport receptor_type, const delay total_delay, const typename ConnectionT::CommonPropertiesType& cp )
 {
-  // 1. does this connection support the event type sent by source
-  // try to send event from source to dummy_target
-  // this line might throw an exception
-  typename ConnectionT::ConnTestDummyNode dummy_node;
-  source.send_test_event( dummy_node, receptor_type, syn_id, true );
-
-  // 2. does the target accept the event type sent by source
+  // Does the target accept the event type sent by source
   // try to send event from source to target
   // this returns the port of the incoming connection
   // p must be stored in the base class connection
   // this line might throw an exception
   // TODO JV (pt): Add rport to neurons who need it, but not to all connections
-  // target_.set_rport( source.send_test_event( target, receptor_type, get_syn_id(), false ) );
+  // set_rport();
+  source.send_test_event( *this, receptor_type, syn_id );
 
-  // 3. do the events sent by source mean the same thing as they are
-  // interpreted in target?
-  // note that we here use a bitwise and operation (&), because we interpret
-  // each bit in the signal type as a collection of individual flags
+  // Do the events sent by source mean the same thing as they are interpreted in target?
+  // Note that we here use a bitwise and operation (&), because we interpret each bit in the signal type as a collection
+  // of individual flags
   if ( not( source.sends_signal() & receives_signal() ) )
   {
     throw IllegalConnection( "Source and target neuron are not compatible (e.g., spiking vs binary neuron)." );
   }
+
+  // The following lines will throw an exception, if the connection is not possible.
+  connection.check_connection( source, *this, receptor_type, syn_id, total_delay, cp );
 }
 
 template < typename ConnectionT >
-const index
+const std::pair< index, size_t >
 Node::add_connection( Node& source_node,
   const synindex syn_id,
   ConnectionT& connection,
@@ -71,17 +68,19 @@ Node::add_connection( Node& source_node,
   const delay axonal_delay,
   const delay dendritic_delay )
 {
+  // TODO JV (pt): The whole axonal delay idea needs to be rethought when adding connections, as it depends on the
+  //  synapse type if axonal delay has to be provided or not.
   // Check if the source of the connection is a device to add the connection to the corresponding container
   if ( connection_type == ConnectionType::CONNECT_FROM_DEVICE )
   {
     if ( not connections_from_devices_.at( syn_id ) )
     {
       // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
-      connections_from_devices_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id );
+      connections_from_devices_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id, 1 );
     }
     Connector< ConnectionT >* vc =
       static_cast< Connector< ConnectionT >* >( connections_from_devices_.at( syn_id ).get() );
-    return vc->add_device_connection( connection, source_node.get_node_id() );
+    return { vc->add_connection( connection ), 0 };
   }
   else
   {
@@ -93,7 +92,7 @@ Node::add_connection( Node& source_node,
     //    Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() );
     //    if ( connection_type == ConnectionType::CONNECT_TO_DEVICE )
     //    {
-    //      return vc->add_device_connection( connection, source_node.get_node_id() );
+    //      return vc->add_connection( connection, source_node.get_node_id() );
     //    }
     //    else
     //    {
@@ -106,39 +105,81 @@ Node::add_connection( Node& source_node,
       if ( not connections_.at( syn_id ) )
       {
         // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
-        connections_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id );
+        connections_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id, 1 );
       }
       Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() );
-      return vc->add_device_connection( connection, source_node.get_node_id() );
+      return { vc->add_connection( connection ), 0 };
     }
     else
     {
-      Connector< ConnectionT >* vc;
+      const ConnectorModel* cm = kernel().model_manager.get_connection_models( thread_ )[ syn_id ];
       if ( not connections_.at( syn_id ) )
       {
-        // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
-        connections_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id );
-        vc = static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() );
         // TODO JV: Benchmark this both with and without reserve
         size_t num;
-        if ( syn_id == 54 or syn_id == 32 )
-        {
-          num = 9000;
-        }
-        else
+        if ( syn_id == 55 )
         {
           num = 2250;
         }
-        vc->resize_debug( num );
+        else
+        {
+          num = 9000;
+        }
+        if ( cm->requires_postponed_delivery() )
+        {
+          connections_.at( syn_id ) = std::make_unique< DendriticDelayConnector< ConnectionT > >( syn_id, num );
+        }
+        else
+        {
+          connections_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id, num );
+        }
+      }
+      if ( cm->requires_postponed_delivery() )
+      {
+        register_stdp_connection( axonal_delay, dendritic_delay, syn_id );
+        DendriticDelayConnector< ConnectionT >* vc =
+          static_cast< DendriticDelayConnector< ConnectionT >* >( connections_.at( syn_id ).get() );
+        return vc->add_connection( connection, dendritic_delay );
       }
       else
       {
-        vc = static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() );
+        Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() );
+        return { vc->add_connection( connection ), 0 };
       }
-      vc->add_connection( connection, source_node.get_node_id(), axonal_delay, dendritic_delay );
-      return invalid_index; // TODO JV (pt): This index should never be used as it will change after sorting
     }
   }
+}
+
+template <>
+inline void
+Node::deliver_event_from_device< SpikeEvent >( const thread tid,
+  const synindex syn_id,
+  const index local_target_connection_id,
+  const delay d,
+  const ConnectorModel* cm,
+  SpikeEvent& e )
+{
+  connections_from_devices_[ syn_id ]->send( tid, node_id_, local_target_connection_id, d, cm, e );
+  static_cast< DeviceNode& >( e.get_sender() ).event_hook( e );
+  // TODO JV (pt): Make this cleaner, as only needed for poisson generators probably
+  if ( e.get_multiplicity() )
+  {
+    handle( e );
+  }
+}
+
+template <>
+inline void
+Node::deliver_event_from_device< CurrentEvent >( const thread tid,
+  const synindex syn_id,
+  const index local_target_connection_id,
+  const delay d,
+  const ConnectorModel* cm,
+  CurrentEvent& e )
+{
+  connections_from_devices_[ syn_id ]->send( tid, node_id_, local_target_connection_id, d, cm, e );
+  static_cast< DeviceNode& >( e.get_sender() ).event_hook( e );
+  handle( e );
 }
 
 template < typename EventT >
@@ -146,18 +187,11 @@ inline void
 Node::deliver_event_from_device( const thread tid,
   const synindex syn_id,
   const index local_target_connection_id,
-  const delay dendritic_delay,
-  const std::vector< ConnectorModel* >& cm,
+  const delay d,
+  const ConnectorModel* cm,
   EventT& e )
 {
-  // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
-  // event by adding a weight and optionally updates its internal state as well.
-  connections_from_devices_[ syn_id ]->send( tid, local_target_connection_id, 0, dendritic_delay, cm, e, this );
-
-  // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
-  //  handle, or just handing the entire local connection id to the handle function.
-
-  handle( e );
+  assert( false ); // TODO JV (pt)
 }
 
 }

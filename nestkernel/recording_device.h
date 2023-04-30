@@ -136,7 +136,7 @@ public:
   using Node::pre_run_hook;
   void pre_run_hook( const std::vector< Name >&, const std::vector< Name >& );
 
-  bool is_active( Time const& T ) const override;
+  bool is_active( const Time& T ) const override;
 
   enum Type
   {

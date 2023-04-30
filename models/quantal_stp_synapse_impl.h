@@ -64,7 +64,7 @@ quantal_stp_synapse::get_status( DictionaryDatum& d ) const
 
 
 void
-quantal_stp_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+quantal_stp_synapse::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   ConnectionBase::set_status( d, cm );
   updateValue< double >( d, names::weight, weight_ );

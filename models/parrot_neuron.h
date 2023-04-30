@@ -91,7 +91,7 @@ public:
   using Node::receives_signal;
   using Node::sends_signal;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
   SignalType sends_signal() const override;
   SignalType receives_signal() const override;
 
@@ -108,7 +108,7 @@ private:
   {
   } // no variables
 
-  void update( Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
 
   /**
      Buffers and accumulates the number of incoming spikes per time step;
@@ -123,7 +123,7 @@ private:
 };
 
 inline port
-parrot_neuron::send_test_event( Node& target, const rport receptor_type, synindex, bool )
+parrot_neuron::send_test_event( Node& target, const rport receptor_type, synindex )
 {
   SpikeEvent e;
   e.set_sender( *this );

@@ -55,7 +55,7 @@ cont_delay_synapse::get_status( DictionaryDatum& d ) const
 }
 
 void
-cont_delay_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+cont_delay_synapse::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   ConnectionBase::set_status( d, cm );
 

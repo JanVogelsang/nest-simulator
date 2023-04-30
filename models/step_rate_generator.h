@@ -108,7 +108,7 @@ public:
   step_rate_generator();
   step_rate_generator( const step_rate_generator& );
 
-  // port send_test_event( Node&, rport, synindex, bool );
+  // port send_test_event( Node&, rport, synindex );
   void sends_secondary_event( DelayedRateConnectionEvent& ) override {};
 
   using Node::handle;
@@ -117,7 +117,7 @@ public:
 
   void handle( DataLoggingRequest& ) override;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   port handles_test_event( DataLoggingRequest&, rport ) override;
 
@@ -135,7 +135,7 @@ private:
   void init_buffers_() override;
   void pre_run_hook() override;
 
-  void update( Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
 
   struct Buffers_;
 
@@ -215,7 +215,7 @@ private:
 };
 
 inline port
-step_rate_generator::send_test_event( Node& target, const rport receptor_type, synindex syn_id, bool )
+step_rate_generator::send_test_event( Node& target, const rport receptor_type, synindex syn_id )
 {
   StimulationDevice::enforce_single_syn_type( syn_id );
 

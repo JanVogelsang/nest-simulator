@@ -206,7 +206,7 @@ public:
   using nest::Node::handle;
   using nest::Node::handles_test_event;
 
-  nest::port send_test_event( nest::Node&, nest::port, nest::synindex, bool ) override;
+  nest::port send_test_event( nest::Node&, nest::port, nest::synindex ) override;
 
   void handle( nest::SpikeEvent& ) override;
   void handle( nest::CurrentEvent& ) override;
@@ -227,7 +227,7 @@ private:
   void pre_run_hook() override;
 
   //! Take neuron through given time interval
-  void update( nest::Time const&, const long, const long ) override;
+  void update( const nest::Time&, const long, const long ) override;
 
   // make dynamics function quasi-member
   friend int glif_cond_dynamics( double, const double*, double*, void* );
@@ -436,7 +436,7 @@ nest::glif_cond::Parameters_::n_receptors_() const
 
 
 inline nest::port
-nest::glif_cond::send_test_event( nest::Node& target, nest::port receptor_type, nest::synindex, bool )
+nest::glif_cond::send_test_event( nest::Node& target, nest::port receptor_type, nest::synindex )
 {
   nest::SpikeEvent e;
   e.set_sender( *this );

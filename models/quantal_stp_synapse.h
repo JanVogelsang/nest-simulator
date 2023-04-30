@@ -128,43 +128,18 @@ public:
    * Set default properties of this connection from the values given in
    * dictionary.
    */
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   /**
    * Send an event to the receiver of this connection.
    * \param e The event to send
    * \param cp Common properties to all synapses (empty).
    */
-  void send( Event& e,
-    const thread t,
-    const delay axonal_delay,
-    const delay dendritic_delay,
-    const CommonSynapseProperties& cp,
-    Node* target );
-
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
+  void send( Event& e, const thread t, const double, const CommonSynapseProperties& cp );
 
   void
-  check_connection( Node& s,
-    Node& t,
-    const rport receptor_type,
-    const synindex syn_id,
-    const delay dendritic_delay,
-    const delay axonal_delay,
-    const CommonPropertiesType& )
+  check_connection( Node&, Node&, const rport, const synindex, const delay, const CommonPropertiesType& )
   {
-    ConnTestDummyNode dummy_target;
   }
 
   void
@@ -192,12 +167,7 @@ private:
  * \param cp Common properties object, containing the quantal_stp parameters.
  */
 inline void
-quantal_stp_synapse::send( Event& e,
-  const thread t,
-  const delay axonal_delay,
-  const delay dendritic_delay,
-  const CommonSynapseProperties&,
-  Node* target )
+quantal_stp_synapse::send( Event& e, const thread t, const double, const CommonSynapseProperties& )
 {
   const double t_spike = e.get_stamp().get_ms();
   const double h = t_spike - t_lastspike_;
@@ -219,8 +189,7 @@ quantal_stp_synapse::send( Event& e,
   if ( n_release > 0 )
   {
     e.set_weight( n_release * weight_ );
-    e.set_delay_steps( dendritic_delay );
-    e();
+
     a_ -= n_release;
   }
 

@@ -168,7 +168,7 @@ public:
   using Node::handle;
   using Node::handles_test_event;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   port handles_test_event( SpikeEvent&, rport ) override;
   port handles_test_event( CurrentEvent&, rport ) override;
@@ -224,7 +224,7 @@ private:
    * While the neuron is refractory, membrane potential (y2_) is
    * clamped to U_reset_.
    */
-  void update( Time const& origin, const long from, const long to ) override;
+  void update( const Time& origin, const long from, const long to ) override;
   //@}
 
   // The next two classes need to be friends to access the State_ class/member
@@ -415,7 +415,7 @@ private:
 };
 
 inline port
-nest::iaf_psc_exp_ps::send_test_event( Node& target, const rport receptor_type, synindex, bool )
+nest::iaf_psc_exp_ps::send_test_event( Node& target, const rport receptor_type, synindex )
 {
   SpikeEvent e;
   e.set_sender( *this );

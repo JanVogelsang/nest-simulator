@@ -145,45 +145,20 @@ public:
   /**
    * Set properties of this connection from the values given in dictionary.
    */
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   /**
    * Send an event to the receiver of this connection.
    * \param e The event to send
    * \param cp Common properties to all synapses (empty).
    */
-  void send( Event& e,
-    const thread t,
-    const delay axonal_delay,
-    const delay dendritic_delay,
-    const CommonSynapseProperties& cp,
-    Node* target );
+  void send( Event& e, const thread t, const double, const CommonSynapseProperties& cp );
 
-
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
 
 
   void
-  check_connection( Node& s,
-    Node& t,
-    const rport receptor_type,
-    const synindex syn_id,
-    const delay dendritic_delay,
-    const delay axonal_delay,
-    const CommonPropertiesType& )
+  check_connection( Node&, Node&, const rport, const synindex, const delay, const CommonPropertiesType& )
   {
-    ConnTestDummyNode dummy_target;
   }
 
   void
@@ -209,12 +184,7 @@ private:
  * \param e The event to send
  */
 inline void
-tsodyks2_synapse::send( Event& e,
-  const thread t,
-  const delay axonal_delay,
-  const delay dendritic_delay,
-  const CommonSynapseProperties&,
-  Node* target )
+tsodyks2_synapse::send( Event& e, const thread t, const double, const CommonSynapseProperties& )
 {
   const double t_spike = e.get_stamp().get_ms();
   const double h = t_spike - t_lastspike_;
@@ -224,8 +194,7 @@ tsodyks2_synapse::send( Event& e,
   // We use the current values for the spike number n.
   e.set_weight( x_ * u_ * weight_ );
   // send the spike to the target
-  e.set_delay_steps( dendritic_delay );
-  e();
+
 
   // now we compute spike number n+1
   x_ = 1. + ( x_ - x_ * u_ - 1. ) * x_decay; // Eq. 5 from reference [3]_
@@ -261,7 +230,7 @@ tsodyks2_synapse::get_status( DictionaryDatum& d ) const
 }
 
 void
-tsodyks2_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+tsodyks2_synapse::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   ConnectionBase::set_status( d, cm );
   updateValue< double >( d, names::weight, weight_ );

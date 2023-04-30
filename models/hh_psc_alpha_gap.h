@@ -169,7 +169,7 @@ public:
   using Node::handles_test_event;
   using Node::sends_secondary_event;
 
-  port send_test_event( Node& target, const rport receptor_type, synindex, bool ) override;
+  port send_test_event( Node& target, const rport receptor_type, synindex ) override;
 
   void handle( SpikeEvent& ) override;
   void handle( CurrentEvent& ) override;
@@ -196,10 +196,10 @@ private:
   /** This is the actual update function. The additional boolean parameter
    * determines if the function is called by update (false) or wfr_update (true)
    */
-  bool update_( Time const&, const long, const long, const bool );
+  bool update_( const Time&, const long, const long, const bool );
 
-  void update( Time const&, const long, const long ) override;
-  bool wfr_update( Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
+  bool wfr_update( const Time&, const long, const long ) override;
 
   // END Boilerplate function declarations ----------------------------
 
@@ -368,13 +368,13 @@ private:
 };
 
 inline void
-hh_psc_alpha_gap::update( Time const& origin, const long from, const long to )
+hh_psc_alpha_gap::update( const Time& origin, const long from, const long to )
 {
   update_( origin, from, to, false );
 }
 
 inline bool
-hh_psc_alpha_gap::wfr_update( Time const& origin, const long from, const long to )
+hh_psc_alpha_gap::wfr_update( const Time& origin, const long from, const long to )
 {
   State_ old_state = S_; // save state before wfr_update
   const bool wfr_tol_exceeded = update_( origin, from, to, true );
@@ -384,7 +384,7 @@ hh_psc_alpha_gap::wfr_update( Time const& origin, const long from, const long to
 }
 
 inline port
-hh_psc_alpha_gap::send_test_event( Node& target, const rport receptor_type, synindex, bool )
+hh_psc_alpha_gap::send_test_event( Node& target, const rport receptor_type, synindex )
 {
   SpikeEvent se;
   se.set_sender( *this );

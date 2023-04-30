@@ -122,7 +122,7 @@ MusicRateInHandler::publish_port()
 
 
 void
-MusicRateInHandler::update( Time const&, const long, const long )
+MusicRateInHandler::update( const Time&, const long, const long )
 {
   const size_t buffer_size = kernel().connection_manager.get_min_delay();
   std::vector< double > new_rates( buffer_size, 0.0 );

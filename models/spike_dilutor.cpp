@@ -117,14 +117,14 @@ nest::spike_dilutor::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::spike_dilutor::update( Time const& T, const long from, const long to )
+nest::spike_dilutor::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 and static_cast< delay >( from ) < kernel().connection_manager.get_min_delay() );
   assert( from < to );
 
   for ( long lag = from; lag < to; ++lag )
   {
-    if ( not device_.is_active( T ) )
+    if ( not device_.is_active( origin ) )
     {
       return; // no spikes to be repeated
     }
@@ -134,16 +134,16 @@ nest::spike_dilutor::update( Time const& T, const long from, const long to )
 
     if ( n_mother_spikes )
     {
-      DSSpikeEvent se;
+      SpikeEvent se;
 
       se.set_multiplicity( n_mother_spikes );
-      kernel().event_delivery_manager.send( *this, se, lag );
+      kernel().event_delivery_manager.send_device_spike( *this, se, lag );
     }
   }
 }
 
 void
-nest::spike_dilutor::event_hook( DSSpikeEvent& e )
+nest::spike_dilutor::event_hook( SpikeEvent& e )
 {
   // Note: event_hook() receives a reference of the spike event that
   // was originally created in the update function. There we set

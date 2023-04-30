@@ -176,7 +176,7 @@ nest::poisson_generator_ps::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::poisson_generator_ps::update( Time const& T, const long from, const long to )
+nest::poisson_generator_ps::update( const Time& origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
@@ -192,8 +192,9 @@ nest::poisson_generator_ps::update( Time const& T, const long from, const long t
    * of the slice.
    */
   V_.t_min_active_ =
-    std::max( T + Time::step( from ), StimulationDevice::get_origin() + StimulationDevice::get_start() );
-  V_.t_max_active_ = std::min( T + Time::step( to ), StimulationDevice::get_origin() + StimulationDevice::get_stop() );
+    std::max( origin + Time::step( from ), StimulationDevice::get_origin() + StimulationDevice::get_start() );
+  V_.t_max_active_ =
+    std::min( origin + Time::step( to ), StimulationDevice::get_origin() + StimulationDevice::get_stop() );
 
   // Nothing to do for equality, since left boundary is excluded
   if ( V_.t_min_active_ < V_.t_max_active_ )
@@ -201,13 +202,13 @@ nest::poisson_generator_ps::update( Time const& T, const long from, const long t
     // we send the event as a "normal" event without offgrid-information
     // the event hook then sends out the real spikes with offgrid timing
     // We pretend to send at T+from
-    DSSpikeEvent se;
-    kernel().event_delivery_manager.send( *this, se, from );
+    SpikeEvent se;
+    kernel().event_delivery_manager.send_device_spike( *this, se, from );
   }
 }
 
 void
-nest::poisson_generator_ps::event_hook( DSSpikeEvent& e )
+nest::poisson_generator_ps::event_hook( SpikeEvent& e )
 {
   // get port number
   const port prt = e.get_port();

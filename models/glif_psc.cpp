@@ -462,7 +462,7 @@ nest::glif_psc::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::glif_psc::update( Time const& origin, const long from, const long to )
+nest::glif_psc::update( const Time& origin, const long from, const long to )
 {
 
   double v_old = S_.U_;
@@ -607,7 +607,7 @@ nest::glif_psc::handles_test_event( SpikeEvent&, rport receptor_type )
 void
 nest::glif_psc::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   B_.spikes_[ e.get_rport() - 1 ].add_value(
     e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_multiplicity() );
@@ -616,7 +616,7 @@ nest::glif_psc::handle( SpikeEvent& e )
 void
 nest::glif_psc::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   B_.currents_.add_value(
     e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_current() );

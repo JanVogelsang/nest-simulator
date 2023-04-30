@@ -75,7 +75,7 @@ STDPDopaCommonProperties::get_status( DictionaryDatum& d ) const
 }
 
 void
-STDPDopaCommonProperties::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+STDPDopaCommonProperties::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   CommonSynapseProperties::set_status( d, cm );
 
@@ -140,7 +140,7 @@ stdp_dopamine_synapse::get_status( DictionaryDatum& d ) const
 }
 
 void
-stdp_dopamine_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+stdp_dopamine_synapse::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   // base class properties
   ConnectionBase::set_status( d, cm );

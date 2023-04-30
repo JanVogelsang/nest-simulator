@@ -58,7 +58,7 @@ public:
       check for errors in time before run
       @throws KernelException if illegal time passed
   */
-  void assert_valid_simtime( Time const& );
+  void assert_valid_simtime( const Time& );
 
   /*
      Simulate can be broken up into .. prepare... run.. run.. cleanup..
@@ -77,7 +77,7 @@ public:
    * calls to get_status(), but any changes to the network are undefined,
    * leading serious risk of incorrect results.
    */
-  void run( Time const& );
+  void run( const Time& );
 
   /**
    * Closes a set of runs, doing finalizations such as file closures.
@@ -109,7 +109,7 @@ public:
   /**
    * Get the time at the beginning of the current time slice.
    */
-  Time const& get_slice_origin() const;
+  const Time& get_slice_origin() const;
 
   /**
    * Get the time at the beginning of the previous time slice.
@@ -145,7 +145,7 @@ public:
 
   //! Return current simulation time.
   // TODO: Precisely how defined? Rename!
-  Time const& get_clock() const;
+  const Time& get_clock() const;
 
   /**
    * Get the simulation duration in the current call to run().
@@ -232,7 +232,7 @@ private:
 #endif
 };
 
-inline Time const&
+inline const Time&
 SimulationManager::get_slice_origin() const
 {
   return clock_;
@@ -263,7 +263,7 @@ SimulationManager::get_slice() const
   return slice_;
 }
 
-inline Time const&
+inline const Time&
 SimulationManager::get_clock() const
 {
   return clock_;

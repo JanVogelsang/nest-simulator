@@ -71,12 +71,14 @@ public:
    * to keep a clean and unitary interface for the event sending
    * mechanism.
    * @note Only specialization for SpikeEvent does remote sending.
-   *       Specialized for DSSpikeEvent to avoid that these events
+   *       Specialized for SpikeEvent to avoid that these events
    *       are sent to remote processes.
    * \see send_local()
    */
   template < class EventT >
   void send( Node& source, EventT& e, const long lag = 0 );
+
+  void send_device_spike( Node& source, SpikeEvent& e, const long lag = 0 );
 
   /**
    * Send a secondary event remote.
@@ -121,13 +123,6 @@ public:
    * @see send_to_targets()
    */
   void send_off_grid_remote( thread tid, SpikeEvent& e, const long lag = 0 );
-
-  /**
-   * Send event e directly to its target node. This should be
-   * used only where necessary, e.g. if a node wants to reply
-   * to a *RequestEvent immediately.
-   */
-  void send_to_node( Event& e );
 
   /**
    * return current communication style.
@@ -494,12 +489,6 @@ EventDeliveryManager::clean_spike_register_( const thread tid )
       iit->erase( new_end, iit->end() );
     }
   }
-}
-
-inline void
-EventDeliveryManager::send_to_node( Event& e )
-{
-  e();
 }
 
 inline bool

@@ -129,7 +129,7 @@ protected:
    * \fn void set_spiketime(Time const & t_sp, double offset)
    * record spike history
    */
-  void set_spiketime( Time const& t_sp, double offset = 0.0 );
+  void set_spiketime( const Time& t_sp, double offset = 0.0 );
 
   /**
    * \fn void clear_history()

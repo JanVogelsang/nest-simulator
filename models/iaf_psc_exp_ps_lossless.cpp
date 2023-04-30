@@ -476,7 +476,7 @@ nest::iaf_psc_exp_ps_lossless::update( const Time& origin, const long from, cons
 void
 nest::iaf_psc_exp_ps_lossless::handle( SpikeEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   /* We need to compute the absolute time stamp of the delivery time
      of the spike, since spikes might spend longer than min_delay_
@@ -493,7 +493,7 @@ nest::iaf_psc_exp_ps_lossless::handle( SpikeEvent& e )
 void
 nest::iaf_psc_exp_ps_lossless::handle( CurrentEvent& e )
 {
-  assert( e.get_delay_steps() > 0 );
+  // assert( e.get_delay_steps() > 0 );  // TODO JV (pt): Make sure this assertion can be removed
 
   const double c = e.get_current();
   const double w = e.get_weight();

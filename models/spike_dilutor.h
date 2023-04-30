@@ -103,11 +103,10 @@ public:
     return names::stimulator;
   }
 
-  using Node::event_hook;
   using Node::handle;
   using Node::handles_test_event; // new
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
   port handles_test_event( SpikeEvent&, rport ) override;
   void handle( SpikeEvent& ) override;
 
@@ -119,9 +118,9 @@ private:
   void init_buffers_() override;
   void pre_run_hook() override;
 
-  void update( Time const&, const long, const long ) override;
+  void update( const Time&, const long, const long ) override;
 
-  void event_hook( DSSpikeEvent& ) override;
+  void event_hook( SpikeEvent& ) override;
 
   // ------------------------------------------------------------
 
@@ -161,7 +160,7 @@ private:
 };
 
 inline port
-spike_dilutor::send_test_event( Node& target, const rport receptor_type, synindex syn_id, bool )
+spike_dilutor::send_test_event( Node& target, const rport receptor_type, synindex syn_id )
 {
 
   device_.enforce_single_syn_type( syn_id );

@@ -132,46 +132,19 @@ public:
   /**
    * Set properties of this connection from the values given in dictionary.
    */
-  void set_status( const DictionaryDatum& d, ConnectorModel& cm );
+  void set_status( const DictionaryDatum& d, const ConnectorModel& cm );
 
   /**
    * Send an event to the receiver of this connection.
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  void send( Event& e,
-    const thread t,
-    const delay axonal_delay,
-    const delay dendritic_delay,
-    const CommonSynapseProperties& cp,
-    Node* target );
+  void send( Event& e, const thread t, const double Kminus, const CommonSynapseProperties& cp );
 
-
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
 
   void
-  check_connection( Node& s,
-    Node& t,
-    const rport receptor_type,
-    const synindex syn_id,
-    const delay dendritic_delay,
-    const delay axonal_delay,
-    const CommonPropertiesType& )
+  check_connection( Node&, Node&, const rport, const synindex, const delay, const CommonPropertiesType& )
   {
-    ConnTestDummyNode dummy_target;
-
-    t.register_stdp_connection( axonal_delay, dendritic_delay, syn_id );
   }
 
   void
@@ -204,70 +177,63 @@ private:
  * \param cp Common properties object, containing the stdp parameters.
  */
 inline void
-urbanczik_synapse::send( Event& e,
-  const thread t,
-  const delay axonal_delay,
-  const delay dendritic_delay,
-  const CommonSynapseProperties&,
-  Node* target )
+urbanczik_synapse::send( Event& e, const thread t, const double Kminus, const CommonSynapseProperties& )
 {
-  double t_spike = e.get_stamp().get_ms();
-  // use accessor functions (inherited from Connection< >) to obtain delay and target
-  double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
-
-  // get spike history in relevant range (t1, t2] from postsynaptic neuron
-  std::deque< ArchivedSpikeGeneric >::iterator start;
-  std::deque< ArchivedSpikeGeneric >::iterator finish;
-
-  // for now we only support two-compartment neurons
-  // in this case the dendritic compartment has index 1
-  const int comp = 1;
-
-  target->get_urbanczik_history(
-    t_lastspike_ - dendritic_delay_ms, t_spike - dendritic_delay_ms, &start, &finish, comp );
-
-  double const g_L = target->get_g_L( comp );
-  double const tau_L = target->get_tau_L( comp );
-  double const C_m = target->get_C_m( comp );
-  double const tau_s = weight_ > 0.0 ? target->get_tau_syn_ex( comp ) : target->get_tau_syn_in( comp );
-  double dPI_exp_integral = 0.0;
-
-  while ( start != finish )
-  {
-    double const t_up = start->t + dendritic_delay_ms;   // from t_lastspike to t_spike
-    double const minus_delta_t_up = t_lastspike_ - t_up; // from 0 to -delta t
-    double const minus_t_down = t_up - t_spike;          // from -t_spike to 0
-    double const PI =
-      ( tau_L_trace_ * exp( minus_delta_t_up / tau_L ) - tau_s_trace_ * exp( minus_delta_t_up / tau_s ) )
-      * start->value;
-    PI_integral_ += PI;
-    dPI_exp_integral += exp( minus_t_down / tau_Delta_ ) * PI;
-    ++start;
-  }
-
-  PI_exp_integral_ = ( exp( ( t_lastspike_ - t_spike ) / tau_Delta_ ) * PI_exp_integral_ + dPI_exp_integral );
-  weight_ = PI_integral_ - PI_exp_integral_;
-  weight_ = init_weight_ + weight_ * 15.0 * C_m * tau_s * eta_ / ( g_L * ( tau_L - tau_s ) );
-
-  if ( weight_ > Wmax_ )
-  {
-    weight_ = Wmax_;
-  }
-  else if ( weight_ < Wmin_ )
-  {
-    weight_ = Wmin_;
-  }
-
-  e.set_weight( weight_ );
-  // use accessor functions (inherited from Connection< >) to obtain delay in steps and rport
-  e.set_delay_steps( dendritic_delay );
-  e();
-
-  // compute the trace of the presynaptic spike train
-  tau_L_trace_ = tau_L_trace_ * std::exp( ( t_lastspike_ - t_spike ) / tau_L ) + 1.0;
-  tau_s_trace_ = tau_s_trace_ * std::exp( ( t_lastspike_ - t_spike ) / tau_s ) + 1.0;
-
-  t_lastspike_ = t_spike;
+  //  double t_spike = e.get_stamp().get_ms();
+  //  // use accessor functions (inherited from Connection< >) to obtain delay and target
+  //  double dendritic_delay_ms = Time::delay_steps_to_ms( dendritic_delay );
+  //
+  //  // get spike history in relevant range (t1, t2] from postsynaptic neuron
+  //  std::deque< ArchivedSpikeGeneric >::iterator start;
+  //  std::deque< ArchivedSpikeGeneric >::iterator finish;
+  //
+  //  // for now we only support two-compartment neurons
+  //  // in this case the dendritic compartment has index 1
+  //  const int comp = 1;
+  //
+  //  target->get_urbanczik_history(
+  //    t_lastspike_ - dendritic_delay_ms, t_spike - dendritic_delay_ms, &start, &finish, comp );
+  //
+  //  double const g_L = target->get_g_L( comp );
+  //  double const tau_L = target->get_tau_L( comp );
+  //  double const C_m = target->get_C_m( comp );
+  //  double const tau_s = weight_ > 0.0 ? target->get_tau_syn_ex( comp ) : target->get_tau_syn_in( comp );
+  //  double dPI_exp_integral = 0.0;
+  //
+  //  while ( start != finish )
+  //  {
+  //    double const t_up = start->t + dendritic_delay_ms;   // from t_lastspike to t_spike
+  //    double const minus_delta_t_up = t_lastspike_ - t_up; // from 0 to -delta t
+  //    double const minus_t_down = t_up - t_spike;          // from -t_spike to 0
+  //    double const PI =
+  //      ( tau_L_trace_ * exp( minus_delta_t_up / tau_L ) - tau_s_trace_ * exp( minus_delta_t_up / tau_s ) )
+  //      * start->value;
+  //    PI_integral_ += PI;
+  //    dPI_exp_integral += exp( minus_t_down / tau_Delta_ ) * PI;
+  //    ++start;
+  //  }
+  //
+  //  PI_exp_integral_ = ( exp( ( t_lastspike_ - t_spike ) / tau_Delta_ ) * PI_exp_integral_ + dPI_exp_integral );
+  //  weight_ = PI_integral_ - PI_exp_integral_;
+  //  weight_ = init_weight_ + weight_ * 15.0 * C_m * tau_s * eta_ / ( g_L * ( tau_L - tau_s ) );
+  //
+  //  if ( weight_ > Wmax_ )
+  //  {
+  //    weight_ = Wmax_;
+  //  }
+  //  else if ( weight_ < Wmin_ )
+  //  {
+  //    weight_ = Wmin_;
+  //  }
+  //
+  //  e.set_weight( weight_ );
+  //
+  //
+  //  // compute the trace of the presynaptic spike train
+  //  tau_L_trace_ = tau_L_trace_ * std::exp( ( t_lastspike_ - t_spike ) / tau_L ) + 1.0;
+  //  tau_s_trace_ = tau_s_trace_ * std::exp( ( t_lastspike_ - t_spike ) / tau_s ) + 1.0;
+  //
+  //  t_lastspike_ = t_spike;
 }
 
 
@@ -300,7 +266,7 @@ urbanczik_synapse::get_status( DictionaryDatum& d ) const
 }
 
 void
-urbanczik_synapse::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+urbanczik_synapse::set_status( const DictionaryDatum& d, const ConnectorModel& cm )
 {
   ConnectionBase::set_status( d, cm );
   updateValue< double >( d, names::weight, weight_ );
