@@ -73,6 +73,9 @@ DendriticDelayConnector< ConnectionT >::update_stdp_connections( const index nod
     static_cast< const GenericConnectorModel< ConnectionT >* >( cm )->get_common_properties();
 
   const double eps = kernel().connection_manager.get_stdp_eps();
+  // TODO JV (pt): Consider moving the dendritic delay to the regions, sort the regions by dendritic delay after all
+  //  regions are known, and do a binary search here instead of a dictionary lookup. Will remove one indirection and
+  //  lookup in small arrays is usually faster than in dictionaries.
   const auto delay_region_it = dendritic_delay_region_indices_.find( dendritic_delay );
   // check if there are connections with given dendritic delay
   if ( delay_region_it != dendritic_delay_region_indices_.end() )

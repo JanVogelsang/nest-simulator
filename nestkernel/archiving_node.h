@@ -190,7 +190,7 @@ protected:
    * Prepare the node for the next update cycle. This includes any cleanup after the past update cycle or any state
    * updates that make sure any get_status call after this cycle yields the correct results (e.g. STDP weight updates).
    */
-  void prepare_update() override;
+  void prepare_update( const Time origin ) override;
 
   /**
    * Cleanup the node after an update cycle.

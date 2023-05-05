@@ -207,7 +207,7 @@ ArchivingNode::update_stdp_connections( const delay lag )
 }
 
 void
-ArchivingNode::prepare_update()
+ArchivingNode::prepare_update( const Time origin )
 {
   if ( has_stdp_connections() )
   {
@@ -217,7 +217,6 @@ ArchivingNode::prepare_update()
     // Process all pre- and post-synaptic spikes in relative order. Processes all pre-synaptic spikes that were just
     // communicated and all post-synaptic spikes in the archive.
     auto [ current_pre_synaptic_spike, last_pre_synaptic_spike ] = intermediate_spike_buffer_.get_next_spikes();
-    const Time origin = kernel().simulation_manager.get_slice_origin();
     const delay min_delay = kernel().connection_manager.get_min_delay();
     for ( delay lag = 1; lag != min_delay + 1; ++lag )
     {

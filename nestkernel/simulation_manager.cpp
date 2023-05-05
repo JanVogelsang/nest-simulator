@@ -983,30 +983,30 @@ nest::SimulationManager::update_()
 #pragma omp single
           {
             kernel().event_delivery_manager.gather_secondary_events( true );
-          }
+          } // implicit barrier
           kernel().event_delivery_manager.deliver_secondary_events( tid, false );
         }
-      } // implicit barrier
 
-      // Prepare all nodes for the next update cycle. This includes any cleanup after the past update cycle or any
-      // state updates that make sure any get_status call after this cycle yields the correct results (e.g. STDP weight
-      // updates).
-      for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
-      {
-        // We update in a parallel region. Therefore, we need to catch
-        // exceptions here and then handle them after the parallel region.
-        try
+        // Prepare all nodes for the next update cycle. This includes any cleanup after the past update cycle or any
+        // state updates that make sure any get_status call after this cycle yields the correct results (e.g. STDP weight
+        // updates).
+        for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
         {
-          Node* node = n->get_node();
-          if ( not( node )->is_frozen() )
+          // We update in a parallel region. Therefore, we need to catch
+          // exceptions here and then handle them after the parallel region.
+          try
           {
-            node->prepare_update();
+            Node* node = n->get_node();
+            if ( not( node )->is_frozen() )
+            {
+              node->prepare_update( clock_ );
+            }
           }
-        }
-        catch ( std::exception& e )
-        {
-          // so throw the exception after parallel region
-          exceptions_raised.at( tid ) = std::shared_ptr< WrappedThreadException >( new WrappedThreadException( e ) );
+          catch ( std::exception& e )
+          {
+            // so throw the exception after parallel region
+            exceptions_raised.at( tid ) = std::shared_ptr< WrappedThreadException >( new WrappedThreadException( e ) );
+          }
         }
       }
 

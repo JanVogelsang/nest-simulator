@@ -308,7 +308,7 @@ public:
    * Prepare the node for the next update cycle.
    */
   virtual void
-  prepare_update()
+  prepare_update( const Time origin )
   {
   }
 
