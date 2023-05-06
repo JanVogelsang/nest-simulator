@@ -66,6 +66,7 @@ class AdjacencyList
    *   - third dim: targets of source neuron
    */
   // TODO JV (pt): Evaluate if adding local target node id as another dimension might make sense for a low number of VPs
+  // TODO JV (pt): Think about switching thread and source neuron dimensions to have a fixed size second dimension
   std::vector< std::vector< std::vector< AdjacencyListTarget > > > adjacency_list_;
 
   /**
@@ -366,8 +367,6 @@ AdjacencyList::add_target( const thread tid,
   // Check if this is the first connection from this source node to any target node managed by this thread
   if ( source_index != sources_[ tid ][ source_rank ].end() ) // not the first connection
   {
-    // TODO JV (pt): This line shows an extreme number of allocations in Heaptrack, while it doesn't for master. The
-    //  number of allocations makes sense, but it is strange that
     adjacency_list_[ tid ][ source_index->second ].push_back({
       local_target_node_id, local_target_connection_id, dendritic_delay_id, syn_id, axonal_delay });
   }
