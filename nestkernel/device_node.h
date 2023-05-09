@@ -25,6 +25,9 @@
 
 // Includes from nestkernel:
 #include "node.h"
+#ifdef TIMER_DETAILED
+#include "stopwatch.h"
+#endif
 
 namespace nest
 {
@@ -74,6 +77,7 @@ public:
     handle( e );
   }
 
+#ifdef TIMER_DETAILED
   void
   deliver_event( const synindex,
     const index,
@@ -81,9 +85,28 @@ public:
     const ConnectorModel*,
     const Time,
     const delay,
-    const double ) override
+    const double,
+    const delay,
+    const delay,
+    Stopwatch&,
+    Stopwatch&,
+    Stopwatch& ) override
   {
   }
+#else
+  void
+  deliver_event( const synindex,
+    const index,
+    const size_t,
+    const ConnectorModel*,
+    const Time,
+    const delay,
+    const double,
+    const delay,
+    const delay ) override
+  {
+  }
+#endif
 
   virtual void event_hook( SpikeEvent& e ) {};
   virtual void event_hook( CurrentEvent& e ) {};

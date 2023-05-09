@@ -135,6 +135,11 @@ EventDeliveryManager::get_status( DictionaryDatum& dict )
   def< double >( dict, names::time_communicate_spike_data, sw_communicate_spike_data_.elapsed() );
   def< double >( dict, names::time_deliver_spike_data, sw_deliver_spike_data_.elapsed() );
   def< double >( dict, names::time_communicate_target_data, sw_communicate_target_data_.elapsed() );
+  def< double >( dict, names::time_adjacency_list, sw_adjacency_list_.elapsed() );
+  def< double >( dict, names::time_deliver_node, sw_deliver_node_.elapsed() );
+  def< double >( dict, names::time_stdp_delivery, sw_stdp_delivery_.elapsed() );
+  def< double >( dict, names::time_static_delivery, sw_static_delivery_.elapsed() );
+  def< double >( dict, names::time_node_archive, sw_node_archive_.elapsed() );
 #endif
 }
 
@@ -282,6 +287,10 @@ EventDeliveryManager::reset_timers_for_dynamics()
   sw_collocate_spike_data_.reset();
   sw_communicate_spike_data_.reset();
   sw_deliver_spike_data_.reset();
+  sw_deliver_node_.reset();
+  sw_stdp_delivery_.reset();
+  sw_static_delivery_.reset();
+  sw_node_archive_.reset();
 #endif
 }
 
@@ -620,18 +629,19 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
           spike_data.get_offset() );
       }
 #else
+#ifdef TIMER_DETAILED
+      if ( tid == 0 )
+        sw_adjacency_list_.start();
+#endif
       if ( kernel().connection_manager.use_compressed_spikes() )
       {
         // Compressed spikes use the adjacency list index of SpikeData to transmit the index in the compressed spike
         // data structure.
         const index compressed_index = spike_data.get_adjacency_list_index();
-        const std::map< thread, index >& compressed_spike_data =
-          kernel().connection_manager.get_compressed_spike_data( compressed_index );
-        const auto compressed_spike_data_it = compressed_spike_data.find( tid );
-        if ( compressed_spike_data_it != compressed_spike_data.end() )
+        if ( const index compressed_adjacency_list_index = kernel().connection_manager.get_compressed_spike_data( compressed_index, tid ); compressed_adjacency_list_index != invalid_index )
         {
           deliver_to_adjacency_list( tid,
-            compressed_spike_data_it->second,
+            compressed_adjacency_list_index,
             prepared_timestamps[ spike_data.get_lag() ],
             spike_data.get_offset(),
             cm );

@@ -84,7 +84,7 @@ class AdjacencyList
    * compression is enabled. Internally arranged in a 2d structure:
    * sources|(thread->adjacency list index)
    */
-  std::vector< std::map< thread, index > > compressed_indices_;
+  std::vector< std::vector< index > > compressed_indices_;
 
   /**
    * Intermediate two-dimensional structure. For each source rank, map all source node ids to the "compressed" index in
@@ -123,7 +123,7 @@ public:
   std::pair< std::vector< AdjacencyListTarget >::const_iterator, std::vector< AdjacencyListTarget >::const_iterator >
   get_iterators( const thread tid, const index adjacency_list_index ) const;
 
-  const std::map< thread, index >& get_compressed_spike_data( const index idx ) const;
+  const index get_compressed_spike_data( const index idx, const thread tid ) const;
 
   void clear_sources();
 
@@ -210,7 +210,7 @@ AdjacencyList::finalize()
 {
   std::vector< std::vector< std::vector< AdjacencyListTarget > > >().swap( adjacency_list_ );
   std::vector< std::vector< std::map< index, index > > >().swap( sources_ );
-  std::vector< std::map< thread, index > >().swap( compressed_indices_ );
+  std::vector< std::vector< index > >().swap( compressed_indices_ );
   std::vector< std::map< index, size_t > >().swap( source_to_compressed_index_ );
   std::vector< std::map< index, size_t >::const_iterator >().swap( next_compressed_index_ );
   std::vector< std::map< index, index >::const_iterator >().swap( next_source_index_ );
@@ -223,10 +223,10 @@ AdjacencyList::num_unique_sources( const thread tid ) const
   return adjacency_list_[ tid ].size();
 }
 
-inline const std::map< thread, index >&
-AdjacencyList::get_compressed_spike_data( const index idx ) const
+inline const index
+AdjacencyList::get_compressed_spike_data( const index idx, const thread tid ) const
 {
-  return compressed_indices_[ idx ];
+  return compressed_indices_[ idx ][ tid ];
 }
 
 inline void
@@ -334,8 +334,8 @@ AdjacencyList::prepare_compressed_targets( const thread num_threads, const threa
           source_to_compressed_index_[ source_rank ][ source_node_id ] = compressed_indices_.size();
           source_node_idx = compressed_indices_.size();
           // TODO JV: Combine the following two lines to a single one
-          compressed_indices_.emplace_back(); // append empty map
-          compressed_indices_[ source_node_idx ].emplace( tid, adjacency_list_index );
+          compressed_indices_.emplace_back( num_threads, invalid_index ); // append empty map
+          compressed_indices_[ source_node_idx ][ tid ] = adjacency_list_index;
         }
         else
         {

@@ -990,6 +990,12 @@ nest::SimulationManager::update_()
         // Prepare all nodes for the next update cycle. This includes any cleanup after the past update cycle or any
         // state updates that make sure any get_status call after this cycle yields the correct results (e.g. STDP weight
         // updates).
+#ifdef TIMER_DETAILED
+        Stopwatch& sw_stdp_delivery = kernel().event_delivery_manager.sw_stdp_delivery_;
+        Stopwatch& sw_node_archive = kernel().event_delivery_manager.sw_node_archive_;
+#endif
+        const std::vector< ConnectorModel* >& cm = kernel().model_manager.get_connection_models( tid );
+        const delay min_delay = kernel().connection_manager.get_min_delay();
         for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
         {
           // We update in a parallel region. Therefore, we need to catch
@@ -999,7 +1005,11 @@ nest::SimulationManager::update_()
             Node* node = n->get_node();
             if ( not( node )->is_frozen() )
             {
-              node->prepare_update( clock_ );
+#ifdef TIMER_DETAILED
+              node->prepare_update( clock_, cm, min_delay, sw_stdp_delivery, sw_node_archive );
+#else
+              node->prepare_update( clock_, cm, min_delay );
+#endif
             }
           }
           catch ( std::exception& e )

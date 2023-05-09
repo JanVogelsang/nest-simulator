@@ -182,6 +182,8 @@ EventDeliveryManager::deliver_to_adjacency_list( const thread tid,
   const double offset,
   const std::vector< ConnectorModel* >& cm )
 {
+  const delay min_delay = kernel().connection_manager.get_min_delay();
+  const delay slice_origin = kernel().simulation_manager.get_slice_origin().get_steps();
   auto [ adjacency_list_it, adjacency_list_end ] = kernel().connection_manager.get_targets( tid, adjacency_list_index );
   for ( ; adjacency_list_it != adjacency_list_end; ++adjacency_list_it )
   {
@@ -189,13 +191,39 @@ EventDeliveryManager::deliver_to_adjacency_list( const thread tid,
     const index local_target_connection_id = adjacency_list_it->local_target_connection_id;
     const synindex syn_id = adjacency_list_it->syn_id;
     Node* target_node = kernel().node_manager.thread_lid_to_node( tid, local_target_node_id );
+#ifdef TIMER_DETAILED
+    if ( tid == 0 )
+    {
+      sw_adjacency_list_.stop();
+      sw_deliver_node_.start();
+    }
     target_node->deliver_event( syn_id,
       local_target_connection_id,
       adjacency_list_it->dendritic_delay_id,
       cm[ syn_id ],
       lag,
       adjacency_list_it->axonal_delay,
-      offset );
+      offset,
+      slice_origin,
+      min_delay,
+      sw_stdp_delivery_,
+      sw_static_delivery_,
+      sw_node_archive_ );
+#else
+    target_node->deliver_event( syn_id,
+      local_target_connection_id,
+      adjacency_list_it->dendritic_delay_id,
+      cm[ syn_id ],
+      lag,
+      adjacency_list_it->axonal_delay,
+      offset,
+      slice_origin,
+      min_delay );
+#endif
+#ifdef TIMER_DETAILED
+    if ( tid == 0 )
+      sw_deliver_node_.stop();
+#endif
   }
 }
 #endif

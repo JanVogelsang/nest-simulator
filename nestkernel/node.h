@@ -39,6 +39,9 @@
 #include "nest_types.h"
 #include "node_collection.h"
 #include "secondary_event.h"
+#ifdef TIMER_DETAILED
+#include "stopwatch.h"
+#endif
 
 // Includes from sli:
 #include "dictdatum.h"
@@ -307,10 +310,17 @@ public:
   /**
    * Prepare the node for the next update cycle.
    */
+#ifdef TIMER_DETAILED
   virtual void
-  prepare_update( const Time origin )
+  prepare_update( const Time origin, const std::vector< ConnectorModel* >& cm, const delay min_delay, Stopwatch& sw_stdp_delivery, Stopwatch& sw_node_archive )
   {
   }
+#else
+  virtual void
+  prepare_update( const Time origin, const std::vector< ConnectorModel* >& cm, const delay min_delay )
+  {
+  }
+#endif
 
   /**
    * Bring the node from state $t$ to $t+n*dt$, sends SecondaryEvents
@@ -705,13 +715,30 @@ public:
    * When receiving an incoming spike event, forward it to the corresponding connection and handle the event previously
    * updated by the connection.
    */
+#ifdef TIMER_DETAILED
   virtual void deliver_event( const synindex syn_id,
     const index local_target_connection_id,
     const size_t dendritic_delay_id,
     const ConnectorModel* cm,
     const Time lag,
     const delay d,
-    const double offset );
+    const double offset,
+    const delay slice_origin,
+    const delay min_delay,
+    Stopwatch& sw_stdp_delivery_,
+    Stopwatch& sw_static_delivery,
+    Stopwatch& sw_node_archive_ );
+#else
+  virtual void deliver_event( const synindex syn_id,
+    const index local_target_connection_id,
+    const size_t dendritic_delay_id,
+    const ConnectorModel* cm,
+    const Time lag,
+    const delay d,
+    const double offset,
+    const delay slice_origin,
+    const delay min_delay );
+#endif
 
   /**
    * Handle incoming spike events.
@@ -1318,6 +1345,7 @@ Node::get_thread_lid() const
   return thread_lid_;
 }
 
+#ifdef TIMER_DETAILED
 inline void
 Node::deliver_event( const synindex syn_id,
   const index local_target_connection_id,
@@ -1325,13 +1353,41 @@ Node::deliver_event( const synindex syn_id,
   const ConnectorModel* cm,
   const Time lag,
   const delay total_delay,
-  const double offset )
+  const double offset,
+  const delay,
+  const delay,
+  Stopwatch&,
+  Stopwatch& sw_static_delivery,
+  Stopwatch& )
 {
+  if ( thread_ == 0 )
+  {
+    sw_static_delivery.start();
+  }
+#else
+inline void
+Node::deliver_event( const synindex syn_id,
+  const index local_target_connection_id,
+  const size_t dendritic_delay_id,
+  const ConnectorModel* cm,
+  const Time lag,
+  const delay total_delay,
+  const double offset,
+  const delay,
+  const delay )
+{
+#endif
   SpikeEvent se;
   se.set_stamp( lag );
   se.set_offset( offset ); // TODO JV (help): Why can't offset be incorporated into lag?
   se.set_sender_node_id_info( thread_, syn_id, node_id_, local_target_connection_id );
 
+#ifdef TIMER_DETAILED
+  if ( thread_ == 0 )
+  {
+    sw_static_delivery.stop();
+  }
+#endif
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight and optionally updates its internal state as well.
   connections_[ syn_id ]->send( thread_, node_id_, local_target_connection_id, total_delay, cm, se );
