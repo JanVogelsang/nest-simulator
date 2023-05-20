@@ -291,7 +291,7 @@ nest::correlospinmatrix_detector::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::correlospinmatrix_detector::update( const Time&, const long, const long )
+nest::correlospinmatrix_detector::update( const Time, const long, const long )
 {
 }
 

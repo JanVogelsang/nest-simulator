@@ -261,7 +261,7 @@ Node::set_status_base( const DictionaryDatum& dict )
  * throws UnexpectedEvent
  */
 bool
-Node::wfr_update( const Time&, const long, const long )
+Node::wfr_update( const Time, const long, const long )
 {
   throw UnexpectedEvent( "Waveform relaxation not supported." );
 }

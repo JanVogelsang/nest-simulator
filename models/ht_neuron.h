@@ -229,7 +229,7 @@ private:
   void init_buffers_() override;
   void pre_run_hook() override;
 
-  void update( const Time&, const long, const long ) override;
+  void update( const Time, const long, const long ) override;
 
   double get_synapse_constant( double, double, double );
 

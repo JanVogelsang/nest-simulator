@@ -296,7 +296,7 @@ nest::iaf_psc_alpha_ps::get_next_event_( const long T, double& ev_offset, double
 }
 
 void
-nest::iaf_psc_alpha_ps::update( const Time& origin, const long from, const long to )
+nest::iaf_psc_alpha_ps::update( const Time origin, const long from, const long to )
 {
   assert( to >= 0 );
   assert( static_cast< delay >( from ) < kernel().connection_manager.get_min_delay() );

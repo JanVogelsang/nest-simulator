@@ -87,7 +87,6 @@ public:
     const delay,
     const double,
     const delay,
-    const delay,
     Stopwatch&,
     Stopwatch&,
     Stopwatch& ) override
@@ -102,7 +101,6 @@ public:
     const Time,
     const delay,
     const double,
-    const delay,
     const delay ) override
   {
   }

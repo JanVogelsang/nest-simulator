@@ -194,7 +194,7 @@ namespace nest
 
 extern "C" int glif_cond_dynamics( double, const double*, double*, void* );
 
-class glif_cond : public nest::ArchivingNode
+class glif_cond : public ArchivingNode
 {
 public:
   glif_cond();
@@ -203,18 +203,18 @@ public:
 
   ~glif_cond() override;
 
-  using nest::Node::handle;
-  using nest::Node::handles_test_event;
+  using Node::handle;
+  using Node::handles_test_event;
 
-  nest::port send_test_event( nest::Node&, nest::port, nest::synindex ) override;
+  port send_test_event( Node&, port, synindex ) override;
 
-  void handle( nest::SpikeEvent& ) override;
-  void handle( nest::CurrentEvent& ) override;
-  void handle( nest::DataLoggingRequest& ) override;
+  void handle( SpikeEvent& ) override;
+  void handle( CurrentEvent& ) override;
+  void handle( DataLoggingRequest& ) override;
 
-  nest::port handles_test_event( nest::SpikeEvent&, nest::port ) override;
-  nest::port handles_test_event( nest::CurrentEvent&, nest::port ) override;
-  nest::port handles_test_event( nest::DataLoggingRequest&, nest::port ) override;
+  port handles_test_event( SpikeEvent&, port ) override;
+  port handles_test_event( CurrentEvent&, port ) override;
+  port handles_test_event( DataLoggingRequest&, port ) override;
 
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
@@ -227,7 +227,7 @@ private:
   void pre_run_hook() override;
 
   //! Take neuron through given time interval
-  void update( const nest::Time&, const long, const long ) override;
+  void update( const Time, const long, const long ) override;
 
   // make dynamics function quasi-member
   friend int glif_cond_dynamics( double, const double*, double*, void* );
@@ -328,8 +328,8 @@ private:
     Buffers_( glif_cond& );
     Buffers_( const Buffers_&, glif_cond& );
 
-    std::vector< nest::RingBuffer > spikes_; //!< Buffer incoming spikes through delay, as sum
-    nest::RingBuffer currents_;              //!< Buffer incoming currents through delay,
+    std::vector< RingBuffer > spikes_; //!< Buffer incoming spikes through delay, as sum
+    RingBuffer currents_;              //!< Buffer incoming currents through delay,
 
     //! Logger for all analog data
     DynamicUniversalDataLogger< glif_cond > logger_;
@@ -390,33 +390,33 @@ private:
   inline double
   get_state_element( size_t elem )
   {
-    if ( elem == nest::glif_cond::State_::V_M )
+    if ( elem == glif_cond::State_::V_M )
     {
       return S_.y_[ elem ] + P_.E_L_;
     }
-    else if ( elem == nest::glif_cond::State_::I )
+    else if ( elem == glif_cond::State_::I )
     {
       return B_.I_;
     }
-    else if ( elem == nest::glif_cond::State_::ASC_SUM )
+    else if ( elem == glif_cond::State_::ASC_SUM )
     {
       return S_.ASCurrents_sum_;
     }
-    else if ( elem == nest::glif_cond::State_::TH )
+    else if ( elem == glif_cond::State_::TH )
     {
       return S_.threshold_ + P_.E_L_;
     }
-    else if ( elem == nest::glif_cond::State_::TH_SPK )
+    else if ( elem == glif_cond::State_::TH_SPK )
     {
       return S_.threshold_spike_;
     }
-    else if ( elem == nest::glif_cond::State_::TH_VLT )
+    else if ( elem == glif_cond::State_::TH_VLT )
     {
       return S_.threshold_voltage_;
     }
     else
     {
-      return S_.y_[ elem - nest::glif_cond::State_::NUMBER_OF_RECORDABLES_ELEMENTS ];
+      return S_.y_[ elem - glif_cond::State_::NUMBER_OF_RECORDABLES_ELEMENTS ];
     }
   };
 
@@ -429,36 +429,36 @@ private:
 
 
 inline size_t
-nest::glif_cond::Parameters_::n_receptors_() const
+glif_cond::Parameters_::n_receptors_() const
 {
   return tau_syn_.size();
 }
 
 
-inline nest::port
-nest::glif_cond::send_test_event( nest::Node& target, nest::port receptor_type, nest::synindex )
+inline port
+glif_cond::send_test_event( Node& target, port receptor_type, synindex )
 {
-  nest::SpikeEvent e;
+  SpikeEvent e;
   e.set_sender( *this );
   return target.handles_test_event( e, receptor_type );
 }
 
-inline nest::port
-nest::glif_cond::handles_test_event( nest::CurrentEvent&, nest::port receptor_type )
+inline port
+glif_cond::handles_test_event( CurrentEvent&, port receptor_type )
 {
   if ( receptor_type != 0 )
   {
-    throw nest::UnknownReceptorType( receptor_type, get_name() );
+    throw UnknownReceptorType( receptor_type, get_name() );
   }
   return 0;
 }
 
-inline nest::port
-nest::glif_cond::handles_test_event( nest::DataLoggingRequest& dlr, nest::port receptor_type )
+inline port
+glif_cond::handles_test_event( DataLoggingRequest& dlr, port receptor_type )
 {
   if ( receptor_type != 0 )
   {
-    throw nest::UnknownReceptorType( receptor_type, get_name() );
+    throw UnknownReceptorType( receptor_type, get_name() );
   }
 
   return B_.logger_.connect_logging_device( dlr, recordablesMap_ );
@@ -474,7 +474,7 @@ glif_cond::get_status( DictionaryDatum& d ) const
   // get information managed by parent class
   ArchivingNode::get_status( d );
 
-  ( *d )[ nest::names::recordables ] = recordablesMap_.get_list();
+  ( *d )[ names::recordables ] = recordablesMap_.get_list();
 }
 
 inline void

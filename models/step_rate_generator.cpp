@@ -271,7 +271,7 @@ nest::step_rate_generator::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::step_rate_generator::update( const Time& origin, const long from, const long to )
+nest::step_rate_generator::update( const Time origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );

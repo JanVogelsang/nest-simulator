@@ -176,7 +176,7 @@ nest::poisson_generator_ps::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::poisson_generator_ps::update( const Time& origin, const long from, const long to )
+nest::poisson_generator_ps::update( const Time origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );

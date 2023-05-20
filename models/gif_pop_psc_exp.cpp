@@ -486,7 +486,7 @@ nest::gif_pop_psc_exp::get_history_size()
 
 
 void
-nest::gif_pop_psc_exp::update( const Time& origin, const long from, const long to )
+nest::gif_pop_psc_exp::update( const Time origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );

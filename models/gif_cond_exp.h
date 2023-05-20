@@ -249,7 +249,7 @@ private:
   void init_buffers_() override;
   void pre_run_hook() override;
 
-  void update( const Time&, const long, const long ) override;
+  void update( const Time, const long, const long ) override;
 
   // make dynamics function quasi-member
   friend int gif_cond_exp_dynamics( double, const double*, double*, void* );

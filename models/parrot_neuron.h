@@ -108,7 +108,7 @@ private:
   {
   } // no variables
 
-  void update( const Time&, const long, const long ) override;
+  void update( const Time, const long, const long ) override;
 
   /**
      Buffers and accumulates the number of incoming spikes per time step;

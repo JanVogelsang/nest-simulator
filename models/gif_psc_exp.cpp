@@ -318,7 +318,7 @@ nest::gif_psc_exp::pre_run_hook()
  */
 
 void
-nest::gif_psc_exp::update( const Time& origin, const long from, const long to )
+nest::gif_psc_exp::update( const Time origin, const long from, const long to )
 {
 
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );

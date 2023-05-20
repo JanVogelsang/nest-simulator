@@ -183,7 +183,6 @@ EventDeliveryManager::deliver_to_adjacency_list( const thread tid,
   const std::vector< ConnectorModel* >& cm )
 {
   const delay min_delay = kernel().connection_manager.get_min_delay();
-  const delay slice_origin = kernel().simulation_manager.get_slice_origin().get_steps();
   auto [ adjacency_list_it, adjacency_list_end ] = kernel().connection_manager.get_targets( tid, adjacency_list_index );
   for ( ; adjacency_list_it != adjacency_list_end; ++adjacency_list_it )
   {
@@ -204,7 +203,6 @@ EventDeliveryManager::deliver_to_adjacency_list( const thread tid,
       lag,
       adjacency_list_it->axonal_delay,
       offset,
-      slice_origin,
       min_delay,
       sw_stdp_delivery_,
       sw_static_delivery_,
@@ -217,7 +215,6 @@ EventDeliveryManager::deliver_to_adjacency_list( const thread tid,
       lag,
       adjacency_list_it->axonal_delay,
       offset,
-      slice_origin,
       min_delay );
 #endif
 #ifdef TIMER_DETAILED

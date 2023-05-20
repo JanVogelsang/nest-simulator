@@ -255,7 +255,7 @@ iaf_psc_delta_ps::pre_run_hook()
 }
 
 void
-iaf_psc_delta_ps::update( const Time& origin, const long from, const long to )
+iaf_psc_delta_ps::update( const Time origin, const long from, const long to )
 {
   assert( to >= 0 );
   assert( static_cast< delay >( from ) < kernel().connection_manager.get_min_delay() );

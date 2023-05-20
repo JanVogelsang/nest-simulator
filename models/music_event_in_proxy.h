@@ -124,7 +124,7 @@ private:
   void pre_run_hook();
 
   void
-  update( const Time&, const long, const long )
+  update( const Time, const long, const long )
   {
   }
 

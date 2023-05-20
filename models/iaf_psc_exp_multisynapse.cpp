@@ -297,7 +297,7 @@ nest::iaf_psc_exp_multisynapse::pre_run_hook()
 }
 
 void
-iaf_psc_exp_multisynapse::update( const Time& origin, const long from, const long to )
+iaf_psc_exp_multisynapse::update( const Time origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );

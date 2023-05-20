@@ -121,7 +121,7 @@ private:
    * to all targets, which is reflected to this->event_hook() with target
    * information.
    */
-  void update( const Time&, const long, const long ) override;
+  void update( const Time, const long, const long ) override;
 
   /**
    * Send out spikes.

@@ -232,7 +232,7 @@ private:
    * While the neuron is refractory, membrane potential (y3_) is
    * clamped to U_reset_.
    */
-  void update( const Time& origin, const long from, const long to ) override;
+  void update( const Time origin, const long from, const long to ) override;
 
   //@}
 

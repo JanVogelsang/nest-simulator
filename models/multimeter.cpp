@@ -176,7 +176,7 @@ multimeter::pre_run_hook()
 }
 
 void
-multimeter::update( const Time& origin, const long from, const long to )
+multimeter::update( const Time origin, const long from, const long to )
 {
   /* There is nothing to request during the first time slice.
      For each subsequent slice, we collect all data generated during the

@@ -305,7 +305,7 @@ public:
    * @param long post-final step inside time slice
    *
    */
-  virtual void update( const Time&, const long, const long ) = 0;
+  virtual void update( const Time, const long, const long ) = 0;
 
   /**
    * Prepare the node for the next update cycle.
@@ -338,7 +338,7 @@ public:
    * @param long post-final step inside time slice
    *
    */
-  virtual bool wfr_update( const Time&, const long, const long );
+  virtual bool wfr_update( const Time, const long, const long );
 
   /**
    * @defgroup status_interface Configuration interface.
@@ -723,7 +723,6 @@ public:
     const Time lag,
     const delay d,
     const double offset,
-    const delay slice_origin,
     const delay min_delay,
     Stopwatch& sw_stdp_delivery_,
     Stopwatch& sw_static_delivery,
@@ -736,7 +735,6 @@ public:
     const Time lag,
     const delay d,
     const double offset,
-    const delay slice_origin,
     const delay min_delay );
 #endif
 
@@ -1355,7 +1353,6 @@ Node::deliver_event( const synindex syn_id,
   const delay total_delay,
   const double offset,
   const delay,
-  const delay,
   Stopwatch&,
   Stopwatch& sw_static_delivery,
   Stopwatch& )
@@ -1373,7 +1370,6 @@ Node::deliver_event( const synindex syn_id,
   const Time lag,
   const delay total_delay,
   const double offset,
-  const delay,
   const delay )
 {
 #endif

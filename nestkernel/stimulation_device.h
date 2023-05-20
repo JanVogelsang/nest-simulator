@@ -191,7 +191,7 @@ public:
   };
   const std::string& get_label() const;
   virtual void set_data_from_stimulation_backend( std::vector< double >& ) {};
-  void update( const Time&, const long, const long ) override {};
+  void update( const Time, const long, const long ) override {};
 
 protected:
   void set_initialized_() final;

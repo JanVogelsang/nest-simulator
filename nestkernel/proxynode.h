@@ -131,7 +131,7 @@ private:
   {
   }
   void
-  update( const Time&, const long, const long ) override
+  update( const Time, const long, const long ) override
   {
   }
 };

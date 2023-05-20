@@ -150,7 +150,7 @@ MusicEventHandler::operator()( double t, MUSIC::GlobalIndex channel )
 }
 
 void
-MusicEventHandler::update( const Time& origin, const long from, const long to )
+MusicEventHandler::update( const Time origin, const long from, const long to )
 {
   for ( size_t channel = 0; channel < channelmap_.size(); ++channel )
   {

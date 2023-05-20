@@ -250,7 +250,7 @@ nest::correlation_detector::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::correlation_detector::update( const Time&, const long, const long )
+nest::correlation_detector::update( const Time, const long, const long )
 {
 }
 

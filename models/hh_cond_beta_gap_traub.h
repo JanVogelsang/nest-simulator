@@ -220,8 +220,8 @@ private:
    */
   bool update_( const Time&, const long, const long, const bool );
 
-  void update( const Time&, const long, const long ) override;
-  bool wfr_update( const Time&, const long, const long ) override;
+  void update( const Time, const long, const long ) override;
+  bool wfr_update( const Time, const long, const long ) override;
 
   // END Boilerplate function declarations ----------------------------
 
@@ -399,13 +399,13 @@ public:
 };
 
 inline void
-hh_cond_beta_gap_traub::update( const Time& origin, const long from, const long to )
+hh_cond_beta_gap_traub::update( const Time origin, const long from, const long to )
 {
   update_( origin, from, to, false );
 }
 
 inline bool
-hh_cond_beta_gap_traub::wfr_update( const Time& origin, const long from, const long to )
+hh_cond_beta_gap_traub::wfr_update( const Time origin, const long from, const long to )
 {
   State_ old_state = S_; // save state before wfr_update
   const bool wfr_tol_exceeded = update_( origin, from, to, true );

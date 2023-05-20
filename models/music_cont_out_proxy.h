@@ -162,7 +162,7 @@ protected:
    * that information. The sampled nodes must provide data from
    * the previous time slice.
    */
-  void update( const Time&, const long, const long );
+  void update( const Time, const long, const long );
 
 private:
   struct State_; //!< Forward declarations

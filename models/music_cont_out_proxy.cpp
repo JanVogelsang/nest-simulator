@@ -334,7 +334,7 @@ nest::music_cont_out_proxy::set_status( const DictionaryDatum& d )
 }
 
 void
-nest::music_cont_out_proxy::update( const Time& origin, const long from, const long to )
+nest::music_cont_out_proxy::update( const Time origin, const long from, const long to )
 {
   /* There is nothing to request during the first time slice. For
      each subsequent slice, we collect all data generated during

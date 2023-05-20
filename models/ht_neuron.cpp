@@ -768,7 +768,7 @@ nest::ht_neuron::set_status( const DictionaryDatum& d )
  * ---------------------------------------------------------------- */
 
 void
-ht_neuron::update( const Time& origin, const long from, const long to )
+ht_neuron::update( const Time origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );

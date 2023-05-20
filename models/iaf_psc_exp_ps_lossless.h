@@ -220,7 +220,7 @@ private:
    * While the neuron is refractory, membrane potential (y2_) is
    * clamped to U_reset_.
    */
-  void update( const Time& origin, const long from, const long to ) override;
+  void update( const Time origin, const long from, const long to ) override;
   //@}
 
   // The next two classes need to be friends to access the State_ class/member

@@ -164,7 +164,7 @@ nest::pulsepacket_generator::pre_run_hook()
 
 
 void
-nest::pulsepacket_generator::update( const Time& origin, const long from, const long to )
+nest::pulsepacket_generator::update( const Time origin, const long from, const long to )
 {
   assert( to >= from );
   assert( ( to - from ) <= kernel().connection_manager.get_min_delay() );

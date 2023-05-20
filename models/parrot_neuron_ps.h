@@ -112,7 +112,7 @@ private:
   {
   } // no variables
 
-  void update( const Time&, const long, const long ) override;
+  void update( const Time, const long, const long ) override;
 
   /** Queue for incoming events. */
   struct Buffers_

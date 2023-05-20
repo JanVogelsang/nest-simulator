@@ -277,7 +277,7 @@ nest::noise_generator::send_test_event( Node& target, const rport receptor_type,
 // Time Evolution Operator
 //
 void
-nest::noise_generator::update( const Time& origin, const long from, const long to )
+nest::noise_generator::update( const Time origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );

@@ -317,7 +317,7 @@ nest::spike_generator::pre_run_hook()
  * Other functions
  * ---------------------------------------------------------------- */
 void
-nest::spike_generator::update( const Time& sliceT0, const long from, const long to )
+nest::spike_generator::update( const Time sliceT0, const long from, const long to )
 {
   if ( P_.spike_stamps_.empty() )
   {

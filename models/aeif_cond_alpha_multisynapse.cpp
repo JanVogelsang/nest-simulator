@@ -482,7 +482,7 @@ aeif_cond_alpha_multisynapse::pre_run_hook()
  * Update and spike handling functions
  * ---------------------------------------------------------------- */
 void
-aeif_cond_alpha_multisynapse::update( const Time& origin, const long from, const long to )
+aeif_cond_alpha_multisynapse::update( const Time origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );

@@ -117,7 +117,7 @@ nest::mip_generator::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::mip_generator::update( const Time& origin, const long from, const long to )
+nest::mip_generator::update( const Time origin, const long from, const long to )
 {
   assert( to >= 0 and static_cast< delay >( from ) < kernel().connection_manager.get_min_delay() );
   assert( from < to );

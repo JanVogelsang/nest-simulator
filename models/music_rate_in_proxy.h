@@ -141,7 +141,7 @@ private:
   void init_buffers_();
   void pre_run_hook();
 
-  void update( const Time&, const long, const long );
+  void update( const Time, const long, const long );
 
   // ------------------------------------------------------------
 

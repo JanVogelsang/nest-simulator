@@ -146,8 +146,8 @@ private:
 
   bool update_( const Time&, const long, const long, const bool );
 
-  void update( const Time&, const long, const long ) override;
-  bool wfr_update( const Time&, const long, const long ) override;
+  void update( const Time, const long, const long ) override;
+  bool wfr_update( const Time, const long, const long ) override;
 
   // The next two classes need to be friends to access the State_ class/member
   friend class RecordablesMap< rate_transformer_node< TNonlinearities > >;
@@ -239,14 +239,14 @@ private:
 
 template < class TNonlinearities >
 inline void
-rate_transformer_node< TNonlinearities >::update( const Time& origin, const long from, const long to )
+rate_transformer_node< TNonlinearities >::update( const Time origin, const long from, const long to )
 {
   update_( origin, from, to, false );
 }
 
 template < class TNonlinearities >
 inline bool
-rate_transformer_node< TNonlinearities >::wfr_update( const Time& origin, const long from, const long to )
+rate_transformer_node< TNonlinearities >::wfr_update( const Time origin, const long from, const long to )
 {
   State_ old_state = S_; // save state before wfr update
   const bool wfr_tol_exceeded = update_( origin, from, to, true );

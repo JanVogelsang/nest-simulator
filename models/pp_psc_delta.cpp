@@ -354,7 +354,7 @@ nest::pp_psc_delta::pre_run_hook()
  */
 
 void
-nest::pp_psc_delta::update( const Time& origin, const long from, const long to )
+nest::pp_psc_delta::update( const Time origin, const long from, const long to )
 {
 
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );

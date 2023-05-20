@@ -173,7 +173,7 @@ ArchivingNode::has_stdp_connections() const
 // }
 
 void
-ArchivingNode::update_stdp_connections( const delay lag )
+ArchivingNode::update_stdp_connections( const Time origin, const delay lag )
 {
   if ( max_axonal_delay_ > 0 )
   {
@@ -190,19 +190,11 @@ ArchivingNode::update_stdp_connections( const delay lag )
       const synindex syn_id = current_pre_synaptic_spike->syn_id;
       const index local_connection_id = current_pre_synaptic_spike->local_connection_id;
       const size_t dendritic_delay_id = current_pre_synaptic_spike->dendritic_delay_id;
-      const Time pre_spike_time = current_pre_synaptic_spike->t_stamp;
-
-      const delay axonal_delay = current_pre_synaptic_spike->axonal_delay;
-      // Time of the last communication round, which can be easily calculated from the pre-synaptic spikes arrival time
-      // at the synapse using the current lag (instead of querying the simulation manager).
-      const double last_communication_time_steps = pre_spike_time.get_steps() + axonal_delay - lag - 1;
       // TODO JV (pt): Precise spikes
       process_spikes_until_pre_synaptic_spike( syn_id,
-        axonal_delay,
         local_connection_id,
         dendritic_delay_id,
-        pre_spike_time,
-        last_communication_time_steps,
+        origin + Time::step( current_pre_synaptic_spike->t_syn_lag ),
         0,
         cm[ syn_id ] );
       ++current_pre_synaptic_spike;
@@ -219,12 +211,11 @@ ArchivingNode::deliver_event_with_trace( const synindex syn_id,
   const index local_target_connection_id,
   const size_t dendritic_delay_id,
   const ConnectorModel* cm,
-  const Time lag,
-  const delay axonal_delay,
+  const Time pre_spike_time_syn,
   const double offset )
 {
   SpikeEvent se;
-  se.set_stamp( lag + Time::step( axonal_delay ) );
+  se.set_stamp( pre_spike_time_syn );
   se.set_offset( offset ); // TODO JV (help): Why can't offset be incorporated into lag?
   se.set_sender_node_id_info( get_thread(), syn_id, get_node_id(), local_target_connection_id );
 

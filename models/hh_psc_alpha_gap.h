@@ -198,8 +198,8 @@ private:
    */
   bool update_( const Time&, const long, const long, const bool );
 
-  void update( const Time&, const long, const long ) override;
-  bool wfr_update( const Time&, const long, const long ) override;
+  void update( const Time, const long, const long ) override;
+  bool wfr_update( const Time, const long, const long ) override;
 
   // END Boilerplate function declarations ----------------------------
 
@@ -368,13 +368,13 @@ private:
 };
 
 inline void
-hh_psc_alpha_gap::update( const Time& origin, const long from, const long to )
+hh_psc_alpha_gap::update( const Time origin, const long from, const long to )
 {
   update_( origin, from, to, false );
 }
 
 inline bool
-hh_psc_alpha_gap::wfr_update( const Time& origin, const long from, const long to )
+hh_psc_alpha_gap::wfr_update( const Time origin, const long from, const long to )
 {
   State_ old_state = S_; // save state before wfr_update
   const bool wfr_tol_exceeded = update_( origin, from, to, true );

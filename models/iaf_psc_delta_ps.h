@@ -208,7 +208,7 @@ private:
   void init_buffers_() override;
 
   void pre_run_hook() override;
-  void update( const Time&, const long, const long ) override;
+  void update( const Time, const long, const long ) override;
 
   /**
    * Calculate the precise spike time, emit the spike and reset the

@@ -618,7 +618,7 @@ nest::glif_cond::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 void
-nest::glif_cond::update( const Time& origin, const long from, const long to )
+nest::glif_cond::update( const Time origin, const long from, const long to )
 {
   // initial values
   double v_old = S_.y_[ State_::V_M ];

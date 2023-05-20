@@ -297,7 +297,7 @@ iaf_psc_alpha_ax_delay::pre_run_hook()
  */
 
 void
-iaf_psc_alpha_ax_delay::update( const Time& origin, const long from, const long to )
+iaf_psc_alpha_ax_delay::update( const Time origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
@@ -366,7 +366,7 @@ iaf_psc_alpha_ax_delay::update( const Time& origin, const long from, const long 
     // log state data
     B_.logger_.record_data( origin.get_steps() + lag );
 
-    ArchivingNode::update_stdp_connections( lag );
+    ArchivingNode::update_stdp_connections( origin, lag );
   }
 
   ArchivingNode::end_update();

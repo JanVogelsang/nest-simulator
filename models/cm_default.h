@@ -255,7 +255,7 @@ private:
   void init_recordables_pointers_();
   void pre_run_hook() override;
 
-  void update( const Time&, const long, const long ) override;
+  void update( const Time, const long, const long ) override;
 
   CompTree c_tree_;
   std::vector< RingBuffer > syn_buffers_;

@@ -38,23 +38,20 @@ namespace nest
 
 struct SpikeBufferEntry
 {
-  Time t_stamp; //!< Time when spike was emitted
-  delay axonal_delay : NUM_BITS_DELAY;
   synindex syn_id : NUM_BITS_SYN_ID;                         //!< Synapse type
-  size_t local_connection_id : NUM_BITS_LOCAL_CONNECTION_ID; //!< Neuron-local connection index
-  size_t dendritic_delay_id : NUM_BITS_DENDRITIC_DELAY_ID;   //!< Dendritic delay region index
-  delay t_syn_lag : 9; //!< The number of steps in the target slice until arriving at synapse
+  unsigned int local_connection_id : NUM_BITS_LOCAL_CONNECTION_ID; //!< Neuron-local connection index
+  // TODO JV (pt): Make lcid and dnedritic delay id a composite index with variable number of bits per part. The more
+  // dendritic delays, the less connections per delay, so it will definitely be sufficient for them to get about 16 bits
+  // in total.
+  unsigned int dendritic_delay_id : 4; // NUM_BITS_DENDRITIC_DELAY_ID;   //!< Dendritic delay region index
+  unsigned int t_syn_lag : 6; //!< The number of steps in the target slice until arriving at synapse
   // double offset;  //!< Precise spike offset  // TODO JV (pt): Templatize this to not always store offset
 
-  SpikeBufferEntry( const Time t_stamp,
-    const delay axonal_delay,
-    const synindex syn_id,
+  SpikeBufferEntry( const synindex syn_id,
     const size_t local_connection_id,
     const size_t dendritic_delay_id,
     const delay t_syn_lag )
-    : t_stamp( t_stamp )
-    , axonal_delay( axonal_delay )
-    , syn_id( syn_id )
+    : syn_id( syn_id )
     , local_connection_id( local_connection_id )
     , dendritic_delay_id( dendritic_delay_id )
     , t_syn_lag( t_syn_lag )
@@ -69,7 +66,7 @@ struct SpikeBufferEntry
 };
 
 //! check legal size
-using success_spike_buffer_entry_size = StaticAssert< sizeof( SpikeBufferEntry ) == 16 >::success;
+using success_spike_buffer_entry_size = StaticAssert< sizeof( SpikeBufferEntry ) == 4 >::success;
 
 
 class DynamicSpikeBuffer
@@ -91,8 +88,6 @@ public:
   void resize( const delay max_axonal_delay );
 
   void push_back( const unsigned long slices_to_postpone,
-    const Time t_stamp,
-    const delay axonal_delay,
     const synindex syn_id,
     const size_t local_connection_id,
     const size_t dendritic_delay_id,
@@ -118,8 +113,6 @@ DynamicSpikeBuffer::resize( const delay max_axonal_delay )
 
 inline void
 DynamicSpikeBuffer::push_back( const unsigned long slices_to_postpone,
-  const Time t_stamp,
-  const delay axonal_delay,
   const synindex syn_id,
   const size_t local_connection_id,
   const size_t dendritic_delay_id,
@@ -128,8 +121,7 @@ DynamicSpikeBuffer::push_back( const unsigned long slices_to_postpone,
   // TODO JV: Precompute moduli
   const size_t spike_buffer_index = ( current_slice_ + slices_to_postpone ) % spike_buffer_.size();
   // insert into sorted vector at correct position to keep it sorted
-  spike_buffer_[ spike_buffer_index ].emplace_back(
-    t_stamp, axonal_delay, syn_id, local_connection_id, dendritic_delay_id, t_syn_lag );
+  spike_buffer_[ spike_buffer_index ].emplace_back( syn_id, local_connection_id, dendritic_delay_id, t_syn_lag );
 }
 
 inline std::pair< std::vector< SpikeBufferEntry >::const_iterator&,

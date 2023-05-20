@@ -121,7 +121,7 @@ private:
   // must have an double operator(double) defined
   TGainfunction gain_;
 
-  void update( const Time&, const long, const long ) override;
+  void update( const Time, const long, const long ) override;
 
   // The next two classes need to be friends to access the State_ class/member
   friend class RecordablesMap< binary_neuron< TGainfunction > >;
@@ -454,7 +454,7 @@ binary_neuron< TGainfunction >::pre_run_hook()
 
 template < class TGainfunction >
 void
-binary_neuron< TGainfunction >::update( const Time& origin, const long from, const long to )
+binary_neuron< TGainfunction >::update( const Time origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );

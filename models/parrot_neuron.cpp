@@ -50,7 +50,7 @@ parrot_neuron::init_buffers_()
 }
 
 void
-parrot_neuron::update( const Time& origin, const long from, const long to )
+parrot_neuron::update( const Time origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );

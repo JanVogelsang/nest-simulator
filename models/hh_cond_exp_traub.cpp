@@ -378,7 +378,7 @@ nest::hh_cond_exp_traub::pre_run_hook()
  * Update and spike handling functions
  * ---------------------------------------------------------------- */
 void
-nest::hh_cond_exp_traub::update( const Time& origin, const long from, const long to )
+nest::hh_cond_exp_traub::update( const Time origin, const long from, const long to )
 {
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
