@@ -47,8 +47,8 @@ class TestSTDPPlSynapse:
         self.resolution = 0.1  # [ms]
         self.simulation_duration = 1E3  # [ms]
         self.synapse_model = "stdp_pl_synapse_hom_ax_delay"
-        self.presynaptic_firing_rate = 200.  # [ms^-1]
-        self.postsynaptic_firing_rate = 200.  # [ms^-1]
+        self.presynaptic_firing_rate = 0.  # [ms^-1]
+        self.postsynaptic_firing_rate = 0.  # [ms^-1]
         self.tau_pre = 20.0
         self.tau_post = 33.7
         self.init_weight = .5
@@ -332,15 +332,22 @@ class TestSTDPPlSynapse:
     def test_stdp_synapse(self):
         self.delay = self.axonal_delay = float('nan')
         self.init_params()
-        for self.delay, self.axonal_delay in [(1., 0.), (1., .5), (1., 1.), (self.resolution, 0.), (self.resolution, self.resolution)]:
-            self.init_params()
-            for self.nest_neuron_model in ["iaf_psc_alpha_ax_delay"]:
-                for self.neuron_parameters["t_ref"] in [.1, .5, 1., 1.5, 2., 2.5]:
-                    fname_snip = "_[nest_neuron_mdl=" + self.nest_neuron_model + "]"
-                    fname_snip += "_[dend_delay=" + str(self.dendritic_delay) + "]"
-                    fname_snip += "_[ax_delay=" + str(self.axonal_delay) + "]"
-                    fname_snip += "_[t_ref=" + str(self.neuron_parameters["t_ref"]) + "]"
-                    self.do_nest_simulation_and_compare_to_reproduced_weight(fname_snip=fname_snip)
+        for self.dendritic_delay, self.axonal_delay in (
+            (1., 0.), (.5, .5), (0., 1.), (self.resolution, 0.), (0., self.resolution), (0.3, 0.6)):
+            self.synapse_parameters["delay"] = self.dendritic_delay
+            self.synapse_parameters["axonal_delay"] = self.axonal_delay
+
+            for self.min_delay in (1., .4, self.resolution):
+                for self.max_delay in (3., 1.):
+                    self.min_delay = min(self.min_delay, self.max_delay)
+                    self.max_delay = max(self.min_delay, self.max_delay)
+                    for self.nest_neuron_model in ("iaf_psc_alpha_ax_delay",):
+                        for self.neuron_parameters["t_ref"] in (self.resolution, .5, 1., 1.1, 2.5):
+                            fname_snip = "_[nest_neuron_mdl=" + self.nest_neuron_model + "]"
+                            fname_snip += "_[dend_delay=" + str(self.dendritic_delay) + "]"
+                            fname_snip += "_[ax_delay=" + str(self.axonal_delay) + "]"
+                            fname_snip += "_[t_ref=" + str(self.neuron_parameters["t_ref"]) + "]"
+                            self.do_nest_simulation_and_compare_to_reproduced_weight(fname_snip=fname_snip)
 
 
 if __name__ == "__main__":
