@@ -445,6 +445,10 @@ ArchivingNode::prepare_update( const Time origin, const std::vector< ConnectorMo
         ++current_pre_synaptic_spike;
       }
     }
+#ifdef TIMER_DETAILED
+    if ( get_thread() == 0 )
+      sw_node_archive.stop();
+#endif
 
     // prepare the next update cycle
     intermediate_spike_buffer_.clean_slice();
@@ -518,12 +522,12 @@ ArchivingNode::deliver_event( const synindex syn_id,
     // In some cases the delivery can be simplified without having to temporarily save them in the
     // intermediate_spike_buffer. If at this point in time it can be guaranteed that there can not be any post-synaptic
     // spike that might arrive before this pre-synaptic spike, the delivery can be performed already.
-    // TODO JV (pt): If there is no axonal delay, we can be sure the spike can be sure the spike can be delivered
-    //  already. If there is axonal delay, it might still be delivered already, but this would require getting the
-    //  dendritic delay, thus visiting the connection. This is expected to be expensive and should be avoided, as if the
-    //  spike has to be postponed after getting the dendritic delay, the synapse has to be visited a second time in the
-    //  future. Storing the spike in the buffer is also fairly expensive, though. It therefore requires some
-    //  benchmarking to see which solution yields better performance.
+    // TODO JV (pt): If there is no axonal delay, we can be sure the spike can be delivered already. If there is axonal
+    //  delay, it might still be delivered already, but this would require getting the dendritic delay, thus visiting
+    //  the connection. This is expected to be expensive and should be avoided, as if the spike has to be postponed
+    //  after getting the dendritic delay, the synapse has to be visited a second time in the future. Storing the spike
+    //  in the buffer is also fairly expensive, though. It therefore requires some benchmarking to see which solution
+    //  yields better performance.
     if ( max_axonal_delay_ > 0 )
     {
       // If there is axonal delay, spikes have to be postponed
