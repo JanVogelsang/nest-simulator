@@ -229,6 +229,7 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e,
   const double t_spike = e.get_stamp().get_ms();
 
   // depression due to new pre-synaptic spike
+
   weight_ = depress_( weight_, Kminus, cp );
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) * cp.tau_plus_inv_ ) + 1.0;
   t_lastspike_ = t_spike;
