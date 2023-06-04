@@ -135,7 +135,6 @@ template < typename ConnectionT >
 void
 Connector< ConnectionT >::prepare_connections( const thread tid, const index target_lid )
 {
-  // TODO JV: Benchmark if using std::array would be faster here (stack vs. heap)
   std::vector< ConnectionT > temp_connections;
   std::vector< index > temp_sources;
   temp_connections.reserve( C_.size() );
