@@ -164,18 +164,6 @@ public:
    */
   void send( Event& e, const thread t, const double axonal_delay, const STDPPLHomCommonProperties&, Node* target );
 
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
 
   /*
    * This function calls check_connection on the sender and checks if the
@@ -199,7 +187,6 @@ public:
     const delay axonal_delay,
     const CommonPropertiesType& cp )
   {
-    ConnTestDummyNode dummy_target;
 
     if ( cp.axonal_delay_ > dendritic_delay )
     {
@@ -289,7 +276,6 @@ stdp_pl_synapse_hom::send( Event& e,
 
   e.set_weight( weight_ );
   e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay ) );
-  e();
 
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) * cp.tau_plus_inv_ ) + 1.0;
 

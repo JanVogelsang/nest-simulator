@@ -116,18 +116,6 @@ public:
   using ConnectionBase::get_dendritic_delay_steps;
 
 
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
 
   void
   check_connection( Node& s,
@@ -161,8 +149,7 @@ public:
       e_spike.set_multiplicity( n_spikes_out );
       e.set_weight( weight_ );
       e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay ) );
-      e();
-    }
+        }
 
     // Resets multiplicity for consistency
     e_spike.set_multiplicity( n_spikes_in );

@@ -246,14 +246,14 @@ nest::gamma_sup_generator::update( Time const& T, const long from, const long to
       continue; // no spike at this lag
     }
 
-    DSSpikeEvent se;
+    SpikeEvent se;
     kernel().event_delivery_manager.send( *this, se, lag );
   }
 }
 
 
 void
-nest::gamma_sup_generator::event_hook( DSSpikeEvent& e )
+nest::gamma_sup_generator::event_hook( SpikeEvent& e )
 {
   // get port number
   const port prt = e.get_port();

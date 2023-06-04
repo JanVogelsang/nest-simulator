@@ -88,10 +88,8 @@ struct EventTargetData
  *
  * @see Node
  * @see SpikeEvent
- * @see DSSpikeEvent
  * @see RateEvent
  * @see CurrentEvent
- * @see DSCurrentEvent
  * @see ConductanceEvent
  * @see WeightRecorderEvent
  * @see DataLoggingRequest
@@ -121,14 +119,6 @@ public:
    * Virtual copy constructor.
    */
   virtual Event* clone() const = 0;
-
-  /**
-   * Deliver the event to receiver.
-   *
-   * This operator calls the handler for the specific event type at
-   * the receiver.
-   */
-  virtual void operator()() = 0;
 
   /**
    * Return reference to sending Node.
@@ -176,7 +166,7 @@ public:
    * If this resolution is not fine enough, the creation time
    * can be corrected by using the time attribute.
    */
-  Time const& get_stamp() const;
+  const Time& get_stamp() const;
 
   /**
    * Set the transmission delay of the event.
@@ -289,22 +279,24 @@ public:
    * The time stamp refers to the time when the event
    * was created.
    */
-  void set_stamp( Time const& );
+  void set_stamp( const Time& );
 
   /**
-   * Returns the sender_spike_data_
+   * Returns the spike_data_
    */
-  EventTargetData get_sender_spike_data() const;
+  EventTargetData get_spike_data() const;
 
 protected:
-  index sender_node_id_;              //!< node ID of sender or 0
-  EventTargetData sender_spike_data_; //!< spike data of sender node, in some cases required to retrieve node ID
+  index sender_node_id_;       //!< node ID of sender or 0
+  EventTargetData spike_data_; //!< spike data of sender node, in some cases required to retrieve node ID
   /*
    * The original formulation used references to Nodes as members, however, in order to avoid the reference of reference
    * problem, we store sender as pointer and use references in the interface.
    * Thus, we can still ensure that the pointers are never nullptr.
    */
   Node* sender_; //!< Pointer to sender or nullptr.
+
+
   /**
    * Sender port number.
    * The sender port is used as a unique identifier for the
@@ -352,6 +344,8 @@ protected:
    */
   weight w_;
 };
+
+
 // Built-in event types
 /**
  * Event for spike information.
@@ -361,10 +355,6 @@ class SpikeEvent : public Event
 {
 public:
   SpikeEvent();
-  void
-  operator()() override
-  {
-  }
   SpikeEvent* clone() const override;
 
   void set_multiplicity( int );
@@ -396,6 +386,8 @@ SpikeEvent::get_multiplicity() const
 {
   return multiplicity_;
 }
+
+
 /**
  * Event for recording the weight of a spike.
  */
@@ -404,10 +396,6 @@ class WeightRecorderEvent : public Event
 public:
   WeightRecorderEvent();
   WeightRecorderEvent* clone() const override;
-  void
-  operator()() override
-  {
-  }
 
   /**
    * Return node ID of receiving Node.
@@ -446,27 +434,6 @@ WeightRecorderEvent::get_receiver_node_id() const
 {
   return receiver_node_id_;
 }
-/**
- * "Callback request event" for use in Device.
- *
- * Some Nodes want to perform a function on an event for each
- * of their targets. An example is the poisson_generator which
- * needs to draw a random number for each target. The DSSpikeEvent,
- * DirectSendingSpikeEvent, calls sender->event_hook(*this)
- * in its operator() function instead of calling receiver->handle().
- * The default implementation of Node::event_hook() just calls
- * target->handle(DSSpikeEvent&). Any reimplementation must also
- * execute this call. Otherwise the event will not be delivered.
- * If needed, target->handle(DSSpikeEvent&) may be called more than
- * once.
- *
- * @note Callback events must only be sent via static_synapse
- */
-class DSSpikeEvent : public SpikeEvent
-{
-public:
-  void operator()() override;
-};
 
 /**
  * Event for firing rate information.
@@ -480,10 +447,6 @@ class RateEvent : public Event
   double r_;
 
 public:
-  void
-  operator()() override
-  {
-  }
   RateEvent* clone() const override;
 
   void set_rate( double );
@@ -517,10 +480,6 @@ class CurrentEvent : public Event
   double c_;
 
 public:
-  void
-  operator()() override
-  {
-  }
   CurrentEvent* clone() const override;
 
   void set_current( double );
@@ -544,28 +503,6 @@ CurrentEvent::get_current() const
 {
   return c_;
 }
-
-/**
- * "Callback request event" for use in Device.
- *
- * Some Nodes want to perform a function on an event for each
- * of their targets. An example is the noise_generator which
- * needs to draw a random number for each target. The DSCurrentEvent,
- * DirectSendingCurrentEvent, calls sender->event_hook(*this)
- * in its operator() function instead of calling receiver->handle().
- * The default implementation of Node::event_hook() just calls
- * target->handle(DSCurrentEvent&). Any reimplementation must also
- * execute this call. Otherwise the event will not be delivered.
- * If needed, target->handle(DSCurrentEvent&) may be called more than
- * once.
- *
- * @note Callback events must only be sent via static_synapse.
- */
-class DSCurrentEvent : public CurrentEvent
-{
-public:
-  void operator()() override;
-};
 
 /**
  * @defgroup DataLoggingEvents Event types for analog logging devices.
@@ -595,11 +532,6 @@ public:
   DataLoggingRequest( const Time&, const Time&, const std::vector< Name >& );
 
   DataLoggingRequest* clone() const override;
-
-  void
-  operator()() override
-  {
-  }
 
   /** Access to stored time interval.*/
   const Time& get_recording_interval() const;
@@ -648,6 +580,8 @@ inline DataLoggingRequest::DataLoggingRequest( const Time& rec_int,
   , record_from_( &recs )
 {
 }
+
+
 inline DataLoggingRequest*
 DataLoggingRequest::clone() const
 {
@@ -716,11 +650,6 @@ public:
   //! Construct with reference to data and time stamps to transmit
   DataLoggingReply( const Container& );
 
-  void
-  operator()() override
-  {
-  }
-
   //! Access referenced data
   const Container&
   get_info() const
@@ -760,7 +689,6 @@ class ConductanceEvent : public Event
   double g_;
 
 public:
-  void operator()() override;
   ConductanceEvent* clone() const override;
 
   void set_conductance( double );
@@ -784,6 +712,8 @@ ConductanceEvent::get_conductance() const
 {
   return g_;
 }
+
+
 /**
  * Event for transmitting arbitrary data.
  * This event type may be used for transmitting arbitrary
@@ -826,10 +756,6 @@ DataEvent< D >::get_pointer() const
 class DoubleDataEvent : public DataEvent< double >
 {
 public:
-  void
-  operator()() override
-  {
-  }
   DoubleDataEvent* clone() const override;
 };
 
@@ -872,7 +798,7 @@ Event::set_sender_node_id_info( const thread tid,
   const index local_target_node_id,
   const index local_target_connection_id )
 {
-  sender_spike_data_ = { tid, syn_id, local_target_node_id, local_target_connection_id };
+  spike_data_ = { tid, syn_id, local_target_node_id, local_target_connection_id };
 }
 
 inline Node&
@@ -900,14 +826,14 @@ Event::set_weight( weight w )
   w_ = w;
 }
 
-inline Time const&
+inline const Time&
 Event::get_stamp() const
 {
   return stamp_;
 }
 
 inline void
-Event::set_stamp( Time const& s )
+Event::set_stamp( const Time& s )
 {
   stamp_ = s;
   stamp_steps_ = 0; // setting stamp_steps to zero indicates
@@ -963,9 +889,9 @@ Event::set_port( port p )
 }
 
 inline EventTargetData
-Event::get_sender_spike_data() const
+Event::get_spike_data() const
 {
-  return sender_spike_data_;
+  return spike_data_;
 }
 }
 

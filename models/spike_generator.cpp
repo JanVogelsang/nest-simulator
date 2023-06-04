@@ -357,7 +357,7 @@ nest::spike_generator::update( Time const& sliceT0, const long from, const long 
       // spike_weights_, so we use a DSSpike event and event_hook()
       if ( not P_.spike_weights_.empty() )
       {
-        se = new DSSpikeEvent;
+        se = new SpikeEvent;
       }
       else
       {
@@ -387,9 +387,16 @@ nest::spike_generator::update( Time const& sliceT0, const long from, const long 
 }
 
 void
-nest::spike_generator::event_hook( DSSpikeEvent& e )
+nest::spike_generator::event_hook( SpikeEvent& e )
 {
-  e.set_weight( P_.spike_weights_[ S_.position_ ] * e.get_weight() );
+  // if we have to deliver weighted spikes, we need to get the
+  // event back to set its weight according to the entry in
+  // spike_weights_, so we use a DSSpike event and event_hook()
+  // TODO JV (pt): Rework devices
+  if ( not P_.spike_weights_.empty() )
+  {
+    e.set_weight( P_.spike_weights_[ S_.position_ ] * e.get_weight() );
+  }
 }
 
 /* ----------------------------------------------------------------

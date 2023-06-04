@@ -99,9 +99,8 @@ public:
 
   bool is_off_grid() const override;
 
-  using Node::event_hook;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
@@ -120,10 +119,10 @@ private:
    * Update state.
    * Update cannot send spikes directly, since we need to identify each
    * target to know the time of the most recent spike sent. Since target
-   * information is in the Connectors, we send a DSSpikeEvent to all
+   * information is in the Connectors, we send a SpikeEvent to all
    * targets, which is reflected to this->event_hook() with target
    * information.
-   * @see event_hook, DSSpikeEvent
+   * @see event_hook, SpikeEvent
    */
   void update( Time const&, const long, const long ) override;
 
@@ -132,7 +131,7 @@ private:
    * Called once per target to dispatch actual output spikes.
    * @param contains target information.
    */
-  void event_hook( DSSpikeEvent& ) override;
+  void event_hook( SpikeEvent& ) override;
 
   // ------------------------------------------------------------
 
@@ -204,27 +203,17 @@ private:
 };
 
 inline port
-poisson_generator_ps::send_test_event( Node& target, rport receptor_type, synindex syn_id, bool dummy_target )
+poisson_generator_ps::send_test_event( Node& target, rport receptor_type, synindex syn_id )
 {
   StimulationDevice::enforce_single_syn_type( syn_id );
-
-  if ( dummy_target )
+  SpikeEvent e;
+  e.set_sender( *this );
+  const port p = target.handles_test_event( e, receptor_type );
+  if ( p != invalid_port and not is_model_prototype() )
   {
-    DSSpikeEvent e;
-    e.set_sender( *this );
-    return target.handles_test_event( e, receptor_type );
+    ++P_.num_targets_; // count number of targets
   }
-  else
-  {
-    SpikeEvent e;
-    e.set_sender( *this );
-    const port p = target.handles_test_event( e, receptor_type );
-    if ( p != invalid_port and not is_model_prototype() )
-    {
-      ++P_.num_targets_; // count number of targets
-    }
-    return p;
-  }
+  return p;
 }
 
 inline void

@@ -56,8 +56,7 @@ public:
     const bool requires_symmetric,
     const bool supports_wfr,
     const bool requires_clopath_archiving,
-    const bool requires_urbanczik_archiving,
-    const bool requires_postponed_delivery );
+    const bool requires_urbanczik_archiving );
   ConnectorModel( const ConnectorModel&, const std::string );
   virtual ~ConnectorModel()
   {
@@ -146,12 +145,6 @@ public:
   }
 
   bool
-  requires_postponed_delivery() const
-  {
-    return requires_postponed_delivery_;
-  }
-
-  bool
   supports_wfr() const
   {
     return supports_wfr_;
@@ -174,9 +167,6 @@ protected:
   bool requires_clopath_archiving_;
   //! indicates that ConnectorModel requires Urbanczik archiving
   bool requires_urbanczik_archiving_;
-  //! indicates that ConnectorModel requires pre-synaptic spike delivery to be postponed until it reaches the synapse
-  //! before any following post-synaptic spike
-  bool requires_postponed_delivery_;
 
 }; // ConnectorModel
 template < typename ConnectionT >
@@ -199,16 +189,14 @@ public:
     bool requires_symmetric,
     bool supports_wfr,
     bool requires_clopath_archiving,
-    bool requires_urbanczik_archiving,
-    bool requires_postponed_delivery )
+    bool requires_urbanczik_archiving )
     : ConnectorModel( name,
       is_primary,
       has_delay,
       requires_symmetric,
       supports_wfr,
       requires_clopath_archiving,
-      requires_urbanczik_archiving,
-      requires_postponed_delivery )
+      requires_urbanczik_archiving )
     , default_axonal_delay_( 0.0 )
     , receptor_type_( 0 )
   {
@@ -302,8 +290,7 @@ public:
       requires_symmetric,
       supports_wfr,
       /*requires_clopath_archiving=*/false,
-      /*requires_urbanczik_archiving=*/false,
-      /*requires_postponed_delivery=*/false )
+      /*requires_urbanczik_archiving=*/false )
     , pev_( 0 )
   {
     pev_ = new typename ConnectionT::EventType();

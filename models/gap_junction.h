@@ -121,8 +121,7 @@ public:
   send( Event& e, const thread t, const double axonal_delay, const CommonSynapseProperties&, Node* target )
   {
     e.set_weight( weight_ );
-    e();
-  }
+    }
 
   void get_status( DictionaryDatum& d ) const;
 

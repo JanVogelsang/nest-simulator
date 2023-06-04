@@ -60,7 +60,7 @@ public:
   deliver_event_to_device( const thread tid,
     const synindex syn_id,
     const index local_target_connection_id,
-    const std::vector< ConnectorModel* >& cm,
+    const ConnectorModel* cm,
     EventT& e )
   {
     // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
@@ -73,10 +73,18 @@ public:
     handle( e );
   }
 
+#ifdef TIMER_DETAILED
   void
-  deliver_event( const synindex, const index, const delay, const std::vector< ConnectorModel* >&, SpikeEvent& ) override
+  deliver_event( const synindex, const index, const ConnectorModel*, const Time lag, const delay d, const double offset, const delay min_delay, Stopwatch&, Stopwatch&, Stopwatch& ) override
+#else
+  void
+  deliver_event( const synindex, const index, const ConnectorModel*, const Time lag, const delay d, const double offset, const delay min_delay ) override
+#endif
   {
   }
+
+  virtual void event_hook( SpikeEvent& e ) {};
+  virtual void event_hook( CurrentEvent& e ) {};
 
 protected:
   index local_device_id_;

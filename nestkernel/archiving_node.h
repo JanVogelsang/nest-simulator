@@ -129,16 +129,6 @@ public:
   void register_stdp_connection( double t_first_read, delay dendritic_delay ) override;
 
   /**
-   * Postponed delivery is required for STDP synapses with predominantly axonal delay. The archiving node supports this
-   * feature by utilizing an intermediate spike buffer.
-   */
-  inline virtual bool
-  supports_postponed_delivery() const
-  {
-    return false;
-  }
-
-  /**
    * When receiving an incoming event, forward it to the corresponding connection and handle the event updated by the
    * connection.
    */

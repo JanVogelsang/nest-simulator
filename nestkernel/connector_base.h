@@ -128,7 +128,7 @@ public:
   virtual void send( const thread tid,
     const index lcid,
     const delay axonal_delay,
-    const std::vector< ConnectorModel* >& cm,
+    const ConnectorModel* cm,
     Event& e,
     Node* target ) = 0;
 
@@ -175,7 +175,10 @@ class Connector : public ConnectorBase
 private:
   const synindex syn_id_;
   std::vector< ConnectionT > C_;
+
+#ifndef USE_ADJACENCY_LIST
   std::vector< delay > axonal_delays_;
+#endif
 
   /**
    * This data structure stores the node IDs of presynaptic neurons connected to this neuron. If structural plasticity
@@ -190,13 +193,16 @@ private:
   std::vector< index > sources_;
 
 public:
-  explicit Connector( const synindex syn_id )
+  explicit Connector( const synindex syn_id, const size_t num )
     : syn_id_( syn_id )
   {
     // TODO JV: Benchmark this both with and without reserve
-    axonal_delays_.reserve( 11250 );
-    C_.reserve( 11250 );
-    sources_.reserve( 11250 );
+
+#ifndef USE_ADJACENCY_LIST
+    axonal_delays_.reserve( num );
+#endif
+    C_.reserve( num );
+    sources_.reserve( num );
   }
 
   ~Connector() override = default;
@@ -353,14 +359,14 @@ public:
   send( const thread tid,
     const index lcid,
     const delay axonal_delay,
-    const std::vector< ConnectorModel* >& cm,
+    const ConnectorModel* cm,
     Event& e,
     Node* target ) override
   {
     assert( C_.size() > lcid );
 
     typename ConnectionT::CommonPropertiesType const& cp =
-      static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties();
+      static_cast< const GenericConnectorModel< ConnectionT >* >( cm )->get_common_properties();
 
     e.set_port( lcid );
     if ( not C_[ lcid ].is_disabled() )

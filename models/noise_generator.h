@@ -157,12 +157,11 @@ public:
    * @see Technical Issues / Virtual Functions: Overriding, Overloading, and
    * Hiding
    */
-  using Node::event_hook;
   using Node::handle;
   using Node::handles_test_event;
   using Node::sends_signal;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   SignalType sends_signal() const override;
 
@@ -189,7 +188,7 @@ private:
   void pre_run_hook() override;
 
   void update( Time const&, const long, const long ) override;
-  void event_hook( DSCurrentEvent& ) override;
+  void event_hook( CurrentEvent& ) override;
 
   // ------------------------------------------------------------
 

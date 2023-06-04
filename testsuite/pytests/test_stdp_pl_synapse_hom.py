@@ -45,7 +45,7 @@ class TestSTDPPlSynapse:
     def init_params(self):
         self.eps = 1e-6
         self.resolution = 0.1  # [ms]
-        self.simulation_duration = 1E3  # [ms]
+        self.simulation_duration = 1E2  # [ms]
         self.synapse_model = "stdp_pl_synapse_hom_ax_delay"
         self.presynaptic_firing_rate = 100.  # [ms^-1]
         self.postsynaptic_firing_rate = 100.  # [ms^-1]

@@ -135,6 +135,11 @@ EventDeliveryManager::get_status( DictionaryDatum& dict )
   def< double >( dict, names::time_communicate_spike_data, sw_communicate_spike_data_.elapsed() );
   def< double >( dict, names::time_deliver_spike_data, sw_deliver_spike_data_.elapsed() );
   def< double >( dict, names::time_communicate_target_data, sw_communicate_target_data_.elapsed() );
+  def< double >( dict, names::time_adjacency_list, sw_adjacency_list_.elapsed() );
+  def< double >( dict, names::time_deliver_node, sw_deliver_node_.elapsed() );
+  def< double >( dict, names::time_stdp_delivery, sw_stdp_delivery_.elapsed() );
+  def< double >( dict, names::time_static_delivery, sw_static_delivery_.elapsed() );
+  def< double >( dict, names::time_node_archive, sw_node_archive_.elapsed() );
 #endif
 }
 
@@ -282,6 +287,10 @@ EventDeliveryManager::reset_timers_for_dynamics()
   sw_collocate_spike_data_.reset();
   sw_communicate_spike_data_.reset();
   sw_deliver_spike_data_.reset();
+  sw_deliver_node_.reset();
+  sw_stdp_delivery_.reset();
+  sw_static_delivery_.reset();
+  sw_node_archive_.reset();
 #endif
 }
 
@@ -578,8 +587,6 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
   // deliver only at end of time slice
   assert( kernel().simulation_manager.get_to_step() == kernel().connection_manager.get_min_delay() );
 
-  SpikeEvent se;
-
   // prepare Time objects for every possible time stamp within min_delay_
   std::vector< Time > prepared_timestamps( kernel().connection_manager.get_min_delay() );
   for ( size_t lag = 0; lag < static_cast< size_t >( kernel().connection_manager.get_min_delay() ); ++lag )
@@ -606,31 +613,7 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
     {
       const SpikeDataT& spike_data = recv_buffer[ rank * send_recv_count_spike_data_per_rank + i ];
 
-      se.set_stamp( prepared_timestamps[ spike_data.get_lag() ] );
-      se.set_offset( spike_data.get_offset() );
-
-#ifdef USE_ADJACENCY_LIST
-      if ( kernel().connection_manager.use_compressed_spikes() )
-      {
-        // Compressed spikes use the adjacency list index of SpikeData to transmit the index in the compressed spike
-        // data structure.
-        const index compressed_index = spike_data.get_adjacency_list_index();
-        const std::map< thread, index >& compressed_spike_data =
-          kernel().connection_manager.get_compressed_spike_data( compressed_index );
-        const auto compressed_spike_data_it = compressed_spike_data.find( tid );
-        if ( compressed_spike_data_it != compressed_spike_data.end() )
-        {
-          deliver_to_adjacency_list( tid, compressed_spike_data_it->second, se, cm );
-        }
-      }
-      else // Delivery to single adjacency list entry (uncompressed spike)
-      {
-        if ( spike_data.get_tid() == tid )
-        {
-          deliver_to_adjacency_list( tid, spike_data.get_adjacency_list_index(), se, cm );
-        }
-      }
-#else
+#ifndef USE_ADJACENCY_LIST
       // simple node-to-node delivery without any indirections in between
       if ( spike_data.get_tid() == tid )
       {
@@ -638,11 +621,42 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
         const index local_target_node_id = spike_data.get_local_target_node_id();
         const index local_target_connection_id = spike_data.get_local_target_connection_id();
 
-        // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
-        // only if needed, as this is computationally costly
-        se.set_sender_node_id_info( tid, syn_id, local_target_node_id, local_target_connection_id );
         Node* target_node = kernel().node_manager.thread_lid_to_node( tid, local_target_node_id );
-        target_node->deliver_event( syn_id, local_target_connection_id, cm, se );
+        target_node->deliver_event( syn_id,
+          local_target_connection_id,
+          cm,
+          prepared_timestamps[ spike_data.get_lag() ],
+          spike_data.get_offset() );
+      }
+#else
+#ifdef TIMER_DETAILED
+      if ( tid == 0 )
+        sw_adjacency_list_.start();
+#endif
+      if ( kernel().connection_manager.use_compressed_spikes() )
+      {
+        // Compressed spikes use the adjacency list index of SpikeData to transmit the index in the compressed spike
+        // data structure.
+        const index compressed_index = spike_data.get_adjacency_list_index();
+        if ( const index compressed_adjacency_list_index = kernel().connection_manager.get_compressed_spike_data( compressed_index, tid ); compressed_adjacency_list_index != invalid_index )
+        {
+          deliver_to_adjacency_list( tid,
+            compressed_adjacency_list_index,
+            prepared_timestamps[ spike_data.get_lag() ],
+            spike_data.get_offset(),
+            cm );
+        }
+      }
+      else // Delivery to single adjacency list entry (uncompressed spike)
+      {
+        if ( spike_data.get_tid() == tid )
+        {
+          deliver_to_adjacency_list( tid,
+            spike_data.get_adjacency_list_index(),
+            prepared_timestamps[ spike_data.get_lag() ],
+            spike_data.get_offset(),
+            cm );
+        }
       }
 #endif
 
@@ -718,6 +732,7 @@ EventDeliveryManager::gather_target_data( const thread tid )
       sw_communicate_target_data_.stop();
 #endif
     } // of omp single (implicit barrier)
+
     const bool distribute_completed = distribute_target_data_buffers_( tid );
     gather_completed_checker_[ tid ].logical_and( distribute_completed );
 

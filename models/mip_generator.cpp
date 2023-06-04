@@ -134,7 +134,7 @@ nest::mip_generator::update( Time const& T, const long from, const long to )
 
     if ( n_parent_spikes )
     {
-      DSSpikeEvent se;
+      SpikeEvent se;
 
       se.set_multiplicity( n_parent_spikes );
       kernel().event_delivery_manager.send( *this, se, lag );
@@ -143,7 +143,7 @@ nest::mip_generator::update( Time const& T, const long from, const long to )
 }
 
 void
-nest::mip_generator::event_hook( DSSpikeEvent& e )
+nest::mip_generator::event_hook( SpikeEvent& e )
 {
   /*
      We temporarily set the spike multiplicity here to the number of

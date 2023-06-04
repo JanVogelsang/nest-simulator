@@ -71,12 +71,14 @@ public:
    * to keep a clean and unitary interface for the event sending
    * mechanism.
    * @note Only specialization for SpikeEvent does remote sending.
-   *       Specialized for DSSpikeEvent to avoid that these events
+   *       Specialized for SpikeEvent to avoid that these events
    *       are sent to remote processes.
    * \see send_local()
    */
   template < class EventT >
   void send( Node& source, EventT& e, const long lag = 0 );
+
+  void send_device_spike( Node& source, SpikeEvent& e, const long lag = 0 );
 
   /**
    * Send a secondary event remote.
@@ -121,13 +123,6 @@ public:
    * @see send_to_targets()
    */
   void send_off_grid_remote( thread tid, SpikeEvent& e, const long lag = 0 );
-
-  /**
-   * Send event e directly to its target node. This should be
-   * used only where necessary, e.g. if a node wants to reply
-   * to a *RequestEvent immediately.
-   */
-  void send_to_node( Event& e );
 
   /**
    * return current communication style.
@@ -292,7 +287,8 @@ private:
    */
   void deliver_to_adjacency_list( const thread tid,
     const index adjacency_list_index,
-    SpikeEvent& se,
+    const Time lag,
+    const double offset,
     const std::vector< ConnectorModel* >& cm );
 #endif
 
@@ -432,6 +428,13 @@ private:
   Stopwatch sw_communicate_spike_data_;
   Stopwatch sw_deliver_spike_data_;
   Stopwatch sw_communicate_target_data_;
+  Stopwatch sw_adjacency_list_;
+  Stopwatch sw_deliver_node_;
+public:
+  Stopwatch sw_stdp_delivery_;
+  Stopwatch sw_static_delivery_;
+  Stopwatch sw_node_archive_;
+private:
 #endif
 };
 
@@ -491,12 +494,6 @@ EventDeliveryManager::clean_spike_register_( const thread tid )
       iit->erase( new_end, iit->end() );
     }
   }
-}
-
-inline void
-EventDeliveryManager::send_to_node( Event& e )
-{
-  e();
 }
 
 inline bool

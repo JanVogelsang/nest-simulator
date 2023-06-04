@@ -71,55 +71,6 @@ public:
 
   using ConnectionBase::get_dendritic_delay_steps;
 
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( RateEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( DataLoggingRequest&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( CurrentEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( ConductanceEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( DoubleDataEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( DSSpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-    port
-    handles_test_event( DSCurrentEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
-
-
   void get_status( DictionaryDatum& d ) const;
 
   void
@@ -131,7 +82,6 @@ public:
     const delay axonal_delay,
     const CommonPropertiesType& )
   {
-    ConnTestDummyNode dummy_target;
   }
 
   /**
@@ -159,8 +109,7 @@ public:
   {
     e.set_weight( cp.get_weight() );
     e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay ) );
-    e();
-  }
+    }
 
   void
   set_weight( double )

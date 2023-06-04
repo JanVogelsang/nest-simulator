@@ -259,14 +259,14 @@ nest::ppd_sup_generator::update( Time const& T, const long from, const long to )
       V_.hazard_step_t_ = V_.hazard_step_;
     }
 
-    DSSpikeEvent se;
+    SpikeEvent se;
     kernel().event_delivery_manager.send( *this, se, lag );
   }
 }
 
 
 void
-nest::ppd_sup_generator::event_hook( DSSpikeEvent& e )
+nest::ppd_sup_generator::event_hook( SpikeEvent& e )
 {
   // get port number
   const port prt = e.get_port();

@@ -62,8 +62,7 @@ enum class RegisterConnectionModelFlags : unsigned
   SUPPORTS_WFR = 1 << 4,
   REQUIRES_SYMMETRIC = 1 << 5,
   REQUIRES_CLOPATH_ARCHIVING = 1 << 6,
-  REQUIRES_URBANCZIK_ARCHIVING = 1 << 7,
-  REQUIRES_POSTPONED_DELIVERY = 1 << 8
+  REQUIRES_URBANCZIK_ARCHIVING = 1 << 7
 };
 
 template <>

@@ -175,18 +175,6 @@ public:
     const STDPPLHomAxDelayCommonProperties& cp,
     Node* target );
 
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
 
   /*
    * This function calls check_connection on the sender and checks if the
@@ -210,7 +198,6 @@ public:
     const delay axonal_delay,
     const CommonPropertiesType& cp )
   {
-    ConnTestDummyNode dummy_target;
 
     if ( axonal_delay + dendritic_delay < kernel().connection_manager.get_stdp_eps() )
     {
@@ -308,7 +295,6 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e,
 
   e.set_weight( weight_ );
   e.set_delay_steps( Time::delay_ms_to_steps( dendritic_delay_ms ) + axonal_delay );
-  e();
 
   if ( ( axonal_delay_ms - dendritic_delay_ms ) > kernel().connection_manager.get_stdp_eps() )
   {
@@ -366,7 +352,6 @@ stdp_pl_synapse_hom_ax_delay::correct_synapse_stdp_ax_delay( const double t_last
   e.set_weight( weight_ - wrong_weight );
   e.set_delay_steps( dendritic_delay + axonal_delay );
   e.set_stamp( Time::ms_stamp( t_spike ) );
-  e();
 }
 
 } // of namespace nest

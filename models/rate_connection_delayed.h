@@ -123,8 +123,7 @@ public:
   {
     e.set_weight( weight_ );
     e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay ) );
-    e();
-  }
+    }
 
   void get_status( DictionaryDatum& d ) const;
 

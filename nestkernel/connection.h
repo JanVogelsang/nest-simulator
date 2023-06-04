@@ -47,53 +47,6 @@ namespace nest
 class ConnectorModel;
 
 /**
- * Base class for dummy nodes used in connection testing.
- *
- * This class provides a based for dummy node objects that
- * are used to test whether a connection can be established.
- * The base class provides empty implementations of all pure
- * virtual functions of class Node.
- *
- * Each connection class (i.e., each class derived from class
- * template Connection<T>), must derive a concrete ConnTestDummyNode
- * class that overrides method Node::handles_test_event() for all
- * event types that the connection supports.
- *
- * For details, see Kunkel et al, Front Neuroinform 8:78 (2014),
- * Sec 3.3.1. Note that the ConnTestDummyNode class is called
- * "check_helper" in the paper.
- *
- * @ingroup event_interface
- */
-class ConnTestDummyNodeBase : public Node
-{
-  void
-  pre_run_hook() override
-  {
-  }
-  void
-  update( const nest::Time&, const long, const long ) override
-  {
-  }
-  void
-  set_status( const DictionaryDatum& ) override
-  {
-  }
-  void
-  get_status( DictionaryDatum& ) const override
-  {
-  }
-  void
-  init_state_() override
-  {
-  }
-  void
-  init_buffers_() override
-  {
-  }
-};
-
-/**
  * Base class for representing connections.
  * It provides the mandatory properties receiver port and target,
  * as well as the functions get_status() and set_status()
@@ -121,10 +74,6 @@ public:
 
   Connection( const Connection& rhs ) = default;
   Connection& operator=( const Connection& rhs ) = default;
-
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  };
 
   /**
    * Get all properties of this connection and put them into a dictionary.

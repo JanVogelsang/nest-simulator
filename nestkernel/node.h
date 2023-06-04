@@ -39,6 +39,9 @@
 #include "nest_types.h"
 #include "node_collection.h"
 #include "secondary_event.h"
+#ifdef TIMER_DETAILED
+#include "stopwatch.h"
+#endif
 
 // Includes from sli:
 #include "dictdatum.h"
@@ -136,16 +139,6 @@ public:
    * Returns true if the node supports the Urbanczik-Senn plasticity rule
    */
   virtual bool supports_urbanczik_archiving() const;
-
-  /**
-   * Base Node class does not support postponed delivery. Postponed delivery has to be implemented in derived classes if
-   * they need to support this feature.
-   */
-  inline virtual bool
-  supports_postponed_delivery() const
-  {
-    return false;
-  }
 
   /**
    * Returns true if the node only receives events from nodes/devices
@@ -252,7 +245,7 @@ public:
    * called on a given node, otherwise it returns immediately. init() calls
    * virtual functions init_state_() and init_buffers_().
    */
-  void init();
+  virtual void init();
 
   /**
    * Re-calculate dependent parameters of the node.
@@ -285,18 +278,16 @@ public:
 
   /**
    * Finalize node.
-   * Override this function if a node needs to "wrap up" things after a
-   * full simulation, i.e., a cycle of Prepare, Run, Cleanup. Typical
-   * use-cases are devices that need to close files.
+   * Override this function if a node needs to "wrap up" things after a full simulation, i.e., a cycle of Prepare, Run,
+   * Cleanup. Typical use-cases are devices that need to close files.
    */
   virtual void finalize();
 
   /**
    * Bring the node from state $t$ to $t+n*dt$.
    *
-   * n->update(T, from, to) performs the update steps beginning
-   * at T+from .. T+to-1, ie, emitting events with time stamps
-   * T+from+1 .. T+to.
+   * n->update(T, from, to) performs the update steps beginning at T+from .. T+to-1, ie, emitting events with time
+   * stamps T+from+1 .. T+to.
    *
    * @param Time   network time at beginning of time slice.
    * @param long initial step inside time slice
@@ -379,15 +370,8 @@ public:
    * This is required during the connection handshaking to test,
    * if the receiving_node can handle the event type and receptor_type sent
    * by the source node.
-   *
-   * If dummy_target is true, this indicates that receiving_node is derived from
-   * ConnTestDummyNodeBase and used in the first call to send_test_event().
-   * This can be ignored in most cases, but Nodes sending DS*Events to their
-   * own event hooks and then *Events to their proper targets must send
-   * DS*Events when called with the dummy target, and *Events when called with
-   * the real target, see #478.
    */
-  virtual port send_test_event( Node& receiving_node, const rport receptor_type, synindex syn_id, bool dummy_target );
+  virtual port send_test_event( Node& receiving_node, const rport receptor_type, synindex syn_id );
 
   /**
    * Check if the node can handle a particular event and receptor type.
@@ -414,8 +398,6 @@ public:
   virtual port handles_test_event( CurrentEvent&, rport receptor_type );
   virtual port handles_test_event( ConductanceEvent&, rport receptor_type );
   virtual port handles_test_event( DoubleDataEvent&, rport receptor_type );
-  virtual port handles_test_event( DSSpikeEvent&, rport receptor_type );
-  virtual port handles_test_event( DSCurrentEvent&, rport receptor_type );
   virtual port handles_test_event( GapJunctionEvent&, rport receptor_type );
   virtual port handles_test_event( InstantaneousRateConnectionEvent&, rport receptor_type );
   virtual port handles_test_event( DiffusionConnectionEvent&, rport receptor_type );
@@ -653,7 +635,8 @@ public:
    * \param receptor The ID of the requested receptor type
    */
   template < typename ConnectionT >
-  void check_connection( Node& source, const synindex syn_id, const rport receptor_type );
+  void check_connection( Node& source, ConnectionT& connection, const synindex syn_id, const rport receptor_type,
+    const delay total_delay, const typename ConnectionT::CommonPropertiesType& cp );
 
   /**
    * Adds a connection to this node of a specific connection type.
@@ -676,25 +659,33 @@ public:
   void deliver_event_from_device( const thread tid,
     const synindex syn_id,
     const index local_target_connection_id,
-    const std::vector< ConnectorModel* >& cm,
+    const ConnectorModel* cm,
     EventT& e );
 
   /**
    * When receiving an incoming spike event, forward it to the corresponding connection and handle the event previously
    * updated by the connection.
    */
-#ifndef USE_ADJACENCY_LIST
+#ifdef TIMER_DETAILED
   virtual void deliver_event( const synindex syn_id,
     const index local_target_connection_id,
-    const std::vector< ConnectorModel* >& cm,
-    SpikeEvent& se );
-#endif
-  //! Same as regular deliver event, but also providing cached axonal delay
-  virtual void deliver_event( const synindex syn_id,
-    const index local_target_connection_id,
+    const ConnectorModel* cm,
+    const Time lag,
     const delay axonal_delay,
-    const std::vector< ConnectorModel* >& cm,
-    SpikeEvent& se );
+    const double offset,
+    const delay min_delay,
+    Stopwatch& sw_stdp_delivery_,
+    Stopwatch& sw_static_delivery,
+    Stopwatch& sw_node_archive_ );
+#else
+  virtual void deliver_event( const synindex syn_id,
+    const index local_target_connection_id,
+    const ConnectorModel* cm,
+    const Time lag,
+    const delay axonal_delay,
+    const double offset,
+    const delay min_delay );
+#endif
 
   /**
    * Handle incoming spike events.
@@ -934,23 +925,6 @@ public:
   virtual double get_tau_s( int comp );
   virtual double get_tau_syn_ex( int comp );
   virtual double get_tau_syn_in( int comp );
-
-  /**
-   * Modify Event object parameters during event delivery.
-   * Some Nodes want to perform a function on an event for each
-   * of their targets. An example is the poisson_generator which
-   * needs to draw a random number for each target. The DSSpikeEvent,
-   * DirectSendingSpikeEvent, calls sender->event_hook(thread, *this)
-   * in its operator() function instead of calling target->handle().
-   * The default implementation of Node::event_hook() just calls
-   * target->handle(DSSpikeEvent&). Any reimplementation must also
-   * execute this call. Otherwise the event will not be delivered.
-   * If needed, target->handle(DSSpikeEvent) may be called more than
-   * once.
-   */
-  virtual void event_hook( DSSpikeEvent& );
-
-  virtual void event_hook( DSCurrentEvent& );
 
   /**
    * Store the number of the thread to which the node is assigned.
@@ -1313,31 +1287,52 @@ Node::get_thread_lid() const
   return thread_lid_;
 }
 
-#ifndef USE_ADJACENCY_LIST
+#ifdef TIMER_DETAILED
 inline void
 Node::deliver_event( const synindex syn_id,
   const index local_target_connection_id,
-  const std::vector< ConnectorModel* >& cm,
-  SpikeEvent& se )
-{
-  const delay axonal_delay = connections_[ syn_id ]->get_axonal_delay( local_target_connection_id );
-  deliver_event( syn_id, local_target_connection_id, axonal_delay, cm, se );
-}
-#endif
-
-inline void
-Node::deliver_event( const synindex syn_id,
-  const index local_target_connection_id,
+  const ConnectorModel* cm,
+  const Time lag,
   const delay axonal_delay,
-  const std::vector< ConnectorModel* >& cm,
-  SpikeEvent& se )
+  const double offset,
+  const delay,
+  Stopwatch&,
+  Stopwatch& sw_static_delivery,
+  Stopwatch& )
 {
+  if ( thread_ == 0 )
+  {
+    sw_static_delivery.start();
+  }
+#else
+inline void
+Node::deliver_event( const synindex syn_id,
+  const index local_target_connection_id,
+  const ConnectorModel* cm,
+  const Time lag,
+  const delay axonal_delay,
+  const double offset,
+  const delay )
+{
+#endif
+  SpikeEvent se;
+  se.set_stamp( lag );
+  se.set_offset( offset ); // TODO JV (help): Why can't offset be incorporated into lag?
+  se.set_sender_node_id_info( thread_, syn_id, node_id_, local_target_connection_id );
+
+#ifdef TIMER_DETAILED
+  if ( thread_ == 0 )
+  {
+    sw_static_delivery.stop();
+  }
+#endif
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight and optionally updates its internal state as well.
   connections_[ syn_id ]->send( thread_, local_target_connection_id, axonal_delay, cm, se, this );
 
   // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
-  //  handle, or just handing the entire local connection id to the handle function.
+  //  handle, or just handing the entire local connection id to the handle function (and storing an array of rports
+  //  which can be indexed by the local connection id).
 
   handle( se );
 }

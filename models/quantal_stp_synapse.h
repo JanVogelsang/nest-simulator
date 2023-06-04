@@ -140,18 +140,6 @@ public:
    */
   void send( Event& e, const thread t, const double axonal_delay, const CommonSynapseProperties& cp, Node* target );
 
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
 
   void
   check_connection( Node& s,
@@ -162,7 +150,6 @@ public:
     const delay axonal_delay,
     const CommonPropertiesType& )
   {
-    ConnTestDummyNode dummy_target;
   }
 
   void
@@ -217,8 +204,7 @@ quantal_stp_synapse::send( Event& e,
   {
     e.set_weight( n_release * weight_ );
     e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay ) );
-    e();
-    a_ -= n_release;
+      a_ -= n_release;
   }
 
   // Compute release probability

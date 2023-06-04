@@ -159,15 +159,6 @@ public:
   iaf_psc_alpha_ax_delay( const iaf_psc_alpha_ax_delay& );
 
   /**
-   * This neuron type supports postponing the delivery of spikes with predominant axonal delays.
-   */
-  bool
-  supports_postponed_delivery() const override
-  {
-    return true;
-  }
-
-  /**
    * Import sets of overloaded virtual functions.
    * @see Technical Issues / Virtual Functions: Overriding, Overloading, and
    * Hiding
@@ -175,7 +166,7 @@ public:
   using Node::handle;
   using Node::handles_test_event;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   void handle( SpikeEvent& ) override;
   void handle( CurrentEvent& ) override;
@@ -366,7 +357,7 @@ private:
 };
 
 inline port
-nest::iaf_psc_alpha_ax_delay::send_test_event( Node& target, rport receptor_type, synindex, bool )
+nest::iaf_psc_alpha_ax_delay::send_test_event( Node& target, rport receptor_type, synindex )
 {
   SpikeEvent e;
   e.set_sender( *this );

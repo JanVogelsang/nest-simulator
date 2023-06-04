@@ -63,7 +63,7 @@ ConnectionManager::ConnectionManager()
   , connbuilder_factories_()
   , min_delay_( 1 )
   , max_delay_( 1 )
-  , keep_source_table_( true )
+  , keep_source_table_( false )
   , connections_have_changed_( false )
   , get_connections_has_been_called_( false )
   , use_compressed_spikes_( true )
@@ -754,12 +754,6 @@ ConnectionManager::connect_( Node& source,
 
   if ( kernel().model_manager.connector_requires_urbanczik_archiving( syn_id )
     and not target.supports_urbanczik_archiving() )
-  {
-    throw NotImplemented( "This synapse model is not supported by the neuron model of at least one connection." );
-  }
-
-  if ( kernel().model_manager.connector_requires_postponed_delivery( syn_id )
-    and not target.supports_postponed_delivery() )
   {
     throw NotImplemented( "This synapse model is not supported by the neuron model of at least one connection." );
   }

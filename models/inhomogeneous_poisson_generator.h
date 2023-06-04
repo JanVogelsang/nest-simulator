@@ -109,9 +109,8 @@ public:
    * @see Technical Issues / Virtual Functions: Overriding, Overloading, and
    * Hiding
    */
-  using Node::event_hook;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
@@ -126,7 +125,7 @@ private:
   void pre_run_hook() override;
 
   void update( Time const&, const long, const long ) override;
-  void event_hook( DSSpikeEvent& ) override;
+  void event_hook( SpikeEvent& ) override;
 
   struct Buffers_;
 
@@ -178,25 +177,13 @@ private:
 inline port
 inhomogeneous_poisson_generator::send_test_event( Node& target,
   rport receptor_type,
-  synindex syn_id,
-  bool dummy_target )
+  synindex syn_id )
 {
   StimulationDevice::enforce_single_syn_type( syn_id );
 
-  // to ensure correct overloading resolution, we need explicit event types
-  // therefore, we need to duplicate the code here
-  if ( dummy_target )
-  {
-    DSSpikeEvent e;
-    e.set_sender( *this );
-    return target.handles_test_event( e, receptor_type );
-  }
-  else
-  {
-    SpikeEvent e;
-    e.set_sender( *this );
-    return target.handles_test_event( e, receptor_type );
-  }
+  SpikeEvent e;
+  e.set_sender( *this );
+  return target.handles_test_event( e, receptor_type );
 }
 
 

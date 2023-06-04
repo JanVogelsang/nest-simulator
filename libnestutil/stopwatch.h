@@ -144,9 +144,9 @@ public:
 
 private:
 #ifndef DISABLE_TIMING
+  bool _running;
   timestamp_t _beg, _end;
   size_t _prev_elapsed;
-  bool _running;
 #endif
 
   /**
@@ -167,9 +167,9 @@ nest::Stopwatch::start()
 #ifndef DISABLE_TIMING
   if ( not isRunning() )
   {
+    _running = true;               // we start running
     _prev_elapsed += _end - _beg;  // store prev. time, if we resume
     _end = _beg = get_timestamp(); // invariant: _end >= _beg
-    _running = true;               // we start running
   }
 #endif
 }
@@ -180,8 +180,8 @@ nest::Stopwatch::stop()
 #ifndef DISABLE_TIMING
   if ( isRunning() )
   {
-    _end = get_timestamp(); // invariant: _end >= _beg
     _running = false;       // we stopped running
+    _end = get_timestamp(); // invariant: _end >= _beg
   }
 #endif
 }

@@ -259,27 +259,17 @@ nest::noise_generator::pre_run_hook()
  * ---------------------------------------------------------------- */
 
 nest::port
-nest::noise_generator::send_test_event( Node& target, rport receptor_type, synindex syn_id, bool dummy_target )
+nest::noise_generator::send_test_event( Node& target, rport receptor_type, synindex syn_id )
 {
   StimulationDevice::enforce_single_syn_type( syn_id );
-
-  if ( dummy_target )
+  CurrentEvent e;
+  e.set_sender( *this );
+  const port p = target.handles_test_event( e, receptor_type );
+  if ( p != invalid_port and not is_model_prototype() )
   {
-    DSCurrentEvent e;
-    e.set_sender( *this );
-    return target.handles_test_event( e, receptor_type );
+    ++P_.num_targets_;
   }
-  else
-  {
-    CurrentEvent e;
-    e.set_sender( *this );
-    const port p = target.handles_test_event( e, receptor_type );
-    if ( p != invalid_port and not is_model_prototype() )
-    {
-      ++P_.num_targets_;
-    }
-    return p;
-  }
+  return p;
 }
 
 //
@@ -334,13 +324,13 @@ nest::noise_generator::update( Time const& origin, const long from, const long t
     S_.I_avg_ /= std::max( 1, int( B_.amps_.size() ) );
     B_.logger_.record_data( origin.get_steps() + offs );
 
-    DSCurrentEvent ce;
+    CurrentEvent ce;
     kernel().event_delivery_manager.send( *this, ce, offs );
   }
 }
 
 void
-nest::noise_generator::event_hook( DSCurrentEvent& e )
+nest::noise_generator::event_hook( CurrentEvent& e )
 {
   // get port number
   const port prt = e.get_port();

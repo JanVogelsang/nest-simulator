@@ -942,14 +942,14 @@ nest::SimulationManager::update_()
 
       for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
       {
-        // We update in a parallel region. Therefore, we need to catch
-        // exceptions here and then handle them after the parallel region.
+        // We update in a parallel region. Therefore, we need to catch exceptions here and then handle them after the
+        // parallel region.
         try
         {
           Node* node = n->get_node();
-          if ( not( node )->is_frozen() )
+          if ( not node->is_frozen() )
           {
-            ( node )->update( clock_, from_step_, to_step_ );
+            node->update( clock_, from_step_, to_step_ );
           }
         }
         catch ( std::exception& e )

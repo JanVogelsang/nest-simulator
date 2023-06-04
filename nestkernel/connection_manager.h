@@ -391,10 +391,10 @@ public:
     adjacency_list_.clear_target_data();
   }
 
-  const std::map< thread, index >&
-  get_compressed_spike_data( const index idx ) const
+  const index
+  get_compressed_spike_data( const index idx, const thread tid ) const
   {
-    return adjacency_list_.get_compressed_spike_data( idx );
+    return adjacency_list_.get_compressed_spike_data( idx, tid );
   }
 
   /**

@@ -175,7 +175,7 @@ public:
   using Node::handle;
   using Node::handles_test_event;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   port handles_test_event( SpikeEvent&, rport ) override;
   port handles_test_event( CurrentEvent&, rport ) override;
@@ -400,7 +400,7 @@ private:
 
 
 inline port
-amat2_psc_exp::send_test_event( Node& target, const rport receptor_type, synindex, bool )
+amat2_psc_exp::send_test_event( Node& target, const rport receptor_type, synindex )
 {
   SpikeEvent e;
   e.set_sender( *this );

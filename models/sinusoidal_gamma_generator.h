@@ -193,14 +193,13 @@ public:
   sinusoidal_gamma_generator();
   sinusoidal_gamma_generator( const sinusoidal_gamma_generator& );
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   /**
    * Import sets of overloaded virtual functions.
    * @see Technical Issues / Virtual Functions: Overriding, Overloading, and
    * Hiding
    */
-  using Node::event_hook;
   using Node::handle;
   using Node::handles_test_event;
 
@@ -224,7 +223,7 @@ private:
   void init_state_() override;
   void init_buffers_() override;
   void pre_run_hook() override;
-  void event_hook( DSSpikeEvent& ) override;
+  void event_hook( SpikeEvent& ) override;
 
   void update( Time const&, const long, const long ) override;
 
@@ -348,7 +347,7 @@ private:
 };
 
 inline port
-sinusoidal_gamma_generator::send_test_event( Node& target, rport receptor_type, synindex syn_id, bool dummy_target )
+sinusoidal_gamma_generator::send_test_event( Node& target, rport receptor_type, synindex syn_id )
 {
   StimulationDevice::enforce_single_syn_type( syn_id );
 
@@ -356,23 +355,14 @@ sinusoidal_gamma_generator::send_test_event( Node& target, rport receptor_type, 
   // therefore, we need to duplicate the code here
   if ( P_.individual_spike_trains_ )
   {
-    if ( dummy_target )
+    SpikeEvent e;
+    e.set_sender( *this );
+    const rport r = target.handles_test_event( e, receptor_type );
+    if ( r != invalid_port and not is_model_prototype() )
     {
-      DSSpikeEvent e;
-      e.set_sender( *this );
-      return target.handles_test_event( e, receptor_type );
+      ++P_.num_trains_;
     }
-    else
-    {
-      SpikeEvent e;
-      e.set_sender( *this );
-      const rport r = target.handles_test_event( e, receptor_type );
-      if ( r != invalid_port and not is_model_prototype() )
-      {
-        ++P_.num_trains_;
-      }
-      return r;
-    }
+    return r;
   }
   else
   {

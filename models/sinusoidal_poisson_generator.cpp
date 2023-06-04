@@ -265,7 +265,7 @@ nest::sinusoidal_poisson_generator::update( Time const& origin, const long from,
     {
       if ( P_.individual_spike_trains_ )
       {
-        DSSpikeEvent se;
+        SpikeEvent se;
         kernel().event_delivery_manager.send( *this, se, lag );
       }
       else
@@ -283,7 +283,7 @@ nest::sinusoidal_poisson_generator::update( Time const& origin, const long from,
 }
 
 void
-nest::sinusoidal_poisson_generator::event_hook( DSSpikeEvent& e )
+nest::sinusoidal_poisson_generator::event_hook( SpikeEvent& e )
 {
   poisson_distribution::param_type param( S_.rate_ * V_.h_ );
   long n_spikes = V_.poisson_dist_( get_vp_specific_rng( get_thread() ), param );

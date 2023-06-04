@@ -222,7 +222,7 @@ public:
   spike_generator();
   spike_generator( const spike_generator& );
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
 
@@ -235,10 +235,9 @@ public:
    * @see Technical Issues / Virtual Functions: Overriding, Overloading, and
    * Hiding
    */
-  using Node::event_hook;
   using Node::sends_signal;
 
-  void event_hook( DSSpikeEvent& ) override;
+  void event_hook( SpikeEvent& ) override;
 
   SignalType
   sends_signal() const override
@@ -315,22 +314,13 @@ private:
 };
 
 inline port
-spike_generator::send_test_event( Node& target, rport receptor_type, synindex syn_id, bool dummy_target )
+spike_generator::send_test_event( Node& target, rport receptor_type, synindex syn_id )
 {
   enforce_single_syn_type( syn_id );
 
-  if ( dummy_target )
-  {
-    DSSpikeEvent e;
-    e.set_sender( *this );
-    return target.handles_test_event( e, receptor_type );
-  }
-  else
-  {
-    SpikeEvent e;
-    e.set_sender( *this );
-    return target.handles_test_event( e, receptor_type );
-  }
+  SpikeEvent e;
+  e.set_sender( *this );
+  return target.handles_test_event( e, receptor_type );
 }
 
 inline void

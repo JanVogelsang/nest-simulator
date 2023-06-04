@@ -77,7 +77,7 @@ public:
   using Node::handle;
   using Node::sends_signal;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   void sends_secondary_event( GapJunctionEvent& ) override;
 
@@ -131,7 +131,7 @@ private:
   {
   }
   void
-  update( Time const&, const long, const long ) override
+  update( const Time&, const long, const long ) override
   {
   }
 };

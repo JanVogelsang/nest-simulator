@@ -137,18 +137,6 @@ public:
    */
   void send( Event& e, const thread t, const double axonal_delay, const CommonSynapseProperties& cp, Node* target );
 
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
 
   void
   check_connection( Node& s,
@@ -159,7 +147,6 @@ public:
     const delay axonal_delay,
     const CommonPropertiesType& )
   {
-    ConnTestDummyNode dummy_target;
   }
 
   //! allows efficient initialization from ConnectorModel::add_connection()
@@ -197,7 +184,6 @@ ht_synapse::send( Event& e, const thread t, const double axonal_delay, const Com
   // send the spike to the target
   e.set_weight( weight_ * p_ );
   e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay ) );
-  e();
 
   // reduce pool after spike is sent
   p_ *= ( 1 - delta_P_ );

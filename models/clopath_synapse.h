@@ -150,18 +150,6 @@ public:
   void send( Event& e, const thread t, const double axonal_delay, const CommonSynapseProperties& cp, Node* target );
 
 
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
 
   void
   check_connection( Node& s,
@@ -172,7 +160,6 @@ public:
     const delay axonal_delay,
     const CommonPropertiesType& )
   {
-    ConnTestDummyNode dummy_target;
 
 
     t.register_stdp_connection( t_lastspike_ - Time::delay_steps_to_ms( dendritic_delay ), dendritic_delay );
@@ -256,7 +243,6 @@ clopath_synapse::send( Event& e,
   // use accessor functions (inherited from Connection< >) to obtain delay in
   // steps and rport
   e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay ) );
-  e();
 
   // compute the trace of the presynaptic spike train
   x_bar_ = x_bar_ * std::exp( ( t_lastspike_ - t_spike ) / tau_x_ ) + 1.0 / tau_x_;

@@ -183,7 +183,7 @@ public:
   using Node::handle;
   using Node::handles_test_event;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   void handle( SpikeEvent& ) override;
   void handle( CurrentEvent& ) override;
@@ -365,7 +365,7 @@ public:
 };
 
 inline port
-aeif_psc_delta::send_test_event( Node& target, const rport receptor_type, synindex, bool )
+aeif_psc_delta::send_test_event( Node& target, const rport receptor_type, synindex )
 {
   SpikeEvent e;
   e.set_sender( *this );

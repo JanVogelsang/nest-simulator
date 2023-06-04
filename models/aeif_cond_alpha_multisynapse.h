@@ -194,7 +194,7 @@ public:
   using Node::handle;
   using Node::handles_test_event;
 
-  port send_test_event( Node&, rport, synindex, bool ) override;
+  port send_test_event( Node&, rport, synindex ) override;
 
   void handle( SpikeEvent& ) override;
   void handle( CurrentEvent& ) override;
@@ -393,7 +393,7 @@ private:
 };
 
 inline port
-aeif_cond_alpha_multisynapse::send_test_event( Node& target, const rport receptor_type, synindex, bool )
+aeif_cond_alpha_multisynapse::send_test_event( Node& target, const rport receptor_type, synindex )
 {
   SpikeEvent e;
   e.set_sender( *this );

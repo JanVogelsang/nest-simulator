@@ -332,8 +332,8 @@ ArchivingNode::add_correction_entry_stdp_ax_delay( SpikeEvent& spike_event,
   assert( static_cast< size_t >( idx ) < correction_entries_stdp_ax_delay_.size() );
 
   correction_entries_stdp_ax_delay_[ idx ].push_back(
-    CorrectionEntrySTDPAxDelay( spike_event.get_sender_spike_data().syn_id,
-      spike_event.get_sender_spike_data().local_connection_id,
+    CorrectionEntrySTDPAxDelay( spike_event.get_spike_data().syn_id,
+      spike_event.get_spike_data().local_connection_id,
       t_last_pre_spike,
       axonal_delay,
       weight_revert ) );

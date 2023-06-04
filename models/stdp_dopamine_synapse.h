@@ -242,18 +242,6 @@ public:
     double t_trig,
     const STDPDopaCommonProperties& cp );
 
-  class ConnTestDummyNode : public ConnTestDummyNodeBase
-  {
-  public:
-    // Ensure proper overriding of overloaded virtual functions.
-    // Return values from functions are ignored.
-    using ConnTestDummyNodeBase::handles_test_event;
-    port
-    handles_test_event( SpikeEvent&, rport ) override
-    {
-      return invalid_port;
-    }
-  };
 
   /*
    * This function calls check_connection on the sender and checks if the
@@ -284,7 +272,6 @@ public:
       throw BadProperty( "No volume transmitter has been assigned to the dopamine synapse." );
     }
 
-    ConnTestDummyNode dummy_target;
 
     t.register_stdp_connection( t_lastspike_ - Time::delay_steps_to_ms( dendritic_delay ), dendritic_delay );
   }
@@ -476,7 +463,6 @@ stdp_dopamine_synapse::send( Event& e,
 
   e.set_weight( weight_ );
   e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay ) );
-  e();
 
   Kplus_ = Kplus_ * std::exp( ( t_last_update_ - t_spike ) / cp.tau_plus_ ) + 1.0;
   t_last_update_ = t_spike;

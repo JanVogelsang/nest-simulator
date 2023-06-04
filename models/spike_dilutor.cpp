@@ -134,7 +134,7 @@ nest::spike_dilutor::update( Time const& T, const long from, const long to )
 
     if ( n_mother_spikes )
     {
-      DSSpikeEvent se;
+      SpikeEvent se;
 
       se.set_multiplicity( n_mother_spikes );
       kernel().event_delivery_manager.send( *this, se, lag );
@@ -143,7 +143,7 @@ nest::spike_dilutor::update( Time const& T, const long from, const long to )
 }
 
 void
-nest::spike_dilutor::event_hook( DSSpikeEvent& e )
+nest::spike_dilutor::event_hook( SpikeEvent& e )
 {
   // Note: event_hook() receives a reference of the spike event that
   // was originally created in the update function. There we set

@@ -190,7 +190,7 @@ public:
   using Node::handles_test_event;
   using Node::sends_secondary_event;
 
-  port send_test_event( Node& target, rport receptor_type, synindex, bool ) override;
+  port send_test_event( Node& target, rport receptor_type, synindex ) override;
 
   void handle( SpikeEvent& ) override;
   void handle( CurrentEvent& ) override;
@@ -415,7 +415,7 @@ hh_cond_beta_gap_traub::wfr_update( Time const& origin, const long from, const l
 }
 
 inline port
-hh_cond_beta_gap_traub::send_test_event( Node& target, rport receptor_type, synindex, bool )
+hh_cond_beta_gap_traub::send_test_event( Node& target, rport receptor_type, synindex )
 {
   SpikeEvent e;
   e.set_sender( *this );

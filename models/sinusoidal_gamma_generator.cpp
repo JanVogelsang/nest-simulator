@@ -325,7 +325,7 @@ nest::sinusoidal_gamma_generator::update( Time const& origin, const long from, c
     {
       if ( P_.individual_spike_trains_ )
       {
-        DSSpikeEvent se;
+        SpikeEvent se;
         kernel().event_delivery_manager.send( *this, se, lag );
       }
       else
@@ -344,7 +344,7 @@ nest::sinusoidal_gamma_generator::update( Time const& origin, const long from, c
 }
 
 void
-nest::sinusoidal_gamma_generator::event_hook( DSSpikeEvent& e )
+nest::sinusoidal_gamma_generator::event_hook( SpikeEvent& e )
 {
   // get port number --- see #737
   const port tgt_idx = e.get_port();
