@@ -312,7 +312,11 @@ public:
    */
 #ifdef TIMER_DETAILED
   virtual void
-  prepare_update( const Time origin, const std::vector< ConnectorModel* >& cm, const delay min_delay, Stopwatch& sw_stdp_delivery, Stopwatch& sw_node_archive )
+  prepare_update( const Time origin,
+    const std::vector< ConnectorModel* >& cm,
+    const delay min_delay,
+    Stopwatch& sw_stdp_delivery,
+    Stopwatch& sw_node_archive )
   {
   }
 #else
@@ -683,8 +687,12 @@ public:
    * \param receptor The ID of the requested receptor type
    */
   template < typename ConnectionT >
-  void check_connection( Node& source, ConnectionT& connection, const synindex syn_id, const rport receptor_type,
-    const delay total_delay, const typename ConnectionT::CommonPropertiesType& cp );
+  void check_connection( Node& source,
+    ConnectionT& connection,
+    const synindex syn_id,
+    const rport receptor_type,
+    const delay total_delay,
+    const typename ConnectionT::CommonPropertiesType& cp );
 
   /**
    * Adds a connection to this node of a specific connection type.

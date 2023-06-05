@@ -470,7 +470,12 @@ GenericAxonalDelayConnectorModel< ConnectionT >::add_connection( Node& src,
   assert( syn_id != invalid_synindex );
 
   // The following lines will throw an exception, if the connection is not possible.
-  tgt.check_connection< ConnectionT >( src, connection, syn_id, actual_receptor_type, actual_axonal_delay + actual_dendritic_delay, get_common_properties() );
+  tgt.check_connection< ConnectionT >( src,
+    connection,
+    syn_id,
+    actual_receptor_type,
+    actual_axonal_delay + actual_dendritic_delay,
+    get_common_properties() );
 
   connection.check_connection(
     src, tgt, actual_receptor_type, syn_id, actual_dendritic_delay, get_common_properties() );

@@ -262,7 +262,6 @@ public:
   void send( Event& e, const thread t, const double Kminus, const STDPFACETSHWHomCommonProperties& );
 
 
-
   /*
    * This function calls check_connection on the sender and checks if the
    * receiver accepts the event type and receptor type requested by the sender.

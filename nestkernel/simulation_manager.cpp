@@ -988,8 +988,8 @@ nest::SimulationManager::update_()
         }
 
         // Prepare all nodes for the next update cycle. This includes any cleanup after the past update cycle or any
-        // state updates that make sure any get_status call after this cycle yields the correct results (e.g. STDP weight
-        // updates).
+        // state updates that make sure any get_status call after this cycle yields the correct results (e.g. STDP
+        // weight updates).
 #ifdef TIMER_DETAILED
         Stopwatch& sw_stdp_delivery = kernel().event_delivery_manager.sw_stdp_delivery_;
         Stopwatch& sw_node_archive = kernel().event_delivery_manager.sw_node_archive_;

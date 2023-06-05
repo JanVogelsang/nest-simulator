@@ -155,7 +155,6 @@ public:
   void send( Event& e, const thread t, const double, const CommonSynapseProperties& cp );
 
 
-
   void
   check_connection( Node&, Node&, const rport, const synindex, const delay, const CommonPropertiesType& )
   {

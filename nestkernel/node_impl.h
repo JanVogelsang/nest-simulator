@@ -34,7 +34,12 @@ namespace nest
 
 template < typename ConnectionT >
 inline void
-Node::check_connection( Node& source, ConnectionT& connection, const synindex syn_id, const rport receptor_type, const delay total_delay, const typename ConnectionT::CommonPropertiesType& cp )
+Node::check_connection( Node& source,
+  ConnectionT& connection,
+  const synindex syn_id,
+  const rport receptor_type,
+  const delay total_delay,
+  const typename ConnectionT::CommonPropertiesType& cp )
 {
   // Does the target accept the event type sent by source
   // try to send event from source to target

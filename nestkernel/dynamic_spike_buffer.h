@@ -38,13 +38,13 @@ namespace nest
 
 struct SpikeBufferEntry
 {
-  synindex syn_id : NUM_BITS_SYN_ID;                         //!< Synapse type
+  synindex syn_id : NUM_BITS_SYN_ID;                               //!< Synapse type
   unsigned int local_connection_id : NUM_BITS_LOCAL_CONNECTION_ID; //!< Neuron-local connection index
   // TODO JV (pt): Make lcid and dnedritic delay id a composite index with variable number of bits per part. The more
   // dendritic delays, the less connections per delay, so it will definitely be sufficient for them to get about 16 bits
   // in total.
   unsigned int dendritic_delay_id : 4; // NUM_BITS_DENDRITIC_DELAY_ID;   //!< Dendritic delay region index
-  unsigned int t_syn_lag : 6; //!< The number of steps in the target slice until arriving at synapse
+  unsigned int t_syn_lag : 6;          //!< The number of steps in the target slice until arriving at synapse
   // double offset;  //!< Precise spike offset  // TODO JV (pt): Templatize this to not always store offset
 
   SpikeBufferEntry( const synindex syn_id,

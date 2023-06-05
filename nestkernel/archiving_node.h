@@ -208,7 +208,11 @@ protected:
    * updates that make sure any get_status call after this cycle yields the correct results (e.g. STDP weight updates).
    */
 #ifdef TIMER_DETAILED
-  void prepare_update( const Time origin, const std::vector< ConnectorModel* >& cm, const delay min_delay, Stopwatch& sw_stdp_delivery, Stopwatch& sw_node_archive ) override;
+  void prepare_update( const Time origin,
+    const std::vector< ConnectorModel* >& cm,
+    const delay min_delay,
+    Stopwatch& sw_stdp_delivery,
+    Stopwatch& sw_node_archive ) override;
 #else
   void prepare_update( const Time origin, const std::vector< ConnectorModel* >& cm, const delay min_delay ) override;
 #endif
@@ -355,7 +359,11 @@ ArchivingNode::process_spikes_until_pre_synaptic_spike( const synindex syn_id,
 
 #ifdef TIMER_DETAILED
 inline void
-ArchivingNode::prepare_update( const Time origin, const std::vector< ConnectorModel* >& cm, const delay min_delay, Stopwatch& sw_stdp_delivery, Stopwatch& sw_node_archive )
+ArchivingNode::prepare_update( const Time origin,
+  const std::vector< ConnectorModel* >& cm,
+  const delay min_delay,
+  Stopwatch& sw_stdp_delivery,
+  Stopwatch& sw_node_archive )
 {
 #else
 inline void
@@ -546,12 +554,8 @@ ArchivingNode::deliver_event( const synindex syn_id,
     {
       // If there is no axonal delay, all post-synaptic spikes until the time of the spike have to be processed by the
       // synapse before processing the pre-synaptic spike.
-      process_spikes_until_pre_synaptic_spike( syn_id,
-        local_target_connection_id,
-        dendritic_delay_id,
-        lag + Time::step( axonal_delay ),
-        offset,
-        cm );
+      process_spikes_until_pre_synaptic_spike(
+        syn_id, local_target_connection_id, dendritic_delay_id, lag + Time::step( axonal_delay ), offset, cm );
     }
 #ifdef TIMER_DETAILED
     if ( get_thread() == 0 )
@@ -563,9 +567,20 @@ ArchivingNode::deliver_event( const synindex syn_id,
   else
   {
 #ifdef TIMER_DETAILED
-    Node::deliver_event( syn_id, local_target_connection_id, dendritic_delay_id, cm, lag, axonal_delay, offset, min_delay, sw_stdp_delivery_, sw_static_delivery, sw_node_archive_ );
+    Node::deliver_event( syn_id,
+      local_target_connection_id,
+      dendritic_delay_id,
+      cm,
+      lag,
+      axonal_delay,
+      offset,
+      min_delay,
+      sw_stdp_delivery_,
+      sw_static_delivery,
+      sw_node_archive_ );
 #else
-    Node::deliver_event( syn_id, local_target_connection_id, dendritic_delay_id, cm, lag, axonal_delay, offset, min_delay );
+    Node::deliver_event(
+      syn_id, local_target_connection_id, dendritic_delay_id, cm, lag, axonal_delay, offset, min_delay );
 #endif
   }
 }

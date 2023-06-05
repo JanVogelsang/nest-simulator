@@ -638,7 +638,9 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
         // Compressed spikes use the adjacency list index of SpikeData to transmit the index in the compressed spike
         // data structure.
         const index compressed_index = spike_data.get_adjacency_list_index();
-        if ( const index compressed_adjacency_list_index = kernel().connection_manager.get_compressed_spike_data( compressed_index, tid ); compressed_adjacency_list_index != invalid_index )
+        if ( const index compressed_adjacency_list_index =
+               kernel().connection_manager.get_compressed_spike_data( compressed_index, tid );
+             compressed_adjacency_list_index != invalid_index )
         {
           deliver_to_adjacency_list( tid,
             compressed_adjacency_list_index,
