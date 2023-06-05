@@ -52,6 +52,9 @@ Node::check_connection( Node& source, ConnectionT& connection, const synindex sy
   {
     throw IllegalConnection( "Source and target neuron are not compatible (e.g., spiking vs binary neuron)." );
   }
+
+  // The following lines will throw an exception, if the connection is not possible.
+  connection.check_connection( source, *this, receptor_type, syn_id, total_delay, cp );
 }
 
 template < typename ConnectionT >
