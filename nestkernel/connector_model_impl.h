@@ -472,6 +472,9 @@ GenericAxonalDelayConnectorModel< ConnectionT >::add_connection( Node& src,
   // The following lines will throw an exception, if the connection is not possible.
   tgt.check_connection< ConnectionT >( src, connection, syn_id, actual_receptor_type, actual_axonal_delay + actual_dendritic_delay, get_common_properties() );
 
+  connection.check_connection(
+    src, tgt, actual_receptor_type, syn_id, actual_dendritic_delay, get_common_properties() );
+
   auto [ local_connection_id, dendritic_delay_id ] = tgt.add_connection< ConnectionT >(
     src, syn_id, connection, actual_receptor_type, true, connection_type, actual_axonal_delay, actual_dendritic_delay );
   return { local_connection_id, dendritic_delay_id, actual_dendritic_delay, actual_axonal_delay };
