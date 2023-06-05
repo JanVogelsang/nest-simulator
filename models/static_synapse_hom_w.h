@@ -109,7 +109,7 @@ public:
   {
     e.set_weight( cp.get_weight() );
     e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay ) );
-    }
+  }
 
   void
   set_weight( double )

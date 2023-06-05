@@ -175,9 +175,7 @@ private:
 };
 
 inline port
-inhomogeneous_poisson_generator::send_test_event( Node& target,
-  rport receptor_type,
-  synindex syn_id )
+inhomogeneous_poisson_generator::send_test_event( Node& target, rport receptor_type, synindex syn_id )
 {
   StimulationDevice::enforce_single_syn_type( syn_id );
 

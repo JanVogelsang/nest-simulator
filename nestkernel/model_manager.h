@@ -133,6 +133,10 @@ public:
     const RegisterConnectionModelFlags flags = default_connection_model_flags );
 
   template < class ConnectionT >
+  void register_axonal_delay_connection_model( const std::string& name,
+    const RegisterConnectionModelFlags flags = default_connection_model_flags );
+
+  template < class ConnectionT >
   void register_secondary_connection_model( const std::string& name,
     const RegisterConnectionModelFlags flags = default_secondary_connection_model_flags );
 

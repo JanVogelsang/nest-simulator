@@ -203,12 +203,6 @@ Connection::get_status( DictionaryDatum& d ) const
 inline void
 Connection::set_status( const DictionaryDatum& d, ConnectorModel& )
 {
-  double delay;
-  if ( updateValue< double >( d, names::delay, delay ) )
-  {
-    kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
-    set_dendritic_delay( delay );
-  }
 }
 
 inline void

@@ -315,26 +315,27 @@ ModelsModule::init( SLIInterpreter* )
     "clopath_synapse", default_connection_model_flags | RegisterConnectionModelFlags::REQUIRES_CLOPATH_ARCHIVING );
   register_connection_model< cont_delay_synapse >( "cont_delay_synapse" );
   register_connection_model< ht_synapse >( "ht_synapse" );
-  register_connection_model< jonke_synapse >( "jonke_synapse" );
   register_connection_model< quantal_stp_synapse >( "quantal_stp_synapse" );
   register_connection_model< static_synapse >( "static_synapse" );
   register_connection_model< static_synapse_hom_w >( "static_synapse_hom_w" );
-  register_connection_model< stdp_synapse >( "stdp_synapse" );
-  register_connection_model< stdp_synapse_hom >( "stdp_synapse_hom" );
-  register_connection_model< stdp_dopamine_synapse >( "stdp_dopamine_synapse" );
-  register_connection_model< stdp_facetshw_synapse_hom >( "stdp_facetshw_synapse_hom" );
-  register_connection_model< stdp_nn_restr_synapse >( "stdp_nn_restr_synapse" );
-  register_connection_model< stdp_nn_symm_synapse >( "stdp_nn_symm_synapse" );
-  register_connection_model< stdp_nn_pre_centered_synapse >( "stdp_nn_pre_centered_synapse" );
-  register_connection_model< stdp_pl_synapse_hom >( "stdp_pl_synapse_hom" );
-  register_connection_model< stdp_pl_synapse_hom_ax_delay >( "stdp_pl_synapse_hom_ax_delay" );
-  register_connection_model< stdp_triplet_synapse >( "stdp_triplet_synapse" );
   register_connection_model< tsodyks_synapse >( "tsodyks_synapse" );
   register_connection_model< tsodyks_synapse_hom >( "tsodyks_synapse_hom" );
   register_connection_model< tsodyks2_synapse >( "tsodyks2_synapse" );
-  register_connection_model< urbanczik_synapse >(
+
+  register_axonal_delay_connection_model< stdp_synapse >( "stdp_synapse" );
+  register_axonal_delay_connection_model< stdp_synapse_hom >( "stdp_synapse_hom" );
+  register_axonal_delay_connection_model< stdp_dopamine_synapse >( "stdp_dopamine_synapse" );
+  register_axonal_delay_connection_model< stdp_facetshw_synapse_hom >( "stdp_facetshw_synapse_hom" );
+  register_axonal_delay_connection_model< stdp_nn_restr_synapse >( "stdp_nn_restr_synapse" );
+  register_axonal_delay_connection_model< stdp_nn_symm_synapse >( "stdp_nn_symm_synapse" );
+  register_axonal_delay_connection_model< stdp_nn_pre_centered_synapse >( "stdp_nn_pre_centered_synapse" );
+  register_axonal_delay_connection_model< stdp_triplet_synapse >( "stdp_triplet_synapse" );
+  register_axonal_delay_connection_model< stdp_pl_synapse_hom >( "stdp_pl_synapse_hom" );
+  register_axonal_delay_connection_model< stdp_pl_synapse_hom_ax_delay >( "stdp_pl_synapse_hom_ax_delay" );
+  register_axonal_delay_connection_model< jonke_synapse >( "jonke_synapse" );
+  register_axonal_delay_connection_model< urbanczik_synapse >(
     "urbanczik_synapse", default_connection_model_flags | RegisterConnectionModelFlags::REQUIRES_URBANCZIK_ARCHIVING );
-  register_connection_model< vogels_sprekeler_synapse >( "vogels_sprekeler_synapse" );
+  register_axonal_delay_connection_model< vogels_sprekeler_synapse >( "vogels_sprekeler_synapse" );
 
   // register secondary connection models
   register_secondary_connection_model< GapJunction >(

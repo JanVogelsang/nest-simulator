@@ -759,8 +759,8 @@ ConnectionManager::connect_( Node& source,
   }
 
   ConnectorModel& conn_model = kernel().model_manager.get_connection_model( syn_id, tid );
-  const auto [ local_target_connection_id, actual_dendritic_delay, actual_axonal_delay ] = conn_model.add_connection(
-    source, target, syn_id, params, delay, axonal_delay, weight, is_primary, connection_type );
+  const auto [ local_target_connection_id, actual_dendritic_delay, actual_axonal_delay ] =
+    conn_model.add_connection( source, target, syn_id, params, delay, axonal_delay, weight, connection_type );
   switch ( connection_type )
   {
 #ifdef USE_ADJACENCY_LIST

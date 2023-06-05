@@ -34,7 +34,12 @@ namespace nest
 
 template < typename ConnectionT >
 inline void
-Node::check_connection( Node& source, ConnectionT& connection, const synindex syn_id, const rport receptor_type, const delay total_delay, const typename ConnectionT::CommonPropertiesType& cp )
+Node::check_connection( Node& source,
+  ConnectionT& connection,
+  const synindex syn_id,
+  const rport receptor_type,
+  const delay total_delay,
+  const typename ConnectionT::CommonPropertiesType& cp )
 {
   // Does the target accept the event type sent by source
   // try to send event from source to target
@@ -102,7 +107,8 @@ Node::add_connection( Node& source_node,
         // No homogeneous Connector with this syn_id exists, we need to create a new homogeneous Connector.
         connections_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id, 1 );
       }
-      return static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() )->add_connection( connection, source_node.get_node_id(), axonal_delay );
+      return static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() )
+        ->add_connection( connection, source_node.get_node_id(), axonal_delay );
     }
     else
     {
@@ -121,7 +127,8 @@ Node::add_connection( Node& source_node,
 
         connections_.at( syn_id ) = std::make_unique< Connector< ConnectionT > >( syn_id, num );
       }
-        return static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() )->add_connection( connection, source_node.get_node_id(), axonal_delay );
+      return static_cast< Connector< ConnectionT >* >( connections_.at( syn_id ).get() )
+        ->add_connection( connection, source_node.get_node_id(), axonal_delay );
     }
   }
 }

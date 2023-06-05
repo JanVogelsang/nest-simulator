@@ -75,10 +75,25 @@ public:
 
 #ifdef TIMER_DETAILED
   void
-  deliver_event( const synindex, const index, const ConnectorModel*, const Time lag, const delay d, const double offset, const delay min_delay, Stopwatch&, Stopwatch&, Stopwatch& ) override
+  deliver_event( const synindex,
+    const index,
+    const ConnectorModel*,
+    const Time lag,
+    const delay d,
+    const double offset,
+    const delay min_delay,
+    Stopwatch&,
+    Stopwatch&,
+    Stopwatch& ) override
 #else
   void
-  deliver_event( const synindex, const index, const ConnectorModel*, const Time lag, const delay d, const double offset, const delay min_delay ) override
+  deliver_event( const synindex,
+    const index,
+    const ConnectorModel*,
+    const Time lag,
+    const delay d,
+    const double offset,
+    const delay min_delay ) override
 #endif
   {
   }

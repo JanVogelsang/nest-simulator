@@ -356,12 +356,8 @@ public:
   }
 
   void
-  send( const thread tid,
-    const index lcid,
-    const delay axonal_delay,
-    const ConnectorModel* cm,
-    Event& e,
-    Node* target ) override
+  send( const thread tid, const index lcid, const delay axonal_delay, const ConnectorModel* cm, Event& e, Node* target )
+    override
   {
     assert( C_.size() > lcid );
 

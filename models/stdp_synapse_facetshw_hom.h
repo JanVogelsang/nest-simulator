@@ -266,8 +266,6 @@ public:
   send( Event& e, const thread t, const double axonal_delay, const STDPFACETSHWHomCommonProperties&, Node* target );
 
 
-
-
   /*
    * This function calls check_connection on the sender and checks if the
    * receiver accepts the event type and receptor type requested by the sender.

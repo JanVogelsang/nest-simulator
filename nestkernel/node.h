@@ -635,8 +635,12 @@ public:
    * \param receptor The ID of the requested receptor type
    */
   template < typename ConnectionT >
-  void check_connection( Node& source, ConnectionT& connection, const synindex syn_id, const rport receptor_type,
-    const delay total_delay, const typename ConnectionT::CommonPropertiesType& cp );
+  void check_connection( Node& source,
+    ConnectionT& connection,
+    const synindex syn_id,
+    const rport receptor_type,
+    const delay total_delay,
+    const typename ConnectionT::CommonPropertiesType& cp );
 
   /**
    * Adds a connection to this node of a specific connection type.
@@ -1296,13 +1300,20 @@ Node::deliver_event( const synindex syn_id,
   const delay axonal_delay,
   const double offset,
   const delay,
-  Stopwatch&,
+  Stopwatch& sw_stdp_delivery,
   Stopwatch& sw_static_delivery,
   Stopwatch& )
 {
   if ( thread_ == 0 )
   {
-    sw_static_delivery.start();
+    if ( syn_id == 33 )
+    {
+      sw_static_delivery.start();
+    }
+    else
+    {
+      sw_stdp_delivery.start();
+    }
   }
 #else
 inline void
@@ -1320,12 +1331,6 @@ Node::deliver_event( const synindex syn_id,
   se.set_offset( offset ); // TODO JV (help): Why can't offset be incorporated into lag?
   se.set_sender_node_id_info( thread_, syn_id, node_id_, local_target_connection_id );
 
-#ifdef TIMER_DETAILED
-  if ( thread_ == 0 )
-  {
-    sw_static_delivery.stop();
-  }
-#endif
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight and optionally updates its internal state as well.
   connections_[ syn_id ]->send( thread_, local_target_connection_id, axonal_delay, cm, se, this );
@@ -1333,6 +1338,20 @@ Node::deliver_event( const synindex syn_id,
   // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
   //  handle, or just handing the entire local connection id to the handle function (and storing an array of rports
   //  which can be indexed by the local connection id).
+
+#ifdef TIMER_DETAILED
+  if ( thread_ == 0 )
+  {
+    if ( syn_id == 33 )
+    {
+      sw_static_delivery.stop();
+    }
+    else
+    {
+      sw_stdp_delivery.stop();
+    }
+  }
+#endif
 
   handle( se );
 }

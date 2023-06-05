@@ -140,6 +140,7 @@ EventDeliveryManager::get_status( DictionaryDatum& dict )
   def< double >( dict, names::time_stdp_delivery, sw_stdp_delivery_.elapsed() );
   def< double >( dict, names::time_static_delivery, sw_static_delivery_.elapsed() );
   def< double >( dict, names::time_node_archive, sw_node_archive_.elapsed() );
+  def< double >( dict, names::time_correction, sw_correction_.elapsed() );
 #endif
 }
 
@@ -291,6 +292,7 @@ EventDeliveryManager::reset_timers_for_dynamics()
   sw_stdp_delivery_.reset();
   sw_static_delivery_.reset();
   sw_node_archive_.reset();
+  sw_correction_.reset();
 #endif
 }
 
@@ -638,7 +640,9 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
         // Compressed spikes use the adjacency list index of SpikeData to transmit the index in the compressed spike
         // data structure.
         const index compressed_index = spike_data.get_adjacency_list_index();
-        if ( const index compressed_adjacency_list_index = kernel().connection_manager.get_compressed_spike_data( compressed_index, tid ); compressed_adjacency_list_index != invalid_index )
+        if ( const index compressed_adjacency_list_index =
+               kernel().connection_manager.get_compressed_spike_data( compressed_index, tid );
+             compressed_adjacency_list_index != invalid_index )
         {
           deliver_to_adjacency_list( tid,
             compressed_adjacency_list_index,

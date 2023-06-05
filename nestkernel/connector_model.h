@@ -51,7 +51,6 @@ class ConnectorModel
 
 public:
   ConnectorModel( const std::string,
-    const bool is_primary,
     const bool has_delay,
     const bool requires_symmetric,
     const bool supports_wfr,
@@ -85,7 +84,6 @@ public:
     const double delay,
     const double axonal_delay,
     const double weight,
-    const bool is_primary,
     const ConnectionType connection_type ) = 0;
 
   virtual ConnectorModel* clone( std::string, synindex syn_id ) const = 0;
@@ -104,8 +102,6 @@ public:
 
   virtual SecondaryEvent* get_event() const = 0;
 
-  virtual void set_syn_id( synindex syn_id ) = 0;
-
   virtual SecondaryEvent* create_event() const = 0;
 
   std::string
@@ -114,11 +110,7 @@ public:
     return name_;
   }
 
-  bool
-  is_primary() const
-  {
-    return is_primary_;
-  }
+  virtual bool is_primary() const = 0;
 
   bool
   has_delay() const
@@ -155,8 +147,6 @@ protected:
   std::string name_;
   //! indicates whether the default delay must be checked
   bool default_delay_needs_check_;
-  //! indicates whether this ConnectorModel belongs to a primary connection
-  bool is_primary_;
   //! indicates whether ConnectorModel has a delay
   bool has_delay_;
   //! indicates that ConnectorModel requires symmetric connections
@@ -169,6 +159,7 @@ protected:
   bool requires_urbanczik_archiving_;
 
 }; // ConnectorModel
+
 template < typename ConnectionT >
 class GenericConnectorModel : public ConnectorModel
 {
@@ -179,25 +170,21 @@ private:
 
   ConnectionT default_connection_;
   delay default_delay_;
-  delay default_axonal_delay_;
   rport receptor_type_;
 
 public:
   GenericConnectorModel( const std::string name,
-    bool is_primary,
     bool has_delay,
     bool requires_symmetric,
     bool supports_wfr,
     bool requires_clopath_archiving,
     bool requires_urbanczik_archiving )
     : ConnectorModel( name,
-      is_primary,
       has_delay,
       requires_symmetric,
       supports_wfr,
       requires_clopath_archiving,
       requires_urbanczik_archiving )
-    , default_axonal_delay_( 0.0 )
     , receptor_type_( 0 )
   {
     default_delay_ = Time::delay_ms_to_steps( 1.0 );
@@ -209,7 +196,6 @@ public:
     , pev_( cm.pev_ )
     , default_connection_( cm.default_connection_ )
     , default_delay_( cm.default_delay_ )
-    , default_axonal_delay_( cm.default_axonal_delay_ )
     , receptor_type_( cm.receptor_type_ )
   {
   }
@@ -221,7 +207,6 @@ public:
     const double delay,
     const double axonal_delay,
     const double weight,
-    const bool is_primary,
     const ConnectionType connection_type ) override;
 
   ConnectorModel* clone( std::string, synindex ) const override;
@@ -242,8 +227,6 @@ public:
   {
     return cp_;
   }
-
-  void set_syn_id( synindex syn_id ) override;
 
   typename ConnectionT::EventType*
   get_event() const override
@@ -267,10 +250,119 @@ public:
     return nullptr; // make the compiler happy
   }
 
+  bool
+  is_primary() const override
+  {
+    return true;
+  }
+
 private:
   void used_default_delay();
 
 }; // GenericConnectorModel
+
+template < typename ConnectionT >
+class GenericAxonalDelayConnectorModel : public ConnectorModel
+{
+private:
+  typename ConnectionT::CommonPropertiesType cp_;
+  //! used to create secondary events that belong to secondary connections
+  typename ConnectionT::EventType* pev_;
+
+  ConnectionT default_connection_;
+  delay default_delay_;
+  delay default_axonal_delay_;
+  rport receptor_type_;
+
+public:
+  GenericAxonalDelayConnectorModel( const std::string name,
+    bool requires_symmetric,
+    bool supports_wfr,
+    bool requires_clopath_archiving,
+    bool requires_urbanczik_archiving )
+    : ConnectorModel( name,
+      true,
+      requires_symmetric,
+      supports_wfr,
+      requires_clopath_archiving,
+      requires_urbanczik_archiving )
+    , default_axonal_delay_( 0.0 )
+    , receptor_type_( 0 )
+  {
+    default_delay_ = Time::delay_ms_to_steps( 1.0 );
+  }
+
+  GenericAxonalDelayConnectorModel( const GenericAxonalDelayConnectorModel& cm, const std::string name )
+    : ConnectorModel( cm, name )
+    , cp_( cm.cp_ )
+    , pev_( cm.pev_ )
+    , default_connection_( cm.default_connection_ )
+    , default_delay_( cm.default_delay_ )
+    , default_axonal_delay_( cm.default_axonal_delay_ )
+    , receptor_type_( cm.receptor_type_ )
+  {
+  }
+
+  const std::tuple< index, delay, delay > add_connection( Node& src,
+    Node& tgt,
+    const synindex syn_id,
+    const DictionaryDatum& d,
+    const double delay,
+    const double axonal_delay,
+    const double weight,
+    const ConnectionType connection_type ) override;
+
+  ConnectorModel* clone( std::string, synindex ) const override;
+
+  void calibrate( const TimeConverter& tc ) override;
+
+  void get_status( DictionaryDatum& ) const override;
+  void set_status( const DictionaryDatum& ) override;
+
+  void
+  check_synapse_params( const DictionaryDatum& syn_spec ) const override
+  {
+    default_connection_.check_synapse_params( syn_spec );
+  }
+
+  typename ConnectionT::CommonPropertiesType const&
+  get_common_properties() const override
+  {
+    return cp_;
+  }
+
+  typename ConnectionT::EventType*
+  get_event() const override
+  {
+    assert( false );
+    return 0;
+  }
+
+  ConnectionT const&
+  get_default_connection() const
+  {
+    return default_connection_;
+  }
+
+  SecondaryEvent*
+  create_event() const override
+  {
+    // Must not be called for a ConnectorModel belonging to a primary
+    // connection. Only required for secondary connection types.
+    assert( false );
+    return nullptr; // make the compiler happy
+  }
+
+  bool
+  is_primary() const override
+  {
+    return true;
+  }
+
+private:
+  void used_default_delay();
+
+}; // GenericAxonalDelayConnectorModel
 
 template < typename ConnectionT >
 class GenericSecondaryConnectorModel : public GenericConnectorModel< ConnectionT >
@@ -285,7 +377,6 @@ public:
     const bool requires_symmetric,
     const bool supports_wfr )
     : GenericConnectorModel< ConnectionT >( name,
-      /*is _primary=*/false,
       has_delay,
       requires_symmetric,
       supports_wfr,
@@ -301,6 +392,7 @@ public:
   {
     pev_ = new typename ConnectionT::EventType( *cm.pev_ );
   }
+
   ConnectorModel* clone( std::string name, synindex syn_id ) const;
 
   SecondaryEvent*
@@ -308,6 +400,7 @@ public:
   {
     return new typename ConnectionT::EventType();
   }
+
   ~GenericSecondaryConnectorModel()
   {
     if ( pev_ != 0 )
@@ -320,6 +413,12 @@ public:
   get_event() const
   {
     return pev_;
+  }
+
+  bool
+  is_primary() const override
+  {
+    return false;
   }
 };
 

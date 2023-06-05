@@ -137,7 +137,7 @@ public:
   {
     e.set_drift_factor( drift_factor_ );
     e.set_diffusion_factor( diffusion_factor_ );
-    }
+  }
 
   void get_status( DictionaryDatum& d ) const;
 

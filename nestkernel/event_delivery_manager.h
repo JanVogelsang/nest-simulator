@@ -430,10 +430,13 @@ private:
   Stopwatch sw_communicate_target_data_;
   Stopwatch sw_adjacency_list_;
   Stopwatch sw_deliver_node_;
+
 public:
   Stopwatch sw_stdp_delivery_;
   Stopwatch sw_static_delivery_;
   Stopwatch sw_node_archive_;
+  Stopwatch sw_correction_;
+
 private:
 #endif
 };

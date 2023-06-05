@@ -102,23 +102,20 @@ import nest
 M_INFO = 10
 M_ERROR = 30
 
-
 ###############################################################################
 # Parameter section
 # Define all relevant parameters: changes should be made here
 
 
 params = {
-    'nvp': 1,               # total number of virtual processes
-    'scale': .015,            # scaling factor of the network size
-    # total network size = scale*11250 neurons
-    'simtime': 250.,        # total simulation time in ms
-    'presimtime': 50.,      # simulation time until reaching equilibrium
-    'dt': 0.1,              # simulation step
-    'record_spikes': False,  # switch to record spikes of excitatory
-    # neurons to file
-    'path_name': '.',       # path where all files will have to be written
-    'log_file': 'log',      # naming scheme for the log files
+    'nvp': 4,                # total number of virtual processes
+    'scale': 0.015,             # scaling factor of the network size (total network size = scale*11250 neurons)
+    'simtime': 1000.,        # total simulation time in ms
+    'presimtime': 500.,      # simulation time until reaching equilibrium
+    'dt': 0.1,               # simulation step
+    'record_spikes': False,  # switch to record spikes of excitatory neurons to file
+    'path_name': '.',        # path where all files will have to be written
+    'log_file': 'log',       # naming scheme for the log files
 }
 
 
@@ -194,6 +191,7 @@ brunel_params = {
 
     'stdp_params': {
         'delay': 1.5,
+        'axonal_delay': 0.0,
         'alpha': 0.0513,
         'lambda': 0.1,  # STDP step size
         'mu': 0.4,  # STDP weight dependence exponent(potentiation)
@@ -226,9 +224,12 @@ def build_network(logger):
 
     # set global kernel parameters
     nest.total_num_virtual_procs = params['nvp']
-    nest.print_time = True
+    nest.print_time = False
     nest.resolution = params['dt']
     nest.overwrite_files = True
+    nest.use_compressed_spikes = True
+    nest.rng_seed = 55
+    nest.keep_source_table = False
 
     nest.message(M_INFO, 'build_network', 'Creating excitatory population.')
     E_neurons = nest.Create('iaf_psc_alpha_ax_delay', NE, params=model_params)
@@ -298,10 +299,8 @@ def build_network(logger):
 
     # Connect Poisson generator to neuron
 
-    nest.Connect(E_stimulus, E_neurons, {'rule': 'all_to_all'},
-                 {'synapse_model': 'syn_ex'})
-    nest.Connect(E_stimulus, I_neurons, {'rule': 'all_to_all'},
-                 {'synapse_model': 'syn_ex'})
+    nest.Connect(E_stimulus, E_neurons, {'rule': 'all_to_all'}, {'synapse_model': 'syn_ex'})
+    nest.Connect(E_stimulus, I_neurons, {'rule': 'all_to_all'}, {'synapse_model': 'syn_ex'})
 
     nest.message(M_INFO, 'build_network',
                  'Connecting excitatory -> excitatory population.')
@@ -337,7 +336,7 @@ def build_network(logger):
 
     if params['record_spikes']:
         if params['nvp'] != 1:
-            local_neurons = nest.GetLocalNodeCollection(E_neurons)
+            local_neurons = nest.GetLocalNodeCollection(E_neurons + I_neurons)
             # GetLocalNodeCollection returns a stepped composite NodeCollection, which
             # cannot be sliced. In order to allow slicing it later on, we're creating a
             # new regular NodeCollection from the plain node IDs.
@@ -345,17 +344,17 @@ def build_network(logger):
         else:
             local_neurons = E_neurons
 
-        if len(local_neurons) < brunel_params['Nrec']:
-            nest.message(
-                M_ERROR, 'build_network',
-                """Spikes can only be recorded from local neurons, but the
-                number of local neurons is smaller than the number of neurons
-                spikes should be recorded from. Aborting the simulation!""")
-            exit(1)
+        # if len(local_neurons) < brunel_params['Nrec']:
+        #     nest.message(
+        #         M_ERROR, 'build_network',
+        #         """Spikes can only be recorded from local neurons, but the
+        #         number of local neurons is smaller than the number of neurons
+        #         spikes should be recorded from. Aborting the simulation!""")
+        #     exit(1)
 
         nest.message(M_INFO, 'build_network', 'Connecting spike recorders.')
-        nest.Connect(local_neurons[:brunel_params['Nrec']], E_recorder,
-                     'all_to_all', 'static_synapse')
+        # nest.Connect(local_neurons[:brunel_params['Nrec']], E_recorder, 'all_to_all', 'static_synapse')
+        nest.Connect(local_neurons, E_recorder, 'all_to_all', 'syn_ex')
 
     # read out time used for building
     BuildEdgeTime = time.time() - tic
@@ -371,7 +370,6 @@ def run_simulation():
 
     # open log file
     with Logger(params['log_file']) as logger:
-
         nest.ResetKernel()
         nest.set_verbosity(M_INFO)
 
@@ -381,16 +379,25 @@ def run_simulation():
 
         tic = time.time()
 
-        nest.Simulate(params['presimtime'])
+        nest.Simulate(params['dt'])
 
-        PreparationTime = time.time() - tic
+        InitTime = time.time() - tic
+
+        tic = time.time()
+        logger.log(str(memory_thisjob()) + ' # virt_mem_after_init')
+        logger.log(str(InitTime) + ' # init_time')
+
+        nest.Simulate(params['presimtime'] + params['simtime'] - params['dt'])
+
+        PresimulationTime = time.time() - tic
 
         logger.log(str(memory_thisjob()) + ' # virt_mem_after_presim')
-        logger.log(str(PreparationTime) + ' # presim_time')
+        logger.log(str(PresimulationTime) + ' # presim_time')
 
         tic = time.time()
 
-        nest.Simulate(params['simtime'])
+        # nest.Simulate(params['simtime'])
+        # nest.Simulate(5)
 
         SimCPUTime = time.time() - tic
 
@@ -446,7 +453,6 @@ class Logger:
 
     def __enter__(self):
         if nest.Rank() < self.max_rank_log:
-
             # convert rank to string, prepend 0 if necessary to make
             # numbers equally wide for all ranks
             rank = '{:0' + str(len(str(self.max_rank_log))) + '}'

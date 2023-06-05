@@ -204,7 +204,7 @@ quantal_stp_synapse::send( Event& e,
   {
     e.set_weight( n_release * weight_ );
     e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay ) );
-      a_ -= n_release;
+    a_ -= n_release;
   }
 
   // Compute release probability

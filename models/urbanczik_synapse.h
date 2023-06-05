@@ -145,7 +145,6 @@ public:
   void send( Event& e, const thread t, const double axonal_delay, const CommonSynapseProperties& cp, Node* target );
 
 
-
   void
   check_connection( Node& s,
     Node& t,

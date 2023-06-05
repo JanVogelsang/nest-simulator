@@ -116,7 +116,6 @@ public:
   using ConnectionBase::get_dendritic_delay_steps;
 
 
-
   void
   check_connection( Node& s,
     Node& t,
@@ -149,7 +148,7 @@ public:
       e_spike.set_multiplicity( n_spikes_out );
       e.set_weight( weight_ );
       e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay ) );
-        }
+    }
 
     // Resets multiplicity for consistency
     e_spike.set_multiplicity( n_spikes_in );
