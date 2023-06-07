@@ -386,6 +386,11 @@ class NestModule(types.ModuleType):
         "Whether to keep source table after connection setup is complete",
         default=True,
     )
+    reserve_connections = KernelAttribute(
+        "bool",
+        "Whether to reserve the exact amount of required memory for all connections in the HPC benchmark",
+        default=True,
+    )
     min_update_time = KernelAttribute(
         "float",
         "Shortest wall-clock time measured so far for a full update step [seconds]",
