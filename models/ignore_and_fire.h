@@ -151,7 +151,7 @@ public:
   using Node::handle;
   using Node::handles_test_event;
 
-  port send_test_event( Node&, rport, synindex, bool );
+  port send_test_event( Node&, rport, synindex );
 
   void handle( SpikeEvent& );
   void handle( CurrentEvent& );
@@ -168,7 +168,7 @@ private:
   void init_buffers_();
   void pre_run_hook();
 
-  void update( Time const&, const long, const long );
+  void update( const Time, const long, const long );
 
   // The next two classes need to be friends to access the State_ class/member
   friend class RecordablesMap< ignore_and_fire >;
@@ -284,7 +284,7 @@ private:
 };
 
 inline port
-nest::ignore_and_fire::send_test_event( Node& target, rport receptor_type, synindex, bool )
+nest::ignore_and_fire::send_test_event( Node& target, rport receptor_type, synindex )
 {
   SpikeEvent e;
   e.set_sender( *this );

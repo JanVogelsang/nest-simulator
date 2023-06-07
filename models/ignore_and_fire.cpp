@@ -28,7 +28,6 @@
 // Includes from libnestutil:
 #include "dict_util.h"
 #include "numerics.h"
-#include "propagator_stability.h"
 
 // Includes from nestkernel:
 #include "exceptions.h"
@@ -171,7 +170,7 @@ ignore_and_fire::pre_run_hook()
  */
 
 void
-ignore_and_fire::update( Time const& origin, const long from, const long to )
+ignore_and_fire::update( const Time origin, const long from, const long to )
 {
   assert( to >= 0 && ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
@@ -201,7 +200,11 @@ ignore_and_fire::update( Time const& origin, const long from, const long to )
 
     // log state data
     B_.logger_.record_data( origin.get_steps() + lag );
+
+    ArchivingNode::update_stdp_connections( origin, lag );
   }
+
+  ArchivingNode::end_update();
 }
 
 void
