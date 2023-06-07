@@ -275,12 +275,6 @@ public:
     // return sources_;
   }
 
-  const void
-  resize_debug( const size_t num )
-  {
-    C_.reserve( num );
-  }
-
   index
   add_connection( const ConnectionT& c )
   {

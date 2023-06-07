@@ -281,6 +281,8 @@ extern const Name Kplus_triplet;
 extern const Name keep_source_table;
 extern const Name kernel;
 
+extern const Name reserve_connections;
+
 extern const Name label;
 extern const Name lambda;
 extern const Name lambda_0;

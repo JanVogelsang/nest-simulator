@@ -60,7 +60,8 @@ namespace nest
 {
 
 ConnectionManager::ConnectionManager()
-  : connruledict_( new Dictionary() )
+  : reserve_connections( true )
+  , connruledict_( new Dictionary() )
   , connbuilder_factories_()
   , min_delay_( 1 )
   , max_delay_( 1 )
@@ -158,6 +159,8 @@ ConnectionManager::set_status( const DictionaryDatum& d )
       "If structural plasticity is enabled, keep_source_table can not be set "
       "to false." );
   }
+
+  updateValue< bool >( d, names::reserve_connections, reserve_connections );
 
 #ifdef USE_ADJACENCY_LIST
   if ( updateValue< bool >( d, names::use_compressed_spikes, use_compressed_spikes_ ) )

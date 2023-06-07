@@ -127,6 +127,11 @@ Node::add_connection( Node& source_node,
         {
           num = 9000;
         }
+        if ( kernel().connection_manager.reserve_connections )
+        {
+          num = 1;
+        }
+
         if ( cm->requires_postponed_delivery() )
         {
           connections_.at( syn_id ) = std::make_unique< DendriticDelayConnector< ConnectionT > >( syn_id, num );

@@ -406,6 +406,8 @@ public:
   // start and stop in high-level connect functions in nestmodule.cpp and nest.cpp
   Stopwatch sw_construction_connect;
 
+  bool reserve_connections;
+
 private:
   size_t get_num_target_data( const thread tid ) const;
 
