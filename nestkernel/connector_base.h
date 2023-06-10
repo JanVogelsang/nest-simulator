@@ -53,7 +53,10 @@ class ConnectorBase
 {
 
 public:
-  ConnectorBase() : last_visited_connection_( 0 ) {}
+  ConnectorBase()
+    : last_visited_connection_( 0 )
+  {
+  }
 
   // Destructor needs to be declared virtual to avoid undefined
   // behavior, avoid possible memory leak and needs to be defined to
@@ -95,7 +98,7 @@ public:
   /**
    * Get the first and last index of all connections corresponding to a specific source node.
    */
-  virtual std::pair< index, index > get_connection_indices( const index source_node_id ) const = 0;
+  virtual std::pair< index, index > get_connection_indices( const thread source_tid, const index source_lid ) const = 0;
 
   /**
    * Get the first index of all connections corresponding to a specific source node.
@@ -105,7 +108,8 @@ public:
   /**
    * Sets the index of the connection that last received a spike.
    */
-  void set_last_visited_connection( const size_t last_visited_connection )
+  void
+  set_last_visited_connection( const size_t last_visited_connection )
   {
     last_visited_connection_ = last_visited_connection;
   }
@@ -113,12 +117,14 @@ public:
   /**
    * Returns the index of the connection that last received a spike.
    */
-  size_t get_last_visited_connection()
+  size_t
+  get_last_visited_connection()
   {
     return last_visited_connection_;
   }
 
-  void reset_last_visited_connection()
+  void
+  reset_last_visited_connection()
   {
     last_visited_connection_ = 0;
   }
@@ -148,6 +154,8 @@ public:
   virtual void send( const thread tid,
     const ConnectorModel* cm,
     Event& e,
+    const thread source_tid,
+    const index source_lid,
     Node* target ) = 0;
 
   virtual void correct_synapse_stdp_ax_delay( const index local_target_connection_id,
@@ -158,6 +166,8 @@ public:
 
   virtual void send_weight_event( const thread tid,
     const index local_target_connection_id,
+    const thread source_tid,
+    const index source_lid,
     Event& e,
     const CommonSynapseProperties& cp,
     Node* target ) = 0;
@@ -189,16 +199,11 @@ public:
 
 protected:
   /**
-   * This data structure stores the node IDs of presynaptic neurons connected to this neuron. If structural plasticity
-   * is disabled, it is only relevant during postsynaptic connection creation, before the connection information has
-   * been transferred to the presynaptic side.
-   * Arranged in a 2d array:
-   * 1st dimension: synapse types
-   * 2nd dimension: source node IDs
-   * After all connections have been created, the information stored in this structure is transferred to the presynaptic
-   * side and the sources vector can be cleared, unless further required for structural plasticity.
+   * This data structure stores the node IDs of presynaptic neurons connected to this neuron. Instead of storing raw
+   * node ids however, a combination of the source thread id and local id are stored.
    */
-  // TODO JV (help): Would it work to precompute the start-indices per source rank after sorting to save time when searching?
+  // TODO JV (help): Would it work to precompute the start-indices per source rank after sorting to save time when
+  // searching?
   //  What else could we do here to speed up the lookup? Most searching algorithms are quite fast when it comes to
   //  finding an element in a sorted sequence, but is it also equally fast to guarantee an element is not in the list as
   //  this will be the case which will occur much more often here. Some sort of pre-filtering might make sense here as
@@ -227,7 +232,8 @@ public:
 
   ~Connector() override
   {
-    C_.clear();
+    std::vector< ConnectionT >().swap( C_ );
+    std::vector< index >().swap( sources_ );
   }
 
   synindex
@@ -271,10 +277,20 @@ public:
   }
 
   const index
-  add_connection( const ConnectionT& c, const index source_node_id )
+  // add_connection( const ConnectionT& c, const thread num_threads, const thread source_rank, const thread source_tid,
+  // const index source_lid )
+  add_connection( const ConnectionT& c, const thread source_tid, const index source_lid )
   {
+    if ( C_.size() >= MAX_LOCAL_CONNECTION_ID )
+    {
+      throw KernelException(
+        String::compose( "Too many connections: at most %1 connections supported per virtual "
+                         "process and synapse model to a specific target neuron.",
+          MAX_LOCAL_CONNECTION_ID ) );
+    }
     C_.push_back( c );
-    sources_.push_back( source_node_id );
+    // sources_.push_back( ( source_rank * source_tid + source_tid ) * max_nodes_per_thread + source_lid );
+    sources_.push_back( source_tid * MAX_LOCAL_NODE_ID + source_lid );
     // Return index of added item
     return C_.size() - 1;
   }
@@ -286,14 +302,15 @@ public:
   }
 
   std::pair< index, index >
-  get_connection_indices( const index source_node_id ) const override
+  get_connection_indices( const thread source_tid, const index source_lid ) const override
   {
-    assert( source_node_id >= sources_[ last_visited_connection_ ] );
+    assert( last_visited_connection_ == 0
+      or source_tid * MAX_LOCAL_NODE_ID + source_lid >= sources_[ last_visited_connection_ ] );
 
     // binary search in sorted sources
     const std::vector< index >::const_iterator begin = sources_.begin() + last_visited_connection_;
     const std::vector< index >::const_iterator end = sources_.end();
-    auto first_last_source = std::equal_range( begin, end, source_node_id );
+    auto first_last_source = std::equal_range( begin, end, source_tid * MAX_LOCAL_NODE_ID + source_lid );
 
     return { first_last_source.first - begin, first_last_source.second - begin };
   }
@@ -345,6 +362,8 @@ public:
   send( const thread tid,
     const ConnectorModel* cm,
     Event& e,
+    const thread source_tid,
+    const index source_lid,
     Node* target ) override
   {
     typename ConnectionT::CommonPropertiesType const& cp =
@@ -355,12 +374,14 @@ public:
     if ( not C_[ local_target_connection_id ].is_disabled() )
     {
       C_[ local_target_connection_id ].send( e, tid, cp, target );
-      send_weight_event( tid, local_target_connection_id, e, cp, target );
+      send_weight_event( tid, local_target_connection_id, source_tid, source_lid, e, cp, target );
     }
   }
 
   void send_weight_event( const thread tid,
     const index local_target_connection_id,
+    const thread source_tid,
+    const index source_lid,
     Event& e,
     const CommonSynapseProperties& cp,
     Node* target ) override;

@@ -37,8 +37,8 @@ class TestStructuralPlasticityManager(unittest.TestCase):
         self.exclude_synapse_model = [
             'stdp_dopamine_synapse',
             'stdp_dopamine_synapse_lbl',
-            'stdp_dopamine_synapse_hpc',
-            'stdp_dopamine_synapse_hpc_lbl',
+            'stdp_dopamine_synapse',
+            'stdp_dopamine_synapse_lbl',
             'gap_junction',
             'gap_junction_lbl',
             'diffusion_connection',

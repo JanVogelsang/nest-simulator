@@ -51,19 +51,30 @@ typedef MPIManager::OffGridSpike OffGridSpike;
 class TargetData;
 class SendBufferPosition;
 
-struct SpikeDataSendBufferPosition {
-  std::vector< size_t > positions_for_rank;  //!<
-  thread write_thread_index;  //!< Current write thread vector for the current target rank
-  index write_thread_pos;  //!< Position inside the current write thread vector
-  thread start_rank;  //!< First rank this thread is assigned to
-  thread end_rank;  //!< Last rank this thread is assigned to
+struct SpikeDataSendBufferPositionPerRank
+{
+  thread write_thread_index; //!< Current write thread vector for the current target rank
+  synindex syn_id_pos;       //!< Position inside the synapse type vector for target rank and writing thread
+  index current_pos;         //!< Position inside the spike register for target rank
+
+  SpikeDataSendBufferPositionPerRank()
+    : write_thread_index( 0 )
+    , syn_id_pos( 0 )
+    , current_pos( 0 )
+  {
+  }
+};
+
+struct SpikeDataSendBufferPosition
+{
+  thread start_rank; //!< First rank this thread is assigned to
+  thread end_rank;   //!< Last rank this thread is assigned to
+  std::vector< SpikeDataSendBufferPositionPerRank > positions_per_rank;
 
   SpikeDataSendBufferPosition( thread start_rank, thread end_rank )
-  : positions_for_rank( end_rank - start_rank, 0 )
-  , write_thread_index( 0 )
-  , write_thread_pos( 0 )
-  , start_rank( start_rank )
-  , end_rank( end_rank )
+    : start_rank( start_rank )
+    , end_rank( end_rank )
+    , positions_per_rank( end_rank - start_rank + 1 )
   {
   }
 };
@@ -232,6 +243,8 @@ public:
    */
   void init_moduli();
 
+  void resize_spike_register( const thread tid, const size_t num_connection_models );
+
   /**
    * Set local spike counter to zero.
    */
@@ -248,10 +261,9 @@ public:
   virtual void reset_timers_for_dynamics();
 
 private:
-  //template < typename SpikeDataT >
-  void gather_spike_data_( const thread tid,
-    std::vector< SpikeData >& send_buffer,
-    std::vector< SpikeData >& recv_buffer );
+  // template < typename SpikeDataT >
+  void
+  gather_spike_data_( const thread tid, std::vector< SpikeData >& send_buffer, std::vector< SpikeData >& recv_buffer );
 
   void resize_send_recv_buffers_spike_data_();
 
@@ -261,15 +273,8 @@ private:
   // template < typename SpikeDataT >
   bool collocate_spike_data_buffers_( const thread tid,
     SpikeDataSendBufferPosition& send_buffer_position,
-    std::vector< std::vector< std::vector< SpikeData > > >& spike_register,
+    std::vector< std::vector< std::vector< std::vector< SpikeData > > > >& emitted_spikes_register,
     std::vector< SpikeData >& send_buffer );
-
-  /**
-   * Marks end of valid regions in MPI buffers.
-   */
-  template < typename SpikeDataT >
-  void set_end_and_invalid_markers_( const SpikeDataSendBufferPosition& send_buffer_position,
-    std::vector< SpikeDataT >& send_buffer );
 
   /**
    * Resets marker in MPI buffer that signals end of communication
@@ -352,13 +357,14 @@ private:
   std::vector< delay > slice_moduli_;
 
   /**
-   * Register for node IDs of neurons that spiked. This is a 3-dim structure. While spikes are written to the buffer
+   * Register for node IDs of neurons that spiked. This is a 4-dim structure. While spikes are written to the buffer
    * they are immediately sorted by the target rank required to write to the corresponding MPI buffer position.
    * - First dim: write threads (from node to register)
    * - Second dim: Target rank
-   * - Third dim: SpikeData
+   * - Third dim: Synapse type
+   * - Fourth dim: SpikeData
    */
-  std::vector< std::vector< std::vector< SpikeData > > > emitted_spikes_register_;
+  std::vector< std::vector< std::vector< std::vector< SpikeData > > > > emitted_spikes_register_;
 
   /**
    * Register for node IDs of preicse neurons that spiked. This is a 3-dim structure. While spikes are written to the
@@ -410,11 +416,14 @@ private:
 inline void
 EventDeliveryManager::reset_spike_register_( const thread tid )
 {
-  for ( std::vector< std::vector< SpikeData > >::iterator it = emitted_spikes_register_[ tid ].begin();
+  for ( std::vector< std::vector< std::vector< SpikeData > > >::iterator it = emitted_spikes_register_[ tid ].begin();
         it < emitted_spikes_register_[ tid ].end();
         ++it )
   {
-    it->clear();
+    for ( auto syn_type_it : *it )
+    {
+      syn_type_it.clear();
+    }
   }
 
   /*for ( std::vector< std::vector< OffGridSpikeData > >::iterator it =
@@ -469,6 +478,15 @@ EventDeliveryManager::get_slice_modulo( delay d )
   assert( static_cast< std::vector< delay >::size_type >( d ) < slice_moduli_.size() );
 
   return slice_moduli_[ d ];
+}
+
+inline void
+EventDeliveryManager::resize_spike_register( const thread tid, const size_t num_connection_models )
+{
+  for ( auto& it : emitted_spikes_register_[ tid ] )
+  {
+    it.resize( num_connection_models );
+  }
 }
 
 } // namespace nest

@@ -33,8 +33,8 @@ class TestDisconnect(unittest.TestCase):
         self.exclude_synapse_model = [
             'stdp_dopamine_synapse',
             'stdp_dopamine_synapse_lbl',
-            'stdp_dopamine_synapse_hpc',
-            'stdp_dopamine_synapse_hpc_lbl',
+            'stdp_dopamine_synapse',
+            'stdp_dopamine_synapse_lbl',
             'gap_junction',
             'gap_junction_lbl',
             'diffusion_connection',
@@ -45,10 +45,10 @@ class TestDisconnect(unittest.TestCase):
             'rate_connection_delayed_lbl',
             'clopath_synapse',
             'clopath_synapse_lbl',
-            'clopath_synapse_hpc',
+            'clopath_synapse',
             'urbanczik_synapse',
             'urbanczik_synapse_lbl',
-            'urbanczik_synapse_hpc'
+            'urbanczik_synapse'
         ]
 
     def test_multiple_synapse_deletion_all_to_all(self):

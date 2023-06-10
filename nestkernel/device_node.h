@@ -66,7 +66,7 @@ public:
     // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
     // event by adding a weight and optionally updates its internal state as well.
     e.set_local_connection_id( local_target_connection_id );
-    connections_[ syn_id ]->send( tid, cm[ syn_id ], e, this );
+    connections_[ syn_id ]->send( tid, cm[ syn_id ], e, 0, 0, this ); // TODO JV
 
     // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
     //  handle, or just handing the entire local connection id to the handle function.
@@ -75,8 +75,7 @@ public:
   }
 
   void
-  deliver_event( const thread, const std::vector< ConnectorModel* >&, SpikeEvent& )
-    override
+  deliver_event( const thread, const thread, const index, const std::vector< ConnectorModel* >&, SpikeEvent& ) override
   {
   }
 

@@ -92,18 +92,16 @@ nest::TargetTable::add_target( const thread tid, const thread target_rank, const
 
   if ( target_data.is_primary() )
   {
-    targets_[ tid ][ lid ].push_back( Target( target_data.get_target_tid(),
-      target_rank,
-      target_data.get_syn_id() ) );
+    targets_[ tid ][ lid ].push_back( Target( target_rank, target_data.get_target_tid(), target_data.get_syn_id() ) );
   }
   else
   {
     // TODO JV (pt): Secondary events
-//     const size_t send_buffer_pos = target_data.get_recv_buffer_pos()
-//       + kernel().mpi_manager.get_send_displacement_secondary_events_in_int( target_rank );
-//    const synindex syn_id = target_data.get_syn_id();
-//
-//    assert( syn_id < secondary_send_buffer_pos_[ tid ][ lid ].size() );
-//    secondary_send_buffer_pos_[ tid ][ lid ][ syn_id ].push_back( send_buffer_pos );
+    //     const size_t send_buffer_pos = target_data.get_recv_buffer_pos()
+    //       + kernel().mpi_manager.get_send_displacement_secondary_events_in_int( target_rank );
+    //    const synindex syn_id = target_data.get_syn_id();
+    //
+    //    assert( syn_id < secondary_send_buffer_pos_[ tid ][ lid ].size() );
+    //    secondary_send_buffer_pos_[ tid ][ lid ][ syn_id ].push_back( send_buffer_pos );
   }
 }

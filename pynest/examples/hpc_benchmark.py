@@ -108,12 +108,12 @@ M_ERROR = 30
 
 
 params = {
-    'nvp': 4,                # total number of virtual processes
-    'scale': 1.,             # scaling factor of the network size (total network size = scale*11250 neurons)
-    'simtime': 1000.,        # total simulation time in ms
-    'presimtime': 500.,      # simulation time until reaching equilibrium
+    'nvp': 1,                # total number of virtual processes
+    'scale': .1,             # scaling factor of the network size (total network size = scale*11250 neurons)
+    'simtime': 30.0,         # total simulation time in ms
+    'presimtime': 0.,        # simulation time until reaching equilibrium
     'dt': 0.1,               # simulation step
-    'record_spikes': False,  # switch to record spikes of excitatory neurons to file
+    'record_spikes': True,   # switch to record spikes of excitatory neurons to file
     'path_name': '.',        # path where all files will have to be written
     'log_file': 'log',       # naming scheme for the log files
 }
@@ -190,7 +190,7 @@ brunel_params = {
 
     'stdp_params': {
         'delay': 1.5,
-        'axonal_delay': 0.,
+        # 'axonal_delay': 0.,
         'alpha': 0.0513,
         'lambda': 0.1,  # STDP step size
         'mu': 0.4,  # STDP weight dependence exponent (potentiation)
@@ -225,15 +225,16 @@ def build_network(logger):
     nest.total_num_virtual_procs = params['nvp']
     nest.resolution = params['dt']
     nest.overwrite_files = True
-    # nest.use_compressed_spikes = False
+    # nest.use_compressed_spikes = True
     nest.rng_seed = 55
     nest.keep_source_table = False
+    nest.print_time = False
 
     nest.message(M_INFO, 'build_network', 'Creating excitatory population.')
-    E_neurons = nest.Create('iaf_psc_alpha', NE, params=model_params)
+    E_neurons = nest.Create('iaf_psc_alpha_ax_delay', NE, params=model_params)
 
     nest.message(M_INFO, 'build_network', 'Creating inhibitory population.')
-    I_neurons = nest.Create('iaf_psc_alpha', NI, params=model_params)
+    I_neurons = nest.Create('iaf_psc_alpha_ax_delay', NI, params=model_params)
 
     if brunel_params['randomize_Vm']:
         nest.message(M_INFO, 'build_network',
@@ -289,7 +290,7 @@ def build_network(logger):
     nest.CopyModel('static_synapse', 'syn_in', {'weight': brunel_params['g'] * JE_pA})
 
     stdp_params['weight'] = JE_pA
-    nest.SetDefaults('stdp_pl_synapse_hom_hpc', stdp_params)
+    nest.SetDefaults('stdp_pl_synapse_hom_ax_delay', stdp_params)
 
     nest.message(M_INFO, 'build_network', 'Connecting stimulus generators.')
 
@@ -304,7 +305,7 @@ def build_network(logger):
     nest.Connect(E_neurons, E_neurons,
                  {'rule': 'fixed_indegree', 'indegree': CE,
                   'allow_autapses': False, 'allow_multapses': True},
-                 {'synapse_model': 'stdp_pl_synapse_hom_hpc'})
+                 {'synapse_model': 'stdp_pl_synapse_hom_ax_delay'})
 
     nest.message(M_INFO, 'build_network',
                  'Connecting inhibitory -> excitatory population.')

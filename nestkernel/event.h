@@ -146,22 +146,26 @@ public:
    */
   void set_sender_node_id( const index );
 
-  index get_local_connection_id() const
+  index
+  get_local_connection_id() const
   {
     return local_connection_id_;
   }
 
-  void set_local_connection_id( const index local_connection_id )
+  void
+  set_local_connection_id( const index local_connection_id )
   {
     local_connection_id_ = local_connection_id;
   }
 
-  synindex get_syn_id() const
+  synindex
+  get_syn_id() const
   {
     return syn_id_;
   }
 
-  void set_syn_id( const synindex syn_id )
+  void
+  set_syn_id( const synindex syn_id )
   {
     syn_id_ = syn_id;
   }
@@ -290,7 +294,7 @@ public:
   void set_stamp( Time const& );
 
 protected:
-  index sender_node_id_;        //!< node ID of sender or 0
+  index sender_node_id_; //!< node ID of sender or 0
   /*
    * The original formulation used references to Nodes as members, however, in order to avoid the reference of reference
    * problem, we store sender as pointer and use references in the interface.
@@ -301,12 +305,12 @@ protected:
   /**
    * Target-Neuron-local index of connection.
    */
-   index local_connection_id_;
+  index local_connection_id_;
 
-   /**
-    * Synapse id over which the Event is sent.
-    */
-   synindex syn_id_;
+  /**
+   * Synapse id over which the Event is sent.
+   */
+  synindex syn_id_;
 
   /**
    * Sender port number.

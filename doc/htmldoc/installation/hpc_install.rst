@@ -1,4 +1,4 @@
-.. _hpc_install:
+.. _install:
 
 High Performance Computer Systems Installation
 ================================================

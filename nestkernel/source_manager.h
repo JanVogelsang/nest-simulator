@@ -76,7 +76,7 @@ private:
    * of ConnectionManager. Data from this structure is transferred to the presynaptic side during construction of the
    * presynaptic connection infrastructure. One map for each synapse type.
    */
-  std::vector < std::map< index, size_t > > compressed_spike_data_map_;
+  std::vector< std::map< index, size_t > > compressed_spike_data_map_;
 
 public:
   SourceManager();
@@ -185,7 +185,7 @@ public:
   /**
    * Resize all data structures when the number of connection models changed.
    */
-  void resize_sources();
+  void resize_sources( const thread tid, const size_t num_connection_models );
 
   /**
    * Encodes combination of node ID and synapse types as single
@@ -194,7 +194,7 @@ public:
   index pack_source_node_id_and_syn_id( const index source_node_id, const synindex syn_id ) const;
 
   // fills the compressed_spike_data structure in ConnectionManager
-  void fill_compressed_spike_data( std::vector < std::vector< std::vector< thread > > >& compressed_spike_data );
+  void fill_compressed_spike_data( std::vector< std::vector< std::vector< thread > > >& compressed_spike_data );
 
   void clear_compressed_spike_data_map();
 
@@ -255,7 +255,7 @@ SourceManager::pack_source_node_id_and_syn_id( const index source_node_id, const
 inline void
 SourceManager::clear_compressed_spike_data_map()
 {
-  std::vector < std::map< index, size_t > >().swap( compressed_spike_data_map_ );
+  std::vector< std::map< index, size_t > >().swap( compressed_spike_data_map_ );
 }
 
 inline void

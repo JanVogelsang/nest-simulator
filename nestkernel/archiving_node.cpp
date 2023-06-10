@@ -90,7 +90,6 @@ ArchivingNode::register_stdp_connection( double t_first_read, double delay )
   // connections afterwards without leaving spikes in the history.
   // For details see bug #218. MH 08-04-22
 
-  // TODO JV: Remove this block
   for ( std::deque< histentry >::iterator runner = history_.begin();
         runner != history_.end() and ( t_first_read - runner->t_ > -1.0 * kernel().connection_manager.get_stdp_eps() );
         ++runner )
@@ -196,6 +195,8 @@ ArchivingNode::get_history( double t1,
 
 void
 ArchivingNode::deliver_event( const thread tid,
+  const thread source_tid,
+  const index source_lid,
   const std::vector< ConnectorModel* >& cm,
   SpikeEvent& se )
 {
@@ -203,7 +204,7 @@ ArchivingNode::deliver_event( const thread tid,
   // TODO JV (pt): Think about removing access to connections_ in derived classes of node
   ConnectorBase* conn = connections_[ syn_id ];
 
-  if ( conn )  // Does this node receive any spikes from that synapse type at all?
+  if ( conn ) // Does this node receive any spikes from that synapse type at all?
   {
     // STDP synapses need to make sure all post-synaptic spikes are known when delivering the spike to the synapse.
     // Spikes will therefore be stored in an intermediate spike buffer until no more post-synaptic spike could reach the
@@ -211,13 +212,21 @@ ArchivingNode::deliver_event( const thread tid,
 
     // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
     // event by adding a weight.
-    const std::pair< index, index >& connection_range = conn->get_connection_indices( se.get_sender_node_id() );
-    for ( auto idx = connection_range.first; idx != connection_range.second; ++idx )  // TODO JV: Verify this
+    const std::pair< index, index >& connection_range = conn->get_connection_indices( source_tid, source_lid );
+
+    if ( connection_range.first != connection_range.second )
     {
-      se.set_local_connection_id( idx );
-      conn->send( tid, cm[ syn_id ], se, this );
-      conn->set_last_visited_connection( idx );
-      handle( se );
+      // Set last visited connection to first entry, as this connections might be visited again for a different lag
+      conn->set_last_visited_connection( connection_range.first );
+      for ( auto idx = connection_range.first; idx != connection_range.second; ++idx )
+      {
+        se.set_local_connection_id( idx );
+        conn->send( tid, cm[ syn_id ], se, source_tid, source_lid, this );
+        handle( se );
+
+        if ( get_node_id() == 1 and se.get_stamp().get_steps() == 1 and syn_id == 32 and idx == 415 )
+          std::cout << se.get_weight() << std::endl;
+      }
     }
   }
 }
@@ -347,11 +356,8 @@ ArchivingNode::add_correction_entry_stdp_ax_delay( SpikeEvent& spike_event,
     - 2 * Time::delay_ms_to_steps( dendritic_delay ) );
   assert( static_cast< size_t >( idx ) < correction_entries_stdp_ax_delay_.size() );
 
-  correction_entries_stdp_ax_delay_[ idx ].push_back(
-    CorrectionEntrySTDPAxDelay( spike_event.get_syn_id(),
-      spike_event.get_local_connection_id(),
-      t_last_pre_spike,
-      weight_revert ) );
+  correction_entries_stdp_ax_delay_[ idx ].push_back( CorrectionEntrySTDPAxDelay(
+    spike_event.get_syn_id(), spike_event.get_local_connection_id(), t_last_pre_spike, weight_revert ) );
 }
 
 void

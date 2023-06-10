@@ -50,38 +50,38 @@ class SpikeData
 {
   static constexpr int MAX_LAG = generate_max_value( NUM_BITS_LAG );
 
-  unsigned int marker_ : NUM_BITS_MARKER_SPIKE_DATA;     //!< status flag
-  unsigned int lag_ : NUM_BITS_LAG;                      //!< lag in this min-delay interval
-  unsigned int target_tid_ : NUM_BITS_TID;               //!< target thread index
-  synindex syn_id_ : NUM_BITS_SYN_ID;                    //!< synapse-type index
-  unsigned int source_tid_ : NUM_BITS_TID;               //!< source thread index
-  unsigned int source_lid_ : NUM_BITS_LOCAL_NODE_ID;     //!< source node local index
-//  unsigned int marker_;     //!< status flag
-//  unsigned int lag_;                      //!< lag in this min-delay interval
-//  unsigned int target_tid_;               //!< target thread index
-//  synindex syn_id_;                    //!< synapse-type index
-//  unsigned int source_tid_;               //!< source thread index
-//  unsigned int source_lid_;     //!< source node local index
+  unsigned int marker_ : NUM_BITS_MARKER_SPIKE_DATA; //!< status flag
+  unsigned int lag_ : NUM_BITS_LAG;                  //!< lag in this min-delay interval
+  unsigned int target_tid_ : NUM_BITS_TID;           //!< target thread index
+  synindex syn_id_ : NUM_BITS_SYN_ID;                //!< synapse-type index
+  unsigned int source_tid_ : NUM_BITS_TID;           //!< source thread index
+  unsigned int source_lid_ : NUM_BITS_LOCAL_NODE_ID; //!< source node local index
+  //  unsigned int marker_;     //!< status flag
+  //  unsigned int lag_;                      //!< lag in this min-delay interval
+  //  unsigned int target_tid_;               //!< target thread index
+  //  synindex syn_id_;                    //!< synapse-type index
+  //  unsigned int source_tid_;               //!< source thread index
+  //  unsigned int source_lid_;     //!< source node local index
   // TODO JV: There still are bits to spare here, could we use them somehow?
 
 public:
   SpikeData() = default;
-//  ~SpikeData() = default;
+  //  ~SpikeData() = default;
   SpikeData( const thread target_tid,
     const synindex syn_id,
     const unsigned int lag,
     const thread source_tid,
     const index source_lid );
-//  SpikeData( const SpikeData& ) = default;
-//  SpikeData( SpikeData&& ) noexcept = default;
-//  SpikeData& operator=( const SpikeData& other ) = default;
-//  SpikeData& operator=( SpikeData&& other ) = default;
+  //  SpikeData( const SpikeData& ) = default;
+  //  SpikeData( SpikeData&& ) noexcept = default;
+  //  SpikeData& operator=( const SpikeData& other ) = default;
+  //  SpikeData& operator=( SpikeData&& other ) = default;
 
-//  void set( const thread target_tid,
-//    const synindex syn_id,
-//    const unsigned int lag,
-//    const thread source_tid,
-//    const index source_lid);
+  //  void set( const thread target_tid,
+  //    const synindex syn_id,
+  //    const unsigned int lag,
+  //    const thread source_tid,
+  //    const index source_lid);
 
   /**
    * Returns lag in min-delay interval.
@@ -152,15 +152,15 @@ public:
 //! check legal size
 // using success_spike_data_size = StaticAssert< sizeof( SpikeData ) == 8 >::success;
 
-//inline SpikeData::SpikeData()
-//  : marker_( SPIKE_DATA_ID_DEFAULT )
-//  , lag_( 0 )
-//  , target_tid_( 0 )
-//  , syn_id_( 0 )
-//  , source_tid_( 0 )
-//  , source_lid_( 0 )
+// inline SpikeData::SpikeData()
+//   : marker_( SPIKE_DATA_ID_DEFAULT )
+//   , lag_( 0 )
+//   , target_tid_( 0 )
+//   , syn_id_( 0 )
+//   , source_tid_( 0 )
+//   , source_lid_( 0 )
 //{
-//}
+// }
 
 inline SpikeData::SpikeData( const thread target_tid,
   const synindex syn_id,
@@ -206,27 +206,27 @@ SpikeData::get_source_lid() const
   return source_lid_;
 }
 
-//inline void
-//SpikeData::set( const thread target_tid,
-//  const synindex syn_id,
-//  const unsigned int lag,
-//  const thread source_tid,
-//  const index source_lid)
+// inline void
+// SpikeData::set( const thread target_tid,
+//   const synindex syn_id,
+//   const unsigned int lag,
+//   const thread source_tid,
+//   const index source_lid)
 //{
-//  assert( 0 <= target_tid );
-//  assert( target_tid <= MAX_TID );
-//  assert( 0 <= source_tid );
-//  assert( source_tid <= MAX_TID );
-//  assert( syn_id <= MAX_SYN_ID );
-//  assert( lag < MAX_LAG );
+//   assert( 0 <= target_tid );
+//   assert( target_tid <= MAX_TID );
+//   assert( 0 <= source_tid );
+//   assert( source_tid <= MAX_TID );
+//   assert( syn_id <= MAX_SYN_ID );
+//   assert( lag < MAX_LAG );
 //
-//  marker_ = SPIKE_DATA_ID_DEFAULT;
-//  lag_ = lag;
-//  target_tid_ = target_tid;
-//  syn_id_ = syn_id;
-//  source_tid_ = source_tid;
-//  source_lid_ = source_lid;
-//}
+//   marker_ = SPIKE_DATA_ID_DEFAULT;
+//   lag_ = lag;
+//   target_tid_ = target_tid;
+//   syn_id_ = syn_id;
+//   source_tid_ = source_tid;
+//   source_lid_ = source_lid;
+// }
 
 inline void
 SpikeData::reset_marker()
@@ -295,12 +295,12 @@ public:
   OffGridSpikeData& operator=( const OffGridSpikeData& other ) = default;
   OffGridSpikeData& operator=( OffGridSpikeData&& other ) = default;
 
-//  void set( const thread target_tid,
-//    const synindex syn_id,
-//    const unsigned int lag,
-//    const thread source_tid,
-//    const index source_lid,
-//    const double offset );
+  //  void set( const thread target_tid,
+  //    const synindex syn_id,
+  //    const unsigned int lag,
+  //    const thread source_tid,
+  //    const index source_lid,
+  //    const double offset );
 
   double get_offset() const;
 };
@@ -308,11 +308,11 @@ public:
 //! check legal size
 // using success_offgrid_spike_data_size = StaticAssert< sizeof( OffGridSpikeData ) == 16 >::success;
 
-//inline OffGridSpikeData::OffGridSpikeData()
-//  : SpikeData()
-//  , offset_( 0. )
+// inline OffGridSpikeData::OffGridSpikeData()
+//   : SpikeData()
+//   , offset_( 0. )
 //{
-//}
+// }
 
 inline OffGridSpikeData::OffGridSpikeData( const thread target_tid,
   const synindex syn_id,
@@ -326,29 +326,29 @@ inline OffGridSpikeData::OffGridSpikeData( const thread target_tid,
 }
 
 
-//inline void
-//OffGridSpikeData::set( const thread _target_tid,
-//  const synindex _syn_id,
-//  const unsigned int _lag,
-//  const thread _source_tid,
-//  const index _source_lid,
-//  const double _offset )
+// inline void
+// OffGridSpikeData::set( const thread _target_tid,
+//   const synindex _syn_id,
+//   const unsigned int _lag,
+//   const thread _source_tid,
+//   const index _source_lid,
+//   const double _offset )
 //{
-//  assert( 0 <= _target_tid );
-//  assert( _target_tid <= MAX_TID );
-//  assert( 0 <= _source_tid );
-//  assert( _source_tid <= MAX_TID );
-//  assert( _syn_id <= MAX_SYN_ID );
-//  assert( _lag < MAX_LAG );
+//   assert( 0 <= _target_tid );
+//   assert( _target_tid <= MAX_TID );
+//   assert( 0 <= _source_tid );
+//   assert( _source_tid <= MAX_TID );
+//   assert( _syn_id <= MAX_SYN_ID );
+//   assert( _lag < MAX_LAG );
 //
-//  marker = SPIKE_DATA_ID_DEFAULT;
-//  lag = _lag;
-//  target_tid = _target_tid;
-//  syn_id = _syn_id;
-//  offset_ = _offset;
-//  source_tid = _source_tid;
-//  source_lid = _source_lid;
-//}
+//   marker = SPIKE_DATA_ID_DEFAULT;
+//   lag = _lag;
+//   target_tid = _target_tid;
+//   syn_id = _syn_id;
+//   offset_ = _offset;
+//   source_tid = _source_tid;
+//   source_lid = _source_lid;
+// }
 
 
 inline double

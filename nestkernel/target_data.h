@@ -65,15 +65,14 @@ private:
   //! TargetData has TargetDataFields else SecondaryTargetDataFields
   bool is_primary_ : NUM_BITS_IS_PRIMARY;
   unsigned int syn_id_ : NUM_BITS_SYN_ID; //!< synapse type
-//  union
-//  {
-  thread target_tid_ : 25; //!< thread index of postsynaptic target neurons
-//    unsigned int compressed_index_ : 25;
-//    unsigned int secondary_recv_buffer_pos_ : 25;  // TODO JV (pt): Secondary events
-//  };
+                                          //  union
+                                          //  {
+  thread target_tid_ : 25;                //!< thread index of postsynaptic target neurons
+  //    unsigned int compressed_index_ : 25;
+  //    unsigned int secondary_recv_buffer_pos_ : 25;  // TODO JV (pt): Secondary events
+  //  };
 
 public:
-
   void reset_marker();
   void set_complete_marker();
   void set_end_marker();

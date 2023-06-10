@@ -211,7 +211,6 @@ public:
   {
     ConnTestDummyNode dummy_target;
 
-
     const double delay = get_delay();
     if ( cp.axonal_delay_ > delay )
     {
@@ -313,7 +312,7 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e, thread t, const STDPPLHomAxDelayCo
 
   if ( ( cp.axonal_delay_ - dendritic_delay ) > kernel().connection_manager.get_stdp_eps() )
   {
-    static_cast< ArchivingNode* >(target)->add_correction_entry_stdp_ax_delay(
+    static_cast< ArchivingNode* >( target )->add_correction_entry_stdp_ax_delay(
       static_cast< SpikeEvent& >( e ), t_lastspike_, weight_revert, dendritic_delay );
   }
 

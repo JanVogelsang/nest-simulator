@@ -135,7 +135,7 @@ public:
   inline virtual bool
   supports_postponed_delivery() const
   {
-    return false;
+    return true;
   }
 
   /**
@@ -143,6 +143,8 @@ public:
    * connection.
    */
   void deliver_event( const thread tid,
+    const thread source_tid,
+    const index source_lid,
     const std::vector< ConnectorModel* >& cm,
     SpikeEvent& se ) override;
 

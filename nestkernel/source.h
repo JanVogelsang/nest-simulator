@@ -46,7 +46,7 @@ private:
 
 public:
   Source();
-  explicit Source( const uint64_t node_id);
+  explicit Source( const uint64_t node_id );
 
   explicit Source( const uint64_t node_id, const bool processed );
 
@@ -84,14 +84,14 @@ inline Source::Source()
 {
 }
 
-inline Source::Source( const uint64_t node_id)
+inline Source::Source( const uint64_t node_id )
   : node_id_( node_id )
   , processed_( false )
 {
   assert( node_id <= MAX_NODE_ID );
 }
 
-inline Source::Source( const uint64_t node_id,  const bool processed )
+inline Source::Source( const uint64_t node_id, const bool processed )
   : node_id_( node_id )
   , processed_( processed )
 {

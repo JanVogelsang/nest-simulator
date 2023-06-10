@@ -109,10 +109,12 @@ EventDeliveryManager::send_remote( thread tid, SpikeEvent& e, const long lag )
   for ( std::vector< Target >::const_iterator it = targets.begin(); it != targets.end(); ++it )
   {
     const thread rank = it->get_rank();
+
     // Unroll spike multiplicity as plastic synapses only handle individual spikes.
     for ( int i = 0; i < e.get_multiplicity(); ++i ) // TODO JV (pt): Remove multiplicity
     {
-      emitted_spikes_register_[ tid ][ rank ].emplace_back( it->get_tid(), it->get_syn_id(), lag, tid, lid );
+      emitted_spikes_register_[ tid ][ rank ][ it->get_syn_id() ].emplace_back(
+        it->get_tid(), it->get_syn_id(), lag, tid, lid );
     }
   }
 }
@@ -130,7 +132,8 @@ EventDeliveryManager::send_off_grid_remote( thread tid, SpikeEvent& e, const lon
     // Unroll spike multiplicity as plastic synapses only handle individual spikes.
     for ( int i = 0; i < e.get_multiplicity(); ++i ) // TODO JV (pt): Remove multiplicity
     {
-      off_grid_emitted_spike_register_[ tid ][ rank ].emplace_back( it->get_tid(), it->get_syn_id(), lag, tid, lid, e.get_offset() );
+      off_grid_emitted_spike_register_[ tid ][ rank ].emplace_back(
+        it->get_tid(), it->get_syn_id(), lag, tid, lid, e.get_offset() );
     }
   }
 }

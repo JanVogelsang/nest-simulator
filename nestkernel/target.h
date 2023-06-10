@@ -64,30 +64,29 @@ namespace nest
  * The processed flag must always use one bit.
  */
 
-//enum enum_status_target_id
+// enum enum_status_target_id
 //{
-//  TARGET_ID_PROCESSED,
-//  TARGET_ID_UNPROCESSED
-//};
+//   TARGET_ID_PROCESSED,
+//   TARGET_ID_UNPROCESSED
+// };
 
-class Target {
+class Target
+{
 protected:
-  unsigned int rank_ : NUM_BITS_RANK;         //!< target rank
-  unsigned int tid_ : NUM_BITS_TID;           //!< thread index
-  unsigned int syn_id_ : NUM_BITS_SYN_ID;     //!< synapse id
+  unsigned int rank_ : NUM_BITS_RANK;     //!< target rank
+  unsigned int tid_ : NUM_BITS_TID;       //!< thread index
+  unsigned int syn_id_ : NUM_BITS_SYN_ID; //!< synapse id
 
 public:
   Target();
   Target( const Target& rhs );
-  Target( const thread rank,
-    const thread tid,
-    const synindex syn_id );
+  Target( const thread rank, const thread tid, const synindex syn_id );
 
   Target& operator=( const Target& rhs );
 
-//  void set( const thread rank,
-//    const thread tid,
-//    const synindex syn_id );
+  //  void set( const thread rank,
+  //    const thread tid,
+  //    const synindex syn_id );
 
   /**
    * Returns target rank.
@@ -104,20 +103,20 @@ public:
    */
   synindex get_syn_id() const;
 
-//  /**
-//   * Set target rank.
-//   */
-//  void set_rank( const thread rank);
-//
-//  /**
-//   * Set target thread index.
-//   */
-//  void set_tid( const thread tid );
-//
-//  /**
-//   * Set synapse-type index.
-//   */
-//  void set_syn_id( const synindex syn_id );
+  //  /**
+  //   * Set target rank.
+  //   */
+  //  void set_rank( const thread rank);
+  //
+  //  /**
+  //   * Set target thread index.
+  //   */
+  //  void set_tid( const thread tid );
+  //
+  //  /**
+  //   * Set synapse-type index.
+  //   */
+  //  void set_syn_id( const synindex syn_id );
 };
 
 //! check legal size
@@ -137,24 +136,23 @@ inline Target::Target( const Target& rhs )
 {
 }
 
-inline Target::Target( const thread rank,
-  const thread tid,
-  const synindex syn_id )
+inline Target::Target( const thread rank, const thread tid, const synindex syn_id )
   : rank_( rank )
   , tid_( tid )
   , syn_id_( syn_id )
 {
-
 }
 
-inline Target& Target::operator=( const Target& rhs ){
+inline Target&
+Target::operator=( const Target& rhs )
+{
   rank_ = rhs.rank_;
   tid_ = rhs.tid_;
   syn_id_ = rhs.syn_id_;
   return *this;
 }
 //
-//void Target::set( const thread rank,
+// void Target::set( const thread rank,
 //  const thread tid,
 //  const synindex syn_id )
 //  {
@@ -187,35 +185,33 @@ Target::get_syn_id() const
   return syn_id_;
 }
 
-//void Target::set_rank( const thread rank)
+// void Target::set_rank( const thread rank)
 //{
-//  rank_ = rank;
-//}
+//   rank_ = rank;
+// }
 //
-//void Target::set_tid( const thread tid )
+// void Target::set_tid( const thread tid )
 //{
-//  tid_ = tid;
-//}
+//   tid_ = tid;
+// }
 //
-//void Target::set_syn_id( const synindex syn_id )
+// void Target::set_syn_id( const synindex syn_id )
 //{
-//  syn_id_ = syn_id;
-//}
+//   syn_id_ = syn_id;
+// }
 
 // TODO JV (pt): This has been reused for local devices, but can be written much cleaner
 class LocalTarget
 {
 private:
-  index local_target_node_id_ : NUM_BITS_LOCAL_NODE_ID;
-  index local_target_connection_id_ : NUM_BITS_LOCAL_CONNECTION_ID;
+  unsigned int local_target_node_id_ : NUM_BITS_LOCAL_NODE_ID;
+  unsigned int local_target_connection_id_ : NUM_BITS_LOCAL_CONNECTION_ID;
   synindex syn_id_;
 
 public:
   LocalTarget() = default;
   LocalTarget( const LocalTarget& target );
-  LocalTarget( const synindex syn_id,
-    const index local_target_node_id,
-    const index local_target_connection_id );
+  LocalTarget( const synindex syn_id, const index local_target_node_id, const index local_target_connection_id );
 
   LocalTarget& operator=( const LocalTarget& );
 
@@ -253,7 +249,6 @@ public:
    * Return offset.
    */
   double get_offset() const;
-
 };
 
 //!< check legal size

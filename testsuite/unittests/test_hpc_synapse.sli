@@ -1,5 +1,5 @@
 /*
- *  test_hpc_synapse.sli
+ *  test_synapse.sli
  *
  *  This file is part of NEST.
  *
@@ -22,15 +22,15 @@
 
 /** @BeginDocumentation
 
-Name: testsuite::test_hpc_synapse - Basic tests on hpc synapses
+Name: testsuite::test_synapse - Basic tests on hpc synapses
 
-Synopsis: (test_hpc_synapse) run -> NEST exits if test fails
+Synopsis: (test_synapse) run -> NEST exits if test fails
 
 Description:
 Test basic properties of HPC synapses as follows:
 
-1. For all known synapses with _hpc ending and counterparts without _hpc
-   connect spike generator to one neuron with normal, one with _hpc synapse,
+1. For all known synapses with  ending and counterparts without
+   connect spike generator to one neuron with normal, one with  synapse,
    ensure that simulation yields identical membrane potentials.
 
 2. Check that adding and freezing/thawing of nodes either is blocked or
@@ -52,7 +52,7 @@ skip_if_not_threaded
 
 M_ERROR setverbosity
 
-% convert name with _hpc to equivalent without
+% convert name with  to equivalent without
 /hpctoplain
 {
   cvs dup length 4 sub Take cvlit
@@ -84,7 +84,7 @@ M_ERROR setverbosity
 % find all hpc synapses with non-hpc counterparts that can be used without
 % additional setup
 /synmodels GetKernelStatus /synapse_models get def
-/hpcsyns synmodels { cvs -4 Take (_hpc) eq } Select def
+/hpcsyns synmodels { cvs -4 Take () eq } Select def
 /hpcwithpartner hpcsyns { dup hpctoplain synmodels exch MemberQ exch synapse_works and } Select def
 
 
@@ -145,7 +145,7 @@ hpcwithpartner
 {
   /static_synapse test_two_step_build
   (Test 2 plain: ) =only dup ==
-  /static_synapse_hpc test_two_step_build
+  /static_synapse test_two_step_build
   (Test 2 hpc  : ) =only dup ==
   eq
 } assert_or_die
@@ -174,7 +174,7 @@ hpcwithpartner
 {
   /static_synapse test_freeze_before_connect_nonfrozen
   (Test 3 plain: ) =only dup ==
-  /static_synapse_hpc test_freeze_before_connect_nonfrozen
+  /static_synapse test_freeze_before_connect_nonfrozen
   (Test 3 hpc  : ) =only dup ==
   eq
 } assert_or_die
@@ -201,7 +201,7 @@ hpcwithpartner
 
 {
   /static_synapse test_freeze_before_connect_all
-  /static_synapse_hpc test_freeze_before_connect_all
+  /static_synapse test_freeze_before_connect_all
   eq
 } assert_or_die
 
@@ -227,7 +227,7 @@ hpcwithpartner
 {
   /static_synapse test_freeze_after_connect_all
   (Test 5 plain: ) =only dup ==
-  /static_synapse_hpc test_freeze_after_connect_all
+  /static_synapse test_freeze_after_connect_all
   (Test 5 hpc  : ) =only dup ==
   eq
 } assert_or_die

@@ -367,7 +367,7 @@ public:
 
   void compress_secondary_send_buffer_pos( const thread tid );
 
-  void resize_connections();
+  void resize_connections( const thread tid, const size_t num_connection_models );
 
   void sync_has_primary_connections();
 

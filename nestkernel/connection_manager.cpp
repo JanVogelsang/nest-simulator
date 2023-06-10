@@ -67,7 +67,7 @@ ConnectionManager::ConnectionManager()
   , keep_source_table_( true )
   , connections_have_changed_( false )
   , get_connections_has_been_called_( false )
-  , use_compressed_spikes_( false )      // TODO JV
+  , use_compressed_spikes_( true ) // TODO JV
   , has_primary_connections_( false )
   , check_primary_connections_()
   , secondary_connections_exist_( false )
@@ -772,19 +772,12 @@ ConnectionManager::increase_connection_count( const thread tid, const synindex s
     num_connections_[ tid ].resize( syn_id + 1 );
   }
   ++num_connections_[ tid ][ syn_id ];
-  if ( num_connections_[ tid ][ syn_id ] >= MAX_LOCAL_CONNECTION_ID )
-  {
-    throw KernelException(
-      String::compose( "Too many connections: at most %1 connections supported per virtual "
-                       "process and synapse model to a specific target neuron.",
-        MAX_LOCAL_CONNECTION_ID ) );
-  }
 }
 
 std::pair< index, index >
 ConnectionManager::find_connections( const synindex syn_id, const index snode_id, const Node* target_node )
 {
-  return target_node->get_connection_indices( syn_id, snode_id );
+  return target_node->get_connection_indices( syn_id, 0, snode_id ); // TODO JV (pt): Structural plasticity
 }
 
 void
@@ -794,7 +787,9 @@ ConnectionManager::disconnect( const thread tid, const synindex syn_id, const in
 
   const std::pair< index, index > connection_indices = find_connections( syn_id, snode_id, target_node );
 
-  for ( index local_target_connection_id = connection_indices.first; local_target_connection_id < connection_indices.second; ++local_target_connection_id )
+  for ( index local_target_connection_id = connection_indices.first;
+        local_target_connection_id < connection_indices.second;
+        ++local_target_connection_id )
   {
     // this function should only be called with at least one valid connection
     if ( local_target_connection_id == invalid_index )
@@ -1519,25 +1514,16 @@ ConnectionManager::remove_disabled_connections( const thread tid )
 }
 
 void
-ConnectionManager::resize_connections()
+ConnectionManager::resize_connections( const thread tid, const size_t num_connection_models )
 {
-  kernel().vp_manager.assert_single_threaded();
+  // TODO JV: Make sure iteration over all nodes is efficient
+  const SparseNodeArray& thread_local_nodes = kernel().node_manager.get_local_nodes( tid );
 
-#pragma omp parallel
+  for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
   {
-    // TODO JV: Make sure iteration over all nodes is efficient
-    const thread tid = kernel().vp_manager.get_thread_id();
-    const SparseNodeArray& thread_local_nodes = kernel().node_manager.get_local_nodes( tid );
-
-    for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
-    {
-      Node* node = n->get_node();
-      node->resize_connections( kernel().model_manager.get_num_connection_models() );
-    }
+    Node* node = n->get_node();
+    node->resize_connections( num_connection_models );
   }
-
-  // Resize data structures for connections between neurons and devices
-  // target_table_devices_.resize_to_number_of_synapse_types();
 }
 
 void
@@ -1584,8 +1570,7 @@ ConnectionManager::collect_compressed_spike_data( const thread tid )
     {
       kernel().source_manager.fill_compressed_spike_data( compressed_spike_data_ );
     }
-    kernel().source_manager.clear_sources( tid );
-  }  // implicit barrier
+  } // implicit barrier
 }
 
 void

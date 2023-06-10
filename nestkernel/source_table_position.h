@@ -42,24 +42,24 @@ struct SourcePosition
     std::vector< bool >::const_iterator it;
     std::map< index, size_t >::const_iterator c_it;
   };
-  SourcePosition(){};
+  SourcePosition() {};
   SourcePosition( const std::map< index, size_t >::const_iterator it );
   SourcePosition( const std::vector< bool >::const_iterator it );
 };
 
-inline
-SourcePosition::SourcePosition( const std::map< index, size_t >::const_iterator it )
-: tid( 0 )
-, syn_id( 0 )
-, c_it( it )
-{}
+inline SourcePosition::SourcePosition( const std::map< index, size_t >::const_iterator it )
+  : tid( 0 )
+  , syn_id( 0 )
+  , c_it( it )
+{
+}
 
-inline
-  SourcePosition::SourcePosition( const std::vector< bool >::const_iterator it )
+inline SourcePosition::SourcePosition( const std::vector< bool >::const_iterator it )
   : tid( 0 )
   , syn_id( 0 )
   , it( it )
-{}
+{
+}
 
 
 /**

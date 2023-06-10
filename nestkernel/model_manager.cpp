@@ -283,8 +283,15 @@ ModelManager::copy_connection_model_( index old_id, Name new_name )
 
   synapsedict_->insert( new_name, new_id );
 
-  kernel().connection_manager.resize_connections();
-  kernel().source_manager.resize_sources();
+#pragma omp parallel
+  {
+    const thread tid = kernel().vp_manager.get_thread_id();
+    const size_t num_connection_models = kernel().model_manager.get_num_connection_models();
+
+    kernel().connection_manager.resize_connections( tid, num_connection_models );
+    kernel().source_manager.resize_sources( tid, num_connection_models );
+    kernel().event_delivery_manager.resize_spike_register( tid, num_connection_models );
+  }
   return new_id;
 }
 
@@ -573,10 +580,15 @@ ModelManager::register_connection_model_( ConnectorModel* cf )
 
   synapsedict_->insert( cf->get_name(), syn_id );
 
-  // Need to resize Connector vectors in case connection model is added after
-  // ConnectionManager is initialised.
-  kernel().connection_manager.resize_connections();
-  kernel().source_manager.resize_sources();
+#pragma omp parallel
+  {
+    const thread tid = kernel().vp_manager.get_thread_id();
+    const size_t num_connection_models = kernel().model_manager.get_num_connection_models();
+
+    kernel().connection_manager.resize_connections( tid, num_connection_models );
+    kernel().source_manager.resize_sources( tid, num_connection_models );
+    kernel().event_delivery_manager.resize_spike_register( tid, num_connection_models );
+  }
 
   return syn_id;
 }

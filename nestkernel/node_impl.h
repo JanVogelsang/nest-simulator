@@ -92,7 +92,7 @@ Node::add_connection( Node& source_node,
   assert( connector );
 
   Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connector );
-  return vc->add_connection( connection, source_node.get_node_id() );
+  return vc->add_connection( connection, source_node.get_thread(), source_node.get_thread_lid() );
 }
 
 template < typename EventT >
@@ -106,7 +106,7 @@ Node::deliver_event_from_device( const thread tid,
   // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
   // event by adding a weight and optionally updates its internal state as well.
   e.set_local_connection_id( local_target_connection_id );
-  connections_from_devices_[ syn_id ]->send( tid, cm[ syn_id ], e, this );
+  connections_from_devices_[ syn_id ]->send( tid, cm[ syn_id ], e, 0, 0, this ); // TODO JV
 
   // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
   //  handle, or just handing the entire local connection id to the handle function.

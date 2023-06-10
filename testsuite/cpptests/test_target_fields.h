@@ -60,8 +60,8 @@ BOOST_AUTO_TEST_CASE( test_target_object_type_constructor )
     const thread tid = std::rand() % ( MAX_TID + 1 );
     const thread rank = std::rand() % ( MAX_RANK + 1 );
     const synindex syn_id = std::rand() % ( MAX_SYN_ID + 1 );
-//    const index local_target_node_id = std::rand() % ( MAX_LOCAL_NODE_ID + 1 );
-//    const index local_target_connection_id = std::rand() % ( MAX_LOCAL_CONNECTION_ID + 1 );
+    //    const index local_target_node_id = std::rand() % ( MAX_LOCAL_NODE_ID + 1 );
+    //    const index local_target_connection_id = std::rand() % ( MAX_LOCAL_CONNECTION_ID + 1 );
 
     Target target_id_testInit( tid, rank, syn_id );
 
@@ -73,16 +73,16 @@ BOOST_AUTO_TEST_CASE( test_target_object_type_constructor )
 
 BOOST_AUTO_TEST_CASE( test_target_object_type_set_get )
 {
-//  std::srand( time( nullptr ) );
-//  Target target_id_testSetGet;
-//  for ( int i = 0; i < NUM_TEST_TRIALS; ++i )
-//  {
-//    const thread tid = std::rand() % ( MAX_TID + 1 );
-//    const thread rank = std::rand() % ( MAX_RANK + 1 );
-//    const synindex syn_id = std::rand() % ( MAX_SYN_ID + 1 );
-//    const index local_target_node_id = std::rand() % ( MAX_LOCAL_NODE_ID + 1 );
-//    const index local_target_connection_id = std::rand() % ( MAX_LOCAL_CONNECTION_ID + 1 );
-//  }
+  //  std::srand( time( nullptr ) );
+  //  Target target_id_testSetGet;
+  //  for ( int i = 0; i < NUM_TEST_TRIALS; ++i )
+  //  {
+  //    const thread tid = std::rand() % ( MAX_TID + 1 );
+  //    const thread rank = std::rand() % ( MAX_RANK + 1 );
+  //    const synindex syn_id = std::rand() % ( MAX_SYN_ID + 1 );
+  //    const index local_target_node_id = std::rand() % ( MAX_LOCAL_NODE_ID + 1 );
+  //    const index local_target_connection_id = std::rand() % ( MAX_LOCAL_CONNECTION_ID + 1 );
+  //  }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -679,18 +679,13 @@ NodeManager::post_run_cleanup()
   } // omp parallel
 }
 
-/**
- * This function is called only if the thread data structures are properly set
- * up.
- */
 void
 NodeManager::finalize_nodes()
 {
 #pragma omp parallel
   {
     thread tid = kernel().vp_manager.get_thread_id();
-    SparseNodeArray::const_iterator n;
-    for ( n = local_nodes_[ tid ].begin(); n != local_nodes_[ tid ].end(); ++n )
+    for ( SparseNodeArray::const_iterator n = local_nodes_[ tid ].begin(); n != local_nodes_[ tid ].end(); ++n )
     {
       n->get_node()->finalize();
     }

@@ -42,7 +42,7 @@ class LabeledSynapsesTestCase(unittest.TestCase):
                          {'vt': vol.get('global_id')[0]})
         nest.SetDefaults('stdp_dopamine_synapse_lbl',
                          {'vt': vol.get('global_id')[1]})
-        nest.SetDefaults('stdp_dopamine_synapse_hpc',
+        nest.SetDefaults('stdp_dopamine_synapse',
                          {'vt': vol.get('global_id')[2]})
 
         self.rate_model_connections = [
@@ -60,13 +60,13 @@ class LabeledSynapsesTestCase(unittest.TestCase):
         self.clopath_synapses = [
             'clopath_synapse',
             'clopath_synapse_lbl',
-            'clopath_synapse_hpc'
+            'clopath_synapse'
         ]
 
         self.urbanczik_synapses = [
             'urbanczik_synapse',
             'urbanczik_synapse_lbl',
-            'urbanczik_synapse_hpc'
+            'urbanczik_synapse'
         ]
 
         # create neurons that accept all synapse connections (especially gap

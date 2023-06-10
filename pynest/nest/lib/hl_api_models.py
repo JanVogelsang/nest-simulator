@@ -62,8 +62,6 @@ def Models(mtype="all", sel=None):
 
     Notes
     -----
-    - Synapse model names ending in ``_hpc`` require less memory because of
-      thread-local indices for target neuron IDs and fixed ``rport``s of 0.
     - Synapse model names ending in ``_lbl`` allow to assign an integer label
       (``synapse_label``) to each individual synapse, at the cost of increased
       memory requirements.

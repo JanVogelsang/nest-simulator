@@ -65,53 +65,54 @@ SourceManager::initialize()
   has_source_.resize( num_threads );
 
   const size_t num_connection_models = kernel().model_manager.get_num_connection_models();
-  for( thread tid = 0; tid < num_threads; ++tid )
+  for ( thread tid = 0; tid < num_threads; ++tid )
   {
     has_source_[ tid ].resize( num_connection_models );
   }
   compressed_spike_data_map_.resize( num_connection_models );
 
-//  if ( kernel().connection_manager.use_compressed_spikes() )
-//  {
-//    current_positions_.resize( num_threads, compressed_spike_data_map_[ 0 ].cbegin() );
-//  }
-//  else
-//  {
-//    for( thread tid = 0; tid < num_threads; ++tid )
-//    {
-//      current_positions_.emplace_back( has_source_[ tid ][ 0 ].cbegin() );
-//    }
-//  }
+  //  if ( kernel().connection_manager.use_compressed_spikes() )
+  //  {
+  //    current_positions_.resize( num_threads, compressed_spike_data_map_[ 0 ].cbegin() );
+  //  }
+  //  else
+  //  {
+  //    for( thread tid = 0; tid < num_threads; ++tid )
+  //    {
+  //      current_positions_.emplace_back( has_source_[ tid ][ 0 ].cbegin() );
+  //    }
+  //  }
 }
 
 void
 SourceManager::finalize()
 {
   // only clear sources when there were nodes added to the simulation already
-  if ( kernel().node_manager.size() > 0 ){
-#pragma omp parallel
+  if ( kernel().node_manager.size() > 0 )
   {
-    const thread tid = kernel().vp_manager.get_thread_id();
-    if ( is_cleared_[ tid ].is_false() )
+#pragma omp parallel
     {
-      clear( tid );
+      const thread tid = kernel().vp_manager.get_thread_id();
+      if ( is_cleared_[ tid ].is_false() )
+      {
+        clear( tid );
+      }
     }
-  }
   }
 
   std::vector< SourcePosition >().swap( current_positions_ );
   std::vector< std::map< index, size_t > >().swap( compressed_spike_data_map_ );
-  std::vector< std::vector < std::vector < bool > > >().swap( has_source_ );
+  std::vector< std::vector< std::vector< bool > > >().swap( has_source_ );
 }
 
-void SourceManager::resize_sources()
+void
+SourceManager::resize_sources( const thread tid, const size_t num_connection_models )
 {
-  const size_t num_connection_models = kernel().model_manager.get_num_connection_models();
-  for ( thread tid = 0; tid < kernel().vp_manager.get_num_threads(); ++tid )
+  has_source_[ tid ].resize( num_connection_models );
+  if ( tid == 0 )
   {
-    has_source_[ tid ].resize( num_connection_models );
+    compressed_spike_data_map_.resize( num_connection_models );
   }
-  compressed_spike_data_map_.resize( num_connection_models );
 }
 
 bool
@@ -296,7 +297,7 @@ SourceManager::clear( const thread tid )
 
   for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
   {
-    n->get_node()->remove_disabled_connections();
+    // n->get_node()->remove_disabled_connections();  // TODO JV (pt)
   }
 
   is_cleared_[ tid ].set_true();
@@ -446,8 +447,8 @@ SourceManager::get_next_target_data( const thread tid,
       else // secondary connection, e.g., gap junctions
       {
         assert( false ); // TODO JV (pt): Secondary events
-        // the source rank will write to the buffer position relative to the first position from the absolute position in
-        // the receive buffer
+        // the source rank will write to the buffer position relative to the first position from the absolute position
+        // in the receive buffer
         /*const size_t relative_recv_buffer_pos = kernel().connection_manager.get_secondary_recv_buffer_position(
                                                   current_position.tid, current_position.syn_id, current_position.lcid )
           - kernel().mpi_manager.get_recv_displacement_secondary_events_in_int( source_rank );
@@ -468,35 +469,39 @@ SourceManager::get_next_target_data( const thread tid,
 
   // TODO JV (pt): Structural plasticity: Handle deactivation of sources
   next_target_data.set_source_lid( kernel().vp_manager.node_id_to_lid( next_source ) );
-  next_target_data.set_source_tid( kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( next_source ) ) );
+  next_target_data.set_source_tid(
+    kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( next_source ) ) );
 
   return true; // reached the end of all sources
 }
 
 void
-SourceManager::fill_compressed_spike_data( std::vector < std::vector< std::vector< thread > > >& compressed_spike_data )
+SourceManager::fill_compressed_spike_data( std::vector< std::vector< std::vector< thread > > >& compressed_spike_data )
 {
+  const size_t num_connection_models = kernel().model_manager.get_num_connection_models();
+  compressed_spike_data.resize( num_connection_models );
   const thread num_threads = has_source_.size();
   for ( thread tid = 0; tid < num_threads; ++tid )
   {
     for ( synindex syn_id = 0; syn_id < has_source_[ tid ].size(); ++syn_id )
     {
-      std::vector<bool>& sources_mask = has_source_[ tid ][ syn_id ];
+      std::vector< bool >& sources_mask = has_source_[ tid ][ syn_id ];
       for ( index source_node_id = 0; source_node_id < sources_mask.size(); ++source_node_id )
       {
-        // TODO JV (pt): Somehow get rid of this branch-mania. This might not be as bad as it looks, though, as this could
+        // TODO JV (pt): Somehow get rid of this branch-mania. This might not be as bad as it looks, though, as this
+        // could
         //  potentially be predictable by the compiler.
         if ( sources_mask[ source_node_id ] )
         {
           const auto compressed_spike_data_index = compressed_spike_data_map_[ syn_id ].find( source_node_id );
           if ( compressed_spike_data_index != compressed_spike_data_map_[ syn_id ].end() )
           {
-            compressed_spike_data[ syn_id ][ (*compressed_spike_data_index).second ].push_back( tid );
+            compressed_spike_data[ syn_id ][ compressed_spike_data_index->second ].push_back( tid );
           }
           else
           {
-            compressed_spike_data_map_[ syn_id ][ source_node_id ] = compressed_spike_data.size();
-            compressed_spike_data[ syn_id ].emplace_back( std::initializer_list< thread >{ tid } );
+            compressed_spike_data_map_[ syn_id ][ source_node_id ] = compressed_spike_data[ syn_id ].size();
+            compressed_spike_data[ syn_id ].emplace_back( std::initializer_list< thread > { tid } );
           }
         }
       }

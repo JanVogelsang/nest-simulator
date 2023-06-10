@@ -471,21 +471,14 @@ public:
   resize_connections( const size_t size )
   {
     connections_.resize( size );
+    connections_from_devices_.resize( size );
   }
 
   /**
    * Get first and last connection index for source node id.
    */
   std::pair< index, index >
-  get_connection_indices( const synindex syn_id, const index source_node_id ) const
-  {
-    assert( connections_[ syn_id ] ); // TODO JV: Remove this
-    if ( connections_[ syn_id ] )
-    {
-      return connections_[ syn_id ]->get_connection_indices( source_node_id );
-    }
-    return {};
-  }
+  get_connection_indices( const synindex syn_id, const thread source_tid, const index source_lid ) const;
 
   /**
    * Get the number of connections to this neuron of a specific connection type.
@@ -533,18 +526,10 @@ public:
     return connections_[ syn_id ]->get_source( local_connection_id );
   }
 
-  void
-  get_all_connections( const index source_node_id,
+  void get_all_connections( const index source_node_id,
     const synindex syn_id,
     const long synapse_label,
-    std::deque< ConnectionID >& conns ) const
-  {
-    auto first_last_index = get_connection_indices( syn_id, source_node_id );
-    for ( index lcid = first_last_index.first; lcid < first_last_index.second; ++lcid  )
-    {
-      conns.push_back( ConnectionDatum( ConnectionID( source_node_id, get_node_id(), get_thread(), syn_id, lcid ) ) );
-    }
-  }
+    std::deque< ConnectionID >& conns ) const;
 
   /**
    * Remove source information of all connections to this node.
@@ -564,7 +549,8 @@ public:
   /**
    * Reset the starting positions at which a source is searched in the source table.
    */
-  void reset_last_visited_connections()
+  void
+  reset_last_visited_connections()
   {
     for ( auto connections_per_syn_type : connections_ )
     {
@@ -642,6 +628,8 @@ public:
    * just updated by the connection. If there is no connection for the
    */
   virtual void deliver_event( const thread tid,
+    const thread source_tid,
+    const index source_lid,
     const std::vector< ConnectorModel* >& cm,
     SpikeEvent& se );
 
@@ -1105,6 +1093,7 @@ protected:
    * to this node. Corresponds to a two dimensional structure:
    * synapse types|connections
    */
+  // TODO JV: Group connections by source rank
   std::vector< ConnectorBase* > connections_;
 
   /**

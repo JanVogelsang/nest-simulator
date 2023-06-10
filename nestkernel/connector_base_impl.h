@@ -36,12 +36,14 @@ template < typename ConnectionT >
 void
 Connector< ConnectionT >::send_weight_event( const thread tid,
   const index local_target_connection_id,
+  const thread source_tid,
+  const index source_lid,
   Event& e,
   const CommonSynapseProperties& cp,
   Node* target )
 {
   // If the pointer to the receiver node in the event is invalid,
-  // the event was not sent, and a WeightRecorderEvent is therefore not created.
+  // the event was not sent, and a Weiget_sender_node_idghtRecorderEvent is therefore not created.
   if ( cp.get_weight_recorder() )
   {
     // Create new event to record the weight and copy relevant content.
@@ -49,7 +51,8 @@ Connector< ConnectionT >::send_weight_event( const thread tid,
     wr_e.set_port( e.get_port() );
     wr_e.set_stamp( e.get_stamp() );
     wr_e.set_sender( e.get_sender() );
-    wr_e.set_sender_node_id( sources_[ local_target_connection_id ] );
+    wr_e.set_sender_node_id(
+      kernel().vp_manager.get_remote_node_id( 0, source_tid, source_lid ) ); // TODO JV: Source rank
     wr_e.set_weight( e.get_weight() );
     wr_e.set_delay_steps( e.get_delay_steps() );
     // Set weight_recorder as receiver

@@ -98,7 +98,6 @@ Node::init()
 void
 Node::finalize()
 {
-  std::vector< ConnectorBase* >().swap( connections_ );
 }
 
 void
@@ -259,12 +258,30 @@ Node::register_stdp_connection( double, double )
 void
 Node::delete_connections()
 {
-  for ( auto syn_type_connections : connections_ )
+  for ( ConnectorBase* syn_type_connections : connections_ )
   {
-    if ( syn_type_connections )
-    {
-      delete syn_type_connections;
-    }
+    delete syn_type_connections;
+  }
+  for ( ConnectorBase* syn_type_connections : connections_from_devices_ )
+  {
+    delete syn_type_connections;
+  }
+  connections_.clear();
+  connections_from_devices_.clear();
+}
+
+void
+Node::get_all_connections( const index source_node_id,
+  const synindex syn_id,
+  const long synapse_label,
+  std::deque< ConnectionID >& conns ) const
+{
+  const thread source_tid = kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( source_node_id ) );
+  const index source_lid = kernel().vp_manager.node_id_to_lid( source_node_id );
+  auto first_last_index = get_connection_indices( syn_id, source_tid, source_lid );
+  for ( index lcid = first_last_index.first; lcid < first_last_index.second; ++lcid )
+  {
+    conns.push_back( ConnectionDatum( ConnectionID( source_node_id, node_id_, thread_, syn_id, lcid ) ) );
   }
 }
 
@@ -290,6 +307,17 @@ Node::remove_disabled_connections()
   }*/
 }
 
+std::pair< index, index >
+Node::get_connection_indices( const synindex syn_id, const thread source_tid, const index source_lid ) const
+{
+  assert( connections_[ syn_id ] ); // TODO JV: Remove this
+  if ( connections_[ syn_id ] )
+  {
+    return connections_[ syn_id ]->get_connection_indices( source_tid, source_lid );
+  }
+  return {};
+}
+
 template <>
 void
 Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
@@ -299,7 +327,7 @@ Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
 {
   const synindex syn_id = e.get_syn_id();
   e.set_local_connection_id( local_target_connection_id );
-  connections_from_devices_[ syn_id ]->send( tid, cm[ syn_id ], e, this );
+  connections_from_devices_[ syn_id ]->send( tid, cm[ syn_id ], e, 0, 0, this ); // TODO JV (pt): Node id
 
   // TODO JV: Make this cleaner, as only needed for poisson generators probably
   if ( not e.get_multiplicity() )
@@ -312,6 +340,8 @@ Node::deliver_event_from_device< DSSpikeEvent >( const thread tid,
 
 void
 Node::deliver_event( const thread tid,
+  const thread source_tid,
+  const index source_lid,
   const std::vector< ConnectorModel* >& cm,
   SpikeEvent& se )
 {
@@ -320,15 +350,15 @@ Node::deliver_event( const thread tid,
   // event by adding a weight and optionally updates its internal state as well.
   ConnectorBase* conn = connections_[ syn_id ];
 
-  if ( conn )  // Does this node receive any spikes from that synapse type at all?
+  if ( conn ) // Does this node receive any spikes from that synapse type at all?
   {
-    const std::pair< index, index >& connection_range = conn->get_connection_indices( se.get_sender_node_id() );
+    const std::pair< index, index >& connection_range = conn->get_connection_indices( source_tid, source_lid );
     for ( auto idx = connection_range.first; idx != connection_range.second; ++idx ) // TODO JV: Verify this
     {
       // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
       //  handle, or just handing the entire local connection id to the handle function.
       se.set_local_connection_id( idx );
-      conn->send( tid, cm[ syn_id ], se, this );
+      conn->send( tid, cm[ syn_id ], se, source_tid, source_lid, this );
       conn->set_last_visited_connection( idx );
       handle( se );
     }

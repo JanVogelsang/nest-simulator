@@ -48,7 +48,8 @@ TargetTableDevices::add_connection_from_device( Node& source,
   assert( ldid != invalid_index );
   assert( ldid < targets_from_devices_[ tid ].size() );
 
-  targets_from_devices_[ tid ][ ldid ].push_back( LocalTarget( syn_id, target.get_thread_lid(), local_target_connection_id ) );
+  targets_from_devices_[ tid ][ ldid ].push_back(
+    LocalTarget( syn_id, target.get_thread_lid(), local_target_connection_id ) );
 
   // store node ID of sending device
   sending_devices_node_ids_[ tid ][ ldid ] = source.get_node_id();
@@ -71,7 +72,8 @@ TargetTableDevices::add_connection_to_device( Node& source,
     targets_to_devices_[ tid ].emplace( source_lid, std::vector< LocalTarget >() );
   }
 
-  targets_to_devices_[ tid ][ source_lid ].push_back( LocalTarget( syn_id, target.get_thread_lid(), local_target_connection_id ) );
+  targets_to_devices_[ tid ][ source_lid ].push_back(
+    LocalTarget( syn_id, target.get_thread_lid(), local_target_connection_id ) );
 }
 
 // inline void
@@ -123,14 +125,17 @@ inline void
 TargetTableDevices::send_to_devices( const thread tid, const index source_node_lid, EventT& e )
 {
   const std::vector< ConnectorModel* > cm = kernel().model_manager.get_connection_models( tid );
-  for ( std::vector< LocalTarget >::iterator it = targets_to_devices_[ tid ][ source_node_lid ].begin();
-        it != targets_to_devices_[ tid ][ source_node_lid ].end();
-        ++it )
+  auto local_targets = targets_to_devices_[ tid ].find( source_node_lid ); // TODO JV (pt): There gotta be a better way
+  if ( local_targets != targets_to_devices_[ tid ].end() )
   {
-    e.set_syn_id( it->get_syn_id() );
-    DeviceNode* target_node =
-      static_cast< DeviceNode* >( kernel().node_manager.thread_lid_to_node( tid, it->get_local_target_node_id() ) );
-    target_node->deliver_event_to_device( tid, it->get_local_target_connection_id(), cm, e );
+    for ( std::vector< LocalTarget >::iterator it = local_targets->second.begin(); it != local_targets->second.end();
+          ++it )
+    {
+      e.set_syn_id( it->get_syn_id() );
+      DeviceNode* target_node =
+        static_cast< DeviceNode* >( kernel().node_manager.thread_lid_to_node( tid, it->get_local_target_node_id() ) );
+      target_node->deliver_event_to_device( tid, it->get_local_target_connection_id(), cm, e );
+    }
   }
 }
 

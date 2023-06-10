@@ -102,8 +102,8 @@ TargetTableDevices::get_synapse_status_from_device( const thread tid,
   DictionaryDatum& dict,
   const index lcid ) const
 {
-  Node* target_node = kernel().node_manager.thread_lid_to_node( tid,
-    targets_from_devices_[ tid ][ ldid ][ lcid ].get_local_target_node_id() );
+  Node* target_node = kernel().node_manager.thread_lid_to_node(
+    tid, targets_from_devices_[ tid ][ ldid ][ lcid ].get_local_target_node_id() );
   target_node->get_connection_status( syn_id, lcid, dict );
 }
 
@@ -115,8 +115,8 @@ TargetTableDevices::set_synapse_status_from_device( const thread tid,
   const DictionaryDatum& dict,
   const index lcid )
 {
-  Node* target_node = kernel().node_manager.thread_lid_to_node( tid,
-    targets_from_devices_[ tid ][ ldid ][ lcid ].get_local_target_node_id() );
+  Node* target_node = kernel().node_manager.thread_lid_to_node(
+    tid, targets_from_devices_[ tid ][ ldid ][ lcid ].get_local_target_node_id() );
   target_node->set_connection_status( syn_id, lcid, dict, cm );
 }
 

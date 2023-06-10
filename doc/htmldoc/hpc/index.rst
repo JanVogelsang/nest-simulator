@@ -1,6 +1,6 @@
 :orphan:
 
-.. _hpc_index:
+.. _index:
 
 All about high performance computing
 ====================================

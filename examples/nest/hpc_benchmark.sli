@@ -264,13 +264,13 @@ brunel_params dup using
 
   % Create custom synapse types with appropriate values for
   % our excitatory and inhibitory connections
-  /static_synapse_hpc << /delay delay >> SetDefaults
-  /static_synapse_hpc /syn_std  CopyModel
-  /static_synapse_hpc /syn_ex << /weight JE_pA >> CopyModel
-  /static_synapse_hpc /syn_in << /weight JE_pA g mul >> CopyModel
+  /static_synapse << /delay delay >> SetDefaults
+  /static_synapse /syn_std  CopyModel
+  /static_synapse /syn_ex << /weight JE_pA >> CopyModel
+  /static_synapse /syn_in << /weight JE_pA g mul >> CopyModel
 
   stdp_params /weight JE_pA put
-  /stdp_pl_synapse_hom_hpc stdp_params SetDefaults
+  /stdp_pl_synapse_hom stdp_params SetDefaults
 
  %------------------------- Connection -----------------------------------------
 
@@ -286,7 +286,7 @@ brunel_params dup using
   (Connecting excitatory -> excitatory population.) message
 
   E_neurons E_neurons << /rule (fixed_indegree) /indegree CE /allow_autapses false /allow_multapses true >>
-                      << /synapse_model /stdp_pl_synapse_hom_hpc >> Connect
+                      << /synapse_model /stdp_pl_synapse_hom >> Connect
 
   M_INFO (BuildNetwork)
   (Connecting inhibitory -> excitatory population.) message

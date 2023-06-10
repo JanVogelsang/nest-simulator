@@ -101,12 +101,12 @@ plastic_syn_models
 
  % Now we test the multimeter. Since it uses non-zero rports, it must also fail on HPC synapses
  % We can currently only distinguish them by name.
- /static_non_hpc_models static_syn_models { cvs -4 Take (_hpc) neq } Select def
- /models_to_fail plastic_syn_models  static_syn_models { cvs -4 Take (_hpc) eq } Select join def
+ /static_non_models static_syn_models { cvs -4 Take () neq } Select def
+ /models_to_fail plastic_syn_models  static_syn_models { cvs -4 Take () eq } Select join def
 
 ResetKernel
 {
-  static_non_hpc_models
+  static_non_models
   { /st Set
     % create new nodes for each connection to avoid any issues with prohibited multiple connections
     /multimeter Create /iaf_psc_alpha Create st Connect

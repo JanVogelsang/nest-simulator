@@ -716,12 +716,6 @@ The different variants are indicated by specific suffixes:
    simulations significantly, as the label is stored on a
    `per-synapse` basis.
 
- ``_hpc``
-   denotes `synapses for high-performance computing scenarios`, which
-   have minimal memory requirements by using thread-local target node
-   indices internally. Use this version if you are running very large
-   simulations.
-
  ``_hom``
    denotes `homogeneous synapses` that store certain parameters like
    `weight` and `delay` only once for all synapses of the same type
