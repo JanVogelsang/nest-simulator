@@ -660,6 +660,12 @@ EventDeliveryManager::deliver_events_( const thread tid, const std::vector< Spik
             cm );
         }
       }
+#ifdef TIMER_DETAILED
+      if ( tid == 0 )
+      {
+        sw_adjacency_list_.stop();
+      }
+#endif
 #endif
 
       // break if this was the last valid entry from this rank

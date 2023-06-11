@@ -219,7 +219,10 @@ EventDeliveryManager::deliver_to_adjacency_list( const thread tid,
 #endif
 #ifdef TIMER_DETAILED
     if ( tid == 0 )
+    {
       sw_deliver_node_.stop();
+      sw_adjacency_list_.start();
+    }
 #endif
   }
 }
