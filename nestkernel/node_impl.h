@@ -127,7 +127,7 @@ Node::add_connection( Node& source_node,
         {
           num = 9000;
         }
-        if ( kernel().connection_manager.reserve_connections )
+        if ( not kernel().connection_manager.reserve_connections )
         {
           num = 1;
         }
