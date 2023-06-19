@@ -246,11 +246,17 @@ private:
  */
 inline void
 stdp_pl_synapse_hom_ax_delay::send( Event& e,
-  const thread,
+  const thread tid,
   const double axonal_delay,
   const STDPPLHomAxDelayCommonProperties& cp,
   Node* target )
 {
+#ifdef TIMER_DETAILED
+  if ( tid == 0 )
+  {
+    kernel().event_delivery_manager.sw_stdp_delivery_.start();
+  }
+#endif
   // synapse STDP depressing/facilitation dynamics
 
   const double t_spike = e.get_stamp().get_ms();
@@ -258,6 +264,13 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e,
   const double axonal_delay_ms = Time::delay_steps_to_ms( axonal_delay );
   const double dendritic_delay_ms = get_dendritic_delay();
 
+#ifdef TIMER_DETAILED
+  if ( tid == 0 )
+  {
+    kernel().event_delivery_manager.sw_stdp_delivery_.stop();
+    kernel().event_delivery_manager.sw_deliver_node_.start();
+  }
+#endif
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
   std::deque< histentry >::iterator start;
   std::deque< histentry >::iterator finish;
@@ -305,6 +318,12 @@ stdp_pl_synapse_hom_ax_delay::send( Event& e,
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) * cp.tau_plus_inv_ ) + 1.0;
 
   t_lastspike_ = t_spike;
+#ifdef TIMER_DETAILED
+  if ( tid == 0 )
+  {
+    kernel().event_delivery_manager.sw_stdp_delivery_.stop();
+  }
+#endif
 }
 
 inline void

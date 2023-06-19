@@ -84,6 +84,7 @@ public:
     const delay min_delay,
     Stopwatch&,
     Stopwatch&,
+    Stopwatch&,
     Stopwatch& ) override
 #else
   void

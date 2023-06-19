@@ -221,7 +221,11 @@ ArchivingNode::get_history( double t1,
 {
 #ifdef TIMER_DETAILED
   if ( get_thread() == 0 )
+  {
+    kernel().event_delivery_manager.sw_deliver_node_.stop();
+    kernel().event_delivery_manager.sw_stdp_delivery_.start();
     kernel().event_delivery_manager.sw_node_archive_.start();
+  }
 #endif
   *finish = history_.end();
   if ( history_.empty() )
@@ -252,18 +256,6 @@ ArchivingNode::get_history( double t1,
     kernel().event_delivery_manager.sw_node_archive_.stop();
 #endif
 }
-
-// void
-// ArchivingNode::deliver_event( const synindex syn_id,
-//   const index local_target_connection_id,
-//   const std::vector< ConnectorModel* >& cm,
-//   const delay axonal_delay,
-//   SpikeEvent& se )
-//{
-//   connections_[ syn_id ]->send( thread_, local_target_connection_id, axonal_delay, cm, se, this );
-//
-//   handle( se );
-// }
 
 void
 ArchivingNode::set_spiketime( Time const& t_sp, double offset )
@@ -450,7 +442,7 @@ ArchivingNode::reset_correction_entries_stdp_ax_delay_()
       const long idx = kernel().event_delivery_manager.get_modulo( lag );
       assert( static_cast< size_t >( idx ) < correction_entries_stdp_ax_delay_.size() );
 
-      correction_entries_stdp_ax_delay_[ idx ].clear();
+      std::vector< CorrectionEntrySTDPAxDelay >().swap( correction_entries_stdp_ax_delay_[ idx ] );
     }
   }
 #ifdef TIMER_DETAILED

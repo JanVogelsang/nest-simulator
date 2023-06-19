@@ -90,10 +90,22 @@ public:
   }
 
   void
-  send( Event& e, const thread, const double axonal_delay, const CommonSynapseProperties&, Node* )
+  send( Event& e, const thread tid, const double axonal_delay, const CommonSynapseProperties&, Node* )
   {
+#ifdef TIMER_DETAILED
+    if ( tid == 0 )
+    {
+      kernel().event_delivery_manager.sw_static_delivery_.start();
+    }
+#endif
     e.set_weight( weight_ );
     e.set_delay_steps( get_dendritic_delay_steps() + Time::delay_ms_to_steps( axonal_delay ) );
+#ifdef TIMER_DETAILED
+    if ( tid == 0 )
+    {
+      kernel().event_delivery_manager.sw_static_delivery_.stop();
+    }
+#endif
   }
 
   void get_status( DictionaryDatum& d ) const;

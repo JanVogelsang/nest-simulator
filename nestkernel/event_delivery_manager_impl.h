@@ -205,14 +205,11 @@ EventDeliveryManager::deliver_to_adjacency_list( const thread tid,
       min_delay,
       sw_stdp_delivery_,
       sw_static_delivery_,
-      sw_node_archive_ );
+      sw_node_archive_,
+      sw_deliver_node_ );
 #else
     target_node->deliver_event(
       syn_id, local_target_connection_id, cm[ syn_id ], lag, adjacency_list_it->axonal_delay, offset, min_delay );
-#endif
-#ifdef TIMER_DETAILED
-    if ( tid == 0 )
-      sw_deliver_node_.stop();
 #endif
   }
 }

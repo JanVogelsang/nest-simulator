@@ -680,7 +680,8 @@ public:
     const delay min_delay,
     Stopwatch& sw_stdp_delivery_,
     Stopwatch& sw_static_delivery,
-    Stopwatch& sw_node_archive_ );
+    Stopwatch& sw_node_archive_,
+    Stopwatch& sw_deliver_node_ );
 #else
   virtual void deliver_event( const synindex syn_id,
     const index local_target_connection_id,
@@ -1302,10 +1303,12 @@ Node::deliver_event( const synindex syn_id,
   const delay,
   Stopwatch& sw_stdp_delivery,
   Stopwatch& sw_static_delivery,
-  Stopwatch& )
+  Stopwatch&,
+  Stopwatch& sw_deliver_node_ )
 {
   if ( thread_ == 0 )
   {
+    sw_deliver_node_.stop();
     if ( syn_id == 33 )
     {
       sw_static_delivery.start();
