@@ -89,6 +89,7 @@ public:
     const delay,
     Stopwatch&,
     Stopwatch&,
+    Stopwatch&,
     Stopwatch& ) override
   {
   }

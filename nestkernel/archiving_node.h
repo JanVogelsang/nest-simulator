@@ -169,7 +169,8 @@ public:
     const delay min_delay,
     Stopwatch& sw_stdp_delivery,
     Stopwatch& sw_static_delivery,
-    Stopwatch& sw_node_archive ) override;
+    Stopwatch& sw_node_archive,
+    Stopwatch& sw_deliver_node_ ) override;
 #else
   void deliver_event( const synindex syn_id,
     const index local_target_connection_id,
@@ -488,7 +489,8 @@ ArchivingNode::deliver_event( const synindex syn_id,
   const delay min_delay,
   Stopwatch& sw_stdp_delivery_,
   Stopwatch& sw_static_delivery,
-  Stopwatch& sw_node_archive_ )
+  Stopwatch& sw_node_archive_,
+  Stopwatch& sw_deliver_node_ )
 {
 #else
 inline void
@@ -524,6 +526,7 @@ ArchivingNode::deliver_event( const synindex syn_id,
 #ifdef TIMER_DETAILED
     if ( get_thread() == 0 )
     {
+      sw_deliver_node_.stop();
       sw_stdp_delivery_.start();
     }
 #endif
@@ -577,7 +580,8 @@ ArchivingNode::deliver_event( const synindex syn_id,
       min_delay,
       sw_stdp_delivery_,
       sw_static_delivery,
-      sw_node_archive_ );
+      sw_node_archive_,
+      sw_deliver_node_ );
 #else
     Node::deliver_event(
       syn_id, local_target_connection_id, dendritic_delay_id, cm, lag, axonal_delay, offset, min_delay );

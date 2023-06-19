@@ -577,11 +577,8 @@ nest::SimulationManager::run( const Time& t )
   // have the proper value.  to_step_ is set as in advance_time().
   to_step_ = std::min( from_step_ + to_do_, kernel().connection_manager.get_min_delay() );
 
-
   // Warn about possible inconsistencies, see #504.
-  // This test cannot come any earlier, because we first need to compute
-  // min_delay_
-  // above.
+  // This test cannot come any earlier, because we first need to compute min_delay_ above.
   if ( t.get_steps() % kernel().connection_manager.get_min_delay() != 0 )
   {
     LOG( M_WARNING,

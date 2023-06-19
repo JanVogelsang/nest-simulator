@@ -206,7 +206,8 @@ EventDeliveryManager::deliver_to_adjacency_list( const thread tid,
       min_delay,
       sw_stdp_delivery_,
       sw_static_delivery_,
-      sw_node_archive_ );
+      sw_node_archive_,
+      sw_deliver_node_ );
 #else
     target_node->deliver_event( syn_id,
       local_target_connection_id,
