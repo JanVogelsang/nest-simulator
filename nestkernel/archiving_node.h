@@ -382,12 +382,12 @@ ArchivingNode::prepare_update( const Time origin, const std::vector< ConnectorMo
     // Process all pre- and post-synaptic spikes in relative order. Processes all pre-synaptic spikes that were just
     // communicated and all post-synaptic spikes in the archive.
     auto [ current_pre_synaptic_spike, last_pre_synaptic_spike ] = intermediate_spike_buffer_.get_next_spikes();
-#ifdef TIMER_DETAILED
-    if ( get_thread() == 0 )
-      sw_node_archive.start();
-#endif
     for ( delay lag = 1; lag != min_delay + 1; ++lag )
     {
+#ifdef TIMER_DETAILED
+      if ( get_thread() == 0 )
+        sw_node_archive.start();
+#endif
       const Time t_now = origin + Time::step( lag );
       std::deque< double >::const_iterator archived_spike_it = history_.cbegin();
       while ( archived_spike_it != history_.cend() )
@@ -441,7 +441,10 @@ ArchivingNode::prepare_update( const Time origin, const std::vector< ConnectorMo
 #endif
         ++archived_spike_it;
       }
-
+#ifdef TIMER_DETAILED
+      if ( get_thread() == 0 )
+        sw_node_archive.stop();
+#endif
       // find the next pre-synaptic spike for the current lag
       while ( current_pre_synaptic_spike != last_pre_synaptic_spike and current_pre_synaptic_spike->t_syn_lag == lag )
       {
@@ -454,10 +457,6 @@ ArchivingNode::prepare_update( const Time origin, const std::vector< ConnectorMo
         ++current_pre_synaptic_spike;
       }
     }
-#ifdef TIMER_DETAILED
-    if ( get_thread() == 0 )
-      sw_node_archive.stop();
-#endif
 
     // prepare the next update cycle
     intermediate_spike_buffer_.clean_slice();
