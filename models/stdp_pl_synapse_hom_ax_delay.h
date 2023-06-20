@@ -222,10 +222,17 @@ private:
 
 inline void
 stdp_pl_synapse_hom_ax_delay::send( Event& e,
-  const thread,
+  const thread tid,
   const double Kminus,
   const STDPPLHomAxDelayCommonProperties& cp )
 {
+#ifdef TIMER_DETAILED
+  if ( tid == 0 )
+  {
+    kernel().event_delivery_manager.sw_deliver_conn_.stop();
+    kernel().event_delivery_manager.sw_stdp_delivery_.start();
+  }
+#endif
   const double t_spike = e.get_stamp().get_ms();
 
   // depression due to new pre-synaptic spike

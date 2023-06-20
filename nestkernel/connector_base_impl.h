@@ -165,6 +165,65 @@ DendriticDelayConnector< ConnectionT >::get_trace( const double pre_spike_time,
   return Kminus;
 }
 
+template < typename ConnectionT >
+void
+Connector< ConnectionT >::send( const thread tid,
+  const index target_node_id,
+  const index lcid,
+  const delay total_delay,
+  const ConnectorModel* cm,
+  Event& e )
+{
+  typename ConnectionT::CommonPropertiesType const& cp =
+    static_cast< const GenericConnectorModel< ConnectionT >* >( cm )->get_common_properties();
+
+  e.set_port( lcid );
+  e.set_delay_steps( total_delay );
+  //    if ( not C_[ lcid ].is_disabled() )
+  //    {
+#ifdef TIMER_DETAILED
+  if ( tid == 0 )
+  {
+    kernel().event_delivery_manager.sw_static_delivery_.stop();
+    kernel().event_delivery_manager.sw_deliver_conn_.start();
+  }
+#endif
+  C_[ lcid ].send( e, tid, 0., cp ); // TODO JV (pt): Remove the 0
+  send_weight_event( tid, e, cp, target_node_id );
+  //    }
+}
+
+template < typename ConnectionT >
+void
+DendriticDelayConnector<ConnectionT>::send( const thread tid,
+  const index target_node_id,
+  const index lcid,
+  const size_t dendritic_delay_id,
+  const double tau_minus_inv,
+  const std::deque< double >& history,
+  const ConnectorModel* cm,
+  Event& e )
+{
+  typename ConnectionT::CommonPropertiesType const& cp =
+    static_cast< const GenericConnectorModel< ConnectionT >* >( cm )->get_common_properties();
+
+  e.set_port( lcid );
+  e.set_delay_steps( dendritic_delay_regions_[ dendritic_delay_id ].dendritic_delay );
+  //    if ( not dendritic_delay_regions_[ dendritic_delay_id ].connections[ lcid ].is_disabled() )
+  //    {
+  const double post_neuron_trace = get_trace( e.get_stamp().get_ms(), dendritic_delay_id, tau_minus_inv, history );
+#ifdef TIMER_DETAILED
+  if ( tid == 0 )
+  {
+    kernel().event_delivery_manager.sw_stdp_delivery_.stop();
+    kernel().event_delivery_manager.sw_deliver_conn_.start();
+  }
+#endif
+  dendritic_delay_regions_[ dendritic_delay_id ].connections[ lcid ].send( e, tid, post_neuron_trace, cp );
+  send_weight_event( tid, e, cp, target_node_id );
+  //    }
+}
+
 } // of namespace nest
 
 #endif

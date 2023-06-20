@@ -27,7 +27,7 @@ set ( nestkernel_sources
       connection.h
       connection_label.h
       common_properties_hom_w.h
-      connector_base.h connector_base_impl.h connector_base.cpp
+      connector_base.h connector_base_impl.h
       connector_model.h connector_model_impl.h connector_model.cpp
       connection_id.h connection_id.cpp
       deprecation_warning.h deprecation_warning.cpp

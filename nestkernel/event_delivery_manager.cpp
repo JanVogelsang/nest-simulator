@@ -137,6 +137,7 @@ EventDeliveryManager::get_status( DictionaryDatum& dict )
   def< double >( dict, names::time_communicate_target_data, sw_communicate_target_data_.elapsed() );
   def< double >( dict, names::time_adjacency_list, sw_adjacency_list_.elapsed() );
   def< double >( dict, names::time_deliver_node, sw_deliver_node_.elapsed() );
+  def< double >( dict, names::time_deliver_conn, sw_deliver_conn_.elapsed() );
   def< double >( dict, names::time_stdp_delivery, sw_stdp_delivery_.elapsed() );
   def< double >( dict, names::time_static_delivery, sw_static_delivery_.elapsed() );
   def< double >( dict, names::time_node_archive, sw_node_archive_.elapsed() );
@@ -288,6 +289,7 @@ EventDeliveryManager::reset_timers_for_dynamics()
   sw_communicate_spike_data_.reset();
   sw_deliver_spike_data_.reset();
   sw_deliver_node_.reset();
+  sw_deliver_conn_.reset();
   sw_stdp_delivery_.reset();
   sw_static_delivery_.reset();
   sw_node_archive_.reset();

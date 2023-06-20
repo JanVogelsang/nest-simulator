@@ -353,19 +353,7 @@ public:
     const index lcid,
     const delay total_delay,
     const ConnectorModel* cm,
-    Event& e ) override
-  {
-    typename ConnectionT::CommonPropertiesType const& cp =
-      static_cast< const GenericConnectorModel< ConnectionT >* >( cm )->get_common_properties();
-
-    e.set_port( lcid );
-    e.set_delay_steps( total_delay );
-    //    if ( not C_[ lcid ].is_disabled() )
-    //    {
-    C_[ lcid ].send( e, tid, 0., cp ); // TODO JV (pt): Remove the 0
-    send_weight_event( tid, e, cp, target_node_id );
-    //    }
-  }
+    Event& e ) override;
 
   void
   send( const thread tid,
@@ -702,20 +690,7 @@ public:
     const double tau_minus_inv,
     const std::deque< double >& history,
     const ConnectorModel* cm,
-    Event& e ) override
-  {
-    typename ConnectionT::CommonPropertiesType const& cp =
-      static_cast< const GenericConnectorModel< ConnectionT >* >( cm )->get_common_properties();
-
-    e.set_port( lcid );
-    e.set_delay_steps( dendritic_delay_regions_[ dendritic_delay_id ].dendritic_delay );
-    //    if ( not dendritic_delay_regions_[ dendritic_delay_id ].connections[ lcid ].is_disabled() )
-    //    {
-    const double post_neuron_trace = get_trace( e.get_stamp().get_ms(), dendritic_delay_id, tau_minus_inv, history );
-    dendritic_delay_regions_[ dendritic_delay_id ].connections[ lcid ].send( e, tid, post_neuron_trace, cp );
-    send_weight_event( tid, e, cp, target_node_id );
-    //    }
-  }
+    Event& e ) override;
 
   void send_weight_event( const thread tid,
     Event& e,

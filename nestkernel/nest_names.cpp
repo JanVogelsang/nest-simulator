@@ -535,6 +535,7 @@ const Name time_communicate_spike_data( "time_communicate_spike_data" );
 const Name time_communicate_target_data( "time_communicate_target_data" );
 const Name time_adjacency_list( "time_adjacency_list" );
 const Name time_deliver_node( "time_deliver_node" );
+const Name time_deliver_conn( "time_deliver_conn" );
 const Name time_stdp_delivery( "time_stdp_delivery" );
 const Name time_static_delivery( "time_static_delivery" );
 const Name time_node_archive( "time_node_archive" );

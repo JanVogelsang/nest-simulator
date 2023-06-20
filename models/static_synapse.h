@@ -88,8 +88,15 @@ public:
   }
 
   void
-  send( Event& e, const thread, const double, const CommonSynapseProperties& )
+  send( Event& e, const thread tid, const double, const CommonSynapseProperties& )
   {
+#ifdef TIMER_DETAILED
+    if ( tid == 0 )
+    {
+      kernel().event_delivery_manager.sw_deliver_conn_.stop();
+      kernel().event_delivery_manager.sw_static_delivery_.start();
+    }
+#endif
     e.set_weight( weight_ );
   }
 

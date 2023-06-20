@@ -434,6 +434,7 @@ private:
   Stopwatch sw_deliver_node_;
 
 public:
+  Stopwatch sw_deliver_conn_;
   Stopwatch sw_stdp_delivery_;
   Stopwatch sw_static_delivery_;
   Stopwatch sw_node_archive_;

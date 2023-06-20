@@ -559,6 +559,7 @@ extern const Name time_communicate_spike_data;
 extern const Name time_communicate_target_data;
 extern const Name time_adjacency_list;
 extern const Name time_deliver_node;
+extern const Name time_deliver_conn;
 extern const Name time_stdp_delivery;
 extern const Name time_static_delivery;
 extern const Name time_node_archive;
