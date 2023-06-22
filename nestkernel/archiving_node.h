@@ -316,8 +316,23 @@ ArchivingNode::process_spikes_until_pre_synaptic_spike( const synindex syn_id,
 
   const double eps = kernel().connection_manager.get_stdp_eps();
   const delay dendritic_delay = connections_[ syn_id ]->get_dendritic_delay( dendritic_delay_id );
+
+#ifdef TIMER_DETAILED
+  if ( get_thread() == 0 )
+  {
+    kernel().event_delivery_manager.sw_stdp_delivery_.stop();
+    kernel().event_delivery_manager.sw_deliver_conn_.start();
+  }
+#endif
   const double last_pre_spike_time_ms =
     connections_[ syn_id ]->get_last_presynaptic_spike( local_connection_id, dendritic_delay_id );
+#ifdef TIMER_DETAILED
+  if ( get_thread() == 0 )
+  {
+    kernel().event_delivery_manager.sw_deliver_conn_.stop();
+    kernel().event_delivery_manager.sw_stdp_delivery_.start();
+  }
+#endif
   // If a pre-synaptic spike is about to be processed, make sure to process all post-synaptic spikes first, which
   // are due before or at the same time of the pre-synaptic spike.
 
@@ -352,7 +367,21 @@ ArchivingNode::process_spikes_until_pre_synaptic_spike( const synindex syn_id,
     }
 
     // TODO JV (pt): Weight recorder event
+#ifdef TIMER_DETAILED
+    if ( get_thread() == 0 )
+    {
+      kernel().event_delivery_manager.sw_stdp_delivery_.stop();
+      kernel().event_delivery_manager.sw_deliver_conn_.start();
+    }
+#endif
     connections_[ syn_id ]->process_post_synaptic_spike( local_connection_id, post_spike_time_ms, cm );
+#ifdef TIMER_DETAILED
+    if ( get_thread() == 0 )
+    {
+      kernel().event_delivery_manager.sw_deliver_conn_.stop();
+      kernel().event_delivery_manager.sw_stdp_delivery_.start();
+    }
+#endif
   }
   // Process pre-synaptic spike after processing all post-synaptic ones
   deliver_event_with_trace( syn_id, local_connection_id, dendritic_delay_id, cm, pre_spike_time_syn, offset );
@@ -432,7 +461,7 @@ ArchivingNode::prepare_update( const Time origin, const std::vector< ConnectorMo
           for ( const synindex stdp_syn_id : stdp_synapse_types_ )
           {
             connections_[ stdp_syn_id ]->update_stdp_connections(
-              get_node_id(), t_now.get_ms(), dendritic_delay, cm[ stdp_syn_id ] );
+              get_node_id(), get_thread(), t_now.get_ms(), dendritic_delay, cm[ stdp_syn_id ] );
           }
         }
 #ifdef TIMER_DETAILED

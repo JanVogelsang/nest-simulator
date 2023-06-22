@@ -142,6 +142,7 @@ public:
   send_weight_event( const thread tid, Event& e, const CommonSynapseProperties& cp, const index target_node_id ) = 0;
 
   virtual void update_stdp_connections( const index node_id,
+    const thread tid,
     const double post_spike_time_syn,
     const delay dendritic_delay,
     const ConnectorModel* cm ) = 0;
@@ -398,6 +399,7 @@ public:
 
   void
   update_stdp_connections( const index node_id,
+    const thread,
     const double post_spike_time_syn,
     const delay dendritic_delay,
     const ConnectorModel* cm ) override
@@ -722,6 +724,7 @@ public:
   }
 
   void update_stdp_connections( const index node_id,
+    const thread tid,
     const double post_spike_time_syn,
     const delay dendritic_delay,
     const ConnectorModel* cm ) override;

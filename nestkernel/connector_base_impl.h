@@ -65,6 +65,7 @@ Connector< ConnectionT >::send_weight_event( const thread tid,
 template < typename ConnectionT >
 void
 DendriticDelayConnector< ConnectionT >::update_stdp_connections( const index node_id,
+  const thread tid,
   const double post_spike_time_syn,
   const delay dendritic_delay,
   const ConnectorModel* cm )
@@ -83,6 +84,13 @@ DendriticDelayConnector< ConnectionT >::update_stdp_connections( const index nod
     for ( ConnectionT& conn : dendritic_delay_regions_[ delay_region_it->second ].connections )
     {
       // Check if synapse has been updated to this point in time already and ignore the post-spike if that is the case
+#ifdef TIMER_DETAILED
+      if ( tid == 0 )
+      {
+        kernel().event_delivery_manager.sw_stdp_delivery_.stop();
+        kernel().event_delivery_manager.sw_deliver_conn_.start();
+      }
+#endif
       const double last_presynaptic_spike_time_ms = conn.get_last_presynaptic_spike();
       if ( last_presynaptic_spike_time_ms + eps < post_spike_time_syn )
       {
@@ -91,6 +99,13 @@ DendriticDelayConnector< ConnectionT >::update_stdp_connections( const index nod
         //  correct.
         // send_weight_event( tid, std::distance( begin, it ), e, cp, target );
       }
+#ifdef TIMER_DETAILED
+      if ( tid == 0 )
+      {
+        kernel().event_delivery_manager.sw_deliver_conn_.stop();
+        kernel().event_delivery_manager.sw_stdp_delivery_.start();
+      }
+#endif
     }
   }
 }
@@ -208,7 +223,6 @@ DendriticDelayConnector<ConnectionT>::send( const thread tid,
     static_cast< const GenericConnectorModel< ConnectionT >* >( cm )->get_common_properties();
 
   e.set_port( lcid );
-  e.set_delay_steps( dendritic_delay_regions_[ dendritic_delay_id ].dendritic_delay );
   //    if ( not dendritic_delay_regions_[ dendritic_delay_id ].connections[ lcid ].is_disabled() )
   //    {
   const double post_neuron_trace = get_trace( e.get_stamp().get_ms(), dendritic_delay_id, tau_minus_inv, history );
@@ -219,6 +233,7 @@ DendriticDelayConnector<ConnectionT>::send( const thread tid,
     kernel().event_delivery_manager.sw_deliver_conn_.start();
   }
 #endif
+  e.set_delay_steps( dendritic_delay_regions_[ dendritic_delay_id ].dendritic_delay );
   dendritic_delay_regions_[ dendritic_delay_id ].connections[ lcid ].send( e, tid, post_neuron_trace, cp );
   send_weight_event( tid, e, cp, target_node_id );
   //    }

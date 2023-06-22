@@ -1389,15 +1389,16 @@ Node::deliver_event( const synindex syn_id,
   se.set_offset( offset ); // TODO JV (help): Why can't offset be incorporated into lag?
   se.set_sender_node_id_info( thread_, syn_id, node_id_, local_target_connection_id );
 
+  // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
+  // event by adding a weight and optionally updates its internal state as well.
+  connections_[ syn_id ]->send( thread_, node_id_, local_target_connection_id, total_delay, cm, se );
+
 #ifdef TIMER_DETAILED
   if ( thread_ == 0 )
   {
     sw_static_delivery.stop();
   }
 #endif
-  // Send the event to the connection over which this event is transmitted to the node. The connection modifies the
-  // event by adding a weight and optionally updates its internal state as well.
-  connections_[ syn_id ]->send( thread_, node_id_, local_target_connection_id, total_delay, cm, se );
 
   // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
   //  handle, or just handing the entire local connection id to the handle function (and storing an array of rports
