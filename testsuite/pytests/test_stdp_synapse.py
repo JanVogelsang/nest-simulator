@@ -174,7 +174,7 @@ class TestSTDPSynapse:
     def reproduce_weight_drift(self, pre_spikes, post_spikes, initial_weight, fname_snip=""):
         """Independent, self-contained model of STDP"""
 
-        def facilitate(w, Kpre, Wmax_=1.0):
+        def facilitate(w, Kpre):
             norm_w = (w / self.synapse_parameters["Wmax"]) + (
                 self.synapse_parameters["lambda"]
                 * pow(1 - (w / self.synapse_parameters["Wmax"]), self.synapse_parameters["mu_plus"])
