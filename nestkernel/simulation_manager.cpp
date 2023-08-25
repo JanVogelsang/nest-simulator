@@ -491,13 +491,6 @@ nest::SimulationManager::prepare()
       const thread tid = kernel().vp_manager.get_thread_id();
       update_connection_infrastructure( tid );
     } // of omp parallel
-
-#ifdef USE_ADJACENCY_LIST
-#pragma omp master
-    {
-      kernel().connection_manager.clear_target_data();
-    }
-#endif
   }
 }
 

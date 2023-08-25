@@ -761,6 +761,7 @@ EventDeliveryManager::gather_target_data( const thread tid )
 #pragma omp single
   {
     kernel().connection_manager.clear_adjacency_list_sources();
+    kernel().connection_manager.clear_target_data();
   }
 #endif
 }
