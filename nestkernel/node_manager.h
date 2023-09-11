@@ -207,11 +207,6 @@ public:
   void post_run_cleanup();
 
   /**
-   * Invoke finalize() on all nodes.
-   */
-  void finalize_nodes();
-
-  /**
    * Returns whether any node uses waveform relaxation
    */
   bool wfr_is_used() const;

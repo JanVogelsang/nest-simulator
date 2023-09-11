@@ -96,11 +96,6 @@ Node::init()
 }
 
 void
-Node::finalize()
-{
-}
-
-void
 Node::init_buffers_()
 {
 }
@@ -353,13 +348,13 @@ Node::deliver_event( const thread tid,
   if ( conn ) // Does this node receive any spikes from that synapse type at all?
   {
     const std::pair< index, index >& connection_range = conn->get_connection_indices( source_tid, source_lid );
-    for ( auto idx = connection_range.first; idx != connection_range.second; ++idx ) // TODO JV: Verify this
+    conn->set_last_visited_connection( connection_range.first );
+    for ( auto idx = connection_range.first; idx != connection_range.second; ++idx )
     {
       // TODO JV (pt): Optionally, the rport can be set here (somehow). For example by just handing it as a parameter to
       //  handle, or just handing the entire local connection id to the handle function.
       se.set_local_connection_id( idx );
       conn->send( tid, cm[ syn_id ], se, source_tid, source_lid, this );
-      conn->set_last_visited_connection( idx );
       handle( se );
     }
   }

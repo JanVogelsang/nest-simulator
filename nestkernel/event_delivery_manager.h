@@ -74,7 +74,7 @@ struct SpikeDataSendBufferPosition
   SpikeDataSendBufferPosition( thread start_rank, thread end_rank )
     : start_rank( start_rank )
     , end_rank( end_rank )
-    , positions_per_rank( end_rank - start_rank + 1 )
+    , positions_per_rank( end_rank - start_rank )
   {
   }
 };

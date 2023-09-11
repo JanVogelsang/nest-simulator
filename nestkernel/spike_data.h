@@ -33,6 +33,7 @@
 namespace nest
 {
 
+// TODO: A single bit would be sufficient here, only two different states are needed.
 enum enum_status_spike_data_id
 {
   SPIKE_DATA_ID_DEFAULT,

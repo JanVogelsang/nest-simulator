@@ -612,7 +612,6 @@ nest::SimulationManager::cleanup()
     return;
   }
 
-  kernel().node_manager.finalize_nodes();
   prepared_ = false;
 }
 

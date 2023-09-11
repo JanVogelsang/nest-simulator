@@ -130,11 +130,6 @@ public:
   }
 
   /**
-   * Remove source information of all connections in this container.
-   */
-  virtual void clear_sources() = 0;
-
-  /**
    * Add ConnectionID with given source_node_id and lcid to conns. If
    * target_neuron_node_ids is given, only add connection if
    * target_neuron_node_ids contains the node ID of the target of the connection.
@@ -304,9 +299,6 @@ public:
   std::pair< index, index >
   get_connection_indices( const thread source_tid, const index source_lid ) const override
   {
-    assert( last_visited_connection_ == 0
-      or source_tid * MAX_LOCAL_NODE_ID + source_lid >= sources_[ last_visited_connection_ ] );
-
     // binary search in sorted sources
     const std::vector< index >::const_iterator begin = sources_.begin() + last_visited_connection_;
     const std::vector< index >::const_iterator end = sources_.end();
@@ -350,12 +342,6 @@ public:
         }
       }
     }*/
-  }
-
-  void
-  clear_sources() override
-  {
-    std::vector< index >().swap( sources_ );
   }
 
   void

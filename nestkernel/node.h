@@ -284,14 +284,6 @@ public:
   }
 
   /**
-   * Finalize node.
-   * Override this function if a node needs to "wrap up" things after a
-   * full simulation, i.e., a cycle of Prepare, Run, Cleanup. Typical
-   * use-cases are devices that need to close files.
-   */
-  virtual void finalize();
-
-  /**
    * Bring the node from state $t$ to $t+n*dt$.
    *
    * n->update(T, from, to) performs the update steps beginning
@@ -530,21 +522,6 @@ public:
     const synindex syn_id,
     const long synapse_label,
     std::deque< ConnectionID >& conns ) const;
-
-  /**
-   * Remove source information of all connections to this node.
-   */
-  void
-  clear_sources()
-  {
-    for ( auto connections_per_syn_type : connections_ )
-    {
-      if ( connections_per_syn_type )
-      {
-        connections_per_syn_type->clear_sources();
-      }
-    }
-  }
 
   /**
    * Reset the starting positions at which a source is searched in the source table.

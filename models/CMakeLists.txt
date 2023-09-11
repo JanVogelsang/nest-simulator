@@ -140,7 +140,9 @@ set( models_sources
     vogels_sprekeler_synapse.h
     weight_recorder.h weight_recorder.cpp
     spike_dilutor.h spike_dilutor.cpp
-    )
+        ignore_and_fire.cpp
+        ignore_and_fire.h
+)
 
 add_library( models ${models_sources} )
 set_target_properties( models

@@ -680,19 +680,6 @@ NodeManager::post_run_cleanup()
 }
 
 void
-NodeManager::finalize_nodes()
-{
-#pragma omp parallel
-  {
-    thread tid = kernel().vp_manager.get_thread_id();
-    for ( SparseNodeArray::const_iterator n = local_nodes_[ tid ].begin(); n != local_nodes_[ tid ].end(); ++n )
-    {
-      n->get_node()->finalize();
-    }
-  } // omp parallel
-}
-
-void
 NodeManager::check_wfr_use()
 {
   wfr_is_used_ = kernel().mpi_manager.any_true( wfr_is_used_ );

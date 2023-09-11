@@ -211,11 +211,6 @@ nest::music_cont_out_proxy::init_buffers_()
   B_.data_.clear();
 }
 
-void
-nest::music_cont_out_proxy::finalize()
-{
-}
-
 nest::port
 nest::music_cont_out_proxy::send_test_event( Node& target, rport receptor_type, synindex, bool )
 {

@@ -153,7 +153,6 @@ public:
 protected:
   void init_buffers_();
   void pre_run_hook();
-  void finalize();
 
   /**
    * Collect and output membrane potential information.

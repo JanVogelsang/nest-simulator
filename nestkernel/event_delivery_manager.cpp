@@ -156,8 +156,9 @@ EventDeliveryManager::resize_send_recv_buffers_spike_data_()
   {
     send_buffer_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );
     recv_buffer_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );
-    // send_buffer_off_grid_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );  // TODO JV (pt):
-    // Fix offgrid spiking recv_buffer_off_grid_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );
+    // TODO JV (pt): Fix offgrid spiking
+    // send_buffer_off_grid_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );
+    // recv_buffer_off_grid_spike_data_.resize( kernel().mpi_manager.get_buffer_size_spike_data() );
   }
 }
 
@@ -518,7 +519,7 @@ EventDeliveryManager::collocate_spike_data_buffers_( const thread,
           ++position_for_rank.syn_id_pos;
         }
       }
-      if ( rank_pos == send_recv_count )
+      if ( rank_pos == send_recv_count or rank_pos == 0 )
       {
         break;
       }
@@ -526,7 +527,6 @@ EventDeliveryManager::collocate_spike_data_buffers_( const thread,
     }
     send_buffer[ send_recv_count * rank + rank_pos - 1 ].set_end_marker();
   }
-
   return is_spike_register_empty;
 }
 
