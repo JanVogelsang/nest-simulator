@@ -302,6 +302,11 @@ iaf_psc_alpha::update( Time const& origin, const long from, const long to )
   assert( to >= 0 and ( delay ) from < kernel().connection_manager.get_min_delay() );
   assert( from < to );
 
+  if ( get_node_id() == 114 and origin.get_tics() == 4500 )
+  {
+    int a = 2;
+  }
+
   for ( long lag = from; lag < to; ++lag )
   {
     if ( S_.r_ == 0 )
@@ -379,6 +384,11 @@ iaf_psc_alpha::handle( SpikeEvent& e )
 
   // separate buffer channels for excitatory and inhibitory inputs
   B_.input_buffer_.add_value( input_buffer_slot, s > 0 ? Buffers_::SYN_EX : Buffers_::SYN_IN, s );
+
+  if ( get_node_id() == 114 )
+  {
+    // std::cout << std::setprecision(17) << kernel().simulation_manager.get_slice_origin().get_tics() + e.get_stamp().get_tics() << " - " << e.get_sender_node_id() << " - " << s << std::endl;
+  }
 }
 
 void

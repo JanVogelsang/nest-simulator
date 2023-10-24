@@ -25,6 +25,7 @@
 // Includes from nestkernel:
 #include "connector_model.h"
 #include "kernel_manager.h"
+#include "vp_manager_impl.h"
 
 // Includes from sli:
 #include "dictutils.h"
@@ -221,11 +222,9 @@ ArchivingNode::deliver_event( const thread tid,
       for ( auto idx = connection_range.first; idx != connection_range.second; ++idx )
       {
         se.set_local_connection_id( idx );
+        se.set_sender_node_id( kernel().vp_manager.get_remote_node_id( 0, source_tid, source_lid ) ); // TODO JV: Only for debugging
         conn->send( tid, cm[ syn_id ], se, source_tid, source_lid, this );
         handle( se );
-
-        if ( get_node_id() == 1 and se.get_stamp().get_steps() == 1 and syn_id == 32 and idx == 415 )
-          std::cout << se.get_weight() << std::endl;
       }
     }
   }
@@ -251,7 +250,8 @@ ArchivingNode::set_spiketime( Time const& t_sp, double offset )
     {
       const double next_t_sp = history_[ 1 ].t_;
       if ( history_.front().access_counter_ >= n_incoming_
-        and t_sp_ms - next_t_sp > 2 * max_delay_ + kernel().connection_manager.get_stdp_eps() )
+           and t_sp_ms - next_t_sp
+               > max_delay_ + kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_stdp_eps() )
       {
         history_.pop_front();
       }

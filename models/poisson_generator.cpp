@@ -146,6 +146,7 @@ nest::poisson_generator::event_hook( DSSpikeEvent& e )
   // if ( n_spikes > 0 ) // we must not send events with multiplicity 0  // TODO JV
   // {
   e.set_multiplicity( n_spikes );
+  e.set_sender_node_id( get_node_id() );  // TODO JV: Remove
   //}
 }
 

@@ -525,7 +525,10 @@ EventDeliveryManager::collocate_spike_data_buffers_( const thread,
       }
       ++position_for_rank.write_thread_index;
     }
-    send_buffer[ send_recv_count * rank + rank_pos - 1 ].set_end_marker();
+    if ( rank_pos > 0 )
+    {
+        send_buffer[send_recv_count * rank + rank_pos - 1].set_end_marker();
+    }
   }
   return is_spike_register_empty;
 }

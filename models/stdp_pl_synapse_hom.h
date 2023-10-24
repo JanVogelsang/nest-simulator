@@ -251,9 +251,19 @@ private:
  * \param p The port under which this connection is stored in the Connector.
  */
 inline void
-stdp_pl_synapse_hom::send( Event& e, thread t, const STDPPLHomCommonProperties& cp, Node* target )
+stdp_pl_synapse_hom::send( Event& e, thread, const STDPPLHomCommonProperties& cp, Node* target )
 {
   // synapse STDP depressing/facilitation dynamics
+
+  if ( e.get_sender_node_id() == 683 and target->get_node_id() == 114 )
+  {
+    int a = 2;
+  }
+
+  if ( e.get_local_connection_id() == 1176 and target->get_node_id() == 114 )
+  {
+    int a = 2;
+  }
 
   const double t_spike = e.get_stamp().get_ms();
 
