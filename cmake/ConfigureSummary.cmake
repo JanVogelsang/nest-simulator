@@ -198,6 +198,13 @@ function( NEST_PRINT_CONFIG_SUMMARY )
   endif ()
 
   message( "" )
+  if ( HAVE_METAVISION )
+    message( "Use Metavision SDK  : Yes (Metavision SDK ${METAVISIONSDK_VERSION})")
+  else ()
+    message( "Use Metavision SDK  : No")
+  endif ()
+
+  message( "" )
   if ( HAVE_HDF5 )
     message( "Use HDF5            : Yes (HDF5 ${HDF5_VERSION})" )
     message( "    Includes        : ${HDF5_INCLUDE_DIR}" )

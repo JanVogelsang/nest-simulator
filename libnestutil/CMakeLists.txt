@@ -42,7 +42,7 @@ set_target_properties( nestutil
     POSITION_INDEPENDENT_CODE ON
     )
 
-target_link_libraries( nestutil ${GSL_LIBRARIES} ${SIONLIB_LIBS} )
+target_link_libraries( nestutil ${GSL_LIBRARIES} ${SIONLIB_LIBS} MetavisionSDK::core MetavisionSDK::driver )
 
 target_include_directories( nestutil PRIVATE
     ${PROJECT_BINARY_DIR}/libnestutil

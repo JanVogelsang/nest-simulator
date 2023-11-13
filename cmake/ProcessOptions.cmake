@@ -568,6 +568,32 @@ function( NEST_PROCESS_WITH_SIONLIB )
   endif ()
 endfunction()
 
+function( NEST_PROCESS_WITH_METAVISIONSDK )
+  set( HAVE_METAVISION OFF )
+  if ( with-metavision )
+    if ( NOT ${with-metavision} STREQUAL "ON" )
+      set( METAVISIONSDK_ROOT_DIR "${with-metavision}" CACHE INTERNAL "metavision" )
+      list( APPEND CMAKE_PREFIX_PATH ${METAVISIONSDK_ROOT_DIR} )
+    endif()
+
+    find_package( MetavisionSDK COMPONENTS core driver )
+
+    # is linked in nestkernel/CMakeLists.txt
+    if ( MetavisionSDK_FOUND )
+      set( HAVE_METAVISION ON CACHE INTERNAL "metavision" )
+
+      # TODO JV: Make sure metavision is available without having to set LD_LIBRARY_PATH before running cmake
+      # list( APPEND LD_LIBRARY_PATH "${METAVISIONSDK_ROOT_DIR}/lib" )
+      # use metavision_software_info to get version
+      execute_process(
+          COMMAND "${METAVISIONSDK_ROOT_DIR}/bin/metavision_software_info" --version
+          OUTPUT_VARIABLE METAVISIONSDK_VERSION
+          OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
+    endif ()
+  endif ()
+endfunction()
+
 function( NEST_PROCESS_WITH_BOOST )
   # Find Boost
   set( HAVE_BOOST OFF PARENT_SCOPE )

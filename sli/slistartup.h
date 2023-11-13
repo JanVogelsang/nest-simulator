@@ -110,6 +110,7 @@ public:
   Name have_music_name;
   Name have_libneurosim_name;
   Name have_sionlib_name;
+  Name have_metavision_name;
   Name have_hdf5_name;
   Name ndebug_name;
 

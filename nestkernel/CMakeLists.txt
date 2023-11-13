@@ -125,6 +125,13 @@ if ( HAVE_SIONLIB )
        )
 endif ()
 
+if ( HAVE_METAVISION )
+  set( nestkernel_sources
+       ${nestkernel_sources}
+       stimulation_backend_metavision.h stimulation_backend_metavision.cpp
+      )
+endif ()
+
 if ( HAVE_MPI )
   set( nestkernel_sources
     ${nestkernel_sources}
@@ -146,7 +153,7 @@ set_target_properties( nestkernel
 
 target_link_libraries( nestkernel
     nestutil sli_lib
-    ${LTDL_LIBRARIES} ${MPI_CXX_LIBRARIES} ${MUSIC_LIBRARIES} ${SIONLIB_LIBRARIES} ${LIBNEUROSIM_LIBRARIES} ${HDF5_LIBRARIES}
+    ${LTDL_LIBRARIES} ${MPI_CXX_LIBRARIES} ${MUSIC_LIBRARIES} ${SIONLIB_LIBRARIES} ${METAVISIONSDK_LIBRARIES} ${LIBNEUROSIM_LIBRARIES} ${HDF5_LIBRARIES}
     )
 
 target_include_directories( nestkernel PRIVATE

@@ -50,6 +50,9 @@
 #ifdef HAVE_SIONLIB
 #include "recording_backend_sionlib.h"
 #endif
+#ifdef HAVE_METAVISION
+#include "stimulation_backend_metavision.h"
+#endif
 
 // Includes from sli:
 #include "dictutils.h"
@@ -70,6 +73,9 @@ IOManager::IOManager()
 #endif
 #ifdef HAVE_SIONLIB
   register_recording_backend< RecordingBackendSIONlib >( "sionlib" );
+#endif
+#ifdef HAVE_METAVISION
+  register_stimulation_backend< StimulationBackendMetavision >( "metavision" );
 #endif
 }
 
