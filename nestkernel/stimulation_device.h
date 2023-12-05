@@ -145,7 +145,7 @@ EndUserDocs */
  *
  * @ingroup Devices
  */
-class StimulationDevice : public DeviceNode, public Device
+class StimulationDevice : public Device
 {
 public:
   StimulationDevice();
@@ -159,16 +159,15 @@ public:
    * @see class comment for details.
    */
   bool is_active( const Time& ) const override;
-  void get_status( DictionaryDatum& d ) const override;
-  void set_status( const DictionaryDatum& ) override;
-
-  bool has_proxies() const override;
-  Name get_element_type() const override;
+  // TODO JV: We need node here, how can we get it without breaking the get/set_status signature?
+  using Device::get_status;
+  using Device::set_status;
+  void get_status( const Node* node, DictionaryDatum& d ) const;
+  void set_status( const Node* node, const DictionaryDatum& );
 
   using Device::init_buffers;
   using Device::init_state;
   using Device::pre_run_hook;
-  using Node::pre_run_hook;
 
   void pre_run_hook() override;
 
@@ -189,14 +188,13 @@ public:
   virtual Type
   get_type() const
   {
-    throw KernelException( "WORNG TYPE" );
+    throw KernelException( "WRONG TYPE" );
   };
   const std::string& get_label() const;
   virtual void set_data_from_stimulation_backend( std::vector< double >& ) {};
-  void update( Time const&, const long, const long ) override {};
 
 protected:
-  void set_initialized_() final;
+  void set_initialized_( const Node* node );
 
   struct Parameters_
   {
@@ -223,17 +221,6 @@ private:
   DictionaryDatum backend_params_;
 };
 
-inline Name
-StimulationDevice::get_element_type() const
-{
-  return names::stimulator;
-}
-
-inline bool
-StimulationDevice::has_proxies() const
-{
-  return false;
-}
 
 } // namespace nest
 

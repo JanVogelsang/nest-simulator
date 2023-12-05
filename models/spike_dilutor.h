@@ -122,6 +122,12 @@ public:
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
 
+  void
+  set_initialized_() final
+  {
+    device_.set_initialized_( this );
+  }
+
 private:
   void init_state_() override;
   void init_buffers_() override;
@@ -161,6 +167,14 @@ private:
     get_type() const override
     {
       return StimulationDevice::Type::SPIKE_GENERATOR;
+    }
+
+  public:
+    using StimulationDevice::set_initialized_;
+    void
+    set_initialized_( const Node* node )
+    {
+      StimulationDevice::set_initialized_( node );
     }
   } device_;
 

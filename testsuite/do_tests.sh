@@ -508,8 +508,14 @@ if test "${PYTHON}"; then
     env
     set +e
     "${PYTHON}" -m pytest --verbose --timeout $TIME_LIMIT --junit-xml="${XUNIT_FILE}" --numprocesses=1 \
-          --ignore="${PYNEST_TEST_DIR}/mpi" "${PYNEST_TEST_DIR}" 2>&1 | tee -a "${TEST_LOGFILE}"
+          --ignore="${PYNEST_TEST_DIR}/mpi" --ignore="${PYNEST_TEST_DIR}/test_metavision_sdk.py" "${PYNEST_TEST_DIR}" 2>&1 | tee -a "${TEST_LOGFILE}"
     set -e
+
+    # Run tests in the mpi* subdirectories, grouped by number of processes
+    if test "${HAVE_METAVISION}" = "true"; then
+      "${PYTHON}" -m pytest --verbose --timeout $TIME_LIMIT --junit-xml="${XUNIT_FILE}" --numprocesses=1 \
+          "${PYNEST_TEST_DIR}/test_metavision_sdk.py" 2>&1 | tee -a "${TEST_LOGFILE}"
+    fi
 
     # Run tests in the mpi* subdirectories, grouped by number of processes
     if test "${HAVE_MPI}" = "true"; then

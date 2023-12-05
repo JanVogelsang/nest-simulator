@@ -52,7 +52,8 @@ IOManager::register_stimulation_backend( const Name name )
   }
 
   StimulationBackendT* stimulation_backend = new StimulationBackendT();
-  stimulation_backend->pre_run_hook();
+  // TODO JV: Does it make sense to run "pre-run" during the initialization stage?
+  // stimulation_backend->pre_run_hook();
   stimulation_backends_.insert( std::make_pair( name, stimulation_backend ) );
 }
 

@@ -110,7 +110,7 @@ public:
    *
    * @ingroup NESTio
    */
-  virtual void enroll( StimulationDevice&, const DictionaryDatum& ) {};
+  virtual void enroll( const Node* node, StimulationDevice& device, const DictionaryDatum& d ) {};
 
   /**
    * Disenroll a `StimulationDevice` from the `StimulationBackend`.
@@ -128,7 +128,7 @@ public:
    *
    * @ingroup NESTio
    */
-  virtual void disenroll( StimulationDevice& ) {};
+  virtual void disenroll( const Node* node, StimulationDevice& device ) {};
 
   /**
    * Initialize global backend-specific data structures.
@@ -168,6 +168,8 @@ public:
    *
    * @ingroup NESTio
    */
+  // TODO JV: Update docstring
+  virtual void post_step_hook() = 0;
   virtual void initialize() = 0;
   virtual void finalize() = 0;
 

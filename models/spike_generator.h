@@ -235,7 +235,7 @@ EndUserDocs
 */
 void register_spike_generator( const std::string& name );
 
-class spike_generator : public StimulationDevice
+class spike_generator : public DeviceNode, public StimulationDevice
 {
 
 public:
@@ -272,6 +272,17 @@ private:
   void pre_run_hook() override;
 
   void update( Time const&, const long, const long ) override;
+
+  void
+  set_initialized_() final
+  {
+    StimulationDevice::set_initialized_( this );
+  }
+  Name
+  get_element_type() const override
+  {
+    return names::stimulator;
+  }
 
   // ------------------------------------------------------------
 
@@ -357,7 +368,7 @@ inline void
 spike_generator::get_status( DictionaryDatum& d ) const
 {
   P_.get( d );
-  StimulationDevice::get_status( d );
+  StimulationDevice::get_status( this, d );
 }
 
 inline void
@@ -384,7 +395,7 @@ nest::spike_generator::set_status( const DictionaryDatum& d )
   // We now know that ptmp is consistent. We do not write it back
   // to P_ before we are also sure that the properties to be set
   // in the parent class are internally consistent.
-  StimulationDevice::set_status( d );
+  StimulationDevice::set_status( this, d );
 
   // if we get here, temporary contains consistent set of properties
   P_ = ptmp;

@@ -196,7 +196,7 @@ EndUserDocs */
  */
 void register_sinusoidal_gamma_generator( const std::string& name );
 
-class sinusoidal_gamma_generator : public StimulationDevice
+class sinusoidal_gamma_generator : public DeviceNode, public StimulationDevice
 {
 
 public:
@@ -237,6 +237,17 @@ private:
   void event_hook( DSSpikeEvent& ) override;
 
   void update( Time const&, const long, const long ) override;
+
+  void
+  set_initialized_() final
+  {
+    StimulationDevice::set_initialized_( this );
+  }
+  Name
+  get_element_type() const override
+  {
+    return names::stimulator;
+  }
 
   struct Parameters_
   {
@@ -408,7 +419,7 @@ inline void
 sinusoidal_gamma_generator::get_status( DictionaryDatum& d ) const
 {
   P_.get( d );
-  StimulationDevice::get_status( d );
+  StimulationDevice::get_status( this, d );
   ( *d )[ names::recordables ] = recordablesMap_.get_list();
 }
 
@@ -421,7 +432,7 @@ sinusoidal_gamma_generator::set_status( const DictionaryDatum& d )
   // We now know that ptmp is consistent. We do not write it back
   // to P_ before we are also sure that the properties to be set
   // in the parent class are internally consistent.
-  StimulationDevice::set_status( d );
+  StimulationDevice::set_status( this, d );
 
   // if we get here, temporaries contain consistent set of properties
   P_ = ptmp;

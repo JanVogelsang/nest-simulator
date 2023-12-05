@@ -116,7 +116,7 @@ namespace nest
 {
 void register_ac_generator( const std::string& name );
 
-class ac_generator : public StimulationDevice
+class ac_generator : public DeviceNode, public StimulationDevice
 {
 
 public:
@@ -148,6 +148,16 @@ private:
 
   void update( Time const&, const long, const long ) override;
 
+  void
+  set_initialized_() final
+  {
+    StimulationDevice::set_initialized_( this );
+  }
+  Name
+  get_element_type() const override
+  {
+    return names::stimulator;
+  }
 
   // ------------------------------------------------------------
 
@@ -250,7 +260,7 @@ ac_generator::get_status( DictionaryDatum& d ) const
 {
   P_.get( d );
   S_.get( d );
-  StimulationDevice::get_status( d );
+  StimulationDevice::get_status( this, d );
 
   ( *d )[ names::recordables ] = recordablesMap_.get_list();
 }
@@ -266,7 +276,7 @@ ac_generator::set_status( const DictionaryDatum& d )
   // We now know that ptmp is consistent. We do not write it back
   // to P_ before we are also sure that the properties to be set
   // in the parent class are internally consistent.
-  StimulationDevice::set_status( d );
+  StimulationDevice::set_status( this, d );
 
   // if we get here, temporaries contain consistent set of properties
   P_ = ptmp;

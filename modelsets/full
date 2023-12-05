@@ -83,6 +83,7 @@ poisson_generator_ps
 pp_psc_delta
 pp_cond_exp_mc_urbanczik
 ppd_sup_generator
+precise_weighted_spike_generator
 pulsepacket_generator
 quantal_stp_synapse
 rate_connection_delayed

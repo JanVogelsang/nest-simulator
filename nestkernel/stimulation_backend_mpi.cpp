@@ -63,17 +63,12 @@ nest::StimulationBackendMPI::finalize()
 }
 
 void
-nest::StimulationBackendMPI::enroll( nest::StimulationDevice& device, const DictionaryDatum& params )
+nest::StimulationBackendMPI::enroll( const Node* node, nest::StimulationDevice& device, const DictionaryDatum& params )
 {
-  size_t tid = device.get_thread();
-  size_t node_id = device.get_node_id();
+  size_t tid = node->get_thread();
+  size_t node_id = node->get_node_id();
 
   // for each thread, add the input device if it's not already in the map
-  auto device_it = devices_[ tid ].find( node_id );
-  if ( device_it != devices_[ tid ].end() )
-  {
-    devices_[ tid ].erase( device_it );
-  }
   // the MPI communication will be initialised during the prepare function
   std::pair< MPI_Comm*, StimulationDevice* > pair = std::make_pair( nullptr, &device );
   std::pair< size_t, std::pair< const MPI_Comm*, StimulationDevice* > > secondpair = std::make_pair( node_id, pair );
@@ -86,10 +81,10 @@ nest::StimulationBackendMPI::enroll( nest::StimulationDevice& device, const Dict
 
 
 void
-nest::StimulationBackendMPI::disenroll( nest::StimulationDevice& device )
+nest::StimulationBackendMPI::disenroll( const Node* node, nest::StimulationDevice& device )
 {
-  size_t tid = device.get_thread();
-  size_t node_id = device.get_node_id();
+  size_t tid = node->get_thread();
+  size_t node_id = node->get_node_id();
 
   // remove the device from the map
   auto device_it = devices_[ tid ].find( node_id );
@@ -120,20 +115,21 @@ nest::StimulationBackendMPI::prepare()
   {
     // add the link between MPI communicator and the device (devices can share the same MPI communicator)
     std::string port_name;
-    get_port( it_device.second.second, &port_name );
+    get_port( it_device.first, it_device.second.second->get_label(), &port_name );
     auto comm_it = commMap_.find( port_name );
     MPI_Comm* comm;
     if ( comm_it != commMap_.end() )
     {
       // it's not a new communicator
       comm = std::get< 0 >( comm_it->second );
-      // add the id of the device if there are a connection with the device.
-      if ( kernel().connection_manager.get_device_connected(
-             thread_id_master, it_device.second.second->get_local_device_id() ) )
-      {
-        std::get< 1 >( comm_it->second )->push_back( it_device.second.second->get_node_id() );
-        std::get< 2 >( comm_it->second )[ thread_id_master ] += 1;
-      }
+      // add the id of the device if there is a connection with the device.
+      // TOOD JV: get_local_device_id no longer present, as non-device stimulators can be used as well
+      // if ( kernel().connection_manager.get_device_connected(
+      //        thread_id_master, it_device.second.second->get_local_device_id() ) )
+      // {
+      std::get< 1 >( comm_it->second )->push_back( it_device.first );
+      std::get< 2 >( comm_it->second )[ thread_id_master ] += 1;
+      // }
     }
     else
     {
@@ -145,12 +141,13 @@ nest::StimulationBackendMPI::prepare()
       int* vector_nb_device_th { new int[ kernel().vp_manager.get_num_threads() ] {} }; // number of device by thread
       std::fill_n( vector_nb_device_th, kernel().vp_manager.get_num_threads(), 0 );
       // add the id of the device if there is a connection with the device.
-      if ( kernel().connection_manager.get_device_connected(
-             thread_id_master, it_device.second.second->get_local_device_id() ) )
-      {
-        vector_id_device->push_back( it_device.second.second->get_node_id() );
-        vector_nb_device_th[ thread_id_master ] += 1;
-      }
+      // TOOD JV: get_local_device_id no longer present, as non-device stimulators can be used as well
+      // if ( kernel().connection_manager.get_device_connected(
+      //        thread_id_master, it_device.second.second->get_local_device_id() ) )
+      // {
+      vector_id_device->push_back( it_device.first );
+      vector_nb_device_th[ thread_id_master ] += 1;
+      // }
       std::tuple< MPI_Comm*, std::vector< int >*, int* > comm_count =
         std::make_tuple( comm, vector_id_device, vector_nb_device_th );
       commMap_.insert( std::make_pair( port_name, comm_count ) );
@@ -159,7 +156,7 @@ nest::StimulationBackendMPI::prepare()
   }
 
   // Add the id of device of the other thread in the vector_id_device and update the count of all device
-  for ( int id_thread = 0; id_thread < kernel().vp_manager.get_num_threads(); id_thread++ )
+  for ( size_t id_thread = 0; id_thread < kernel().vp_manager.get_num_threads(); id_thread++ )
   {
     // don't do it again for the master thread
     if ( id_thread != thread_id_master )
@@ -167,23 +164,24 @@ nest::StimulationBackendMPI::prepare()
       for ( auto& it_device : devices_[ id_thread ] )
       {
         // add the id of the device if there is a connection with the device.
-        if ( kernel().connection_manager.get_device_connected(
-               id_thread, it_device.second.second->get_local_device_id() ) )
+        // TOOD JV: get_local_device_id no longer present, as non-device stimulators can be used as well
+        // if ( kernel().connection_manager.get_device_connected(
+        //        id_thread, it_device.second.second->get_local_device_id() ) )
+        // {
+        std::string port_name;
+        get_port( it_device.first, it_device.second.second->get_label(), &port_name );
+        auto comm_it = commMap_.find( port_name );
+        if ( comm_it != commMap_.end() )
         {
-          std::string port_name;
-          get_port( it_device.second.second, &port_name );
-          auto comm_it = commMap_.find( port_name );
-          if ( comm_it != commMap_.end() )
-          {
-            std::get< 1 >( comm_it->second )->push_back( it_device.second.second->get_node_id() );
-            std::get< 2 >( comm_it->second )[ id_thread ] += 1;
-          }
-          else
-          {
-            // should be impossible
-            throw KernelException( "The MPI port was not defined in the master thread" );
-          }
+          std::get< 1 >( comm_it->second )->push_back( it_device.first );
+          std::get< 2 >( comm_it->second )[ id_thread ] += 1;
         }
+        else
+        {
+          // should be impossible
+          throw KernelException( "The MPI port was not defined in the master thread" );
+        }
+        // }
       }
     }
   }
@@ -258,6 +256,11 @@ nest::StimulationBackendMPI::post_run_hook()
 }
 
 void
+nest::StimulationBackendMPI::post_step_hook()
+{
+}
+
+void
 nest::StimulationBackendMPI::cleanup()
 {
 // Disconnect all the MPI connection and send information about this disconnection
@@ -286,9 +289,8 @@ nest::StimulationBackendMPI::cleanup()
 }
 
 void
-nest::StimulationBackendMPI::get_port( nest::StimulationDevice* device, std::string* port_name )
+nest::StimulationBackendMPI::get_port( const size_t index_node, const std::string& label, std::string* port_name )
 {
-  const std::string& label = device->get_label();
   // The MPI address can be provided by two different means.
   // a) the address is given via the mpi_address device status
   // b) the file is provided via a file: {data_path}/{data_prefix}{label}/{node_id}.txt
@@ -298,50 +300,44 @@ nest::StimulationBackendMPI::get_port( nest::StimulationDevice* device, std::str
   {
     *port_name = mpi_address_;
   }
-  // Case b: fallback to get_port implementation that reads the address from file
+  // Case b: fallback to implementation that reads the address from file
   else
   {
-    get_port( device->get_node_id(), label, port_name );
-  }
-}
+    // path of the file : path+label+id+.txt
+    // (file contains only one line with name of the port)
+    std::ostringstream basename;
+    // get the path from the kernel
+    const std::string& path = kernel().io_manager.get_data_path();
+    if ( not path.empty() )
+    {
+      basename << path << '/';
+    }
+    basename << kernel().io_manager.get_data_prefix();
 
-void
-nest::StimulationBackendMPI::get_port( const size_t index_node, const std::string& label, std::string* port_name )
-{
-  // path of the file : path+label+id+.txt
-  // (file contains only one line with name of the port)
-  std::ostringstream basename;
-  // get the path from the kernel
-  const std::string& path = kernel().io_manager.get_data_path();
-  if ( not path.empty() )
-  {
-    basename << path << '/';
-  }
-  basename << kernel().io_manager.get_data_prefix();
+    // add the path from the label of the device
+    if ( not label.empty() )
+    {
+      basename << label;
+    }
+    else
+    {
+      throw MPIPortsFileUnknown( index_node );
+    }
+    // add the id of the device to the path
+    basename << "/" << index_node << ".txt";
+    std::ifstream file( basename.str() );
+    if ( !file.good() )
+    {
+      throw MPIPortsFileMissing( index_node, basename.str() );
+    }
 
-  // add the path from the label of the device
-  if ( not label.empty() )
-  {
-    basename << label;
+    // read the file
+    if ( file.is_open() )
+    {
+      getline( file, *port_name );
+    }
+    file.close();
   }
-  else
-  {
-    throw MPIPortsFileUnknown( index_node );
-  }
-  // add the id of the device to the path
-  basename << "/" << index_node << ".txt";
-  std::ifstream file( basename.str() );
-  if ( !file.good() )
-  {
-    throw MPIPortsFileMissing( index_node, basename.str() );
-  }
-
-  // read the file
-  if ( file.is_open() )
-  {
-    getline( file, *port_name );
-  }
-  file.close();
 }
 
 std::pair< int*, double* >

@@ -242,7 +242,7 @@ EndUserDocs */
  */
 void register_spike_train_injector( const std::string& name );
 
-class spike_train_injector : public Node, public Device
+class spike_train_injector : public Node, public StimulationDevice
 {
 
 public:
@@ -260,7 +260,7 @@ public:
     return P_.precise_times_;
   }
 
-  void set_data( std::vector< double >& input_spikes );
+  void set_data_from_stimulation_backend( std::vector< double >& input_spikes ) override {};
 
 private:
   void init_state_() override;
@@ -343,7 +343,7 @@ inline void
 spike_train_injector::get_status( DictionaryDatum& d ) const
 {
   P_.get( d );
-  Device::get_status( d );
+  StimulationDevice::get_status( this, d );
 }
 
 
@@ -362,7 +362,7 @@ spike_train_injector::set_status( const DictionaryDatum& d )
   }
   else
   {
-    origin = Device::get_origin();
+    origin = StimulationDevice::get_origin();
   }
 
   // throws if BadProperty
@@ -371,7 +371,7 @@ spike_train_injector::set_status( const DictionaryDatum& d )
   // We now know that ptmp is consistent. We do not write it back
   // to P_ before we are also sure that the properties to be set
   // in the parent class are internally consistent.
-  Device::set_status( d );
+  StimulationDevice::set_status( this, d );
 
   // if we get here, temporary contains consistent set of properties
   P_ = ptmp;

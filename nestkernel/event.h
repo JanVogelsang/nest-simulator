@@ -442,7 +442,6 @@ SpikeEvent::get_multiplicity() const
   return multiplicity_;
 }
 
-
 /**
  * Event for recording the weight of a spike.
  */

@@ -105,7 +105,7 @@ EndUserDocs */
 
 void register_step_current_generator( const std::string& name );
 
-class step_current_generator : public StimulationDevice
+class step_current_generator : public DeviceNode, public StimulationDevice
 {
 
 public:
@@ -137,6 +137,17 @@ private:
   void pre_run_hook() override;
 
   void update( Time const&, long, long ) override;
+
+  void
+  set_initialized_() final
+  {
+    StimulationDevice::set_initialized_( this );
+  }
+  Name
+  get_element_type() const override
+  {
+    return names::stimulator;
+  }
 
   struct Buffers_;
 
@@ -240,7 +251,7 @@ inline void
 step_current_generator::get_status( DictionaryDatum& d ) const
 {
   P_.get( d );
-  StimulationDevice::get_status( d );
+  StimulationDevice::get_status( this, d );
 
   ( *d )[ names::recordables ] = recordablesMap_.get_list();
 }
@@ -254,7 +265,7 @@ step_current_generator::set_status( const DictionaryDatum& d )
   // We now know that ptmp is consistent. We do not write it back
   // to P_ before we are also sure that the properties to be set
   // in the parent class are internally consistent.
-  StimulationDevice::set_status( d );
+  StimulationDevice::set_status( this, d );
 
   // if we get here, temporaries contain consistent set of properties
   P_ = ptmp;

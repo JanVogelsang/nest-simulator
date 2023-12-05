@@ -129,6 +129,7 @@ def get_models_from_file(model_file):
                     if pattern in line:
                         names.append(model_file)
                         types.append(mtype)
+                        break
             if line.startswith("class") and line.strip().endswith(f" : public {model_file}"):
                 names.append(line.split(" ", 2)[1])
                 # try to infer the type of the derived model from the base model,

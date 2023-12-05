@@ -573,19 +573,11 @@ nest::SimulationManager::run( Time const& t )
     return;
   }
 
-  kernel().io_manager.pre_run_hook();
-
-  // Reset local spike counters within event_delivery_manager
-  kernel().event_delivery_manager.reset_counters();
-
-  sw_simulate_.start();
-
   // from_step_ is not touched here.  If we are at the beginning
   // of a simulation, it has been reset properly elsewhere.  If
   // a simulation was ended and is now continued, from_step_ will
   // have the proper value.  to_step_ is set as in advance_time().
   to_step_ = std::min( from_step_ + to_do_, kernel().connection_manager.get_min_delay() );
-
 
   // Warn about possible inconsistencies, see #504.
   // This test cannot come any earlier, because we first need to compute
@@ -602,6 +594,13 @@ nest::SimulationManager::run( Time const& t )
       "is called repeatedly with simulation times that are not multiples of "
       "the minimal delay." );
   }
+
+  kernel().io_manager.pre_run_hook();
+
+  // Reset local spike counters within event_delivery_manager
+  kernel().event_delivery_manager.reset_counters();
+
+  sw_simulate_.start();
 
   call_update_();
 
@@ -1063,10 +1062,10 @@ nest::SimulationManager::update_()
 // end of master section, all threads have to synchronize at this point
 #pragma omp barrier
 
+        kernel().io_manager.post_step_hook();
         // if block to avoid omp barrier if SIONLIB is not used
 #ifdef HAVE_SIONLIB
-        kernel().io_manager.post_step_hook();
-// enforce synchronization after post-step activities of the recording backends
+// enforce synchronization after post-step activities of the recording backends if SIONLIB is used
 #pragma omp barrier
 #endif
 

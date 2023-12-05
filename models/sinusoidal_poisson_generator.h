@@ -129,7 +129,7 @@ EndUserDocs */
 
 void register_sinusoidal_poisson_generator( const std::string& name );
 
-class sinusoidal_poisson_generator : public StimulationDevice
+class sinusoidal_poisson_generator : public DeviceNode, public StimulationDevice
 {
 
 public:
@@ -154,6 +154,17 @@ public:
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
 
+  void
+  set_initialized_() final
+  {
+    StimulationDevice::set_initialized_( this );
+  }
+  Name
+  get_element_type() const override
+  {
+    return names::stimulator;
+  }
+
   //! Model can be switched between proxies (single spike train) and not
   bool
   has_proxies() const override
@@ -166,12 +177,6 @@ public:
   local_receiver() const override
   {
     return true;
-  }
-
-  Name
-  get_element_type() const override
-  {
-    return names::stimulator;
   }
 
   StimulationDevice::Type
@@ -315,7 +320,7 @@ sinusoidal_poisson_generator::get_status( DictionaryDatum& d ) const
 {
   P_.get( d );
   S_.get( d );
-  StimulationDevice::get_status( d );
+  StimulationDevice::get_status( this, d );
   ( *d )[ names::recordables ] = recordablesMap_.get_list();
 }
 
@@ -328,7 +333,7 @@ sinusoidal_poisson_generator::set_status( const DictionaryDatum& d )
   // We now know that ptmp is consistent. We do not write it back
   // to P_ before we are also sure that the properties to be set
   // in the parent class are internally consistent.
-  StimulationDevice::set_status( d );
+  StimulationDevice::set_status( this, d );
 
   // if we get here, temporaries contain consistent set of properties
   P_ = ptmp;

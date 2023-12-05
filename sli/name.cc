@@ -88,7 +88,7 @@ Name::insert( const std::string& s )
     // performance problems due to serialization.
     assert( not omp_in_parallel() );
 #endif
-    // The following is more comlex code than a simple
+    // The following is more complex code than a simple
     // handleMap_[s] = Handle(s), but it avoids the creation
     // of spurious Handle objects. HEP 2007-05-24
     HandleTable_& table = Name::handleTableInstance_();

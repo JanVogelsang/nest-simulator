@@ -27,16 +27,14 @@
 
 
 nest::StimulationDevice::StimulationDevice()
-  : DeviceNode()
-  , Device()
+  : Device()
   , first_syn_id_( invalid_synindex )
   , backend_params_( new Dictionary )
 {
 }
 
 nest::StimulationDevice::StimulationDevice( StimulationDevice const& sd )
-  : DeviceNode( sd )
-  , Device( sd )
+  : Device( sd )
   , P_( sd.P_ )
   , first_syn_id_( invalid_synindex ) // a new instance can't have any connections
   , backend_params_( sd.backend_params_ )
@@ -76,9 +74,9 @@ nest::StimulationDevice::pre_run_hook()
 }
 
 void
-nest::StimulationDevice::set_initialized_()
+nest::StimulationDevice::set_initialized_( const Node* node )
 {
-  kernel().io_manager.enroll_stimulator( P_.stimulus_source_, *this, backend_params_ );
+  kernel().io_manager.enroll_stimulator( P_.stimulus_source_, node, *this, backend_params_ );
 }
 
 const std::string&
@@ -120,15 +118,14 @@ nest::StimulationDevice::Parameters_::set( const DictionaryDatum& d )
 }
 
 void
-nest::StimulationDevice::set_status( const DictionaryDatum& d )
+nest::StimulationDevice::set_status( const Node* node, const DictionaryDatum& d )
 {
-
   Parameters_ ptmp = P_; // temporary copy in case of errors
   ptmp.set( d );         // throws if BadProperty
 
   Device::set_status( d );
 
-  if ( get_node_id() == 0 ) // this is a model prototype, not an actual instance
+  if ( node->get_node_id() == 0 ) // this is a model prototype, not an actual instance
   {
     DictionaryDatum backend_params = DictionaryDatum( new Dictionary );
 
@@ -154,7 +151,8 @@ nest::StimulationDevice::set_status( const DictionaryDatum& d )
   }
   else
   {
-    kernel().io_manager.enroll_stimulator( ptmp.stimulus_source_, *this, d );
+    kernel().io_manager.enroll_stimulator( Name(), node, *this, d ); // disenroll first
+    kernel().io_manager.enroll_stimulator( ptmp.stimulus_source_, node, *this, d );
   }
 
   // if we get here, temporaries contain consistent set of properties
@@ -163,7 +161,7 @@ nest::StimulationDevice::set_status( const DictionaryDatum& d )
 
 
 void
-nest::StimulationDevice::get_status( DictionaryDatum& d ) const
+nest::StimulationDevice::get_status( const Node* node, DictionaryDatum& d ) const
 {
   P_.get( d );
 
@@ -171,7 +169,7 @@ nest::StimulationDevice::get_status( DictionaryDatum& d ) const
 
   ( *d )[ names::element_type ] = LiteralDatum( names::stimulator );
 
-  if ( get_node_id() == 0 ) // this is a model prototype, not an actual instance
+  if ( node->get_node_id() == 0 ) // this is a model prototype, not an actual instance
   {
     // overwrite with cached parameters
     for ( auto& kv_pair : *backend_params_ )

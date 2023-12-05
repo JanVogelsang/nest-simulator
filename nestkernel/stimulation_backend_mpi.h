@@ -122,9 +122,9 @@ public:
 
   void finalize() override;
 
-  void enroll( StimulationDevice& device, const DictionaryDatum& params ) override;
+  void enroll( const Node* node, StimulationDevice& device, const DictionaryDatum& params ) override;
 
-  void disenroll( StimulationDevice& device ) override;
+  void disenroll( const Node* node, StimulationDevice& device ) override;
 
   void cleanup() override;
 
@@ -133,6 +133,8 @@ public:
   void pre_run_hook() override;
 
   void post_run_hook() override;
+
+  void post_step_hook() override;
 
 private:
   bool enrolled_;
@@ -158,11 +160,9 @@ private:
   /**
    * Getting the port name for the MPI connection
    *
-   * @param device : input device for finding the file with the port
    * @param port_name : result of the port name
    */
-  void get_port( StimulationDevice* device, std::string* port_name );
-  void get_port( size_t index_node, const std::string& label, std::string* port_name );
+  void get_port( const size_t index_node, const std::string& label, std::string* port_name );
 
   /**
    * MPI communication for receiving the data before each run.

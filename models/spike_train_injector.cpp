@@ -26,7 +26,6 @@
 #include "event_delivery_manager_impl.h"
 #include "exceptions.h"
 #include "kernel_manager.h"
-#include "model_manager_impl.h"
 #include "nest_impl.h"
 
 // Includes from libnestutil:
@@ -176,9 +175,7 @@ spike_train_injector::Parameters_::set( const DictionaryDatum& d,
   const bool updated_spike_times = d->known( names::spike_times );
   if ( flags_changed and not( updated_spike_times or spike_stamps_.empty() ) )
   {
-    throw BadProperty(
-      "Options can only be set together with spike times or if no "
-      "spike times have been set." );
+    throw BadProperty( "Options can only be set together with spike times or if no spike times have been set." );
   }
 
   if ( updated_spike_times )
@@ -264,7 +261,7 @@ spike_train_injector::State_::State_()
 
 spike_train_injector::spike_train_injector()
   : Node()
-  , Device()
+  , StimulationDevice()
   , S_()
   , P_()
 {
@@ -272,7 +269,7 @@ spike_train_injector::spike_train_injector()
 
 spike_train_injector::spike_train_injector( const spike_train_injector& n )
   : Node( n )
-  , Device( n )
+  , StimulationDevice( n )
   , S_( n.S_ )
   , P_( n.P_ )
 {
@@ -314,7 +311,7 @@ spike_train_injector::pre_run_hook()
       "lead to inconsistent results." );
   }
 
-  Device::pre_run_hook();
+  StimulationDevice::pre_run_hook();
 }
 
 
@@ -342,7 +339,7 @@ spike_train_injector::update( Time const& sliceT0, const long from, const long t
 
   const Time tstart = sliceT0 + Time::step( from );
   const Time tstop = sliceT0 + Time::step( to );
-  const Time& origin = Device::get_origin();
+  const Time& origin = StimulationDevice::get_origin();
 
   // We fire all spikes with time stamps up to including sliceT0 + to
   while ( S_.position_ < P_.spike_stamps_.size() )

@@ -138,7 +138,7 @@ public:
     const std::vector< long >& long_values );
 
   void enroll_recorder( const Name, const RecordingDevice&, const DictionaryDatum& );
-  void enroll_stimulator( const Name, StimulationDevice&, const DictionaryDatum& );
+  void enroll_stimulator( const Name, const Node* node, StimulationDevice&, const DictionaryDatum& );
 
   void set_recording_value_names( const Name backend_name,
     const RecordingDevice& device,

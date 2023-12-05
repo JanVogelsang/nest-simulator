@@ -136,7 +136,7 @@ SLIgraphics::ReadPGMFunction::readMagicNumber( std::istream* in, char* magic ) c
   // reads in the magic number which determines the file format
   try
   {
-    *in >> magic;
+    // *in >> magic;  // TODO JV: Removed for debugging (c++20 standard)
   }
   catch ( std::exception& e )
   {
