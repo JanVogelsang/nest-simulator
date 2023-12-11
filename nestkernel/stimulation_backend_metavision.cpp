@@ -39,8 +39,7 @@ namespace nest
 {
 
 StimulationBackendMetavision::StimulationBackendMetavision()
-  : // co( std::cout )
-  enrolled_( false )
+  : enrolled_( false )
   , next_index_( 0 )
   , priority_waiting_( false )
   , sim_target_time_( 0 )
@@ -60,9 +59,12 @@ StimulationBackendMetavision::initialize()
   auto comm = kernel().mpi_manager.get_communicator();
 
   // TODO JV: Find a way to let the user specify which input source to use (e.g. cam via serial number, file, etc.)
-  cameras_.push_back( Metavision::Camera::from_file( "/home/vogelsang1/vision/camera_data/data.raw" ) );
-  cameras_.back().add_runtime_error_callback( [ & ]( const Metavision::CameraException& e )
-    { std::cout << "Metavision SDK reported an exception from one of the cameras: " << e.what() << std::endl; } );
+  if ( kernel().mpi_manager.get_rank() == 0 )
+  {
+    cameras_.push_back( Metavision::Camera::from_file( "/home/vogelsang1/vision/camera_data/data.raw" ) );
+    cameras_.back().add_runtime_error_callback( [ & ]( const Metavision::CameraException& e )
+      { std::cout << "Metavision SDK reported an exception from one of the cameras: " << e.what() << std::endl; } );
+  }
 
   //  Metavision::AvailableSourcesList camera_list = Metavision::Camera::list_online_sources();
   //  for ( const auto& cameras_per_type : camera_list )
@@ -96,57 +98,61 @@ StimulationBackendMetavision::initialize()
     }
   }
 
-  // find local start index
-  const size_t local_start_index = std::accumulate(
-    num_cameras_per_process.begin(), num_cameras_per_process.begin() + kernel().mpi_manager.get_rank(), 0 );
-  camera_num_pixels_.resize( global_num_cameras_ );
-  process_devices_start_indices_.resize( num_processes );
-  process_devices_end_indices_.resize( num_processes );
-  camera_resolutions_.resize( cameras_.size() );
-  camera_times_.resize( cameras_.size(), 0 );
+  if ( global_num_cameras_ > 0 ){
+    // find local start index
+    const size_t local_start_index = std::accumulate(
+      num_cameras_per_process.begin(), num_cameras_per_process.begin() + kernel().mpi_manager.get_rank(), 0 );
+    camera_num_pixels_.resize( global_num_cameras_ );
+    process_devices_start_indices_.resize( num_processes );
+    process_devices_end_indices_.resize( num_processes );
+    camera_resolutions_.resize( cameras_.size() );
+    camera_times_.resize( cameras_.size(), 0 );
 
-  for ( size_t cam_idx = 0; cam_idx != cameras_.size(); ++cam_idx )
-  {
-    camera_resolutions_[ cam_idx ] =
-      std::make_pair( cameras_[ cam_idx ].geometry().width(), cameras_[ cam_idx ].geometry().height() );
-    camera_num_pixels_[ local_start_index + cam_idx ] =
-      camera_resolutions_[ cam_idx ].first * camera_resolutions_[ cam_idx ].second;
+    for ( size_t cam_idx = 0; cam_idx != cameras_.size(); ++cam_idx )
+    {
+      camera_resolutions_[ cam_idx ] =
+        std::make_pair( cameras_[ cam_idx ].geometry().width(), cameras_[ cam_idx ].geometry().height() );
+      camera_num_pixels_[ local_start_index + cam_idx ] =
+        camera_resolutions_[ cam_idx ].first * camera_resolutions_[ cam_idx ].second;
+    }
+
+    // Communicate the total number of pixels of each camera to determine the maximum number of devices each process might
+    // have to accept for each camera. The exact value is not known yet, as it depends on the distribution of devices
+    // (one per pixel) on the processes. Some processes will own one more device compared to other processes if the total
+    // number of pixels is not divisible by the number of ranks.
+    std::vector< int > displacements = std::vector< int >( global_num_cameras_ );
+    displacements[ 0 ] = 0;
+    for ( size_t cam_idx = 1; cam_idx != camera_num_pixels_.size(); ++cam_idx )
+    {
+      displacements[ cam_idx ] = num_cameras_per_process[ cam_idx - 1 ];
+    }
+    MPI_Allgatherv( camera_num_pixels_.data() + local_start_index,
+      num_local_cameras,
+      MPI_SIZE_T,
+      camera_num_pixels_.data(),
+      num_cameras_per_process.data(),
+      displacements.data(),
+      MPI_SIZE_T,
+      comm );
+
+    camera_start_indices_.resize( cameras_.size() );
+    if ( cameras_.size() > 0 )
+    {
+      camera_start_indices_[ 0 ] =
+        std::accumulate( camera_num_pixels_.begin(), camera_num_pixels_.begin() + local_start_index, 0 );
+      for ( size_t cam_idx = 1; cam_idx != cameras_.size(); ++cam_idx )
+      {
+        camera_start_indices_[ cam_idx ] =
+          camera_start_indices_[ cam_idx - 1 ] + camera_num_pixels_[ local_start_index + cam_idx ];
+      }
+    }
+
+    size_t max_num_devices =
+      ( std::accumulate( camera_num_pixels_.begin(), camera_num_pixels_.end(), 0 ) - 1 ) / num_processes + 1;
+    devices_.resize( max_num_devices );
+
+    spikes_ring_buffer_.resize( num_processes, std::vector< std::vector< CameraSpikeEvent > >( 1 ) );
   }
-
-  // Communicate the total number of pixels of each camera to determine the maximum number of devices each process might
-  // have to accept for each camera. The exact value is not known yet, as it depends on the distribution of devices
-  // (one per pixel) on the processes. Some processes will own one more device compared to other processes if the total
-  // number of pixels is not divisible by the number of ranks.
-  std::vector< int > displacements = std::vector< int >( global_num_cameras_ );
-  displacements[ 0 ] = 0;
-  for ( size_t cam_idx = 1; cam_idx != camera_num_pixels_.size(); ++cam_idx )
-  {
-    displacements[ cam_idx ] = num_cameras_per_process[ cam_idx - 1 ];
-  }
-  MPI_Allgatherv( camera_num_pixels_.data() + local_start_index,
-    num_local_cameras,
-    MPI_SIZE_T,
-    camera_num_pixels_.data(),
-    num_cameras_per_process.data(),
-    displacements.data(),
-    MPI_SIZE_T,
-    comm );
-
-  camera_start_indices_.resize( cameras_.size() );
-  camera_start_indices_[ 0 ] =
-    std::accumulate( camera_num_pixels_.begin(), camera_num_pixels_.begin() + local_start_index, 0 );
-
-  for ( size_t cam_idx = 1; cam_idx != cameras_.size(); ++cam_idx )
-  {
-    camera_start_indices_[ cam_idx ] =
-      camera_start_indices_[ cam_idx - 1 ] + camera_num_pixels_[ local_start_index + cam_idx ];
-  }
-
-  size_t max_num_devices =
-    ( std::accumulate( camera_num_pixels_.begin(), camera_num_pixels_.end(), 0 ) - 1 ) / num_processes + 1;
-  devices_.resize( max_num_devices );
-
-  spikes_ring_buffer_.resize( num_processes, std::vector< std::vector< CameraSpikeEvent > >( 1 ) );
 }
 
 void
@@ -213,22 +219,23 @@ StimulationBackendMetavision::prepare()
 void
 StimulationBackendMetavision::wait_for_camera_( const size_t cam_idx, std::unique_lock< std::mutex >& lock )
 {
-  // co << "Cam time: " << camera_times_[ cam_idx ] << " - Sim time: " << sim_target_time_ << std::endl;
   // If the camera didn't reach simulation time yet, we continue waiting. Make sure this is only checked while the mutex
   // is locked by us, otherwise race conditions can occur when accessing the camera_times_.
   while ( camera_times_[ cam_idx ] < sim_target_time_ )
   {
     // wait for notification of camera that more spikes have been sent and the camera time has been advanced
-    // co << "Wait for camera: Waiting" << std::endl;
     camera_busy_cv_.wait( lock );
-    // co << "Wait for camera: Done waiting" << std::endl;
   }
-  // co << "Wait for camera: Continue" << std::endl;
 }
 
 void
 StimulationBackendMetavision::pre_run_hook()
 {
+  if ( not enrolled_ )
+  {
+    return;
+  }
+
   // Get the total number of devices on each process and communicate to everyone, so that all processes managing cameras
   // can send the events for all pixels depending on the number of devices. Device-pixel mapping is performed round-
   // robin, but some processes could in theory own more devices than others, depending on how the devices were created.
@@ -261,6 +268,8 @@ StimulationBackendMetavision::pre_run_hook()
     cameras_[ cam_idx ].start();
   }
 
+  // sleep( 30 );
+
   // manually run post_step_hook once, to initially load spikes from the camera
   post_step_hook();
 }
@@ -274,39 +283,37 @@ StimulationBackendMetavision::post_step_hook()
   // number of spikes produced in the current slice are communicated to all other processes to then exchange all spikes
   // in a subsequent step.
   const long current_timestep = kernel().simulation_manager.get_slice_origin().get_steps();
+  const double current_timestep_double = Time::delay_steps_to_ms( current_timestep );
   // get end time of next time slice
   sim_target_time_ = Time::delay_steps_to_ms( current_timestep + kernel().simulation_manager.get_to_step() );
-  // co << "--- Simulation slice end time: " << sim_target_time_ << std::endl;
 
-  const double current_plus_one = Time::delay_steps_to_ms( current_timestep + 1 );
   const double time_slice_length = Time::delay_steps_to_ms( kernel().connection_manager.get_min_delay() );
   const size_t num_processes = kernel().mpi_manager.get_num_processes();
 
+  std::unique_lock< std::mutex > lock;
 #pragma omp master
   {
+    lock = std::unique_lock( camera_busy_mutex_ );
+
     // prevent the camera from taking over the mutex again
     priority_waiting_ = true;
+
+    // block until all cameras_ reached the current timestep
+    for ( size_t cam_idx = 0; cam_idx != cameras_.size(); ++cam_idx )
     {
-      std::unique_lock< std::mutex > lock( camera_busy_mutex_ );
-
-      // block until all cameras_ reached the current timestep
-      for ( size_t cam_idx = 0; cam_idx != cameras_.size(); ++cam_idx )
+      // only wait for new camera spikes if the camera is still turned on
+      if ( cameras_[ cam_idx ].is_running() )
       {
-        // only wait for new camera spikes if the camera is still turned on
-        if ( cameras_[ cam_idx ].is_running() )
-        {
-          wait_for_camera_( cam_idx, lock );
-        }
+        wait_for_camera_( cam_idx, lock );
       }
-      priority_waiting_ = false;
     }
+    priority_waiting_ = false;
   }
-
   std::vector< int > send_sizes = std::vector< int >( num_processes );
   std::vector< int > recv_sizes = std::vector< int >( num_processes );
 
   // Parallel sorting of temporarily buffered spikes into time slices
-  // #pragma omp for
+  #pragma omp for
   for ( size_t rank = 0; rank != num_processes; ++rank )
   {
     for ( const CameraSpikeEvent& cse : temporary_spikes_buffer_[ rank ] )
@@ -315,7 +322,7 @@ StimulationBackendMetavision::post_step_hook()
       double t = static_cast< double >( cse.t ) / 1000;
 
       // calculate how many simulation cycles in the future the event has to be sent
-      const size_t cycles_in_future = ( t - current_plus_one ) / time_slice_length;
+      const size_t cycles_in_future = ( t - current_timestep_double ) / time_slice_length;
 
       // Check if the spikes must be inserted into a position in the ring buffer that does not exist yet. In this
       // case the ring buffer must be resized first.
@@ -337,12 +344,12 @@ StimulationBackendMetavision::post_step_hook()
   }
 #pragma omp master
   {
+    lock.unlock();
     // Notify camera thread that spikes can be collected again now, as the temporary_spikes_buffer_ is no longer in use.
     camera_busy_cv_.notify_all();
 
     // recv_sizes = send_sizes;
     MPI_Alltoall( send_sizes.data(), 1, MPI_INT, recv_sizes.data(), 1, MPI_INT, comm );
-
     // now allocate memory
     const size_t send_total_num = std::accumulate( send_sizes.begin(), send_sizes.end(), 0 );
     const size_t recv_total_num = std::accumulate( recv_sizes.begin(), recv_sizes.end(), 0 );
@@ -381,7 +388,6 @@ StimulationBackendMetavision::post_step_hook()
       recv_displacements.data(),
       MPI_SIZE_T,
       comm );
-
     for ( CameraSpikeEvent cse : recv_buffer )
     {
       // convert time from microsecond (long) to milliseconds (double)
@@ -389,7 +395,7 @@ StimulationBackendMetavision::post_step_hook()
 
       // send spike to device for pixel
       std::vector< double > spike { t, cse.positive_contrast_change ? 1. : -1. };
-      devices_[ cse.idx ]->set_data_from_stimulation_backend( spike );
+      devices_.at( cse.idx )->set_data_from_stimulation_backend( spike );
     }
     for ( size_t rank = 0; rank != num_processes; ++rank )
     {
@@ -421,17 +427,22 @@ StimulationBackendMetavision::collect_incoming_spikes_( const Metavision::EventC
   const Metavision::EventCD* end,
   const size_t cam_idx )
 {
-  // co << "Camera time (tmp): " << current_camera_time << std::endl;
   {
     std::unique_lock< std::mutex > l( camera_busy_mutex_ );
-    // co << "Collect spikes: Waiting" << std::endl;
     camera_busy_cv_.wait( l, [ & ]() { return !priority_waiting_ or sim_target_time_ > camera_times_[ cam_idx ]; } );
-    // co << "Collect spikes: Done waiting" << std::endl;
+
+    // we can discard all spikes that will never be processes by the simulation anymore
+    const long simulation_end_time_us = static_cast< long >( kernel().simulation_manager.run_duration().get_ms() * 1000 );
 
     // copy all events into temporary buffer
     for ( const Metavision::EventCD* ev = begin; ev != end; ++ev )
     {
       const long time_us = ev->t;
+      if ( time_us > simulation_end_time_us )
+      {
+        break;
+      }
+
       const bool positive_contrast_change = ev->p == 1;
       const unsigned int pixel_idx =
         camera_start_indices_[ cam_idx ] + camera_resolutions_[ cam_idx ].first * ev->y + ev->x;
@@ -452,22 +463,20 @@ StimulationBackendMetavision::collect_incoming_spikes_( const Metavision::EventC
       camera_times_[ cam_idx ] = static_cast< double >( ( end - 1 )->t ) / 1000;
     }
   }
-  // co << "Collect spikes: Notify" << std::endl;
   camera_busy_cv_.notify_all();
 }
 
 void
 StimulationBackendMetavision::change_ring_buffer_size_( const size_t rank, const size_t new_size )
 {
-  size_t size_diff = new_size - spikes_ring_buffer_[ rank ].size(); // only valid if size increased
   spikes_ring_buffer_[ rank ].resize( new_size );
 
   if ( new_size > spikes_ring_buffer_[ rank ].size() )
   {
     // The ring buffer must be extended at the end, however the end is not necessarily at the end of the vector.
-    for ( size_t i = 0; i != std::max( size_diff, current_time_index_[ rank ] ); ++i )
+    for ( size_t i = 0; i != current_time_index_[ rank ]; ++i )
     {
-      spikes_ring_buffer_[ rank ][ current_time_index_[ rank ] + i + 1 ].swap( spikes_ring_buffer_[ rank ][ i ] );
+      spikes_ring_buffer_[ rank ][ ( current_time_index_[ rank ] + i + 1 ) % spikes_ring_buffer_[ rank ].size() ].swap( spikes_ring_buffer_[ rank ][ i ] );
     }
   }
 }

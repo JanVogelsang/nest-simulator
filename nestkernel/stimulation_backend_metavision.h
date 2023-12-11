@@ -33,7 +33,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
-// #include <syncstream>
+#include <syncstream>
 
 /* BeginUserDocs: stimulation backend
 
