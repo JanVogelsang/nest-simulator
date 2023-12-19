@@ -34,26 +34,21 @@ class MetavisionSDKTestCase(unittest.TestCase):
 
     def test_EventsSpikes(self):
         """Spike Events"""
+
         nest.ResetKernel()
         nest.set_verbosity("M_WARNING")
         nest.resolution = 1.
-        nest.local_num_threads = 1
+        nest.local_num_threads = 8
+        cam = nest.Create("precise_weighted_spike_generator", 1280 * 720, params={"stimulus_source": "metavision"})
+        sr = nest.Create("spike_recorder", num_processes)
 
-        cam = nest.Create("precise_weighted_spike_generator", 1000, params={"stimulus_source": "metavision"})
-        # p = nest.Create("parrot_neuron_ps")
-        # cam = nest.Create("precise_weighted_spike_generator", 1280 * 720, params={"stimulus_source": "metavision"})
-        sr = nest.Create("spike_recorder")
+        nest.Connect(cam, sr, syn_spec={"delay": 1.0})
 
-        # nest.Connect(cam, p)
-        # nest.Connect(p, sr)
-        nest.Connect(cam, sr)
-
-        nest.Simulate(10.)
+        nest.Simulate(8.)
 
         d = nest.GetStatus(sr, "events")[0]
-        print(len(d["times"]))
 
-        # self.assertEqual(len(d["times"]), 20)
+        self.assertGreater(len(d["times"]), 0)
 
 
 def suite():
@@ -64,6 +59,4 @@ def suite():
 if __name__ == "__main__":
     # runner = unittest.TextTestRunner(verbosity=2)
     # runner.run(suite())
-    for _ in range(1000):
-        print("\n\n\n")
-        MetavisionSDKTestCase().test_EventsSpikes()
+    MetavisionSDKTestCase().test_EventsSpikes()

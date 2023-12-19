@@ -187,15 +187,14 @@ Layer< D >::do_get_global_positions_ntree_( NodeCollectionPTR node_collection )
   {
     // Convert from vector to Ntree
 
-    // TODO JV: Removed for debugging (c++20 standard)
-    /*typename std::insert_iterator< Ntree< D, size_t > > to = std::inserter( *cached_ntree_, cached_ntree_->end() );
+    typename std::insert_iterator< Ntree< D, size_t > > to = std::inserter( *cached_ntree_, cached_ntree_->end() );
 
     for ( typename std::vector< std::pair< Position< D >, size_t > >::iterator from = cached_vector_->begin();
           from != cached_vector_->end();
           ++from )
     {
       *to = *from;
-    }*/
+    }
   }
   else
   {

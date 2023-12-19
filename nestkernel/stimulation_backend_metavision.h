@@ -82,9 +82,6 @@ class StimulationDevice;
 class StimulationBackendMetavision : public StimulationBackend
 {
 public:
-  // TODO JV: Debugging only
-  // std::osyncstream co;
-
   /**
    * InputBackend constructor
    *
@@ -118,10 +115,6 @@ public:
   void post_step_hook() override;
 
 private:
-  /**
-   * True if there is at least one registered stimulation device.
-   */
-  bool enrolled_;
 
   /**
    * Maps (x, y) camera coordinates to stimulation devices.

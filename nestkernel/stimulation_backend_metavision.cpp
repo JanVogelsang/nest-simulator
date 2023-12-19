@@ -39,8 +39,7 @@ namespace nest
 {
 
 StimulationBackendMetavision::StimulationBackendMetavision()
-  : enrolled_( false )
-  , next_index_( 0 )
+  : next_index_( 0 )
   , priority_waiting_( false )
   , sim_target_time_( 0 )
 {
@@ -59,24 +58,26 @@ StimulationBackendMetavision::initialize()
   auto comm = kernel().mpi_manager.get_communicator();
 
   // TODO JV: Find a way to let the user specify which input source to use (e.g. cam via serial number, file, etc.)
-  if ( kernel().mpi_manager.get_rank() == 0 )
-  {
-    cameras_.push_back( Metavision::Camera::from_file( "/home/vogelsang1/vision/camera_data/data.raw" ) );
-    cameras_.back().add_runtime_error_callback( [ & ]( const Metavision::CameraException& e )
-      { std::cout << "Metavision SDK reported an exception from one of the cameras: " << e.what() << std::endl; } );
-  }
+    if ( kernel().mpi_manager.get_rank() == 0 )
+    {
+      cameras_.push_back( Metavision::Camera::from_file( "/home/vogelsang1/vision/camera_data/data.raw" ) );
+      cameras_.back().add_runtime_error_callback( [ & ]( const Metavision::CameraException& e )
+        { std::cout << "Metavision SDK reported an exception from one of the cameras: " << e.what() << std::endl; } );
+//      cameras_.push_back( Metavision::Camera::from_file( "/home/vogelsang1/vision/camera_data/data.raw" ) );
+//      cameras_.back().add_runtime_error_callback( [ & ]( const Metavision::CameraException& e )
+//        { std::cout << "Metavision SDK reported an exception from one of the cameras: " << e.what() << std::endl; } );
+    }
 
-  //  Metavision::AvailableSourcesList camera_list = Metavision::Camera::list_online_sources();
-  //  for ( const auto& cameras_per_type : camera_list )
-  //  {
-  //    for ( const std::string& camera_serial : cameras_per_type.second )
-  //    {
-  //      cameras_.push_back( Metavision::Camera::from_serial( camera_serial ) );
-  //      cameras_.back().add_runtime_error_callback( [ & ]( const Metavision::CameraException& e )
-  //        { std::cout << "Metavision SDK reported an exception from one of the cameras: " << e.what() << std::endl; }
-  //        );
-  //    }
-  //  }
+//  Metavision::AvailableSourcesList camera_list = Metavision::Camera::list_online_sources();
+//  for ( const auto& cameras_per_type : camera_list )
+//  {
+//    for ( const std::string& camera_serial : cameras_per_type.second )
+//    {
+//      cameras_.push_back( Metavision::Camera::from_serial( camera_serial ) );
+//      cameras_.back().add_runtime_error_callback( [ & ]( const Metavision::CameraException& e )
+//        { std::cout << "Metavision SDK reported an exception from one of the cameras: " << e.what() << std::endl; } );
+//    }
+//  }
 
   const size_t num_processes = kernel().mpi_manager.get_num_processes();
   const int num_local_cameras = cameras_.size();
@@ -98,7 +99,8 @@ StimulationBackendMetavision::initialize()
     }
   }
 
-  if ( global_num_cameras_ > 0 ){
+  if ( global_num_cameras_ > 0 )
+  {
     // find local start index
     const size_t local_start_index = std::accumulate(
       num_cameras_per_process.begin(), num_cameras_per_process.begin() + kernel().mpi_manager.get_rank(), 0 );
@@ -116,10 +118,10 @@ StimulationBackendMetavision::initialize()
         camera_resolutions_[ cam_idx ].first * camera_resolutions_[ cam_idx ].second;
     }
 
-    // Communicate the total number of pixels of each camera to determine the maximum number of devices each process might
-    // have to accept for each camera. The exact value is not known yet, as it depends on the distribution of devices
-    // (one per pixel) on the processes. Some processes will own one more device compared to other processes if the total
-    // number of pixels is not divisible by the number of ranks.
+    // Communicate the total number of pixels of each camera to determine the maximum number of devices each process
+    // might have to accept for each camera. The exact value is not known yet, as it depends on the distribution of
+    // devices (one per pixel) on the processes. Some processes will own one more device compared to other processes if
+    // the total number of pixels is not divisible by the number of ranks.
     std::vector< int > displacements = std::vector< int >( global_num_cameras_ );
     displacements[ 0 ] = 0;
     for ( size_t cam_idx = 1; cam_idx != camera_num_pixels_.size(); ++cam_idx )
@@ -160,11 +162,6 @@ StimulationBackendMetavision::finalize()
 {
   std::vector< StimulationDevice* >().swap( devices_ );
   next_index_ = 0;
-
-  for ( Metavision::Camera& cam : cameras_ )
-  {
-    cam.stop();
-  }
   std::vector< Metavision::Camera >().swap( cameras_ );
   std::vector< Metavision::CallbackId >().swap( camera_callbacks_ );
   std::vector< std::vector< std::vector< CameraSpikeEvent > > >().swap( spikes_ring_buffer_ );
@@ -172,6 +169,7 @@ StimulationBackendMetavision::finalize()
   std::vector< size_t >().swap( camera_start_indices_ );
   std::vector< std::pair< size_t, size_t > >().swap( camera_resolutions_ );
   std::vector< double >().swap( camera_times_ );
+  std::vector< size_t >().swap( camera_ranks_ );
   std::vector< size_t >().swap( camera_num_pixels_ );
   std::vector< size_t >().swap( process_devices_start_indices_ );
   std::vector< size_t >().swap( process_devices_end_indices_ );
@@ -185,15 +183,14 @@ StimulationBackendMetavision::enroll( const Node* node, StimulationDevice& devic
   {
     throw KernelException( "Metavision stimulation backend is not accepting any more stimulation devices!" );
   }
-  auto device_it = std::find( devices_.begin(), devices_.begin() + next_index_, &device );
-  if ( device_it == devices_.begin() + next_index_ )
-  {
-    devices_[ next_index_ ] = &device;
-    // Find next pixel for which no stimulation device has been registered yet, starting from the last set index.
-    next_index_ = std::find( devices_.begin() + next_index_ + 1, devices_.end(), nullptr ) - devices_.begin();
-
-    enrolled_ = true;
-  }
+  // Check if device has been enrolled already to prevent enrolling the same device multiple times.
+  // auto device_it = std::find( devices_.begin(), devices_.begin() + next_index_, &device );
+  // if ( device_it == devices_.begin() + next_index_ )
+  // {
+  devices_[ next_index_ ] = &device;
+  // Find next pixel for which no stimulation device has been registered yet, starting from the last set index.
+  next_index_ = std::find( devices_.begin() + next_index_ + 1, devices_.end(), nullptr ) - devices_.begin();
+  // }
 }
 
 void
@@ -210,10 +207,6 @@ StimulationBackendMetavision::disenroll( const Node* node, StimulationDevice& de
 void
 StimulationBackendMetavision::prepare()
 {
-  if ( not enrolled_ )
-  {
-    return;
-  }
 }
 
 void
@@ -231,11 +224,6 @@ StimulationBackendMetavision::wait_for_camera_( const size_t cam_idx, std::uniqu
 void
 StimulationBackendMetavision::pre_run_hook()
 {
-  if ( not enrolled_ )
-  {
-    return;
-  }
-
   // Get the total number of devices on each process and communicate to everyone, so that all processes managing cameras
   // can send the events for all pixels depending on the number of devices. Device-pixel mapping is performed round-
   // robin, but some processes could in theory own more devices than others, depending on how the devices were created.
@@ -268,8 +256,6 @@ StimulationBackendMetavision::pre_run_hook()
     cameras_[ cam_idx ].start();
   }
 
-  // sleep( 30 );
-
   // manually run post_step_hook once, to initially load spikes from the camera
   post_step_hook();
 }
@@ -291,12 +277,13 @@ StimulationBackendMetavision::post_step_hook()
   const size_t num_processes = kernel().mpi_manager.get_num_processes();
 
   std::unique_lock< std::mutex > lock;
+
 #pragma omp master
   {
-    lock = std::unique_lock( camera_busy_mutex_ );
-
     // prevent the camera from taking over the mutex again
     priority_waiting_ = true;
+
+    lock = std::unique_lock( camera_busy_mutex_ );  // implicitly locks the mutex
 
     // block until all cameras_ reached the current timestep
     for ( size_t cam_idx = 0; cam_idx != cameras_.size(); ++cam_idx )
@@ -309,11 +296,9 @@ StimulationBackendMetavision::post_step_hook()
     }
     priority_waiting_ = false;
   }
-  std::vector< int > send_sizes = std::vector< int >( num_processes );
-  std::vector< int > recv_sizes = std::vector< int >( num_processes );
 
-  // Parallel sorting of temporarily buffered spikes into time slices
-  #pragma omp for
+// Parallel sorting of temporarily buffered spikes into time slices
+#pragma omp for
   for ( size_t rank = 0; rank != num_processes; ++rank )
   {
     for ( const CameraSpikeEvent& cse : temporary_spikes_buffer_[ rank ] )
@@ -335,20 +320,23 @@ StimulationBackendMetavision::post_step_hook()
                            .push_back( cse );
     }
     temporary_spikes_buffer_[ rank ].clear();
-
-    // All spikes need to be exchanged. In order to do so, we must first communicate the number of spikes for each rank,
-    // to then calculate the receive buffer sizes on each rank and allocate the memory.
-    // first communicate the number of spikes to expect
-
-    send_sizes[ rank ] = spikes_ring_buffer_[ rank ][ current_time_index_[ rank ] ].size();
-  }
+  } // implicit barrier
 #pragma omp master
   {
     lock.unlock();
     // Notify camera thread that spikes can be collected again now, as the temporary_spikes_buffer_ is no longer in use.
     camera_busy_cv_.notify_all();
 
-    // recv_sizes = send_sizes;
+    // All spikes need to be exchanged. In order to do so, we must first communicate the number of spikes for each rank,
+    // to then calculate the receive buffer sizes on each rank and allocate the memory.
+    // first communicate the number of spikes to expect
+    std::vector< int > send_sizes = std::vector< int >( num_processes );
+    std::vector< int > recv_sizes = std::vector< int >( num_processes );
+    for ( size_t rank = 0; rank != num_processes; ++rank )
+    {
+      send_sizes[ rank ] = spikes_ring_buffer_[ rank ][ current_time_index_[ rank ] ].size();
+    }
+
     MPI_Alltoall( send_sizes.data(), 1, MPI_INT, recv_sizes.data(), 1, MPI_INT, comm );
     // now allocate memory
     const size_t send_total_num = std::accumulate( send_sizes.begin(), send_sizes.end(), 0 );
@@ -367,10 +355,11 @@ StimulationBackendMetavision::post_step_hook()
       recv_sizes[ rank ] *= effective_size_multiplier;
 
       send_displacements[ rank ] = current_idx;
-      std::copy( spikes_ring_buffer_[ rank ][ current_time_index_[ rank ] ].begin(),
-        spikes_ring_buffer_[ rank ][ current_time_index_[ rank ] ].end(),
+      assert( send_buffer.size() - current_idx >= spikes_ring_buffer_.at( rank ).at( current_time_index_.at( rank ) ).size() );
+      std::copy( spikes_ring_buffer_.at( rank ).at( current_time_index_.at( rank ) ).begin(),
+        spikes_ring_buffer_.at( rank ).at( current_time_index_.at( rank ) ).end(),
         send_buffer.begin() + current_idx );
-      current_idx += spikes_ring_buffer_[ rank ][ current_time_index_[ rank ] ].size();
+      current_idx += spikes_ring_buffer_.at( rank ).at( current_time_index_.at( rank ) ).size();
     }
     recv_displacements[ 0 ] = 0;
     for ( size_t rank = 1; rank != num_processes; ++rank )
@@ -378,7 +367,6 @@ StimulationBackendMetavision::post_step_hook()
       recv_displacements[ rank ] = recv_displacements[ rank - 1 ] + recv_sizes[ rank - 1 ];
     }
     // now communicate the actual spike data
-    recv_buffer = send_buffer;
     MPI_Alltoallv( send_buffer.data(),
       send_sizes.data(),
       send_displacements.data(),
@@ -395,6 +383,7 @@ StimulationBackendMetavision::post_step_hook()
 
       // send spike to device for pixel
       std::vector< double > spike { t, cse.positive_contrast_change ? 1. : -1. };
+
       devices_.at( cse.idx )->set_data_from_stimulation_backend( spike );
     }
     for ( size_t rank = 0; rank != num_processes; ++rank )
@@ -432,8 +421,8 @@ StimulationBackendMetavision::collect_incoming_spikes_( const Metavision::EventC
     camera_busy_cv_.wait( l, [ & ]() { return !priority_waiting_ or sim_target_time_ > camera_times_[ cam_idx ]; } );
 
     // we can discard all spikes that will never be processes by the simulation anymore
-    const long simulation_end_time_us = static_cast< long >( kernel().simulation_manager.run_duration().get_ms() * 1000 );
-
+    const long simulation_end_time_us =
+      static_cast< long >( kernel().simulation_manager.run_duration().get_ms() * 1000 );
     // copy all events into temporary buffer
     for ( const Metavision::EventCD* ev = begin; ev != end; ++ev )
     {
@@ -469,14 +458,16 @@ StimulationBackendMetavision::collect_incoming_spikes_( const Metavision::EventC
 void
 StimulationBackendMetavision::change_ring_buffer_size_( const size_t rank, const size_t new_size )
 {
+  const size_t old_size = spikes_ring_buffer_[ rank ].size();
   spikes_ring_buffer_[ rank ].resize( new_size );
 
-  if ( new_size > spikes_ring_buffer_[ rank ].size() )
+  if ( new_size > old_size )
   {
     // The ring buffer must be extended at the end, however the end is not necessarily at the end of the vector.
     for ( size_t i = 0; i != current_time_index_[ rank ]; ++i )
     {
-      spikes_ring_buffer_[ rank ][ ( current_time_index_[ rank ] + i + 1 ) % spikes_ring_buffer_[ rank ].size() ].swap( spikes_ring_buffer_[ rank ][ i ] );
+      spikes_ring_buffer_[ rank ][ ( old_size + i ) % spikes_ring_buffer_[ rank ].size() ].swap(
+        spikes_ring_buffer_[ rank ][ i ] );
     }
   }
 }
