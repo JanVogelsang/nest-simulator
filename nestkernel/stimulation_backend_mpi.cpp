@@ -43,6 +43,16 @@ nest::StimulationBackendMPI::~StimulationBackendMPI() noexcept
 
 
 void
+nest::StimulationBackendMPI::set_status( const DictionaryDatum& params )
+{
+}
+
+void
+nest::StimulationBackendMPI::get_status( DictionaryDatum& params ) const
+{
+}
+
+void
 nest::StimulationBackendMPI::initialize()
 {
   auto nthreads = kernel().vp_manager.get_num_threads();

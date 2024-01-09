@@ -199,6 +199,7 @@ extern const Name events;
 extern const Name extent;
 
 extern const Name file_extension;
+extern const Name file_paths;
 extern const Name filename;
 extern const Name filenames;
 extern const Name frequency;
@@ -450,6 +451,7 @@ extern const Name SIC_th;
 extern const Name sdev;
 extern const Name send_buffer_size_secondary_events;
 extern const Name senders;
+extern const Name serial_numbers;
 extern const Name shape;
 extern const Name shift_now_spikes;
 extern const Name shrink_factor_buffer_spike_data;

@@ -160,6 +160,7 @@ public:
    */
   bool is_active( const Time& ) const override;
   // TODO JV: We need node here, how can we get it without breaking the get/set_status signature?
+  //  The best solution would be a rework of the node inheritance structure. There should be a Node base class
   using Device::get_status;
   using Device::set_status;
   void get_status( const Node* node, DictionaryDatum& d ) const;

@@ -297,6 +297,12 @@ set_model_defaults( const std::string component, const DictionaryDatum& dict )
     return;
   }
 
+  if ( kernel().io_manager.is_valid_stimulation_backend( component ) )
+  {
+    kernel().io_manager.set_stimulation_backend_status( component, dict );
+    return;
+  }
+
   throw UnknownComponent( component );
 }
 
@@ -326,6 +332,11 @@ get_model_defaults( const std::string component )
   if ( kernel().io_manager.is_valid_recording_backend( component ) )
   {
     return kernel().io_manager.get_recording_backend_status( component );
+  }
+
+  if ( kernel().io_manager.is_valid_stimulation_backend( component ) )
+  {
+    return kernel().io_manager.get_stimulation_backend_status( component );
   }
 
   throw UnknownComponent( component );

@@ -173,6 +173,7 @@ const Name events( "events" );
 const Name extent( "extent" );
 
 const Name file_extension( "file_extension" );
+const Name file_paths( "file_paths" );
 const Name filename( "filename" );
 const Name filenames( "filenames" );
 const Name frequency( "frequency" );
@@ -424,6 +425,7 @@ const Name SIC_th( "SIC_th" );
 const Name sdev( "sdev" );
 const Name send_buffer_size_secondary_events( "send_buffer_size_secondary_events" );
 const Name senders( "senders" );
+const Name serial_numbers( "serial_numbers" );
 const Name shape( "shape" );
 const Name shift_now_spikes( "shift_now_spikes" );
 const Name shrink_factor_buffer_spike_data( "shrink_factor_buffer_spike_data" );

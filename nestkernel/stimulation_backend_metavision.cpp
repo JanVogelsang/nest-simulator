@@ -49,6 +49,53 @@ StimulationBackendMetavision::~StimulationBackendMetavision() noexcept
 {
 }
 
+void
+StimulationBackendMetavision::set_status( const DictionaryDatum& d )
+{
+  if ( d->known( names::file_paths ) )
+  {
+    input_file_paths_.clear();
+
+    ArrayDatum ad = getValue< ArrayDatum >( d, names::file_paths );
+    for ( Token* t = ad.begin(); t != ad.end(); ++t )
+    {
+      input_file_paths_.push_back( getValue< std::string >( *t ) );
+    }
+  }
+  if ( d->known( names::serial_numbers ) )
+  {
+    input_serials_.clear();
+
+    ArrayDatum ad = getValue< ArrayDatum >( d, names::serial_numbers );
+    for ( Token* t = ad.begin(); t != ad.end(); ++t )
+    {
+      input_serials_.push_back( getValue< std::string >( *t ) );
+    }
+  }
+  // If the input sources changes, reinitialize the backend
+  if ( d->known( names::file_paths ) or d->known( names::serial_numbers ) )
+  {
+    finalize();
+    initialize();
+  }
+}
+
+void
+StimulationBackendMetavision::get_status( DictionaryDatum& d ) const
+{
+  ArrayDatum ad;
+  for ( const std::string& file_path : input_file_paths_ )
+  {
+    ad.push_back( LiteralDatum( file_path ) );
+  }
+  ( *d )[ names::file_paths ] = ad;
+  ad.clear();
+    for ( const std::string& serial : input_serials_ )
+  {
+    ad.push_back( LiteralDatum( serial ) );
+  }
+  ( *d )[ names::serial_numbers ] = ad;
+}
 
 void
 StimulationBackendMetavision::initialize()
@@ -57,27 +104,30 @@ StimulationBackendMetavision::initialize()
 
   auto comm = kernel().mpi_manager.get_communicator();
 
-  // TODO JV: Find a way to let the user specify which input source to use (e.g. cam via serial number, file, etc.)
+  for ( const std::string& path : input_file_paths_ )
+  {
     if ( kernel().mpi_manager.get_rank() == 0 )
     {
-      cameras_.push_back( Metavision::Camera::from_file( "/home/vogelsang1/vision/camera_data/data.raw" ) );
+      cameras_.push_back( Metavision::Camera::from_file( path ) );
       cameras_.back().add_runtime_error_callback( [ & ]( const Metavision::CameraException& e )
         { std::cout << "Metavision SDK reported an exception from one of the cameras: " << e.what() << std::endl; } );
-//      cameras_.push_back( Metavision::Camera::from_file( "/home/vogelsang1/vision/camera_data/data.raw" ) );
-//      cameras_.back().add_runtime_error_callback( [ & ]( const Metavision::CameraException& e )
-//        { std::cout << "Metavision SDK reported an exception from one of the cameras: " << e.what() << std::endl; } );
     }
+  }
 
-//  Metavision::AvailableSourcesList camera_list = Metavision::Camera::list_online_sources();
-//  for ( const auto& cameras_per_type : camera_list )
-//  {
-//    for ( const std::string& camera_serial : cameras_per_type.second )
-//    {
-//      cameras_.push_back( Metavision::Camera::from_serial( camera_serial ) );
-//      cameras_.back().add_runtime_error_callback( [ & ]( const Metavision::CameraException& e )
-//        { std::cout << "Metavision SDK reported an exception from one of the cameras: " << e.what() << std::endl; } );
-//    }
-//  }
+  Metavision::AvailableSourcesList camera_list = Metavision::Camera::list_online_sources();
+  for ( const auto& cameras_per_type : camera_list )
+  {
+    for ( const std::string& camera_serial : cameras_per_type.second )
+    {
+      if ( input_serials_.empty()
+        or std::find( input_serials_.begin(), input_serials_.end(), camera_serial ) != input_serials_.end() )
+      {
+        cameras_.push_back( Metavision::Camera::from_serial( camera_serial ) );
+        cameras_.back().add_runtime_error_callback( [ & ]( const Metavision::CameraException& e )
+          { std::cout << "Metavision SDK reported an exception from one of the cameras: " << e.what() << std::endl; } );
+      }
+    }
+  }
 
   const size_t num_processes = kernel().mpi_manager.get_num_processes();
   const int num_local_cameras = cameras_.size();
@@ -283,7 +333,7 @@ StimulationBackendMetavision::post_step_hook()
     // prevent the camera from taking over the mutex again
     priority_waiting_ = true;
 
-    lock = std::unique_lock( camera_busy_mutex_ );  // implicitly locks the mutex
+    lock = std::unique_lock( camera_busy_mutex_ ); // implicitly locks the mutex
 
     // block until all cameras_ reached the current timestep
     for ( size_t cam_idx = 0; cam_idx != cameras_.size(); ++cam_idx )
@@ -355,7 +405,8 @@ StimulationBackendMetavision::post_step_hook()
       recv_sizes[ rank ] *= effective_size_multiplier;
 
       send_displacements[ rank ] = current_idx;
-      assert( send_buffer.size() - current_idx >= spikes_ring_buffer_.at( rank ).at( current_time_index_.at( rank ) ).size() );
+      assert( send_buffer.size() - current_idx
+        >= spikes_ring_buffer_.at( rank ).at( current_time_index_.at( rank ) ).size() );
       std::copy( spikes_ring_buffer_.at( rank ).at( current_time_index_.at( rank ) ).begin(),
         spikes_ring_buffer_.at( rank ).at( current_time_index_.at( rank ) ).end(),
         send_buffer.begin() + current_idx );

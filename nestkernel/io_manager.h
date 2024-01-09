@@ -59,6 +59,8 @@ public:
 
   void set_recording_backend_status( std::string, const DictionaryDatum& );
   DictionaryDatum get_recording_backend_status( std::string );
+  void set_stimulation_backend_status( std::string, const DictionaryDatum& );
+  DictionaryDatum get_stimulation_backend_status( std::string );
 
   /**
    * The prefix for files written by devices.

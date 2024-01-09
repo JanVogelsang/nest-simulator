@@ -118,6 +118,28 @@ public:
    */
   ~StimulationBackendMPI() noexcept override;
 
+  /**
+   * Set the status of the stimulation backend using the key-value pairs contained in the params dictionary.
+   *
+   * @param params the status of the stimulation backend
+   *
+   * @see get_status()
+   *
+   * @ingroup NESTio
+   */
+  void set_status( const DictionaryDatum& params ) override;
+
+  /**
+   * Return the status of the stimulation backend by writing it to the given params dictionary.
+   *
+   * @param params the status of the stimulation backend
+   *
+   * @see set_status()
+   *
+   * @ingroup NESTio
+   */
+  void get_status( DictionaryDatum& params ) const override;
+
   void initialize() override;
 
   void finalize() override;

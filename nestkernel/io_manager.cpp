@@ -202,6 +202,12 @@ IOManager::set_recording_backend_status( std::string recording_backend, const Di
 }
 
 void
+IOManager::set_stimulation_backend_status( std::string stimulation_backend, const DictionaryDatum& d )
+{
+  stimulation_backends_[ stimulation_backend ]->set_status( d );
+}
+
+void
 IOManager::set_status( const DictionaryDatum& d )
 {
   set_data_path_prefix_( d );
@@ -214,6 +220,15 @@ IOManager::get_recording_backend_status( std::string recording_backend )
   DictionaryDatum status( new Dictionary );
   recording_backends_[ recording_backend ]->get_status( status );
   ( *status )[ names::element_type ] = "recording_backend";
+  return status;
+}
+
+DictionaryDatum
+IOManager::get_stimulation_backend_status( std::string stimulation_backend )
+{
+  DictionaryDatum status( new Dictionary );
+  stimulation_backends_[ stimulation_backend ]->get_status( status );
+  ( *status )[ names::element_type ] = "stimulation_backend";
   return status;
 }
 

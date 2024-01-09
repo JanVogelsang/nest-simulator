@@ -96,6 +96,28 @@ public:
    */
   ~StimulationBackendMetavision() noexcept override;
 
+  /**
+   * Set the status of the stimulation backend using the key-value pairs contained in the params dictionary.
+   *
+   * @param params the status of the stimulation backend
+   *
+   * @see get_status()
+   *
+   * @ingroup NESTio
+   */
+  void set_status( const DictionaryDatum& params ) override;
+
+  /**
+   * Return the status of the stimulation backend by writing it to the given params dictionary.
+   *
+   * @param params the status of the stimulation backend
+   *
+   * @see set_status()
+   *
+   * @ingroup NESTio
+   */
+  void get_status( DictionaryDatum& params ) const override;
+
   void initialize() override;
 
   void finalize() override;
@@ -115,7 +137,6 @@ public:
   void post_step_hook() override;
 
 private:
-
   /**
    * Maps (x, y) camera coordinates to stimulation devices.
    */
@@ -184,6 +205,16 @@ private:
    * Time in milliseconds of the end of the current simulation time slice.
    */
   std::atomic< double > sim_target_time_;
+
+  /**
+   * List of recorded data file paths to use as input sources.
+   */
+  std::vector< std::string > input_file_paths_;
+
+  /**
+   * List of camera serial numbers to use as input sources.
+   */
+  std::vector< std::string > input_serials_;
 
   /**
    *

@@ -77,6 +77,28 @@ public:
   virtual ~StimulationBackend() noexcept = default;
 
   /**
+   * Set the status of the stimulation backend using the key-value pairs contained in the params dictionary.
+   *
+   * @param params the status of the stimulation backend
+   *
+   * @see get_status()
+   *
+   * @ingroup NESTio
+   */
+  virtual void set_status( const DictionaryDatum& params ) = 0;
+
+  /**
+   * Return the status of the stimulation backend by writing it to the given params dictionary.
+   *
+   * @param params the status of the stimulation backend
+   *
+   * @see set_status()
+   *
+   * @ingroup NESTio
+   */
+  virtual void get_status( DictionaryDatum& params ) const = 0;
+
+  /**
    * Enroll a `StimulationDevice` with the `StimulationBackend`.
    *
    * When this function is called by a `StimulationDevice` @p device,
@@ -159,18 +181,14 @@ public:
   virtual void post_run_hook() = 0;
 
   /**
-   * In order to allow a derived backend do work at the end of each simulation step, this base class could define the
-   * function post_step_hook() right about here.
-   * However, this function would be called at the very end of each simulation step and require a very tight
-   * synchronization between incoming data and the simulation control itself. As the requirements for this are currently
-   * not formally defined due to the lack of a suitable use-case, we decided to omit the function from the interface
-   * until such a use-case arises.
+   * Clean up stimulation backend after a single simulation step.
    *
    * @ingroup NESTio
    */
-  // TODO JV: Update docstring
   virtual void post_step_hook() = 0;
+
   virtual void initialize() = 0;
+
   virtual void finalize() = 0;
 
   /**
