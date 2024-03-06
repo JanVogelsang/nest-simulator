@@ -134,6 +134,8 @@ DynamicSpikeBuffer::get_next_spikes()
 inline void
 DynamicSpikeBuffer::prepare_next_slice()
 {
+  // std::cout << spike_buffer_[ current_slice_ ].size() << std::endl;
+
   current_spike_ = spike_buffer_[ current_slice_ ].cbegin();
   std::sort( spike_buffer_[ current_slice_ ].begin(),
     spike_buffer_[ current_slice_ ].end(),

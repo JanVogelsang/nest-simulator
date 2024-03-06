@@ -210,7 +210,7 @@ Connector< ConnectionT >::send( const thread tid,
 
 template < typename ConnectionT >
 void
-DendriticDelayConnector<ConnectionT>::send( const thread tid,
+DendriticDelayConnector< ConnectionT >::send( const thread tid,
   const index target_node_id,
   const index lcid,
   const size_t dendritic_delay_id,

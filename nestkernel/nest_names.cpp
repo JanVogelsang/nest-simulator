@@ -257,7 +257,7 @@ const Name Kplus_triplet( "Kplus_triplet" );
 const Name keep_source_table( "keep_source_table" );
 const Name kernel( "kernel" );
 
-const Name reserve_connections( "reserve_connections");
+const Name reserve_connections( "reserve_connections" );
 
 const Name label( "label" );
 const Name lambda( "lambda" );

@@ -966,6 +966,7 @@ nest::SimulationManager::update_()
       {
         if ( kernel().connection_manager.has_primary_connections() )
         {
+          // std::cout << "COMMUNICATION" << std::endl;
           kernel().event_delivery_manager.gather_spike_data( tid );
         }
         if ( kernel().connection_manager.secondary_connections_exist() )

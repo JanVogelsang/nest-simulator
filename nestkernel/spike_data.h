@@ -283,6 +283,8 @@ template < class TargetT >
 inline void
 SpikeData::set( const TargetT& target, const unsigned int lag )
 {
+
+  // std::cout << lag << " - " << target.get_adjacency_list_index() << std::endl;
   // the assertions in the above function are granted by the TargetT object!
   assert( lag < MAX_LAG );
   adjacency_list_data_.adjacency_list_index = target.get_adjacency_list_index();

@@ -304,6 +304,8 @@ iaf_psc_alpha_ax_delay::update( const Time origin, const long from, const long t
 
   for ( long lag = from; lag < to; ++lag )
   {
+    ArchivingNode::update_stdp_connections( origin, lag );
+    // std::cout << "UPDATE - " << lag << std::endl;
     if ( S_.r_ == 0 )
     {
       // neuron not refractory
@@ -355,6 +357,8 @@ iaf_psc_alpha_ax_delay::update( const Time origin, const long from, const long t
 
       SpikeEvent se;
       kernel().event_delivery_manager.send( *this, se, lag );
+
+      // std::cout << "SEND - " << origin.get_steps() + lag << std::endl;
     }
 
     // set new input current
@@ -366,7 +370,7 @@ iaf_psc_alpha_ax_delay::update( const Time origin, const long from, const long t
     // log state data
     B_.logger_.record_data( origin.get_steps() + lag );
 
-    ArchivingNode::update_stdp_connections( origin, lag );
+    // ArchivingNode::update_stdp_connections( origin, lag );
   }
 
   ArchivingNode::end_update();
@@ -384,6 +388,9 @@ iaf_psc_alpha_ax_delay::handle( SpikeEvent& e )
 
   // separate buffer channels for excitatory and inhibitory inputs
   B_.input_buffer_.add_value( input_buffer_slot, s > 0 ? Buffers_::SYN_EX : Buffers_::SYN_IN, s );
+
+  // std::cout << "HANDLE - " << e.get_delay_steps() << " - " << e.get_stamp().get_steps() << " - " << kernel().simulation_manager.get_slice_origin().get_steps() << " - " << e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ) << std::endl;
+  // std::cout << e.get_spike_data().syn_id << " - " << e.get_spike_data().local_connection_id << " - " << input_buffer_slot << std::endl;
 }
 
 void

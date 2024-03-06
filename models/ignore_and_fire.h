@@ -280,7 +280,6 @@ private:
     V_.firing_period_steps_ = Time( Time::ms( 1. / P_.rate_ * 1000. ) ).get_steps();
     V_.phase_steps_ = Time( Time::ms( P_.phase_ / P_.rate_ * 1000. ) ).get_steps();
   }
-
 };
 
 inline port
@@ -333,10 +332,10 @@ ignore_and_fire::get_status( DictionaryDatum& d ) const
 inline void
 ignore_and_fire::set_status( const DictionaryDatum& d )
 {
-  Parameters_ ptmp = P_;                // temporary copy in case of errors
-  ptmp.set( d, this );                  // throws if BadProperty
-  State_ stmp = S_;                     // temporary copy in case of errors
-  stmp.set( d, ptmp, this );            // throws if BadProperty
+  Parameters_ ptmp = P_;     // temporary copy in case of errors
+  ptmp.set( d, this );       // throws if BadProperty
+  State_ stmp = S_;          // temporary copy in case of errors
+  stmp.set( d, ptmp, this ); // throws if BadProperty
 
   // We now know that (ptmp, stmp) are consistent. We do not
   // write them back to (P_, S_) before we are also sure that
@@ -349,7 +348,6 @@ ignore_and_fire::set_status( const DictionaryDatum& d )
   S_ = stmp;
 
   ignore_and_fire::calc_initial_variables_();
-
 }
 
 } // namespace

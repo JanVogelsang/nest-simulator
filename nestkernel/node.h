@@ -1365,7 +1365,7 @@ Node::deliver_event( const synindex syn_id,
   Stopwatch&,
   Stopwatch& sw_static_delivery,
   Stopwatch&,
-  Stopwatch& sw_deliver_node_)
+  Stopwatch& sw_deliver_node_ )
 {
   if ( thread_ == 0 )
   {

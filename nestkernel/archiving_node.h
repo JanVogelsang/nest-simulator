@@ -411,6 +411,11 @@ ArchivingNode::prepare_update( const Time origin, const std::vector< ConnectorMo
     // Process all pre- and post-synaptic spikes in relative order. Processes all pre-synaptic spikes that were just
     // communicated and all post-synaptic spikes in the archive.
     auto [ current_pre_synaptic_spike, last_pre_synaptic_spike ] = intermediate_spike_buffer_.get_next_spikes();
+
+    if (get_node_id() == 1)
+    {
+      // std::cout << "prepare_update - " << last_pre_synaptic_spike - current_pre_synaptic_spike << std::endl;
+    }
     for ( delay lag = 1; lag != min_delay + 1; ++lag )
     {
 #ifdef TIMER_DETAILED
@@ -577,7 +582,10 @@ ArchivingNode::deliver_event( const synindex syn_id,
       // end of slice is inclusive, therefore subtract 1
       const unsigned long slices_to_postpone =
         static_cast< unsigned long >( ( time_until_reaching_synapse + min_delay - 1 ) / min_delay );
-      const delay t_syn_lag = time_until_reaching_synapse + min_delay - slices_to_postpone * min_delay;
+      delay t_syn_lag = time_until_reaching_synapse + min_delay - slices_to_postpone * min_delay;
+
+      // std::cout << t_now << " - " << t_syn << " - " << slices_to_postpone << " - " << t_syn_lag << std::endl;
+
       intermediate_spike_buffer_.push_back(
         slices_to_postpone, syn_id, local_target_connection_id, dendritic_delay_id, t_syn_lag );
     }

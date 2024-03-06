@@ -64,6 +64,7 @@ parrot_neuron::update( const Time origin, const long from, const long to )
       SpikeEvent se;
       se.set_multiplicity( current_spikes_n );
       kernel().event_delivery_manager.send( *this, se, lag );
+      std::cout << "SEND (P) - " << lag << std::endl;
 
       // set the spike times, respecting the multiplicity
       for ( unsigned long i = 0; i < current_spikes_n; i++ )

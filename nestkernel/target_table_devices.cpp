@@ -79,7 +79,7 @@ TargetTableDevices::resize_to_number_of_neurons()
 // void
 // TargetTableDevices::resize_to_number_of_synapse_types()
 //{
-//#pragma omp parallel
+// #pragma omp parallel
 //   {
 //     const thread tid = kernel().vp_manager.get_thread_id();
 //     //    for ( index lid = 0; lid < targets_to_devices_[ tid ].size(); ++lid )

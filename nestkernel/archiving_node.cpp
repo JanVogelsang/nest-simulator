@@ -183,6 +183,10 @@ ArchivingNode::update_stdp_connections( const Time origin, const delay lag )
 #endif
     const std::vector< ConnectorModel* >& cm = kernel().model_manager.get_connection_models( get_thread() );
     auto [ current_pre_synaptic_spike, last_pre_synaptic_spike ] = intermediate_spike_buffer_.get_next_spikes();
+    if (get_node_id() == 1)
+    {
+      // std::cout << "update_stdp_connections - " << last_pre_synaptic_spike - current_pre_synaptic_spike << std::endl;
+    }
     // Process all pending pre-synaptic spikes. Lag+1 is required, as lag marks the beginning of the current update step
     // and the update should be performed at the end instead.
     while ( current_pre_synaptic_spike != last_pre_synaptic_spike and current_pre_synaptic_spike->t_syn_lag == lag + 1 )
@@ -228,6 +232,8 @@ ArchivingNode::deliver_event_with_trace( const synindex syn_id,
   //  handle, or just handing the entire local connection id to the handle function (and storing an array of rports
   //  which can be indexed by the local connection id).
 
+  // if (get_node_id() == 1)
+  //   std::cout << get_node_id() << " - " << pre_spike_time_syn.get_steps() << std::endl;
   handle( se );
 }
 

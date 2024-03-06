@@ -105,6 +105,7 @@ EventDeliveryManager::send_remote( thread tid, SpikeEvent& e, const long lag )
   const index lid = kernel().vp_manager.node_id_to_lid( e.get_sender().get_node_id() );
   const std::vector< Target >& targets = kernel().connection_manager.get_remote_targets_of_local_node( tid, lid );
 
+  // std::cout << e.get_sender().get_node_id() << std::endl;
   for ( std::vector< Target >::const_iterator it = targets.begin(); it != targets.end(); ++it )
   {
     const thread assigned_tid = ( *it ).get_rank() / kernel().vp_manager.get_num_assigned_ranks_per_thread();
@@ -209,6 +210,7 @@ EventDeliveryManager::deliver_to_adjacency_list( const thread tid,
       sw_node_archive_,
       sw_deliver_node_ );
 #else
+
     target_node->deliver_event( syn_id,
       local_target_connection_id,
       adjacency_list_it->dendritic_delay_id,

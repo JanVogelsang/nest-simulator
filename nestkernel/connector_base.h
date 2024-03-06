@@ -348,8 +348,7 @@ public:
     return C_[ lcid ].is_disabled();
   }
 
-  void
-  send( const thread tid,
+  void send( const thread tid,
     const index target_node_id,
     const index lcid,
     const delay total_delay,
@@ -684,8 +683,7 @@ public:
     throw UnexpectedEvent( "" );
   }
 
-  void
-  send( const thread tid,
+  void send( const thread tid,
     const index target_node_id,
     const index lcid,
     const size_t dendritic_delay_id,
