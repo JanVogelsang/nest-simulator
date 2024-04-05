@@ -86,11 +86,6 @@ public:
   void send_secondary( Node& source, SecondaryEvent& e );
 
   /**
-   * Send event e to all targets of node source on thread t
-   */
-  void send_local( size_t t, Node& source, Event& e );
-
-  /**
    * Add node ID of event sender to the spike_register.
    *
    * An event sent through this method will remain in the queue until

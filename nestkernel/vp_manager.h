@@ -95,6 +95,9 @@ public:
    */
   bool is_node_id_vp_local( const size_t node_id ) const;
 
+  void
+  deconstruct_node_id( const size_t node_id, size_t& process_id_out, size_t& thread_id_out, size_t& lid_out ) const;
+
   /**
    * Returns thread local index of a given global node.
    */
@@ -169,14 +172,29 @@ public:
    */
   AssignedRanks get_assigned_ranks( const size_t tid );
 
+  /**
+   * Sorting of connection arrays is only required for a certain number of processes. As the number of processes
+   * increases, the number of connections on any process for receiving spikes from a specific source neuron decreases.
+   * At a certain number of processes, we therefore switch from sorting connections, thus only sending a single spike
+   * per source neuron to each process with targets, to unsorted connection arrays, which requires sending one spike per
+   * connection instead. When sorting spikes, we also always use spike compression.
+   */
+  bool use_compressed_spikes() const;
+
 private:
   const bool force_singlethreading_;
   size_t n_threads_; //!< Number of threads per process.
+
+  /**
+   * Whether to use spike compression; if a neuron has targets on multiple threads of a process, this switch makes sure
+   * that only a single packet is sent to the process instead of one packet per target thread; implies connection
+   * sorting; for more details see the discussion and sketch in https://github.com/nest/nest-simulator/pull/1338
+   */
+  bool use_compressed_spikes_;
 };
-}
 
 inline size_t
-nest::VPManager::get_thread_id() const
+VPManager::get_thread_id() const
 {
 #ifdef _OPENMP
   return omp_get_thread_num();
@@ -186,13 +204,13 @@ nest::VPManager::get_thread_id() const
 }
 
 inline size_t
-nest::VPManager::get_num_threads() const
+VPManager::get_num_threads() const
 {
   return n_threads_;
 }
 
 inline void
-nest::VPManager::assert_single_threaded() const
+VPManager::assert_single_threaded() const
 {
 #ifdef _OPENMP
   assert( omp_get_num_threads() == 1 );
@@ -200,7 +218,7 @@ nest::VPManager::assert_single_threaded() const
 }
 
 inline void
-nest::VPManager::assert_thread_parallel() const
+VPManager::assert_thread_parallel() const
 {
 #ifdef _OPENMP
   // omp_get_num_threads() returns int
@@ -208,5 +226,12 @@ nest::VPManager::assert_thread_parallel() const
 #endif
 }
 
+inline bool
+VPManager::use_compressed_spikes() const
+{
+  return use_compressed_spikes_;
+}
+
+}
 
 #endif /* #ifndef VP_MANAGER_H */

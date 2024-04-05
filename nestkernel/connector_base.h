@@ -141,6 +141,7 @@ public:
    */
   virtual void get_target_node_ids( const size_t tid,
     const size_t start_lcid,
+    const size_t end_lcid,
     const std::string& post_synaptic_element,
     std::vector< size_t >& target_node_ids ) const = 0;
 
@@ -159,7 +160,11 @@ public:
    * indicating whether the following connection belongs to the same
    * source.
    */
-  virtual size_t send( const size_t tid, const size_t lcid, const std::vector< ConnectorModel* >& cm, Event& e ) = 0;
+  virtual void send( const size_t tid,
+    const size_t lcid,
+    const size_t num_targets,
+    const std::vector< ConnectorModel* >& cm,
+    Event& e ) = 0;
 
   virtual void
   send_weight_event( const size_t tid, const unsigned int lcid, Event& e, const CommonSynapseProperties& cp ) = 0;
@@ -179,23 +184,20 @@ public:
   virtual void sort_connections( BlockVector< Source >& ) = 0;
 
   /**
-   * Set a flag in the connection indicating whether the following
-   * connection belongs to the same source.
-   */
-  virtual void set_source_has_more_targets( const size_t lcid, const bool has_more_targets ) = 0;
-
-  /**
    * Return lcid of the first connection after start_lcid (inclusive)
    * where the node_id of the target matches target_node_id. If there are no matches,
-   * the function returns invalid_index.
+   * the function returns invalid_lcid.
    */
-  virtual size_t find_first_target( const size_t tid, const size_t start_lcid, const size_t target_node_id ) const = 0;
+  virtual size_t find_first_target( const size_t tid,
+    const size_t start_lcid,
+    const size_t end_lcid,
+    const size_t target_node_id ) const = 0;
 
   /**
    * Return lcid of first connection where the node ID of the target
    * matches target_node_id; consider only the connections with lcids
    * given in matching_lcids. If there is no match, the function returns
-   * invalid_index.
+   * invalid_lcid.
    */
   virtual size_t find_matching_target( const size_t tid,
     const std::vector< size_t >& matching_lcids,
@@ -352,24 +354,18 @@ public:
   void
   get_target_node_ids( const size_t tid,
     const size_t start_lcid,
+    const size_t end_lcid,
     const std::string& post_synaptic_element,
     std::vector< size_t >& target_node_ids ) const override
   {
-    size_t lcid = start_lcid;
-    while ( true )
+
+    for ( size_t lcid = start_lcid; lcid != end_lcid; ++lcid )
     {
       if ( C_[ lcid ].get_target( tid )->get_synaptic_elements( post_synaptic_element ) != 0.0
         and not C_[ lcid ].is_disabled() )
       {
         target_node_ids.push_back( C_[ lcid ].get_target( tid )->get_node_id() );
       }
-
-      if ( not C_[ lcid ].source_has_more_targets() )
-      {
-        break;
-      }
-
-      ++lcid;
     }
   }
 
@@ -392,15 +388,17 @@ public:
     }
   }
 
-  size_t
-  send( const size_t tid, const size_t lcid, const std::vector< ConnectorModel* >& cm, Event& e ) override
+  void
+  send( const size_t tid,
+    const size_t lcid,
+    const size_t num_targets,
+    const std::vector< ConnectorModel* >& cm,
+    Event& e ) override
   {
     typename ConnectionT::CommonPropertiesType const& cp =
       static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties();
 
-    size_t lcid_offset = 0;
-
-    while ( true )
+    for ( size_t lcid_offset = 0; lcid_offset != num_targets; ++lcid_offset )
     {
       assert( lcid + lcid_offset < C_.size() );
       ConnectionT& conn = C_[ lcid + lcid_offset ];
@@ -415,14 +413,7 @@ public:
           send_weight_event( tid, lcid + lcid_offset, e, cp );
         }
       }
-      if ( not conn.source_has_more_targets() )
-      {
-        break;
-      }
-      ++lcid_offset;
     }
-
-    return 1 + lcid_offset; // event was delivered to at least one target
   }
 
   // Implemented in connector_base_impl.h
@@ -457,30 +448,20 @@ public:
     nest::sort( sources, C_ );
   }
 
-  void
-  set_source_has_more_targets( const size_t lcid, const bool has_more_targets ) override
-  {
-    C_[ lcid ].set_source_has_more_targets( has_more_targets );
-  }
-
   size_t
-  find_first_target( const size_t tid, const size_t start_lcid, const size_t target_node_id ) const override
+  find_first_target( const size_t tid,
+    const size_t start_lcid,
+    const size_t end_lcid,
+    const size_t target_node_id ) const override
   {
-    size_t lcid = start_lcid;
-    while ( true )
+    for ( size_t lcid = start_lcid; lcid != end_lcid; ++lcid )
     {
       if ( C_[ lcid ].get_target( tid )->get_node_id() == target_node_id and not C_[ lcid ].is_disabled() )
       {
         return lcid;
       }
-
-      if ( not C_[ lcid ].source_has_more_targets() )
-      {
-        return invalid_index;
-      }
-
-      ++lcid;
     }
+    return invalid_lcid;
   }
 
   size_t
@@ -496,7 +477,7 @@ public:
       }
     }
 
-    return invalid_index;
+    return invalid_lcid;
   }
 
   void

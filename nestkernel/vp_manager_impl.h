@@ -75,6 +75,18 @@ VPManager::is_node_id_vp_local( const size_t node_id ) const
   return ( node_id % get_num_virtual_processes() == static_cast< size_t >( get_vp() ) );
 }
 
+inline void
+VPManager::deconstruct_node_id( const size_t node_id,
+  size_t& process_id_out,
+  size_t& thread_id_out,
+  size_t& lid_out ) const
+{
+  lid_out = node_id_to_lid( node_id );
+  const size_t vp = node_id % get_num_virtual_processes();
+  thread_id_out = vp_to_thread( vp );
+  process_id_out = kernel().mpi_manager.get_process_id_of_vp( vp );
+}
+
 inline size_t
 VPManager::node_id_to_lid( const size_t node_id ) const
 {

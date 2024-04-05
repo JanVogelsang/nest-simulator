@@ -84,27 +84,27 @@ nest::TargetTable::compress_secondary_send_buffer_pos( const size_t tid )
 }
 
 void
-nest::TargetTable::add_target( const size_t tid, const size_t target_rank, const TargetData& target_data )
+nest::TargetTable::add_target( const size_t tid,
+  const size_t lid,
+  const size_t target_rank,
+  const size_t target_thread,
+  const size_t syn_id,
+  const size_t lcid )
+{
+  assert(targets_[tid].size() > lid);
+  targets_[ tid ][ lid ].push_back( Target( target_rank, target_thread, syn_id, lcid ) );
+}
+
+void
+nest::TargetTable::add_secondary_target( const size_t tid, const size_t target_rank, const TargetData& target_data )
 {
   const size_t lid = target_data.get_source_lid();
 
-  vector_util::grow( targets_[ tid ][ lid ] );
+  const SecondaryTargetDataFields& secondary_fields = target_data.secondary_data;
+  const size_t send_buffer_pos = secondary_fields.get_recv_buffer_pos()
+    + kernel().mpi_manager.get_send_displacement_secondary_events_in_int( target_rank );
+  const synindex syn_id = secondary_fields.get_syn_id();
 
-  if ( target_data.is_primary() )
-  {
-    const TargetDataFields& target_fields = target_data.target_data;
-
-    targets_[ tid ][ lid ].push_back(
-      Target( target_fields.get_tid(), target_rank, target_fields.get_syn_id(), target_fields.get_lcid() ) );
-  }
-  else
-  {
-    const SecondaryTargetDataFields& secondary_fields = target_data.secondary_data;
-    const size_t send_buffer_pos = secondary_fields.get_recv_buffer_pos()
-      + kernel().mpi_manager.get_send_displacement_secondary_events_in_int( target_rank );
-    const synindex syn_id = secondary_fields.get_syn_id();
-
-    assert( syn_id < secondary_send_buffer_pos_[ tid ][ lid ].size() );
-    secondary_send_buffer_pos_[ tid ][ lid ][ syn_id ].push_back( send_buffer_pos );
-  }
+  assert( syn_id < secondary_send_buffer_pos_[ tid ][ lid ].size() );
+  secondary_send_buffer_pos_[ tid ][ lid ][ syn_id ].push_back( send_buffer_pos );
 }

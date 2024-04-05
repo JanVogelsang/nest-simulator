@@ -40,9 +40,7 @@ namespace nest
 class Source
 {
 private:
-  uint64_t node_id_ : NUM_BITS_NODE_ID; //!< node ID of source
-  bool processed_ : 1;                  //!< whether this target has already been moved
-                                        //!< to the MPI buffer
+  uint64_t node_id_ : 63; //!< node ID of source
   bool primary_ : 1;
 
 public:
@@ -58,9 +56,6 @@ public:
    * Returns this Source's node ID.
    */
   uint64_t get_node_id() const;
-
-  void set_processed( const bool processed );
-  bool is_processed() const;
 
   /**
    * Sets whether Source is primary.
@@ -89,14 +84,12 @@ public:
 
 inline Source::Source()
   : node_id_( 0 )
-  , processed_( false )
   , primary_( true )
 {
 }
 
 inline Source::Source( const uint64_t node_id, const bool is_primary )
   : node_id_( node_id )
-  , processed_( false )
   , primary_( is_primary )
 {
   assert( node_id <= MAX_NODE_ID );
@@ -113,18 +106,6 @@ inline uint64_t
 Source::get_node_id() const
 {
   return node_id_;
-}
-
-inline void
-Source::set_processed( const bool processed )
-{
-  processed_ = processed;
-}
-
-inline bool
-Source::is_processed() const
-{
-  return processed_;
 }
 
 inline void

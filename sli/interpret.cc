@@ -595,6 +595,7 @@ SLIInterpreter::raiseerror( std::exception& err )
   // SLIException provide addtional information
   SLIException* slierr = dynamic_cast< SLIException* >( &err );
 
+  /*
   if ( slierr )
   {
     // err is a SLIException
@@ -606,7 +607,7 @@ SLIInterpreter::raiseerror( std::exception& err )
     // plain std::exception: turn what() output into message
     errordict->insert( Name( "message" ), std::string( err.what() ) );
     raiseerror( caller, "CppException" );
-  }
+  }*/
 }
 
 void

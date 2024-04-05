@@ -75,6 +75,9 @@ nest::VPManager::initialize( const bool adjust_number_of_threads_or_rng_only )
   }
 
   set_num_threads( 1 );
+
+  // TODO JV: Determine the optimal threshold
+  use_compressed_spikes_ = get_num_virtual_processes() < 1000;
 }
 
 void
@@ -174,6 +177,8 @@ nest::VPManager::set_status( const DictionaryDatum& d )
 
     kernel().change_number_of_threads( n_threads );
   }
+
+  updateValue< bool >( d, names::use_compressed_spikes, use_compressed_spikes_ );
 }
 
 void
@@ -181,6 +186,7 @@ nest::VPManager::get_status( DictionaryDatum& d )
 {
   def< long >( d, names::local_num_threads, get_num_threads() );
   def< long >( d, names::total_num_virtual_procs, get_num_virtual_processes() );
+  def< bool >( d, names::use_compressed_spikes, use_compressed_spikes_ );
 }
 
 void

@@ -77,26 +77,14 @@ enum enum_status_target_id
 class Target
 {
 private:
-  uint64_t remote_target_id_;
-
-  static constexpr uint8_t BITPOS_LCID = 0U;
-  static constexpr uint8_t BITPOS_RANK = NUM_BITS_LCID;
-  static constexpr uint8_t BITPOS_TID = BITPOS_RANK + NUM_BITS_RANK;
-  static constexpr uint8_t BITPOS_SYN_ID = BITPOS_TID + NUM_BITS_TID;
-  static constexpr uint8_t BITPOS_PROCESSED_FLAG = BITPOS_SYN_ID + NUM_BITS_SYN_ID;
-
-  using bits_for_processed_flag = StaticAssert< NUM_BITS_PROCESSED_FLAG == 1U >::success;
-  using position_of_processed_flag = StaticAssert< BITPOS_PROCESSED_FLAG == 63U >::success;
-
-  // generate bit-masks used in bit-operations
-  static constexpr uint64_t MASK_LCID = generate_bit_mask( NUM_BITS_LCID, BITPOS_LCID );
-  static constexpr uint64_t MASK_RANK = generate_bit_mask( NUM_BITS_RANK, BITPOS_RANK );
-  static constexpr uint64_t MASK_TID = generate_bit_mask( NUM_BITS_TID, BITPOS_TID );
-  static constexpr uint64_t MASK_SYN_ID = generate_bit_mask( NUM_BITS_SYN_ID, BITPOS_SYN_ID );
-  static constexpr uint64_t MASK_PROCESSED_FLAG = generate_bit_mask( NUM_BITS_PROCESSED_FLAG, BITPOS_PROCESSED_FLAG );
+  size_t rank_ : NUM_BITS_RANK;
+  size_t tid_ : NUM_BITS_TID;
+  size_t syn_id_ : NUM_BITS_SYN_ID;
+  size_t lcid_ : NUM_BITS_LCID;
+  size_t processed_flag_ : 1;
 
 public:
-  Target();
+  Target() = delete;
   Target( const Target& target );
   Target( const size_t tid, const size_t rank, const synindex syn_id, const size_t lcid );
 
@@ -171,13 +159,11 @@ public:
 //!< check legal size
 using success_target_size = StaticAssert< sizeof( Target ) == 8 >::success;
 
-inline Target::Target()
-  : remote_target_id_( 0 )
-{
-}
-
 inline Target::Target( const Target& target )
-  : remote_target_id_( target.remote_target_id_ )
+  : rank_( target.rank_ )
+  , tid_( target.tid_ )
+  , syn_id_( target.syn_id_ )
+  , lcid_( target.lcid_ )
 {
   set_status( TARGET_ID_UNPROCESSED ); // initialize
 }
@@ -185,20 +171,20 @@ inline Target::Target( const Target& target )
 inline Target&
 Target::operator=( const Target& other )
 {
-  remote_target_id_ = other.remote_target_id_;
+  rank_ = other.rank_;
+  tid_ = other.tid_;
+  syn_id_ = other.syn_id_;
+  lcid_ = other.lcid_;
   set_status( TARGET_ID_UNPROCESSED );
   return *this;
 }
 
-inline Target::Target( const size_t tid, const size_t rank, const synindex syn_id, const size_t lcid )
-  : remote_target_id_( 0 )
+inline Target::Target( const size_t rank, const size_t tid, const synindex syn_id, const size_t lcid )
+  : rank_( rank )
+  , tid_( tid )
+  , syn_id_( syn_id )
+  , lcid_( lcid )
 {
-  // We need to call set_*() methods to properly encode values in bitfield.
-  // Validity of arguments is asserted in set_*() methods.
-  set_lcid( lcid );
-  set_rank( rank );
-  set_tid( tid );
-  set_syn_id( syn_id );
   set_status( TARGET_ID_UNPROCESSED ); // initialize
 }
 
@@ -206,52 +192,52 @@ inline void
 Target::set_lcid( const size_t lcid )
 {
   assert( lcid < MAX_LCID );
-  remote_target_id_ = ( remote_target_id_ & ( ~MASK_LCID ) ) | ( static_cast< uint64_t >( lcid ) << BITPOS_LCID );
+  lcid_ = lcid;
 }
 
 inline size_t
 Target::get_lcid() const
 {
-  return ( ( remote_target_id_ & MASK_LCID ) >> BITPOS_LCID );
+  return lcid_;
 }
 
 inline void
 Target::set_rank( const size_t rank )
 {
   assert( rank <= MAX_RANK ); // MAX_RANK is allowed since it is not used as invalid value
-  remote_target_id_ = ( remote_target_id_ & ( ~MASK_RANK ) ) | ( static_cast< uint64_t >( rank ) << BITPOS_RANK );
+  rank_ = rank;
 }
 
 inline size_t
 Target::get_rank() const
 {
-  return ( ( remote_target_id_ & MASK_RANK ) >> BITPOS_RANK );
+  return rank_;
 }
 
 inline void
 Target::set_tid( const size_t tid )
 {
   assert( tid <= MAX_TID ); // MAX_TID is allowed since it is not used as invalid value
-  remote_target_id_ = ( remote_target_id_ & ( ~MASK_TID ) ) | ( static_cast< uint64_t >( tid ) << BITPOS_TID );
+  tid_ = tid;
 }
 
 inline size_t
 Target::get_tid() const
 {
-  return ( ( remote_target_id_ & MASK_TID ) >> BITPOS_TID );
+  return tid_;
 }
 
 inline void
 Target::set_syn_id( const synindex syn_id )
 {
   assert( syn_id < MAX_SYN_ID );
-  remote_target_id_ = ( remote_target_id_ & ( ~MASK_SYN_ID ) ) | ( static_cast< uint64_t >( syn_id ) << BITPOS_SYN_ID );
+  syn_id_ = syn_id;
 }
 
 inline synindex
 Target::get_syn_id() const
 {
-  return ( ( remote_target_id_ & MASK_SYN_ID ) >> BITPOS_SYN_ID );
+  return syn_id_;
 }
 
 inline void
@@ -260,10 +246,10 @@ Target::set_status( enum_status_target_id set_status_to )
   switch ( set_status_to )
   {
   case TARGET_ID_PROCESSED:
-    remote_target_id_ = remote_target_id_ | MASK_PROCESSED_FLAG; // set single bit
+    processed_flag_ = TARGET_ID_PROCESSED;
     break;
   case TARGET_ID_UNPROCESSED:
-    remote_target_id_ = remote_target_id_ & ~MASK_PROCESSED_FLAG; // clear single bit
+    processed_flag_ = TARGET_ID_UNPROCESSED;
     break;
   default:
     throw InternalError( "Invalid remote target id status." );
@@ -273,11 +259,7 @@ Target::set_status( enum_status_target_id set_status_to )
 inline enum_status_target_id
 Target::get_status() const
 {
-  if ( ( remote_target_id_ & MASK_PROCESSED_FLAG ) >> BITPOS_PROCESSED_FLAG ) // test single bit
-  {
-    return ( TARGET_ID_PROCESSED );
-  }
-  return ( TARGET_ID_UNPROCESSED );
+  return static_cast< enum_status_target_id >( processed_flag_ );
 }
 
 inline bool
@@ -305,16 +287,10 @@ private:
   double offset_;
 
 public:
-  OffGridTarget();
+  OffGridTarget() = delete;
   OffGridTarget( const Target& target, const double offset );
   double get_offset() const;
 };
-
-inline OffGridTarget::OffGridTarget()
-  : Target()
-  , offset_( 0 )
-{
-}
 
 inline OffGridTarget::OffGridTarget( const Target& target, const double offset )
   : Target( target )

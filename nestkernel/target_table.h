@@ -87,7 +87,14 @@ public:
   /**
    * Adds entry to targets_.
    */
-  void add_target( const size_t tid, const size_t target_rank, const TargetData& target_data );
+  void add_target( const size_t tid,
+    const size_t lid,
+    const size_t target_rank,
+    const size_t target_thread,
+    const size_t syn_id,
+    const size_t lcid );
+
+  void add_secondary_target( const size_t tid, const size_t target_rank, const TargetData& target_data );
 
   /**
    * Returns all targets of a neuron. Used for filling

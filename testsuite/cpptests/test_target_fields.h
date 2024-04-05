@@ -48,7 +48,7 @@ constexpr int NUM_TEST_TRIALS = 50U;
 BOOST_AUTO_TEST_CASE( test_target_object_type_size )
 {
   // Test the size of the Target data type object: must be 64-bit!
-  Target target_id_testSize;
+  Target target_id_testSize(0,0,0,0);
   BOOST_REQUIRE( sizeof( target_id_testSize ) == 8U );
 }
 
@@ -77,7 +77,6 @@ BOOST_AUTO_TEST_CASE( test_target_object_type_constructor )
 BOOST_AUTO_TEST_CASE( test_target_object_type_set_get )
 {
   std::srand( 2345678 );
-  Target target_id_testSetGet;
   for ( int i = 0; i < NUM_TEST_TRIALS; ++i )
   {
     // tid and rank can take on all values up to MAX_{TID,RANK}
@@ -93,10 +92,7 @@ BOOST_AUTO_TEST_CASE( test_target_object_type_set_get )
       status_target_id = TARGET_ID_PROCESSED;
     }
 
-    target_id_testSetGet.set_tid( tid );
-    target_id_testSetGet.set_rank( rank );
-    target_id_testSetGet.set_syn_id( syn_id );
-    target_id_testSetGet.set_lcid( lcid );
+    Target target_id_testSetGet(rank, tid, syn_id, lcid);
     target_id_testSetGet.set_status( status_target_id );
 
     BOOST_REQUIRE( target_id_testSetGet.get_tid() == tid );

@@ -746,17 +746,13 @@ nest::SimulationManager::update_connection_infrastructure( const size_t tid )
 
   kernel().connection_manager.restructure_connection_tables( tid );
   kernel().connection_manager.sort_connections( tid );
-  kernel().connection_manager.collect_compressed_spike_data( tid );
+  kernel().connection_manager.prepare_compressed_spike_data( tid );
 
 #pragma omp barrier // wait for all threads to finish sorting
 
 #pragma omp single
   {
-    kernel().connection_manager.compute_target_data_buffer_size();
-    kernel().event_delivery_manager.resize_send_recv_buffers_target_data();
-
-    // check whether primary and secondary connections exists on any
-    // compute node
+    // check whether primary and secondary connections exists on any compute node
     kernel().connection_manager.sync_has_primary_connections();
     kernel().connection_manager.check_secondary_connections_exist();
   }
@@ -782,7 +778,7 @@ nest::SimulationManager::update_connection_infrastructure( const size_t tid )
 
   // communicate connection information from postsynaptic to
   // presynaptic side
-  if ( kernel().connection_manager.use_compressed_spikes() )
+  /*if ( kernel().vp_manager.use_compressed_spikes() )
   {
 #pragma omp barrier
 #pragma omp single
@@ -794,7 +790,7 @@ nest::SimulationManager::update_connection_infrastructure( const size_t tid )
   else
   {
     kernel().event_delivery_manager.gather_target_data( tid );
-  }
+  }*/
 
 #ifdef TIMER_DETAILED
 #pragma omp barrier

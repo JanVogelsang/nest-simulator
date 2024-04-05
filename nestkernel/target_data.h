@@ -33,6 +33,18 @@
 
 namespace nest
 {
+
+struct TargetDataNew
+{
+  size_t source_tid : NUM_BITS_TID;
+  size_t source_lid : 19;
+  size_t target_tid : NUM_BITS_TID;
+  size_t lcid : NUM_BITS_LCID;
+};
+
+//! check legal size
+using success_target_data_fields_size = StaticAssert< sizeof( TargetDataNew ) == 8 >::success;
+
 class TargetDataFields
 {
 private:
@@ -295,6 +307,97 @@ TargetData::is_primary() const
 {
   return is_primary_;
 }
+
+class CompressedSpikeData
+{
+private:
+  unsigned int lcid_;
+  unsigned int num_connections_;
+
+public:
+  CompressedSpikeData()
+    : lcid_( invalid_lcid )
+    , num_connections_( 0 )
+  {
+  }
+  CompressedSpikeData( const size_t lcid, const size_t num_connections )
+    : lcid_( lcid )
+    , num_connections_( num_connections )
+  {
+  }
+
+  /**
+   * Sets the local connection ID.
+   */
+  void set_lcid( const size_t lcid );
+
+  /**
+   * Returns the local connection ID.
+   */
+  size_t get_lcid() const;
+
+  /**
+   * Set the number of connections from source.
+   */
+  void set_num_connections( const size_t num_connections );
+
+  /**
+   * Increment the number of connections from source.
+   */
+  void increment_num_connections();
+
+  /**
+   * Increase the number of connections from source by amount.
+   */
+  void increase_num_connections( const size_t num );
+
+  /**
+   * Get the number of connections from source.
+   */
+  size_t get_num_connections() const;
+};
+
+//! check legal size
+using success_compressed_data_size = StaticAssert< sizeof( CompressedSpikeData ) == 8 >::success;
+using success_unsigned_int_lcid_size = StaticAssert< sizeof( unsigned int ) * 8 >= NUM_BITS_LCID >::success;
+
+inline void
+CompressedSpikeData::set_lcid( const size_t lcid )
+{
+  lcid_ = lcid;
+}
+
+inline size_t
+CompressedSpikeData::get_lcid() const
+{
+  return lcid_;
+}
+
+inline void
+CompressedSpikeData::set_num_connections( const size_t num_connections )
+{
+  num_connections_ = num_connections;
+}
+
+inline void
+CompressedSpikeData::increment_num_connections()
+{
+  ++num_connections_;
+}
+
+
+inline void
+CompressedSpikeData::increase_num_connections( const size_t num )
+{
+  num_connections_ += num;
+}
+
+inline size_t
+CompressedSpikeData::get_num_connections() const
+{
+  return num_connections_;
+}
+
 } // namespace nest
 
 #endif /* #ifndef TARGET_DATA_H */

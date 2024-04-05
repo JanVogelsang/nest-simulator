@@ -29,9 +29,9 @@
 // Includes from nestkernel:
 #include "connection_manager.h"
 #include "connection_manager_impl.h"
-#include "event_delivery_manager_impl.h"
+// #include "event_delivery_manager_impl.h"
 #include "kernel_manager.h"
-#include "mpi_manager_impl.h"
+// #include "mpi_manager_impl.h"
 #include "send_buffer_position.h"
 #include "source.h"
 #include "vp_manager.h"
@@ -39,8 +39,6 @@
 
 // Includes from sli:
 #include "dictutils.h"
-
-#include "compose.hpp"
 
 namespace nest
 {
@@ -394,7 +392,7 @@ EventDeliveryManager::gather_spike_data_( std::vector< SpikeDataT >& send_buffer
    * - once if all spikes fit into current send buffers on all ranks
    * - twice if send buffer size needs to be increased to fit in all spikes
    */
-  bool all_spikes_transmitted = false;
+  bool all_spikes_transmitted;
   do
   {
     // Need to get new positions in case buffer size has changed
@@ -576,7 +574,7 @@ EventDeliveryManager::get_global_max_spikes_per_rank_( const SendBufferPosition&
   for ( size_t target_rank = 0; target_rank < kernel().mpi_manager.get_num_processes(); ++target_rank )
   {
     const auto& end_entry = recv_buffer[ send_buffer_position.end( target_rank ) - 1 ];
-    size_t max_per_thread_max_spikes_per_rank = 0;
+    size_t max_per_thread_max_spikes_per_rank;
     if ( end_entry.is_complete_marker() or end_entry.is_invalid_marker() )
     {
       max_per_thread_max_spikes_per_rank = end_entry.get_lcid();
@@ -660,7 +658,7 @@ EventDeliveryManager::deliver_events_( const size_t tid, const std::vector< Spik
     size_t syn_id_batch[ SPIKES_PER_BATCH ];
     size_t lcid_batch[ SPIKES_PER_BATCH ];
 
-    if ( not kernel().connection_manager.use_compressed_spikes() )
+    if ( not kernel().vp_manager.use_compressed_spikes() )
     {
       for ( size_t i = 0; i < num_batches; ++i )
       {
@@ -678,7 +676,8 @@ EventDeliveryManager::deliver_events_( const size_t tid, const std::vector< Spik
         {
           if ( tid_batch[ j ] == tid )
           {
-            kernel().connection_manager.send( tid_batch[ j ], syn_id_batch[ j ], lcid_batch[ j ], cm, se_batch[ j ] );
+            kernel().connection_manager.send(
+              tid_batch[ j ], syn_id_batch[ j ], lcid_batch[ j ], 1, cm, se_batch[ j ] );
           }
         }
       }
@@ -699,12 +698,14 @@ EventDeliveryManager::deliver_events_( const size_t tid, const std::vector< Spik
       {
         if ( tid_batch[ j ] == tid )
         {
-          kernel().connection_manager.send( tid_batch[ j ], syn_id_batch[ j ], lcid_batch[ j ], cm, se_batch[ j ] );
+          kernel().connection_manager.send( tid_batch[ j ], syn_id_batch[ j ], lcid_batch[ j ], 1, cm, se_batch[ j ] );
         }
       }
     }
     else // compressed spikes
     {
+      size_t num_targets_batch[ SPIKES_PER_BATCH ];
+
       for ( size_t i = 0; i < num_batches; ++i )
       {
         for ( size_t j = 0; j < SPIKES_PER_BATCH; ++j )
@@ -722,9 +723,10 @@ EventDeliveryManager::deliver_events_( const size_t tid, const std::vector< Spik
         for ( size_t j = 0; j < SPIKES_PER_BATCH; ++j )
         {
           // find the spike-data entry for this thread
-          const std::vector< SpikeData >& compressed_spike_data =
-            kernel().connection_manager.get_compressed_spike_data( syn_id_batch[ j ], lcid_batch[ j ] );
-          lcid_batch[ j ] = compressed_spike_data[ tid ].get_lcid();
+          const CompressedSpikeData compressed_spike_data =
+            kernel().connection_manager.get_compressed_spike_data( syn_id_batch[ j ], lcid_batch[ j ], tid );
+          lcid_batch[ j ] = compressed_spike_data.get_lcid();
+          num_targets_batch[ j ] = compressed_spike_data.get_num_connections();
         }
         for ( size_t j = 0; j < SPIKES_PER_BATCH; ++j )
         {
@@ -739,7 +741,8 @@ EventDeliveryManager::deliver_events_( const size_t tid, const std::vector< Spik
         {
           if ( lcid_batch[ j ] != invalid_lcid )
           {
-            kernel().connection_manager.send( tid, syn_id_batch[ j ], lcid_batch[ j ], cm, se_batch[ j ] );
+            kernel().connection_manager.send(
+              tid, syn_id_batch[ j ], lcid_batch[ j ], num_targets_batch[ j ], cm, se_batch[ j ] );
           }
         }
       }
@@ -759,9 +762,10 @@ EventDeliveryManager::deliver_events_( const size_t tid, const std::vector< Spik
       for ( size_t j = 0; j < num_remaining_entries; ++j )
       {
         // find the spike-data entry for this thread
-        const std::vector< SpikeData >& compressed_spike_data =
-          kernel().connection_manager.get_compressed_spike_data( syn_id_batch[ j ], lcid_batch[ j ] );
-        lcid_batch[ j ] = compressed_spike_data[ tid ].get_lcid();
+        const CompressedSpikeData compressed_spike_data =
+          kernel().connection_manager.get_compressed_spike_data( syn_id_batch[ j ], lcid_batch[ j ], tid );
+        lcid_batch[ j ] = compressed_spike_data.get_lcid();
+        num_targets_batch[ j ] = compressed_spike_data.get_num_connections();
       }
       for ( size_t j = 0; j < num_remaining_entries; ++j )
       {
@@ -776,7 +780,8 @@ EventDeliveryManager::deliver_events_( const size_t tid, const std::vector< Spik
       {
         if ( lcid_batch[ j ] != invalid_lcid )
         {
-          kernel().connection_manager.send( tid, syn_id_batch[ j ], lcid_batch[ j ], cm, se_batch[ j ] );
+          kernel().connection_manager.send(
+            tid, syn_id_batch[ j ], lcid_batch[ j ], num_targets_batch[ j ], cm, se_batch[ j ] );
         }
       }
     } // if-else not compressed

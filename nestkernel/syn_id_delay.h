@@ -33,13 +33,11 @@ namespace nest
 struct SynIdDelay
 {
   unsigned int delay : NUM_BITS_DELAY;
-  unsigned int syn_id : NUM_BITS_SYN_ID;
-  bool more_targets : 1;
+  unsigned int syn_id : NUM_BITS_SYN_ID; // TODO JV: Check if we can make this 1 more bit now
   bool disabled : 1;
 
   explicit SynIdDelay( double d )
     : syn_id( invalid_synindex )
-    , more_targets( false )
     , disabled( false )
   {
     set_delay_ms( d );
@@ -64,18 +62,6 @@ struct SynIdDelay
   set_delay_ms( const double d )
   {
     delay = Time::delay_ms_to_steps( d );
-  }
-
-  void
-  set_source_has_more_targets( const bool more_targets )
-  {
-    this->more_targets = more_targets;
-  }
-
-  bool
-  source_has_more_targets() const
-  {
-    return more_targets;
   }
 
   /**

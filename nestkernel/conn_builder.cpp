@@ -119,6 +119,11 @@ nest::ConnBuilder::ConnBuilder( NodeCollectionPTR sources,
   {
     throw KernelException( "InvalidNodeCollection: sources and targets must be valid NodeCollections." );
   }
+
+  sources_per_thread_.resize(
+    syn_specs.size(), std::vector< std::map< size_t, size_t > >( kernel().vp_manager.get_num_threads() ) );
+  sources_to_conn_lcids_.resize(
+    syn_specs.size(), std::vector< std::vector< TargetDataNew > >( kernel().mpi_manager.get_num_processes() ) );
 }
 
 nest::ConnBuilder::~ConnBuilder()
@@ -140,6 +145,8 @@ nest::ConnBuilder::~ConnBuilder()
       delete synapse_parameter.second;
     }
   }
+
+  sources_to_conn_lcids_.clear();
 }
 
 bool
@@ -313,9 +320,10 @@ nest::ConnBuilder::single_connect_( size_t snode_id, Node& target, size_t target
   {
     update_param_dict_( snode_id, target, target_thread, rng, synapse_indx );
 
+    size_t lcid;
     if ( default_weight_and_delay_[ synapse_indx ] )
     {
-      kernel().connection_manager.connect( snode_id,
+      lcid = kernel().connection_manager.connect( snode_id,
         &target,
         target_thread,
         synapse_model_id_[ synapse_indx ],
@@ -323,7 +331,7 @@ nest::ConnBuilder::single_connect_( size_t snode_id, Node& target, size_t target
     }
     else if ( default_weight_[ synapse_indx ] )
     {
-      kernel().connection_manager.connect( snode_id,
+      lcid = kernel().connection_manager.connect( snode_id,
         &target,
         target_thread,
         synapse_model_id_[ synapse_indx ],
@@ -332,7 +340,7 @@ nest::ConnBuilder::single_connect_( size_t snode_id, Node& target, size_t target
     }
     else if ( default_delay_[ synapse_indx ] )
     {
-      kernel().connection_manager.connect( snode_id,
+      lcid = kernel().connection_manager.connect( snode_id,
         &target,
         target_thread,
         synapse_model_id_[ synapse_indx ],
@@ -344,13 +352,33 @@ nest::ConnBuilder::single_connect_( size_t snode_id, Node& target, size_t target
     {
       const double delay = delays_[ synapse_indx ]->value_double( target_thread, rng, snode_id, &target );
       const double weight = weights_[ synapse_indx ]->value_double( target_thread, rng, snode_id, &target );
-      kernel().connection_manager.connect( snode_id,
+      lcid = kernel().connection_manager.connect( snode_id,
         &target,
         target_thread,
         synapse_model_id_[ synapse_indx ],
         param_dicts_[ synapse_indx ][ target_thread ],
         delay,
         weight );
+    }
+    if (lcid != invalid_lcid)
+    {
+      if ( kernel().vp_manager.use_compressed_spikes() )
+      {
+        // TODO JV: As the number of targets per source is known for some builders, we can just set the value once instead
+        //  of incrementing here.
+        /**
+         * When we connect to a source neuron, we need to increment the connection count from that source neuron. If this is
+         * the first time we connect to that source neuron, we need to insert the source node id before incrementing the
+         * count.
+         */
+        ++( sources_per_thread_[ synapse_indx ][ target_thread ].insert( std::make_pair( snode_id, 0 ) ).first->second );
+      }
+      else
+      {
+        size_t source_lid, source_tid, source_pid;
+        kernel().vp_manager.deconstruct_node_id( snode_id, source_pid, source_tid, source_lid );
+        sources_to_conn_lcids_[ synapse_indx ][ source_pid ].push_back( TargetDataNew { source_tid, source_lid, target_thread, lcid } );  // TODO JV
+      }
     }
   }
 }
@@ -1068,7 +1096,6 @@ nest::FixedInDegreeBuilder::FixedInDegreeBuilder( NodeCollectionPTR sources,
 void
 nest::FixedInDegreeBuilder::connect_()
 {
-
 #pragma omp parallel
   {
     // get thread id
@@ -1078,6 +1105,8 @@ nest::FixedInDegreeBuilder::connect_()
     {
       RngPtr rng = get_vp_specific_rng( tid );
 
+      // TODO JV: While connecting its local post-synaptic neurons, each thread can already store the target information
+      //  (for pre-synaptic side) in a buffer and initiate async communication after this loop
       if ( loop_over_targets_() )
       {
         NodeCollection::const_iterator target_it = targets_->begin();
@@ -1119,11 +1148,12 @@ nest::FixedInDegreeBuilder::connect_()
     }
     catch ( std::exception& err )
     {
-      // We must create a new exception here, err's lifetime ends at
-      // the end of the catch block.
+      // We must create a new exception here, err's lifetime ends at the end of the catch block.
       exceptions_raised_.at( tid ) = std::shared_ptr< WrappedThreadException >( new WrappedThreadException( err ) );
     }
   }
+  // TODO JV: All threads that finished connecting their local neurons can progress async communication of previous
+  //  async calls
 }
 
 void
@@ -1154,8 +1184,8 @@ nest::FixedInDegreeBuilder::inner_connect_( const int tid,
   {
     unsigned long s_id;
     size_t snode_id;
-    bool skip_autapse = false;
-    bool skip_multapse = false;
+    bool skip_autapse;
+    bool skip_multapse;
 
     do
     {
@@ -1252,8 +1282,8 @@ nest::FixedOutDegreeBuilder::connect_()
     {
       unsigned long t_id;
       size_t tnode_id;
-      bool skip_autapse = false;
-      bool skip_multapse = false;
+      bool skip_autapse;
+      bool skip_multapse;
 
       do
       {
@@ -1728,10 +1758,10 @@ nest::TripartiteBernoulliWithPoolBuilder::TripartiteBernoulliWithPoolBuilder( No
   const DictionaryDatum& conn_spec,
   const std::map< Name, std::vector< DictionaryDatum > >& syn_specs )
   : ConnBuilder( sources,
-    targets,
-    conn_spec,
-    // const_cast here seems required, clang complains otherwise; try to clean up when Datums disappear
-    const_cast< std::map< Name, std::vector< DictionaryDatum > >& >( syn_specs )[ names::primary ] )
+      targets,
+      conn_spec,
+      // const_cast here seems required, clang complains otherwise; try to clean up when Datums disappear
+      const_cast< std::map< Name, std::vector< DictionaryDatum > >& >( syn_specs )[ names::primary ] )
   , third_( third )
   , third_in_builder_( sources,
       third,
@@ -1873,7 +1903,7 @@ nest::TripartiteBernoulliWithPoolBuilder::connect_()
           }
 
           // conditionally connect third factor
-          if ( not( synced_rng->drand() < p_third_if_primary_ ) )
+          if ( synced_rng->drand() >= p_third_if_primary_ )
           {
             continue;
           }

@@ -40,6 +40,7 @@
 #include "nest_time.h"
 #include "node_collection.h"
 #include "parameter.h"
+#include "target_data.h"
 
 // Includes from sli:
 #include "dictdatum.h"
@@ -91,6 +92,18 @@ public:
       throw KernelException( "Can only retrieve synapse model when one synapse per connection is used." );
     }
     return synapse_model_id_[ 0 ];
+  }
+
+  size_t
+  get_synapse_model( const size_t idx ) const
+  {
+    return synapse_model_id_[ idx ];
+  }
+
+  size_t
+  get_num_synapse_models() const
+  {
+    return synapse_model_id_.size();
   }
 
   bool
@@ -147,6 +160,18 @@ public:
   requires_proxies() const
   {
     return true;
+  }
+
+  std::vector< std::vector< std::map< size_t, size_t > > >&
+  get_sources_per_thread()
+  {
+    return sources_per_thread_;
+  }
+
+  std::vector< std::vector< std::vector< TargetDataNew > > >&
+  get_sources_to_conn_lcids()
+  {
+    return sources_to_conn_lcids_;
   }
 
 protected:
@@ -250,6 +275,13 @@ private:
 
   //! synapse-specific parameters that should be skipped when we set default synapse parameters
   std::set< Name > skip_syn_params_;
+
+  //! Temporarily store all sources per syn_id and thread and the number of outgoing connections for that source
+  std::vector< std::vector< std::map< size_t, size_t > > > sources_per_thread_;
+
+  //! Temporarily stores pairs of source node id and either local connection indices (no compression) or indices to
+  //! compressed spike data (compression enabled) (per syn_id and source process)
+  std::vector< std::vector< std::vector< TargetDataNew > > > sources_to_conn_lcids_;
 
   /**
    * Collects all array parameters in a vector.

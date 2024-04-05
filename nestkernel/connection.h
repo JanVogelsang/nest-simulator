@@ -250,30 +250,6 @@ public:
   }
 
   /**
-   * Sets a flag in the connection to signal that the following connection has
-   * the same source.
-   *
-   * @see source_has_more_targets
-   */
-  void
-  set_source_has_more_targets( const bool more_targets )
-  {
-    syn_id_delay_.set_source_has_more_targets( more_targets );
-  }
-
-  /**
-   * Returns a flag denoting whether the connection has source subsequent
-   * targets.
-   *
-   * @see set_source_has_more_targets
-   */
-  bool
-  source_has_more_targets() const
-  {
-    return syn_id_delay_.source_has_more_targets();
-  }
-
-  /**
    * Disables the connection.
    *
    * @see is_disabled

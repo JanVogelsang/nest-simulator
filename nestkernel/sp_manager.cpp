@@ -27,12 +27,12 @@
 
 // Includes from nestkernel:
 #include "conn_builder.h"
-#include "conn_parameter.h"
 #include "connector_base.h"
 #include "connector_model.h"
 #include "kernel_manager.h"
 #include "nest_names.h"
 #include "sp_manager_impl.h"
+#include "vp_manager_impl.h"
 
 namespace nest
 {
@@ -668,7 +668,7 @@ nest::SPManager::enable_structural_plasticity()
       "Structural plasticity can not be enabled if keep_source_table has been "
       "set to false." );
   }
-  if ( not kernel().connection_manager.use_compressed_spikes() )
+  if ( not kernel().vp_manager.use_compressed_spikes() )
   {
     throw KernelException(
       "Structural plasticity can not be enabled if use_compressed_spikes "
