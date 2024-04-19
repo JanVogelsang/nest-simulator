@@ -144,6 +144,13 @@ function( NEST_PRINT_CONFIG_SUMMARY )
   endif ()
 
   message( "" )
+  if ( USE_LEGACY_CONN_BUILDER )
+    message( "Legacy connectivity     : Yes" )
+  else ()
+    message( "Legacy connectivity     : No" )
+  endif ()
+
+  message( "" )
   if ( TIMER_DETAILED )
     message( "Detailed timers     : Yes" )
   else ()

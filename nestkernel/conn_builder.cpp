@@ -222,6 +222,7 @@ nest::ConnBuilder::connect()
   else
   {
     connect_();
+    kernel().connection_manager.create_connections();
     if ( make_symmetric_ and not creates_symmetric_connections_ )
     {
       // call reset on all parameters
@@ -238,6 +239,7 @@ nest::ConnBuilder::connect()
 
       std::swap( sources_, targets_ );
       connect_();
+      kernel().connection_manager.create_connections();
       std::swap( sources_, targets_ ); // re-establish original state
     }
   }
@@ -571,6 +573,9 @@ nest::OneToOneBuilder::OneToOneBuilder( const NodeCollectionPTR sources,
   }
 }
 
+// TODO JV: Debug
+#define USE_LEGACY_CONN_BUILDER 1
+#ifdef USE_LEGACY_CONN_BUILDER
 void
 nest::OneToOneBuilder::connect_()
 {
@@ -649,6 +654,85 @@ nest::OneToOneBuilder::connect_()
     }
   }
 }
+#else
+void
+nest::OneToOneBuilder::connect_()
+{
+#pragma omp parallel
+  {
+    // get thread id
+    const size_t tid = kernel().vp_manager.get_thread_id();
+
+    try
+    {
+      RngPtr rng = get_vp_specific_rng( tid );
+
+      if ( loop_over_targets_() )
+      {
+        // A more efficient way of doing this might be to use NodeCollection's local_begin(). For this to work we would
+        // need to change some of the logic, sources and targets might not be on the same process etc., so therefore
+        // we are not doing it at the moment. This also applies to other ConnBuilders below.
+        NodeCollection::const_iterator target_it = targets_->begin();
+        NodeCollection::const_iterator source_it = sources_->begin();
+        for ( ; target_it < targets_->end(); ++target_it, ++source_it )
+        {
+          assert( source_it < sources_->end() );
+
+          const size_t snode_id = ( *source_it ).node_id;
+          const size_t tnode_id = ( *target_it ).node_id;
+
+          if ( snode_id == tnode_id and not allow_autapses_ )
+          {
+            continue;
+          }
+
+          Node* const target = kernel().node_manager.get_node_or_proxy( tnode_id, tid );
+          if ( target->is_proxy() )
+          {
+            // skip array parameters handled in other virtual processes
+            skip_conn_parameter_( tid );
+            continue;
+          }
+
+          single_connect_( snode_id, *target, tid, rng );
+        }
+      }
+      else
+      {
+        const SparseNodeArray& local_nodes = kernel().node_manager.get_local_nodes( tid );
+        SparseNodeArray::const_iterator n;
+        for ( n = local_nodes.begin(); n != local_nodes.end(); ++n )
+        {
+          Node* target = n->get_node();
+
+          const size_t tnode_id = n->get_node_id();
+          const long lid = targets_->get_lid( tnode_id );
+          if ( lid < 0 ) // Is local node in target list?
+          {
+            continue;
+          }
+
+          // one-to-one, thus we can use target idx for source as well
+          const size_t snode_id = ( *sources_ )[ lid ];
+          if ( not allow_autapses_ and snode_id == tnode_id )
+          {
+            // no skipping required / possible,
+            // as we iterate only over local nodes
+            continue;
+          }
+          single_connect_( snode_id, *target, tid, rng );
+        }
+      }
+    }
+    catch ( std::exception& err )
+    {
+      // We must create a new exception here, err's lifetime ends at
+      // the end of the catch block.
+      exceptions_raised_.at( tid ) = std::shared_ptr< WrappedThreadException >( new WrappedThreadException( err ) );
+    }
+  }
+}
+#endif
 
 void
 nest::OneToOneBuilder::disconnect_()

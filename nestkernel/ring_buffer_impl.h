@@ -27,19 +27,29 @@
 
 template < unsigned int num_channels >
 nest::MultiChannelInputBuffer< num_channels >::MultiChannelInputBuffer()
-  : buffer_( kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay(),
-    std::array< double, num_channels >() )
+  : buffer_( kernel().vp_manager.get_num_threads() )
 {
+  const size_t num_threads = kernel().vp_manager.get_num_threads();
+  for ( size_t tid = 0; tid != num_threads; ++tid )
+  {
+    buffer_[ tid ] = std::vector< std::array< double, num_channels > >(
+      kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay() );
+  }
 }
 
 template < unsigned int num_channels >
 void
 nest::MultiChannelInputBuffer< num_channels >::resize()
 {
-  const size_t size = kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay();
-  if ( buffer_.size() != size )
+  const size_t num_threads = kernel().vp_manager.get_num_threads();
+  buffer_.resize( num_threads );
+  for ( size_t tid = 0; tid != num_threads; ++tid )
   {
-    buffer_.resize( size, std::array< double, num_channels >() );
+    const size_t size = kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay();
+    if ( buffer_[ tid ].size() != size )
+    {
+      buffer_[ tid ].resize( size );
+    }
   }
 }
 
@@ -49,7 +59,7 @@ nest::MultiChannelInputBuffer< num_channels >::clear()
 {
   resize(); // does nothing if size is fine
   // set all elements to 0.0
-  for ( size_t slot = 0; slot < buffer_.size(); ++slot )
+  for ( size_t slot = 0; slot < buffer_[ 0 ].size(); ++slot )
   {
     reset_values_all_channels( slot );
   }

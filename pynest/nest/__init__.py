@@ -305,16 +305,6 @@ class NestModule(types.ModuleType):
         "The list of the available structural plasticity growth curves",
         readonly=True,
     )
-    use_compressed_spikes = KernelAttribute(
-        "bool",
-        (
-            "Whether to use spike compression; if a neuron has targets on"
-            + " multiple threads of a process, this switch makes sure that only"
-            + " a single packet is sent to the process instead of one packet"
-            + " per target thread; it implies that connections are sorted by source."
-        ),
-        default=True,
-    )
     data_path = KernelAttribute(
         "str",
         "A path, where all data is written to, defaults to current directory",

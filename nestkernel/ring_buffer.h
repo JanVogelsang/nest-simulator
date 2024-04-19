@@ -87,18 +87,20 @@ public:
   /**
    * Add a value to the ring buffer.
    *
+   * @param  tid    Thread writing into the ring buffer.
    * @param  offs     Arrival time relative to beginning of slice.
    * @param  double Value to add.
    */
-  void add_value( const long offs, const double );
+  void add_value( const size_t tid, const long offs, const double );
 
   /**
    * Set a ring buffer entry to a given value.
    *
+   * @param  tid    Thread writing into the ring buffer.
    * @param  offs     Arrival time relative to beginning of slice.
    * @param  double Value to set.
    */
-  void set_value( const long offs, const double );
+  void set_value( const size_t tid, const long offs, const double );
 
   /**
    * Read one value from ring buffer.
@@ -137,12 +139,12 @@ public:
   size_t
   size() const
   {
-    return buffer_.size();
+    return buffer_[ 0 ].size();
   }
 
 private:
-  //! Buffered data
-  std::vector< double > buffer_;
+  //! Buffered data per thread
+  std::vector< std::vector< double > > buffer_;
 
   /**
    * Obtain buffer index.
@@ -155,42 +157,50 @@ private:
 };
 
 inline void
-RingBuffer::add_value( const long offs, const double v )
+RingBuffer::add_value( const size_t tid, const long offs, const double v )
 {
-  buffer_[ get_index_( offs ) ] += v;
+  buffer_[ tid ][ get_index_( offs ) ] += v;
 }
 
 inline void
-RingBuffer::set_value( const long offs, const double v )
+RingBuffer::set_value( const size_t tid, const long offs, const double v )
 {
-  buffer_[ get_index_( offs ) ] = v;
+  buffer_[ tid ][ get_index_( offs ) ] = v;
 }
 
 inline double
 RingBuffer::get_value( const long offs )
 {
-  assert( 0 <= offs and static_cast< size_t >( offs ) < buffer_.size() );
+  assert( 0 <= offs and static_cast< size_t >( offs ) < buffer_[ 0 ].size() );
   assert( offs < kernel().connection_manager.get_min_delay() );
 
   // offs == 0 is beginning of slice, but we have to
   // take modulo into account when indexing
   long idx = get_index_( offs );
-  double val = buffer_[ idx ];
-  buffer_[ idx ] = 0.0; // clear buffer after reading
-  return val;
+  double sum = 0;
+  for ( size_t tid = 0; tid != kernel().vp_manager.get_num_threads(); ++tid )
+  {
+    sum += buffer_[ tid ][ idx ];
+    buffer_[ tid ][ idx ] = 0.0; // clear buffer after reading
+  }
+  return sum;
 }
 
 inline double
 RingBuffer::get_value_wfr_update( const long offs )
 {
-  assert( 0 <= offs and static_cast< size_t >( offs ) < buffer_.size() );
+  assert( 0 <= offs and static_cast< size_t >( offs ) < buffer_[ 0 ].size() );
   assert( offs < kernel().connection_manager.get_min_delay() );
 
   // offs == 0 is beginning of slice, but we have to
   // take modulo into account when indexing
   long idx = get_index_( offs );
-  double val = buffer_[ idx ];
-  return val;
+  double sum = 0;
+  for ( size_t tid = 0; tid != kernel().vp_manager.get_num_threads(); ++tid )
+  {
+    sum += buffer_[ tid ][ idx ];
+  }
+  return sum;
 }
 
 inline size_t
@@ -198,7 +208,7 @@ RingBuffer::get_index_( const long d ) const
 {
   const long idx = kernel().event_delivery_manager.get_modulo( d );
   assert( 0 <= idx );
-  assert( static_cast< size_t >( idx ) < buffer_.size() );
+  assert( static_cast< size_t >( idx ) < buffer_[ 0 ].size() );
   return idx;
 }
 
@@ -210,10 +220,11 @@ public:
 
   /**
    * Add a value to the ring buffer.
+   * @param  tid    Thread writing into the ring buffer.
    * @param  offs     Arrival time relative to beginning of slice.
    * @param  double Value to add.
    */
-  void add_value( const long offs, const double );
+  void add_value( const size_t tid, const long offs, const double );
 
   /**
    * Read one value from ring buffer.
@@ -238,12 +249,12 @@ public:
   size_t
   size() const
   {
-    return buffer_.size();
+    return buffer_[ 0 ].size();
   }
 
 private:
-  //! Buffered data
-  std::vector< double > buffer_;
+  //! Buffered data per thread
+  std::vector< std::vector< double > > buffer_;
 
   /**
    * Obtain buffer index.
@@ -256,31 +267,35 @@ private:
 };
 
 inline void
-MultRBuffer::add_value( const long offs, const double v )
+MultRBuffer::add_value( const size_t tid, const long offs, const double v )
 {
-  assert( 0 <= offs and static_cast< size_t >( offs ) < buffer_.size() );
-  buffer_[ get_index_( offs ) ] *= v;
+  assert( 0 <= offs and static_cast< size_t >( offs ) < buffer_[ 0 ].size() );
+  buffer_[ tid ][ get_index_( offs ) ] *= v;
 }
 
 inline double
 MultRBuffer::get_value( const long offs )
 {
-  assert( 0 <= offs and static_cast< size_t >( offs ) < buffer_.size() );
+  assert( 0 <= offs and static_cast< size_t >( offs ) < buffer_[ 0 ].size() );
   assert( offs < kernel().connection_manager.get_min_delay() );
 
   // offs == 0 is beginning of slice, but we have to
   // take modulo into account when indexing
   long idx = get_index_( offs );
-  double val = buffer_[ idx ];
-  buffer_[ idx ] = 0.0; // clear buffer after reading
-  return val;
+  double sum = 0;
+  for ( size_t tid = 0; tid != kernel().vp_manager.get_num_threads(); ++tid )
+  {
+    sum += buffer_[ tid ][ idx ];
+    buffer_[ tid ][ idx ] = 0.0; // clear buffer after reading
+  }
+  return sum;
 }
 
 inline size_t
 MultRBuffer::get_index_( const long d ) const
 {
   const long idx = kernel().event_delivery_manager.get_modulo( d );
-  assert( 0 <= idx and static_cast< size_t >( idx ) < buffer_.size() );
+  assert( 0 <= idx and static_cast< size_t >( idx ) < buffer_[ 0 ].size() );
   return idx;
 }
 
@@ -293,12 +308,13 @@ public:
   /**
    * Append a value to the ring buffer list.
    *
+   * @param  tid    Thread writing into the ring buffer.
    * @param  offs     Arrival time relative to beginning of slice.
    * @param  double Value to append.
    */
-  void append_value( const long offs, const double );
+  void append_value( const size_t tid, const long offs, const double );
 
-  std::list< double >& get_list( const long offs );
+  std::list< double > get_list( const long offs );
 
   /**
    * Initialize the buffer with empty lists.
@@ -320,12 +336,12 @@ public:
   size_t
   size() const
   {
-    return buffer_.size();
+    return buffer_[ 0 ].size();
   }
 
 private:
-  //! Buffered data
-  std::vector< std::list< double > > buffer_;
+  //! Buffered data per thread
+  std::vector< std::vector< std::list< double > > > buffer_;
 
   /**
    * Obtain buffer index.
@@ -338,21 +354,26 @@ private:
 };
 
 inline void
-ListRingBuffer::append_value( const long offs, const double v )
+ListRingBuffer::append_value( const size_t tid, const long offs, const double v )
 {
-  buffer_[ get_index_( offs ) ].push_back( v );
+  buffer_[ tid ][ get_index_( offs ) ].push_back( v );
 }
 
-inline std::list< double >&
+inline std::list< double >
 ListRingBuffer::get_list( const long offs )
 {
-  assert( 0 <= offs and static_cast< size_t >( offs ) < buffer_.size() );
+  assert( 0 <= offs and static_cast< size_t >( offs ) < buffer_[ 0 ].size() );
   assert( offs < kernel().connection_manager.get_min_delay() );
 
+  std::list< double > ret;
   // offs == 0 is beginning of slice, but we have to
   // take modulo into account when indexing
   long idx = get_index_( offs );
-  return buffer_[ idx ];
+  for ( size_t tid = 0; tid != kernel().vp_manager.get_num_threads(); ++tid )
+  {
+    ret.insert( ret.end(), buffer_[ tid ][ idx ].begin(), buffer_[ tid ][ idx ].end() );
+  }
+  return ret;
 }
 
 inline size_t
@@ -360,7 +381,7 @@ ListRingBuffer::get_index_( const long d ) const
 {
   const long idx = kernel().event_delivery_manager.get_modulo( d );
   assert( 0 <= idx );
-  assert( static_cast< size_t >( idx ) < buffer_.size() );
+  assert( static_cast< size_t >( idx ) < buffer_[ 0 ].size() );
   return idx;
 }
 
@@ -371,9 +392,9 @@ class MultiChannelInputBuffer
 public:
   MultiChannelInputBuffer();
 
-  void add_value( const size_t slot, const size_t channel, const double value );
+  void add_value( const size_t tid, const size_t slot, const size_t channel, const double value );
 
-  const std::array< double, num_channels >& get_values_all_channels( const size_t slot ) const;
+  std::array< double, num_channels > get_values_all_channels( const size_t slot ) const;
   void reset_values_all_channels( const size_t slot );
 
   void clear();
@@ -386,40 +407,55 @@ private:
   /**
    * Buffered data stored in a vector of arrays of double values
    *
-   * 1st dimension: ring buffer slot (index into outer vector)
-   * 2nd dimension: channel (index into inner array)
+   * 1st dimension: Thread writing into the buffer
+   * 2nd dimension: ring buffer slot (index into outer vector)
+   * 3rd dimension: channel (index into inner array)
    */
-  std::vector< std::array< double, num_channels > > buffer_;
+  std::vector< std::vector< std::array< double, num_channels > > > buffer_;
 };
 
 template < unsigned int num_channels >
 inline void
 MultiChannelInputBuffer< num_channels >::reset_values_all_channels( const size_t slot )
 {
-  assert( slot < buffer_.size() );
-  buffer_[ slot ].fill( 0.0 );
+  assert( slot < buffer_[ 0 ].size() );
+  for ( size_t tid = 0; tid != kernel().vp_manager.get_num_threads(); ++tid )
+  {
+    buffer_[ tid ][ slot ].fill( 0.0 );
+  }
 }
 
 template < unsigned int num_channels >
 inline void
-MultiChannelInputBuffer< num_channels >::add_value( const size_t slot, const size_t channel, const double value )
+MultiChannelInputBuffer< num_channels >::add_value( const size_t tid,
+  const size_t slot,
+  const size_t channel,
+  const double value )
 {
-  buffer_[ slot ][ channel ] += value;
+  buffer_[ tid ][ slot ][ channel ] += value;
 }
 
 template < unsigned int num_channels >
-inline const std::array< double, num_channels >&
+inline std::array< double, num_channels >
 MultiChannelInputBuffer< num_channels >::get_values_all_channels( const size_t slot ) const
 {
-  assert( slot < buffer_.size() );
-  return buffer_[ slot ];
+  assert( slot < buffer_[ 0 ].size() );
+  std::array< double, num_channels > ret { 0. };
+  for ( size_t tid = 0; tid != kernel().vp_manager.get_num_threads(); ++tid )
+  {
+    for ( size_t channel = 0; channel != num_channels; ++channel )
+    {
+      ret[ channel ] += buffer_[ tid ][ slot ][ channel ];
+    }
+  }
+  return ret;
 }
 
 template < unsigned int num_channels >
 inline size_t
 MultiChannelInputBuffer< num_channels >::size() const
 {
-  return buffer_.size();
+  return buffer_[ 0 ].size();
 }
 
 } // namespace nest

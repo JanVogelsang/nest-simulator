@@ -59,16 +59,12 @@ BOOST_AUTO_TEST_CASE( test_target_object_type_constructor )
   {
     // tid and rank can take on all values up to MAX_{TID,RANK}
     // syn_id and lcid can only take values up to MAX_{SYN_ID,LCID}-1
-    const size_t tid = std::rand() % ( MAX_TID + 1 );
     const size_t rank = std::rand() % ( MAX_RANK + 1 );
-    const synindex syn_id = std::rand() % MAX_SYN_ID;
     const size_t lcid = std::rand() % MAX_LCID;
 
-    Target target_id_testInit( tid, rank, syn_id, lcid );
+    Target target_id_testInit( rank, lcid );
 
-    BOOST_REQUIRE( target_id_testInit.get_tid() == tid );
     BOOST_REQUIRE( target_id_testInit.get_rank() == rank );
-    BOOST_REQUIRE( target_id_testInit.get_syn_id() == syn_id );
     BOOST_REQUIRE( target_id_testInit.get_lcid() == lcid );
     BOOST_REQUIRE( target_id_testInit.get_status() == TARGET_ID_UNPROCESSED );
   }
@@ -82,9 +78,7 @@ BOOST_AUTO_TEST_CASE( test_target_object_type_set_get )
   {
     // tid and rank can take on all values up to MAX_{TID,RANK}
     // syn_id and lcid can only take values up to MAX_{SYN_ID,LCID}-1
-    const size_t tid = std::rand() % ( MAX_TID + 1 );
     const size_t rank = std::rand() % ( MAX_RANK + 1 );
-    const synindex syn_id = std::rand() % MAX_SYN_ID;
     const size_t lcid = std::rand() % MAX_LCID;
 
     enum_status_target_id status_target_id = TARGET_ID_UNPROCESSED;
@@ -93,15 +87,11 @@ BOOST_AUTO_TEST_CASE( test_target_object_type_set_get )
       status_target_id = TARGET_ID_PROCESSED;
     }
 
-    target_id_testSetGet.set_tid( tid );
     target_id_testSetGet.set_rank( rank );
-    target_id_testSetGet.set_syn_id( syn_id );
     target_id_testSetGet.set_lcid( lcid );
     target_id_testSetGet.set_status( status_target_id );
 
-    BOOST_REQUIRE( target_id_testSetGet.get_tid() == tid );
     BOOST_REQUIRE( target_id_testSetGet.get_rank() == rank );
-    BOOST_REQUIRE( target_id_testSetGet.get_syn_id() == syn_id );
     BOOST_REQUIRE( target_id_testSetGet.get_lcid() == lcid );
     BOOST_REQUIRE( target_id_testSetGet.get_status() == status_target_id );
   }

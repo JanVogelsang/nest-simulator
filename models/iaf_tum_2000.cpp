@@ -368,7 +368,7 @@ nest::iaf_tum_2000::update( const Time& origin, const long from, const long to )
 
     // get read access to the correct input-buffer slot
     const size_t input_buffer_slot = kernel().event_delivery_manager.get_modulo( lag );
-    auto& input = B_.input_buffer_.get_values_all_channels( input_buffer_slot );
+    auto input = B_.input_buffer_.get_values_all_channels( input_buffer_slot );
 
     // the spikes arriving at T+1 have an immediate effect on the state of the
     // neuron
@@ -462,7 +462,7 @@ nest::iaf_tum_2000::handle( SpikeEvent& e )
   }
 
   // separate buffer channels for excitatory and inhibitory inputs
-  B_.input_buffer_.add_value( input_buffer_slot, s > 0 ? Buffers_::SYN_EX : Buffers_::SYN_IN, s );
+  B_.input_buffer_.add_value( kernel().vp_manager.get_thread_id(), input_buffer_slot, s > 0 ? Buffers_::SYN_EX : Buffers_::SYN_IN, s );
 }
 
 void
@@ -478,11 +478,11 @@ nest::iaf_tum_2000::handle( CurrentEvent& e )
 
   if ( 0 == e.get_rport() )
   {
-    B_.input_buffer_.add_value( input_buffer_slot, Buffers_::I0, w * c );
+    B_.input_buffer_.add_value( kernel().vp_manager.get_thread_id(), input_buffer_slot, Buffers_::I0, w * c );
   }
   if ( 1 == e.get_rport() )
   {
-    B_.input_buffer_.add_value( input_buffer_slot, Buffers_::I1, w * c );
+    B_.input_buffer_.add_value( kernel().vp_manager.get_thread_id(), input_buffer_slot, Buffers_::I1, w * c );
   }
 }
 

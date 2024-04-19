@@ -545,12 +545,12 @@ nest::aeif_cond_alpha_astro::handle( SpikeEvent& e )
 
   if ( e.get_weight() > 0.0 )
   {
-    B_.spike_exc_.add_value( e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
+    B_.spike_exc_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
       e.get_weight() * e.get_multiplicity() );
   }
   else
   {
-    B_.spike_inh_.add_value( e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
+    B_.spike_inh_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
       -e.get_weight() * e.get_multiplicity() );
   }
 }
@@ -563,7 +563,7 @@ nest::aeif_cond_alpha_astro::handle( CurrentEvent& e )
   const double c = e.get_current();
   const double w = e.get_weight();
 
-  B_.currents_.add_value( e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * c );
+  B_.currents_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * c );
 }
 
 void
@@ -577,7 +577,7 @@ nest::aeif_cond_alpha_astro::handle( SICEvent& e )
   // The call to get_coeffvalue( it ) in this loop also advances the iterator it
   while ( it != e.end() )
   {
-    B_.sic_currents_.add_value( delay + i, weight * e.get_coeffvalue( it ) );
+    B_.sic_currents_.add_value( kernel().vp_manager.get_thread_id(), delay + i, weight * e.get_coeffvalue( it ) );
     ++i;
   }
 }

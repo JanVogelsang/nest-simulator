@@ -25,6 +25,7 @@
 
 // Includes from nestkernel:
 #include "nest_types.h"
+#include <vector>
 
 namespace nest
 {
@@ -35,25 +36,25 @@ namespace nest
 class histentry
 {
 public:
-  histentry( double t, double Kminus, double Kminus_triplet, size_t access_counter );
+  histentry( double t, double Kminus, double Kminus_triplet );
 
   double t_;              //!< point in time when spike occurred (in ms)
   double Kminus_;         //!< value of Kminus at that time
   double Kminus_triplet_; //!< value of triplet STDP Kminus at that time
-  size_t access_counter_; //!< access counter to enable removal of the entry, once all neurons read it
+  std::vector< size_t > access_counter_; //!< access counter to enable removal of the entry, once all neurons read it
 };
 
 // entry in the history of plasticity rules which consider additional factors
 class histentry_extended
 {
 public:
-  histentry_extended( double t, double dw, size_t access_counter );
+  histentry_extended( double t, double dw );
 
   double t_; //!< point in time when spike occurred (in ms)
   double dw_;
   //! how often this entry was accessed (to enable removal, once read by all
   //! neurons which need it)
-  size_t access_counter_;
+  std::vector< size_t > access_counter_;
 
   friend bool operator<( const histentry_extended he, double t );
 };
@@ -115,9 +116,9 @@ public:
 class HistEntryEpropUpdate : public HistEntryEprop
 {
 public:
-  HistEntryEpropUpdate( long t, size_t access_counter );
+  HistEntryEpropUpdate( long t );
 
-  size_t access_counter_;
+  std::vector< size_t > access_counter_;
 };
 
 /**

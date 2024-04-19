@@ -596,7 +596,7 @@ nest::gif_cond_exp_multisynapse::handle( SpikeEvent& e )
   assert( e.get_delay_steps() > 0 );
   assert( ( e.get_rport() > 0 ) and ( ( size_t ) e.get_rport() <= P_.n_receptors() ) );
 
-  B_.spikes_[ e.get_rport() - 1 ].add_value(
+  B_.spikes_[ e.get_rport() - 1 ].add_value( kernel().vp_manager.get_thread_id(),
     e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_multiplicity() );
 }
 
@@ -609,7 +609,7 @@ nest::gif_cond_exp_multisynapse::handle( CurrentEvent& e )
   const double w = e.get_weight();
 
   // Add weighted current; HEP 2002-10-04
-  B_.currents_.add_value( e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * I );
+  B_.currents_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * I );
 }
 
 void

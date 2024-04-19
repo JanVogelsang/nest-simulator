@@ -59,7 +59,7 @@ public:
    * When the trace is requested at the exact same time that the neuron emits a spike,
    * the trace value as it was just before the spike is returned.
    */
-  double get_K_value( double t ) override;
+  double get_K_value( double t ) const override;
 
   /**
    * Write the different STDP K values at time t (in ms) to the provided locations.
@@ -71,20 +71,20 @@ public:
    *
    * @throws UnexpectedEvent
    */
-  void get_K_values( double t, double& Kminus, double& nearest_neighbor_Kminus, double& Kminus_triplet ) override;
+  void get_K_values( double t, double& Kminus, double& nearest_neighbor_Kminus, double& Kminus_triplet ) const override;
 
   /**
    * Return the triplet Kminus value for the associated iterator.
    */
-  double get_K_triplet_value( const std::deque< histentry >::iterator& iter );
+  // double get_K_triplet_value( const std::deque< histentry >::const_iterator& iter ) const;
 
   /**
    * Return the spike times (in steps) of spikes which occurred in the range [t1,t2].
    */
   void get_history( double t1,
     double t2,
-    std::deque< histentry >::iterator* start,
-    std::deque< histentry >::iterator* finish ) override;
+    std::deque< histentry >::const_iterator* start,
+    std::deque< histentry >::const_iterator* finish ) override;
 
   /**
    * Register a new incoming STDP connection.
@@ -136,7 +136,6 @@ private:
   double tau_minus_triplet_inv_;
 
   double max_delay_;
-  double trace_;
 
   double last_spike_;
 

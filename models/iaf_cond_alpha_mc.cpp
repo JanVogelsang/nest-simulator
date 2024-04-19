@@ -660,7 +660,7 @@ nest::iaf_cond_alpha_mc::handle( SpikeEvent& e )
   assert( e.get_delay_steps() > 0 );
   assert( e.get_rport() < 2 * NCOMP );
 
-  B_.spikes_[ e.get_rport() ].add_value(
+  B_.spikes_[ e.get_rport() ].add_value( kernel().vp_manager.get_thread_id(),
     e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_multiplicity() );
 }
 
@@ -672,7 +672,7 @@ nest::iaf_cond_alpha_mc::handle( CurrentEvent& e )
   assert( e.get_rport() < NCOMP );
 
   // add weighted current; HEP 2002-10-04
-  B_.currents_[ e.get_rport() ].add_value(
+  B_.currents_[ e.get_rport() ].add_value( kernel().vp_manager.get_thread_id(),
     e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_current() );
 }
 

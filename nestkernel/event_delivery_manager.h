@@ -211,20 +211,10 @@ public:
    */
   void gather_target_data( const size_t tid );
 
-  void gather_target_data_compressed( const size_t tid );
-
-
   /**
    * Delivers events to targets.
    */
   void deliver_events( const size_t tid );
-
-  /**
-   * Collocates presynaptic connection information for secondary events (MPI
-   * buffer offsets), communicates via MPI and create presynaptic connection
-   * infrastructure for secondary events.
-   */
-  void gather_secondary_target_data();
 
   void write_done_marker_secondary_events_( const bool done );
 
@@ -283,7 +273,7 @@ private:
    */
   template < typename SpikeDataWithRankT, typename SpikeDataT >
   void collocate_spike_data_buffers_( SendBufferPosition& send_buffer_position,
-    std::vector< std::vector< SpikeDataWithRankT >* >& spike_register,
+    std::vector< std::vector< std::vector< SpikeDataWithRankT >* > >& spike_register,
     std::vector< SpikeDataT >& send_buffer,
     std::vector< size_t >& num_spikes_per_rank );
 
@@ -339,10 +329,6 @@ private:
    * SourceTable and connections information.
    */
   bool collocate_target_data_buffers_( const size_t tid,
-    const AssignedRanks& assigned_ranks,
-    TargetSendBufferPosition& send_buffer_position );
-
-  bool collocate_target_data_buffers_compressed_( const size_t tid,
     const AssignedRanks& assigned_ranks,
     TargetSendBufferPosition& send_buffer_position );
 
@@ -403,12 +389,13 @@ private:
    * All spikes to be delivered non-locally are first written to this register by the thread generating the spike.
    * They are later transferred to communication buffers and exchanged globally.
    *
-   * The outer dimension represents the thread generating the spikes, the second dimension the individual spikes.
+   * The outer dimension represents the synapse type, the second dimension the thread generating the spikes, the third
+   * dimension the individual spikes.
    *
    * @note We store here pointers to the vectors for the individual threads so that those vectors, including their
    * administrative metadata will be stored in thread-local memory.
    */
-  std::vector< std::vector< SpikeDataWithRank >* > emitted_spikes_register_;
+  std::vector< std::vector< std::vector< SpikeDataWithRank >* > > emitted_spikes_register_;
 
   /**
    * Register of emitted off-grid spikes.
@@ -416,12 +403,13 @@ private:
    * All off-grid spikes to be delivered non-locally are first written to this register by the thread generating the
    * spike. They are later transferred to communication buffers and exchanged globally.
    *
-   * The outer dimension represents the thread generating the spikes, the second dimension the individual spikes.
+   * The outer dimension represents the synapse type, the second dimension the thread generating the spikes, the third
+   * dimension the individual spikes.
    *
    * @note We store here pointers to the vectors for the individual threads so that those vectors, including their
    * administrative metadata will be stored in thread-local memory.
    */
-  std::vector< std::vector< OffGridSpikeDataWithRank >* > off_grid_emitted_spikes_register_;
+  std::vector< std::vector< std::vector< OffGridSpikeDataWithRank >* > > off_grid_emitted_spikes_register_;
 
   /**
    * Buffer to collect the secondary events after serialization.
@@ -478,8 +466,14 @@ private:
 inline void
 EventDeliveryManager::reset_spike_register_( const size_t tid )
 {
-  emitted_spikes_register_[ tid ]->clear();
-  off_grid_emitted_spikes_register_[ tid ]->clear();
+  for ( auto& arr : emitted_spikes_register_ )
+  {
+    arr[ tid ]->clear();
+  }
+  for ( auto& arr : off_grid_emitted_spikes_register_ )
+  {
+    arr[ tid ]->clear();
+  }
 }
 
 inline bool

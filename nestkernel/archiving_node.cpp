@@ -42,7 +42,6 @@ nest::ArchivingNode::ArchivingNode()
   , tau_minus_triplet_( 110.0 )
   , tau_minus_triplet_inv_( 1. / tau_minus_triplet_ )
   , max_delay_( 0 )
-  , trace_( 0.0 )
   , last_spike_( -1.0 )
 {
 }
@@ -57,7 +56,6 @@ nest::ArchivingNode::ArchivingNode( const ArchivingNode& n )
   , tau_minus_triplet_( n.tau_minus_triplet_ )
   , tau_minus_triplet_inv_( n.tau_minus_triplet_inv_ )
   , max_delay_( n.max_delay_ )
-  , trace_( n.trace_ )
   , last_spike_( n.last_spike_ )
 {
 }
@@ -74,7 +72,10 @@ ArchivingNode::register_stdp_connection( double t_first_read, double delay )
         runner != history_.end() and ( t_first_read - runner->t_ > -1.0 * kernel().connection_manager.get_stdp_eps() );
         ++runner )
   {
-    ( runner->access_counter_ )++;
+    for ( size_t tid = 0; tid != kernel().vp_manager.get_num_threads(); ++tid )
+    {
+      runner->access_counter_[ tid ]++;
+    }
   }
 
   n_incoming_++;
@@ -83,39 +84,34 @@ ArchivingNode::register_stdp_connection( double t_first_read, double delay )
 }
 
 double
-nest::ArchivingNode::get_K_value( double t )
+nest::ArchivingNode::get_K_value( double t ) const
 {
   // case when the neuron has not yet spiked
   if ( history_.empty() )
   {
-    trace_ = 0.;
-    return trace_;
+    return 0;
   }
 
-  // search for the latest post spike in the history buffer that came strictly
-  // before `t`
+  // Search for the latest post spike in the history buffer that came strictly before `t`.
   int i = history_.size() - 1;
   while ( i >= 0 )
   {
     if ( t - history_[ i ].t_ > kernel().connection_manager.get_stdp_eps() )
     {
-      trace_ = ( history_[ i ].Kminus_ * std::exp( ( history_[ i ].t_ - t ) * tau_minus_inv_ ) );
-      return trace_;
+      return ( history_[ i ].Kminus_ * std::exp( ( history_[ i ].t_ - t ) * tau_minus_inv_ ) );
     }
     --i;
   }
 
-  // this case occurs when the trace was requested at a time precisely at or
-  // before the first spike in the history
-  trace_ = 0.;
-  return trace_;
+  // This case occurs when the trace was requested at a time precisely at or before the first spike in the history.
+  return 0;
 }
 
 void
 nest::ArchivingNode::get_K_values( double t,
   double& K_value,
   double& nearest_neighbor_K_value,
-  double& K_triplet_value )
+  double& K_triplet_value ) const
 {
   // case when the neuron has not yet spiked
   if ( history_.empty() )
@@ -152,8 +148,8 @@ nest::ArchivingNode::get_K_values( double t,
 void
 nest::ArchivingNode::get_history( double t1,
   double t2,
-  std::deque< histentry >::iterator* start,
-  std::deque< histentry >::iterator* finish )
+  std::deque< histentry >::const_iterator* start,
+  std::deque< histentry >::const_iterator* finish )
 {
   *finish = history_.end();
   if ( history_.empty() )
@@ -171,7 +167,7 @@ nest::ArchivingNode::get_history( double t1,
   *finish = runner.base();
   while ( runner != history_.rend() and runner->t_ >= t1_lim )
   {
-    runner->access_counter_++;
+    runner->access_counter_[ kernel().vp_manager.get_thread_id() ]++;
     ++runner;
   }
   *start = runner.base();
@@ -195,7 +191,7 @@ nest::ArchivingNode::set_spiketime( Time const& t_sp, double offset )
     while ( history_.size() > 1 )
     {
       const double next_t_sp = history_[ 1 ].t_;
-      if ( history_.front().access_counter_ >= n_incoming_
+      if ( std::accumulate(history_.front().access_counter_.begin(), history_.front().access_counter_.end(), 0) >= n_incoming_
         and t_sp_ms - next_t_sp > max_delay_ + Time::delay_steps_to_ms( kernel().connection_manager.get_min_delay() )
             + kernel().connection_manager.get_stdp_eps() )
       {
@@ -210,7 +206,7 @@ nest::ArchivingNode::set_spiketime( Time const& t_sp, double offset )
     Kminus_ = Kminus_ * std::exp( ( last_spike_ - t_sp_ms ) * tau_minus_inv_ ) + 1.0;
     Kminus_triplet_ = Kminus_triplet_ * std::exp( ( last_spike_ - t_sp_ms ) * tau_minus_triplet_inv_ ) + 1.0;
     last_spike_ = t_sp_ms;
-    history_.push_back( histentry( last_spike_, Kminus_, Kminus_triplet_, 0 ) );
+    history_.push_back( histentry( last_spike_, Kminus_, Kminus_triplet_ ) );
   }
   else
   {
@@ -224,7 +220,7 @@ nest::ArchivingNode::get_status( DictionaryDatum& d ) const
   def< double >( d, names::t_spike, get_spiketime_ms() );
   def< double >( d, names::tau_minus, tau_minus_ );
   def< double >( d, names::tau_minus_triplet, tau_minus_triplet_ );
-  def< double >( d, names::post_trace, trace_ );
+  // def< double >( d, names::post_trace, get_K_value(t_now) );  // TODO JV: Do we really need this?
 #ifdef DEBUG_ARCHIVER
   def< int >( d, names::archiver_length, history_.size() );
 #endif

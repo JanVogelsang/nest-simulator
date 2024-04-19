@@ -32,21 +32,18 @@ nest::TargetTable::initialize()
 {
   const size_t num_threads = kernel().vp_manager.get_num_threads();
   targets_.resize( num_threads );
-  secondary_send_buffer_pos_.resize( num_threads );
 
 #pragma omp parallel
   {
     const size_t tid = kernel().vp_manager.get_thread_id();
-    targets_[ tid ] = std::vector< std::vector< Target > >();
-    secondary_send_buffer_pos_[ tid ] = std::vector< std::vector< std::vector< size_t > > >();
+    targets_[ tid ] = std::vector< std::vector< std::vector< Target > > >();
   } // of omp parallel
 }
 
 void
 nest::TargetTable::finalize()
 {
-  std::vector< std::vector< std::vector< Target > > >().swap( targets_ );
-  std::vector< std::vector< std::vector< std::vector< size_t > > > >().swap( secondary_send_buffer_pos_ );
+  std::vector< std::vector< std::vector< std::vector< Target > > > >().swap( targets_ );
 }
 
 void
@@ -58,28 +55,11 @@ nest::TargetTable::prepare( const size_t tid )
 
   targets_[ tid ].resize( num_local_nodes );
 
-  secondary_send_buffer_pos_[ tid ].resize( num_local_nodes );
-
   for ( size_t lid = 0; lid < num_local_nodes; ++lid )
   {
     // resize to maximal possible synapse-type index
-    secondary_send_buffer_pos_[ tid ][ lid ].resize( kernel().model_manager.get_num_connection_models() );
-  }
-}
-
-void
-nest::TargetTable::compress_secondary_send_buffer_pos( const size_t tid )
-{
-  for ( std::vector< std::vector< std::vector< size_t > > >::iterator it = secondary_send_buffer_pos_[ tid ].begin();
-        it != secondary_send_buffer_pos_[ tid ].end();
-        ++it )
-  {
-    for ( std::vector< std::vector< size_t > >::iterator iit = it->begin(); iit != it->end(); ++iit )
-    {
-      std::sort( iit->begin(), iit->end() );
-      const std::vector< size_t >::iterator new_it = std::unique( iit->begin(), iit->end() );
-      iit->resize( std::distance( iit->begin(), new_it ) );
-    }
+    // TODO JV: This produces lots of empty vectors, compress this somehow
+    targets_[ tid ][ lid ].resize( kernel().model_manager.get_num_connection_models() );
   }
 }
 
@@ -88,23 +68,8 @@ nest::TargetTable::add_target( const size_t tid, const size_t target_rank, const
 {
   const size_t lid = target_data.get_source_lid();
 
-  vector_util::grow( targets_[ tid ][ lid ] );
+  vector_util::grow( targets_[ tid ][ lid ] ); // TODO JV: Does this really make sense?
 
-  if ( target_data.is_primary() )
-  {
-    const TargetDataFields& target_fields = target_data.target_data;
-
-    targets_[ tid ][ lid ].push_back(
-      Target( target_fields.get_tid(), target_rank, target_fields.get_syn_id(), target_fields.get_lcid() ) );
-  }
-  else
-  {
-    const SecondaryTargetDataFields& secondary_fields = target_data.secondary_data;
-    const size_t send_buffer_pos = secondary_fields.get_recv_buffer_pos()
-      + kernel().mpi_manager.get_send_displacement_secondary_events_in_int( target_rank );
-    const synindex syn_id = secondary_fields.get_syn_id();
-
-    assert( syn_id < secondary_send_buffer_pos_[ tid ][ lid ].size() );
-    secondary_send_buffer_pos_[ tid ][ lid ][ syn_id ].push_back( send_buffer_pos );
-  }
+  targets_[ tid ][ lid ][ target_data.get_syn_id() ].push_back(
+    Target( target_rank, target_data.get_target_lcid() ) );
 }

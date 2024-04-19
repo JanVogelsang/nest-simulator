@@ -49,14 +49,12 @@ nest::SourceTable::initialize()
   saved_entry_point_.initialize( num_threads, false );
   current_positions_.resize( num_threads );
   saved_positions_.resize( num_threads );
-  compressible_sources_.resize( num_threads );
 
 #pragma omp parallel
   {
     const size_t tid = kernel().vp_manager.get_thread_id();
     sources_.at( tid ).resize( 0 );
     resize_sources();
-    compressible_sources_.at( tid ).resize( 0 );
   } // of omp parallel
 }
 
@@ -68,15 +66,12 @@ nest::SourceTable::finalize()
     if ( is_cleared_[ tid ].is_false() )
     {
       clear( tid );
-      compressible_sources_[ tid ].clear();
     }
   }
 
   sources_.clear();
   current_positions_.clear();
   saved_positions_.clear();
-  compressible_sources_.clear();
-  compressed_spike_data_map_.clear();
 }
 
 bool
@@ -195,77 +190,6 @@ nest::SourceTable::remove_disabled_sources( const size_t tid, const synindex syn
 }
 
 void
-nest::SourceTable::compute_buffer_pos_for_unique_secondary_sources( const size_t tid,
-  std::map< size_t, size_t >& buffer_pos_of_source_node_id_syn_id )
-{
-  // set of unique sources & synapse types, required to determine
-  // secondary events MPI buffer positions
-  // initialized and deleted by thread 0 in this method
-  static std::set< std::pair< size_t, size_t > >* unique_secondary_source_node_id_syn_id;
-#pragma omp single
-  {
-    unique_secondary_source_node_id_syn_id = new std::set< std::pair< size_t, size_t > >();
-  }
-
-  // collect all unique pairs of source node ID and synapse-type id
-  // corresponding to continuous-data connections on this MPI rank;
-  // using a set makes sure secondary events are not duplicated for
-  // targets on the same process, but different threads
-  for ( size_t syn_id = 0; syn_id < sources_[ tid ].size(); ++syn_id )
-  {
-    const ConnectorModel& conn_model = kernel().model_manager.get_connection_model( syn_id, tid );
-    const bool is_primary = conn_model.has_property( ConnectionModelProperties::IS_PRIMARY );
-
-    if ( not is_primary )
-    {
-      for ( BlockVector< Source >::const_iterator source_cit = sources_[ tid ][ syn_id ].begin();
-            source_cit != sources_[ tid ][ syn_id ].end();
-            ++source_cit )
-      {
-#pragma omp critical
-        {
-          ( *unique_secondary_source_node_id_syn_id ).insert( std::make_pair( source_cit->get_node_id(), syn_id ) );
-        }
-      }
-    }
-  }
-#pragma omp barrier
-
-#pragma omp single
-  {
-    // compute receive buffer positions for all unique pairs of source
-    // node ID and synapse-type id on this MPI rank
-    std::vector< int > recv_counts_secondary_events_in_int_per_rank( kernel().mpi_manager.get_num_processes(), 0 );
-
-    for ( std::set< std::pair< size_t, size_t > >::const_iterator cit =
-            ( *unique_secondary_source_node_id_syn_id ).begin();
-          cit != ( *unique_secondary_source_node_id_syn_id ).end();
-          ++cit )
-    {
-      const size_t source_rank = kernel().mpi_manager.get_process_id_of_node_id( cit->first );
-      const size_t event_size = kernel().model_manager.get_secondary_event_prototype( cit->second, tid ).size();
-
-      buffer_pos_of_source_node_id_syn_id.insert(
-        std::make_pair( pack_source_node_id_and_syn_id( cit->first, cit->second ),
-          recv_counts_secondary_events_in_int_per_rank[ source_rank ] ) );
-
-      recv_counts_secondary_events_in_int_per_rank[ source_rank ] += event_size;
-    }
-
-    // each chunk needs to contain one additional int that can be used
-    // to communicate whether waveform relaxation has converged
-    for ( auto& recv_count : recv_counts_secondary_events_in_int_per_rank )
-    {
-      ++recv_count;
-    }
-
-    kernel().mpi_manager.set_recv_counts_secondary_events_in_int_per_rank(
-      recv_counts_secondary_events_in_int_per_rank );
-    delete unique_secondary_source_node_id_syn_id;
-  } // of omp single
-}
-
-void
 nest::SourceTable::resize_sources()
 {
   kernel().vp_manager.assert_thread_parallel();
@@ -312,49 +236,19 @@ nest::SourceTable::previous_entry_has_same_source_( const SourceTablePosition& c
     and local_sources[ previous_lcid ].get_node_id() == current_source.get_node_id() );
 }
 
-bool
+void
 nest::SourceTable::populate_target_data_fields_( const SourceTablePosition& current_position,
   const Source& current_source,
-  const size_t source_rank,
   TargetData& next_target_data ) const
 {
-  assert( not kernel().connection_manager.use_compressed_spikes() ); // handled elsewhere
-
   const auto node_id = current_source.get_node_id();
 
   // set values of next_target_data
   next_target_data.set_source_lid( kernel().vp_manager.node_id_to_lid( node_id ) );
   next_target_data.set_source_tid( kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( node_id ) ) );
   next_target_data.reset_marker();
-
-  if ( current_source.is_primary() ) // primary connection, i.e., chemical synapses
-  {
-    next_target_data.set_is_primary( true );
-
-    TargetDataFields& target_fields = next_target_data.target_data;
-    target_fields.set_syn_id( current_position.syn_id );
-
-    // we store the thread index of the source table, not our own tid!
-    target_fields.set_tid( current_position.tid );
-    target_fields.set_lcid( current_position.lcid );
-  }
-  else // secondary connection, e.g., gap junctions
-  {
-    next_target_data.set_is_primary( false );
-
-    // the source rank will write to the buffer position relative to
-    // the first position from the absolute position in the receive
-    // buffer
-    const size_t relative_recv_buffer_pos = kernel().connection_manager.get_secondary_recv_buffer_position(
-                                              current_position.tid, current_position.syn_id, current_position.lcid )
-      - kernel().mpi_manager.get_recv_displacement_secondary_events_in_int( source_rank );
-
-    SecondaryTargetDataFields& secondary_fields = next_target_data.secondary_data;
-    secondary_fields.set_recv_buffer_pos( relative_recv_buffer_pos );
-    secondary_fields.set_syn_id( current_position.syn_id );
-  }
-
-  return true;
+  next_target_data.set_syn_id( current_position.syn_id );
+  next_target_data.set_target_lcid( current_position.lcid );
 }
 
 bool
@@ -411,58 +305,13 @@ nest::SourceTable::get_next_target_data( const size_t tid,
     // set the source rank
     source_rank = kernel().mpi_manager.get_process_id_of_node_id( current_source.get_node_id() );
 
-    if ( not populate_target_data_fields_( current_position, current_source, source_rank, next_target_data ) )
-    {
-      current_position.decrease();
-      continue;
-    }
+    populate_target_data_fields_( current_position, current_source, next_target_data );
 
     // we are about to return a valid entry, so mark it as processed
     current_source.set_processed( true );
 
     current_position.decrease();
     return true; // found a valid entry
-  }
-}
-
-void
-nest::SourceTable::resize_compressible_sources()
-{
-  for ( size_t tid = 0; tid < static_cast< size_t >( compressible_sources_.size() ); ++tid )
-  {
-    compressible_sources_[ tid ].clear();
-    compressible_sources_[ tid ].resize(
-      kernel().model_manager.get_num_connection_models(), std::map< size_t, SpikeData >() );
-  }
-}
-
-void
-nest::SourceTable::collect_compressible_sources( const size_t tid )
-{
-  for ( synindex syn_id = 0; syn_id < sources_[ tid ].size(); ++syn_id )
-  {
-    size_t lcid = 0;
-    auto& syn_sources = sources_[ tid ][ syn_id ];
-    while ( lcid < syn_sources.size() )
-    {
-      const size_t old_source_node_id = syn_sources[ lcid ].get_node_id();
-      const std::pair< size_t, SpikeData > source_node_id_to_spike_data =
-        std::make_pair( old_source_node_id, SpikeData( tid, syn_id, lcid, 0 ) );
-      compressible_sources_[ tid ][ syn_id ].insert( source_node_id_to_spike_data );
-
-      // For all subsequent connections with same source, set "has more targets" on preceding connection.
-      // Requires sorted connections.
-      ++lcid;
-      while ( ( lcid < syn_sources.size() ) and ( syn_sources[ lcid ].get_node_id() == old_source_node_id ) )
-      {
-        kernel().connection_manager.set_source_has_more_targets( tid, syn_id, lcid - 1, true );
-        ++lcid;
-      }
-      // Mark last connection in sequence as not having successor. This is essential if connections are
-      // delete, e.g., by structural plasticity, because we do not globally reset the more_targets flag.
-      assert( lcid - 1 < syn_sources.size() );
-      kernel().connection_manager.set_source_has_more_targets( tid, syn_id, lcid - 1, false );
-    }
   }
 }
 
@@ -486,110 +335,3 @@ nest::SourceTable::dump_sources() const
   } )
 }
 
-
-void
-nest::SourceTable::dump_compressible_sources() const
-{
-  FULL_LOGGING_ONLY( for ( size_t tid = 0; tid < compressible_sources_.size(); ++tid ) {
-    for ( size_t syn_id = 0; syn_id < compressible_sources_[ tid ].size(); ++syn_id )
-    {
-      for ( const auto& entry : compressible_sources_[ tid ][ syn_id ] )
-      {
-        kernel().write_to_dump( String::compose( "csrc : r%1 t%2 s%3 l%4 tt%5",
-          kernel().mpi_manager.get_rank(),
-          kernel().vp_manager.get_thread_id(),
-          entry.first,
-          entry.second.get_lcid(),
-          entry.second.get_tid() ) );
-      }
-    }
-  } )
-}
-
-void
-nest::SourceTable::fill_compressed_spike_data(
-  std::vector< std::vector< std::vector< SpikeData > > >& compressed_spike_data )
-{
-  const size_t num_synapse_models = kernel().model_manager.get_num_connection_models();
-  compressed_spike_data.clear();
-  compressed_spike_data.resize( num_synapse_models );
-  compressed_spike_data_map_.clear();
-  compressed_spike_data_map_.resize( num_synapse_models, std::map< size_t, CSDMapEntry >() );
-
-  // For each synapse type, and for each source neuron with at least one local target,
-  // store in compressed_spike_data one SpikeData entry for each local thread that
-  // owns a local target. In compressed_spike_data_map_ store index into compressed_spike_data[syn_id]
-  // where data for a given source is stored.
-
-  // TODO: I believe that at this point compressible_sources_ is ordered by source gid.
-  //       Maybe one can exploit that to avoid searching with find() below.
-  for ( synindex syn_id = 0; syn_id < kernel().model_manager.get_num_connection_models(); ++syn_id )
-  {
-    for ( size_t target_thread = 0; target_thread < static_cast< size_t >( compressible_sources_.size() );
-          ++target_thread )
-    {
-      for ( const auto& connection : compressible_sources_[ target_thread ][ syn_id ] )
-      {
-        const auto source_gid = connection.first;
-
-        if ( compressed_spike_data_map_[ syn_id ].find( source_gid ) == compressed_spike_data_map_[ syn_id ].end() )
-        {
-          // Set up entry for new source
-          const auto new_source_index = compressed_spike_data[ syn_id ].size();
-
-          compressed_spike_data[ syn_id ].emplace_back( kernel().vp_manager.get_num_threads(),
-            SpikeData( invalid_targetindex, invalid_synindex, invalid_lcid, 0 ) );
-
-          compressed_spike_data_map_[ syn_id ].insert(
-            std::make_pair( source_gid, CSDMapEntry( new_source_index, target_thread ) ) );
-        }
-
-        const auto source_index = compressed_spike_data_map_[ syn_id ].find( source_gid )->second.get_source_index();
-
-        assert( compressed_spike_data[ syn_id ][ source_index ][ target_thread ].get_lcid() == invalid_lcid );
-
-        compressed_spike_data[ syn_id ][ source_index ][ target_thread ] = connection.second;
-      } // for connection
-
-      compressible_sources_[ target_thread ][ syn_id ].clear();
-
-    } // for target_thread
-  }   // for syn_id
-}
-
-// Argument name only needed if full logging is activated. Macro-protect to avoid unused argument warning.
-void
-nest::SourceTable::dump_compressed_spike_data(
-  const std::vector< std::vector< std::vector< SpikeData > > >& FULL_LOGGING_ONLY( compressed_spike_data ) ) const
-{
-  FULL_LOGGING_ONLY(
-    for ( const auto& tab
-          : compressed_spike_data_map_ ) {
-      for ( const auto& entry : tab )
-      {
-        kernel().write_to_dump( String::compose( "csdm : r%1 t%2 s%3 sx%4 tt%5",
-          kernel().mpi_manager.get_rank(),
-          kernel().vp_manager.get_thread_id(),
-          entry.first,
-          entry.second.get_source_index(),
-          entry.second.get_target_thread() ) );
-      }
-    }
-
-    for ( const auto& tab
-          : compressed_spike_data ) {
-      for ( size_t six = 0; six < tab.size(); ++six )
-      {
-        for ( size_t tx = 0; tx < tab[ six ].size(); ++tx )
-        {
-          kernel().write_to_dump( String::compose( "csd  : r%1 t%2 six%3 tx%4 l%5 tt%6",
-            kernel().mpi_manager.get_rank(),
-            kernel().vp_manager.get_thread_id(),
-            six,
-            tx,
-            tab[ six ][ tx ].get_lcid(),
-            tab[ six ][ tx ].get_tid() ) );
-        }
-      }
-    } )
-}

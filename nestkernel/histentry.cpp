@@ -21,20 +21,21 @@
  */
 
 #include "histentry.h"
+#include "kernel_manager.h"
 
-nest::histentry::histentry( double t, double Kminus, double Kminus_triplet, size_t access_counter )
+nest::histentry::histentry( double t, double Kminus, double Kminus_triplet )
   : t_( t )
   , Kminus_( Kminus )
   , Kminus_triplet_( Kminus_triplet )
-  , access_counter_( access_counter )
 {
+  access_counter_ = std::vector< size_t >( kernel().vp_manager.get_num_threads(), 0 );
 }
 
-nest::histentry_extended::histentry_extended( double t, double dw, size_t access_counter )
+nest::histentry_extended::histentry_extended( double t, double dw)
   : t_( t )
   , dw_( dw )
-  , access_counter_( access_counter )
 {
+  access_counter_ = std::vector< size_t >( kernel().vp_manager.get_num_threads(), 0 );
 }
 
 nest::HistEntryEprop::HistEntryEprop( long t )
@@ -55,10 +56,11 @@ nest::HistEntryEpropReadout::HistEntryEpropReadout( long t, double error_signal 
 {
 }
 
-nest::HistEntryEpropUpdate::HistEntryEpropUpdate( long t, size_t access_counter )
+nest::HistEntryEpropUpdate::HistEntryEpropUpdate( long t )
   : HistEntryEprop( t )
-  , access_counter_( access_counter )
 {
+  access_counter_ = std::vector< size_t >( kernel().vp_manager.get_num_threads(), 0 );
+  access_counter_[ 0 ] = 1;
 }
 
 nest::HistEntryEpropFiringRateReg::HistEntryEpropFiringRateReg( long t, double firing_rate_reg )

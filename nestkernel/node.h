@@ -761,9 +761,9 @@ public:
    * return the Kminus value at t (in ms).
    * @throws UnexpectedEvent
    */
-  virtual double get_K_value( double t );
+  virtual double get_K_value( double t ) const;
 
-  virtual double get_LTD_value( double t );
+  virtual double get_LTD_value( double t ) const;
 
   /**
    * write the Kminus, nearest_neighbor_Kminus, and Kminus_triplet
@@ -771,7 +771,7 @@ public:
    *
    * @throws UnexpectedEvent
    */
-  virtual void get_K_values( double t, double& Kminus, double& nearest_neighbor_Kminus, double& Kminus_triplet );
+  virtual void get_K_values( double t, double& Kminus, double& nearest_neighbor_Kminus, double& Kminus_triplet ) const;
 
   /**
    * return the spike history for (t1,t2].
@@ -779,27 +779,27 @@ public:
    */
   virtual void get_history( double t1,
     double t2,
-    std::deque< histentry >::iterator* start,
-    std::deque< histentry >::iterator* finish );
+    std::deque< histentry >::const_iterator* start,
+    std::deque< histentry >::const_iterator* finish );
 
   // for Clopath synapse
   virtual void get_LTP_history( double t1,
     double t2,
-    std::deque< histentry_extended >::iterator* start,
-    std::deque< histentry_extended >::iterator* finish );
+    std::deque< histentry_extended >::const_iterator* start,
+    std::deque< histentry_extended >::const_iterator* finish ;
   // for Urbanczik synapse
   virtual void get_urbanczik_history( double t1,
     double t2,
-    std::deque< histentry_extended >::iterator* start,
-    std::deque< histentry_extended >::iterator* finish,
-    int );
+    std::deque< histentry_extended >::const_iterator* start,
+    std::deque< histentry_extended >::const_iterator* finish,
+    int ;
   // make neuron parameters accessible in Urbanczik synapse
-  virtual double get_C_m( int comp );
-  virtual double get_g_L( int comp );
-  virtual double get_tau_L( int comp );
-  virtual double get_tau_s( int comp );
-  virtual double get_tau_syn_ex( int comp );
-  virtual double get_tau_syn_in( int comp );
+  virtual double get_C_m( int comp ) const;
+  virtual double get_g_L( int comp ) const;
+  virtual double get_tau_L( int comp ) const;
+  virtual double get_tau_s( int comp ) const;
+  virtual double get_tau_syn_ex( int comp ) const;
+  virtual double get_tau_syn_in( int comp ) const;
 
   /**
    * Compute gradient change for eprop synapses.

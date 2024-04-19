@@ -105,7 +105,6 @@ protected:
 public:
   SpikeData();
   SpikeData( const SpikeData& rhs );
-  SpikeData( const Target& target, const size_t lag );
   SpikeData( const size_t tid, const synindex syn_id, const size_t lcid, const unsigned int lag );
 
   SpikeData& operator=( const SpikeData& rhs );
@@ -207,15 +206,6 @@ inline SpikeData::SpikeData( const SpikeData& rhs )
   , lag_( rhs.lag_ )
   , tid_( rhs.tid_ )
   , syn_id_( rhs.syn_id_ )
-{
-}
-
-inline SpikeData::SpikeData( const Target& target, const size_t lag )
-  : lcid_( target.get_lcid() )
-  , marker_( SPIKE_DATA_ID_DEFAULT )
-  , lag_( lag )
-  , tid_( target.get_tid() )
-  , syn_id_( target.get_syn_id() )
 {
 }
 
@@ -360,7 +350,6 @@ private:
 
 public:
   OffGridSpikeData();
-  OffGridSpikeData( const Target& target, const size_t lag, const double offset );
   OffGridSpikeData( const size_t tid,
     const synindex syn_id,
     const size_t lcid,
@@ -382,12 +371,6 @@ using success_offgrid_spike_data_size = StaticAssert< sizeof( OffGridSpikeData )
 inline OffGridSpikeData::OffGridSpikeData()
   : SpikeData()
   , offset_( 0.0 )
-{
-}
-
-inline OffGridSpikeData::OffGridSpikeData( const Target& target, const size_t lag, const double offset )
-  : SpikeData( target, lag )
-  , offset_( offset )
 {
 }
 
@@ -476,17 +459,15 @@ OffGridSpikeData::get_offset() const
  */
 struct SpikeDataWithRank
 {
-  SpikeDataWithRank( const Target& target, const size_t lag );
-
   const size_t rank;          //!< rank of target neuron
   const SpikeData spike_data; //! data on spike transmitted
-};
 
-inline SpikeDataWithRank::SpikeDataWithRank( const Target& target, const size_t lag )
-  : rank( target.get_rank() )
-  , spike_data( target, lag )
-{
-}
+  SpikeDataWithRank( const size_t rank, SpikeData&& spike_data )
+  : rank(rank)
+  , spike_data( std::move( spike_data ) )
+  {
+  }
+};
 
 /**
  * Combine target rank and spike data information for storage in emitted_off_grid_spikes_register.
@@ -495,18 +476,15 @@ inline SpikeDataWithRank::SpikeDataWithRank( const Target& target, const size_t 
  */
 struct OffGridSpikeDataWithRank
 {
-  OffGridSpikeDataWithRank( const Target& target, const size_t lag, const double offset );
-
   const size_t rank;                 //!< rank of target neuron
   const OffGridSpikeData spike_data; //! data on spike transmitted
+
+  OffGridSpikeDataWithRank( const size_t rank, OffGridSpikeData&& spike_data )
+  : rank(rank)
+  , spike_data( std::move( spike_data ) )
+  {
+  }
 };
-
-inline OffGridSpikeDataWithRank::OffGridSpikeDataWithRank( const Target& target, const size_t lag, const double offset )
-  : rank( target.get_rank() )
-  , spike_data( target, lag, offset )
-{
-}
-
 
 } // namespace nest
 

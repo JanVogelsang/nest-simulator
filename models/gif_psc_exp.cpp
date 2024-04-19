@@ -411,12 +411,12 @@ nest::gif_psc_exp::handle( SpikeEvent& e )
   //     is clumsy and should be improved.
   if ( e.get_weight() >= 0.0 )
   {
-    B_.spikes_ex_.add_value( e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
+    B_.spikes_ex_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
       e.get_weight() * e.get_multiplicity() );
   }
   else
   {
-    B_.spikes_in_.add_value( e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
+    B_.spikes_in_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
       e.get_weight() * e.get_multiplicity() );
   }
 }
@@ -430,7 +430,7 @@ nest::gif_psc_exp::handle( CurrentEvent& e )
   const double w = e.get_weight();
 
   // Add weighted current; HEP 2002-10-04
-  B_.currents_.add_value( e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * c );
+  B_.currents_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * c );
 }
 
 void

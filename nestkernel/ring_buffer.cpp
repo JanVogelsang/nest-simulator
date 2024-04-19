@@ -23,74 +23,120 @@
 #include "ring_buffer.h"
 
 nest::RingBuffer::RingBuffer()
-  : buffer_( kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay(), 0.0 )
+  : buffer_( kernel().vp_manager.get_num_threads() )
 {
+  const size_t num_threads = kernel().vp_manager.get_num_threads();
+  for ( size_t tid = 0; tid != num_threads; ++tid )
+  {
+    buffer_[ tid ] = std::vector< double >(
+      kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay(), 0.0 );
+  }
 }
 
 void
 nest::RingBuffer::resize()
 {
-  size_t size = kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay();
-  if ( buffer_.size() != size )
+  const size_t num_threads = kernel().vp_manager.get_num_threads();
+  buffer_.resize( num_threads );
+  for ( size_t tid = 0; tid != num_threads; ++tid )
   {
-    buffer_.resize( size );
+    size_t size = kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay();
+    if ( buffer_[ tid ].size() != size )
+    {
+      buffer_[ tid ].resize( size );
+    }
   }
 }
 
 void
 nest::RingBuffer::clear()
 {
+  const size_t num_threads = kernel().vp_manager.get_num_threads();
   resize(); // does nothing if size is fine
-  // clear all elements
-  buffer_.assign( buffer_.size(), 0.0 );
+            // clear all elements
+  for ( size_t tid = 0; tid != num_threads; ++tid )
+  {
+    buffer_[ tid ].assign( buffer_[ tid ].size(), 0.0 );
+  }
 }
 
 
 nest::MultRBuffer::MultRBuffer()
-  : buffer_( kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay(), 0.0 )
+  : buffer_( kernel().vp_manager.get_num_threads() )
 {
+  const size_t num_threads = kernel().vp_manager.get_num_threads();
+  for ( size_t tid = 0; tid != num_threads; ++tid )
+  {
+    buffer_[ tid ] = std::vector< double >(
+      kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay(), 0.0 );
+  }
 }
 
 void
 nest::MultRBuffer::resize()
 {
-  size_t size = kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay();
-  if ( buffer_.size() != size )
+
+  const size_t num_threads = kernel().vp_manager.get_num_threads();
+  buffer_.resize( num_threads );
+  for ( size_t tid = 0; tid != num_threads; ++tid )
   {
-    buffer_.resize( size );
+    size_t size = kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay();
+    if ( buffer_[ tid ].size() != size )
+    {
+      buffer_[ tid ].resize( size );
+    }
   }
 }
 
 void
 nest::MultRBuffer::clear()
 {
+  const size_t num_threads = kernel().vp_manager.get_num_threads();
   // clear all elements
-  buffer_.assign( buffer_.size(), 0.0 );
+  for ( size_t tid = 0; tid != num_threads; ++tid )
+  {
+    buffer_[ tid ].assign( buffer_[ tid ].size(), 0.0 );
+  }
 }
 
 
 nest::ListRingBuffer::ListRingBuffer()
-  : buffer_( kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay() )
+  : buffer_( kernel().vp_manager.get_num_threads() )
 {
+  const size_t num_threads = kernel().vp_manager.get_num_threads();
+  for ( size_t tid = 0; tid != num_threads; ++tid )
+  {
+    buffer_[ tid ] = std::vector< std::list< double > >(
+      kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay() );
+  }
 }
 
 void
 nest::ListRingBuffer::resize()
 {
-  size_t size = kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay();
-  if ( buffer_.size() != size )
+  const size_t num_threads = kernel().vp_manager.get_num_threads();
+  buffer_.resize( num_threads );
+  for ( size_t tid = 0; tid != num_threads; ++tid )
   {
-    buffer_.resize( size );
+    size_t size = kernel().connection_manager.get_min_delay() + kernel().connection_manager.get_max_delay();
+    if ( buffer_[ tid ].size() != size )
+    {
+      buffer_[ tid ].resize( size );
+    }
   }
 }
 
 void
 nest::ListRingBuffer::clear()
 {
+  const size_t num_threads = kernel().vp_manager.get_num_threads();
   resize(); // does nothing if size is fine
-  // clear all elements
-  for ( unsigned int i = 0; i < buffer_.size(); i++ )
+            // clear all elements
+  for ( size_t tid = 0; tid != num_threads; ++tid )
   {
-    buffer_[ i ].clear();
+    for ( unsigned int i = 0; i < buffer_[ tid ].size(); i++ )
+    {
+      buffer_[ tid ][ i ].clear();
+    }
   }
 }

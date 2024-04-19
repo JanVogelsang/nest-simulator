@@ -60,11 +60,11 @@ EpropArchivingNode< HistEntryT >::register_eprop_connection()
 
   if ( it_hist == update_history_.end() or it_hist->t_ != shift )
   {
-    update_history_.insert( it_hist, HistEntryEpropUpdate( shift, 1 ) );
+    update_history_.insert( it_hist, HistEntryEpropUpdate( shift ) );
   }
   else
   {
-    ++it_hist->access_counter_;
+    ++it_hist->access_counter_;  // TODO JV
   }
 }
 
@@ -83,11 +83,11 @@ EpropArchivingNode< HistEntryT >::write_update_to_history( const long t_previous
 
   if ( it_hist_curr != update_history_.end() and it_hist_curr->t_ == t_current_update + shift )
   {
-    ++it_hist_curr->access_counter_;
+    ++it_hist_curr->access_counter_[ kernel().vp_manager.get_thread_id() ];
   }
   else
   {
-    update_history_.insert( it_hist_curr, HistEntryEpropUpdate( t_current_update + shift, 1 ) );
+    update_history_.insert( it_hist_curr, HistEntryEpropUpdate( t_current_update + shift ) );
   }
 
   const auto it_hist_prev = get_update_history( t_previous_update + shift );
@@ -95,7 +95,7 @@ EpropArchivingNode< HistEntryT >::write_update_to_history( const long t_previous
   if ( it_hist_prev != update_history_.end() and it_hist_prev->t_ == t_previous_update + shift )
   {
     // If an entry exists for the previous update time, decrement its access counter
-    --it_hist_prev->access_counter_;
+    --it_hist_prev->access_counter_[ kernel().vp_manager.get_thread_id() ];
   }
 }
 
@@ -155,7 +155,7 @@ EpropArchivingNode< HistEntryT >::erase_used_update_history()
   auto it_hist = update_history_.begin();
   while ( it_hist != update_history_.end() )
   {
-    if ( it_hist->access_counter_ == 0 )
+    if ( std::accumulate(it_hist->access_counter_.begin(), it_hist->access_counter_.end(), 0) == 0 )
     {
       // erase() invalidates the iterator, but returns a new, valid iterator
       it_hist = update_history_.erase( it_hist );

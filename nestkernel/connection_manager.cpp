@@ -22,13 +22,9 @@
 
 #include "connection_manager.h"
 
-// Generated includes:
-#include "config.h"
-
 // C++ includes:
 #include <algorithm>
 #include <cassert>
-#include <cmath>
 #include <iomanip>
 #include <limits>
 #include <set>
@@ -41,7 +37,6 @@
 // Includes from nestkernel:
 #include "clopath_archiving_node.h"
 #include "conn_builder.h"
-#include "conn_builder_conngen.h"
 #include "conn_builder_factory.h"
 #include "connection_label.h"
 #include "connection_manager_impl.h"
@@ -73,7 +68,6 @@ nest::ConnectionManager::ConnectionManager()
   , keep_source_table_( true )
   , connections_have_changed_( false )
   , get_connections_has_been_called_( false )
-  , use_compressed_spikes_( true )
   , has_primary_connections_( false )
   , check_primary_connections_()
   , secondary_connections_exist_( false )
@@ -114,7 +108,6 @@ nest::ConnectionManager::initialize( const bool adjust_number_of_threads_or_rng_
     keep_source_table_ = true;
     connections_have_changed_ = false;
     get_connections_has_been_called_ = false;
-    use_compressed_spikes_ = true;
     stdp_eps_ = 1.0e-6;
     min_delay_ = max_delay_ = 1;
     sw_construction_connect.reset();
@@ -122,8 +115,7 @@ nest::ConnectionManager::initialize( const bool adjust_number_of_threads_or_rng_
 
   const size_t num_threads = kernel().vp_manager.get_num_threads();
   connections_.resize( num_threads );
-  secondary_recv_buffer_pos_.resize( num_threads );
-  compressed_spike_data_.resize( 0 );
+  temp_connections.resize( num_threads );
 
   has_primary_connections_ = false;
   check_primary_connections_.initialize( num_threads, false );
@@ -138,7 +130,6 @@ nest::ConnectionManager::initialize( const bool adjust_number_of_threads_or_rng_
   {
     const size_t tid = kernel().vp_manager.get_thread_id();
     connections_.at( tid ) = std::vector< ConnectorBase* >( num_conn_models );
-    secondary_recv_buffer_pos_.at( tid ) = std::vector< std::vector< size_t > >();
   } // of omp parallel
 
   source_table_.initialize();
@@ -160,8 +151,7 @@ nest::ConnectionManager::finalize( const bool adjust_number_of_threads_or_rng_on
   target_table_devices_.finalize();
   delete_connections_();
   std::vector< std::vector< ConnectorBase* > >().swap( connections_ );
-  std::vector< std::vector< std::vector< size_t > > >().swap( secondary_recv_buffer_pos_ );
-  compressed_spike_data_.clear();
+  std::vector< std::vector< TemporaryConnection > >().swap( temp_connections );
 
   if ( not adjust_number_of_threads_or_rng_only )
   {
@@ -190,8 +180,6 @@ nest::ConnectionManager::set_status( const DictionaryDatum& d )
       "to false." );
   }
 
-  updateValue< bool >( d, names::use_compressed_spikes, use_compressed_spikes_ );
-
   //  Need to update the saved values if we have changed the delay bounds.
   if ( d->known( names::min_delay ) or d->known( names::max_delay ) )
   {
@@ -215,7 +203,6 @@ nest::ConnectionManager::get_status( DictionaryDatum& dict )
   const size_t n = get_num_connections();
   def< long >( dict, names::num_connections, n );
   def< bool >( dict, names::keep_source_table, keep_source_table_ );
-  def< bool >( dict, names::use_compressed_spikes, use_compressed_spikes_ );
 
   def< double >( dict, names::time_construction_connect, sw_construction_connect.elapsed() );
 
@@ -482,7 +469,7 @@ nest::ConnectionManager::connect( TokenArray sources, TokenArray targets, const 
     {
       auto target_node = kernel().node_manager.get_node_or_proxy( target );
       auto target_thread = target_node->get_thread();
-      connect_( *source_node, *target_node, source, target_thread, syn_id, syn_spec );
+      connect_( *source_node, *target_node, target_thread, syn_id, syn_spec );
     }
   }
 }
@@ -553,7 +540,7 @@ nest::ConnectionManager::connect( const size_t snode_id,
   switch ( connection_type )
   {
   case CONNECT:
-    connect_( *source, *target, snode_id, target_thread, syn_id, params, delay, weight );
+    connect_( *source, *target, target_thread, syn_id, params, delay, weight );
     break;
   case CONNECT_FROM_DEVICE:
     connect_from_device_( *source, *target, target_thread, syn_id, params, delay, weight );
@@ -592,7 +579,7 @@ nest::ConnectionManager::connect( const size_t snode_id,
   switch ( connection_type )
   {
   case CONNECT:
-    connect_( *source, *target, snode_id, target_thread, syn_id, params );
+    connect_( *source, *target, target_thread, syn_id, params );
     break;
   case CONNECT_FROM_DEVICE:
     connect_from_device_( *source, *target, target_thread, syn_id, params );
@@ -857,11 +844,44 @@ nest::ConnectionManager::connect_tripartite( NodeCollectionPTR sources,
   delete cb;
 }
 
+#ifdef USE_LEGACY_CONN_BUILDER
+void
+nest::ConnectionManager::create_connections()
+{
+  const size_t num_threads = kernel().vp_manager.get_num_threads();
+  for ( size_t tid = 0; tid != num_threads; ++tid )
+  {
+    for ( auto& conn : temp_connections[ tid ] )
+    {
+      ConnectorModel& conn_model = kernel().model_manager.get_connection_model( conn.syn_id, tid );
+      const bool is_primary = conn_model.has_property( ConnectionModelProperties::IS_PRIMARY );
+      const size_t target_thread = get_responsible_thread( conn.source.get_node_id() );
+      conn_model.add_connection(
+        conn.source, conn.target, connections_[ target_thread ], conn.syn_id, conn.params, conn.delay, conn.weight );
+      source_table_.add_source( target_thread, conn.syn_id, conn.source.get_node_id(), is_primary );
+    }
+    temp_connections[ tid ].clear();
+  }
+}
+
+size_t
+nest::ConnectionManager::get_responsible_thread( const size_t source_node_id )
+{
+  // TODO JV: Optimize
+  const size_t vps_per_source_group = kernel().mpi_manager.get_num_processes();
+  const size_t vp = kernel().vp_manager.node_id_to_vp( source_node_id );
+  const size_t source_tid = kernel().vp_manager.vp_to_thread( vp );
+  const size_t vp_thread_ordered =
+    source_tid + kernel().mpi_manager.get_process_id_of_vp( vp ) * kernel().mpi_manager.get_num_processes();
+  const size_t tid = vp_thread_ordered / vps_per_source_group;
+  assert( tid < kernel().vp_manager.get_num_threads() );
+  return tid;
+}
+#endif
 
 void
 nest::ConnectionManager::connect_( Node& source,
   Node& target,
-  const size_t s_node_id,
   const size_t tid,
   const synindex syn_id,
   const DictionaryDatum& params,
@@ -891,8 +911,12 @@ nest::ConnectionManager::connect_( Node& source,
   }
 
   const bool is_primary = conn_model.has_property( ConnectionModelProperties::IS_PRIMARY );
+#ifdef USE_LEGACY_CONN_BUILDER
+  temp_connections[ tid ].push_back( TemporaryConnection { source, target, syn_id, params, delay, weight } );
+#else
   conn_model.add_connection( source, target, connections_[ tid ], syn_id, params, delay, weight );
-  source_table_.add_source( tid, syn_id, s_node_id, is_primary );
+  source_table_.add_source( tid, syn_id, source.get_node_id(), is_primary );
+#endif
 
   increase_connection_count( tid, syn_id );
 
@@ -1438,17 +1462,15 @@ void
 nest::ConnectionManager::sort_connections( const size_t tid )
 {
   assert( not source_table_.is_cleared() );
-  if ( use_compressed_spikes_ )
+  // TODO: Sorting not required in large-scale case
+  for ( synindex syn_id = 0; syn_id < connections_[ tid ].size(); ++syn_id )
   {
-    for ( synindex syn_id = 0; syn_id < connections_[ tid ].size(); ++syn_id )
+    if ( connections_[ tid ][ syn_id ] )
     {
-      if ( connections_[ tid ][ syn_id ] )
-      {
-        connections_[ tid ][ syn_id ]->sort_connections( source_table_.get_thread_local_sources( tid )[ syn_id ] );
-      }
+      connections_[ tid ][ syn_id ]->sort_connections( source_table_.get_thread_local_sources( tid )[ syn_id ] );
     }
-    remove_disabled_connections( tid );
   }
+  remove_disabled_connections( tid );
 }
 
 void
@@ -1475,49 +1497,6 @@ nest::ConnectionManager::compute_target_data_buffer_size()
 
   // Adjust target data buffers accordingly
   kernel().mpi_manager.set_buffer_size_target_data( std::max( min_num_target_data, max_num_target_data ) );
-}
-
-void
-nest::ConnectionManager::compute_compressed_secondary_recv_buffer_positions( const size_t tid )
-{
-#pragma omp single
-  {
-    buffer_pos_of_source_node_id_syn_id_.clear();
-  }
-
-  source_table_.compute_buffer_pos_for_unique_secondary_sources( tid, buffer_pos_of_source_node_id_syn_id_ );
-  secondary_recv_buffer_pos_[ tid ].resize( connections_[ tid ].size() );
-
-  const synindex syn_id_end = connections_[ tid ].size();
-  for ( synindex syn_id = 0; syn_id < syn_id_end; ++syn_id )
-  {
-    std::vector< size_t >& positions = secondary_recv_buffer_pos_[ tid ][ syn_id ];
-
-    if ( connections_[ tid ][ syn_id ] )
-    {
-      ConnectorModel& conn_model = kernel().model_manager.get_connection_model( syn_id, tid );
-      const bool is_primary = conn_model.has_property( ConnectionModelProperties::IS_PRIMARY );
-
-      if ( not is_primary )
-      {
-        positions.clear();
-        const size_t lcid_end = get_num_connections_( tid, syn_id );
-        positions.resize( lcid_end, 0 );
-
-        // Compute and store the buffer position from which this connection
-        // should read secondary events.
-        for ( size_t lcid = 0; lcid < lcid_end; ++lcid )
-        {
-          const size_t source_node_id = source_table_.get_node_id( tid, syn_id, lcid );
-          const size_t sg_s_id = source_table_.pack_source_node_id_and_syn_id( source_node_id, syn_id );
-          const size_t source_rank = kernel().mpi_manager.get_process_id_of_node_id( source_node_id );
-
-          positions[ lcid ] = buffer_pos_of_source_node_id_syn_id_[ sg_s_id ]
-            + kernel().mpi_manager.get_recv_displacement_secondary_events_in_int( source_rank );
-        }
-      }
-    }
-  }
 }
 
 nest::ConnectionManager::ConnectionType
@@ -1615,7 +1594,7 @@ nest::ConnectionManager::connection_required( Node*& source, Node*& target, size
 void
 nest::ConnectionManager::set_stdp_eps( const double stdp_eps )
 {
-  if ( not( stdp_eps < Time::get_resolution().get_ms() ) )
+  if ( stdp_eps >= Time::get_resolution().get_ms() )
   {
     throw KernelException(
       "The epsilon used for spike-time comparison in STDP must be less "
@@ -1649,32 +1628,33 @@ nest::ConnectionManager::deliver_secondary_events( const size_t tid,
   const std::vector< ConnectorModel* >& cm = kernel().model_manager.get_connection_models( tid );
   const Time stamp =
     kernel().simulation_manager.get_slice_origin() + Time::step( 1 - kernel().connection_manager.get_min_delay() );
-  const std::vector< std::vector< size_t > >& positions_tid = secondary_recv_buffer_pos_[ tid ];
 
-  const synindex syn_id_end = positions_tid.size();
-  for ( synindex syn_id = 0; syn_id < syn_id_end; ++syn_id )
+  // TODO: The syn_ids per index can be precomputed
+  synindex syn_id = 0;  // recv_buffer[0].get_syn_id();
+
+  const ConnectorModel& conn_model = kernel().model_manager.get_connection_model( syn_id, tid );
+  const bool supports_wfr = conn_model.has_property( ConnectionModelProperties::SUPPORTS_WFR );
+  if ( not called_from_wfr_update or supports_wfr )
   {
-    const ConnectorModel& conn_model = kernel().model_manager.get_connection_model( syn_id, tid );
-    const bool supports_wfr = conn_model.has_property( ConnectionModelProperties::SUPPORTS_WFR );
-    if ( not called_from_wfr_update or supports_wfr )
+    SecondaryEvent& prototype = kernel().model_manager.get_secondary_event_prototype( syn_id, tid );
+    size_t lcid = 0;
+
+    for (auto& data_entry : recv_buffer )
     {
-      if ( positions_tid[ syn_id ].size() > 0 )
+      // TODO JV: See TODO above
+      /*if ( syn_id != data_entry.get_syn_id() )
       {
-        SecondaryEvent& prototype = kernel().model_manager.get_secondary_event_prototype( syn_id, tid );
+        syn_id = data_entry.get_syn_id();
+        prototype = kernel().model_manager.get_secondary_event_prototype( syn_id, tid );
+      }*/
 
-        size_t lcid = 0;
-        const size_t lcid_end = positions_tid[ syn_id ].size();
-        while ( lcid < lcid_end )
-        {
-          std::vector< unsigned int >::iterator readpos = recv_buffer.begin() + positions_tid[ syn_id ][ lcid ];
-          prototype << readpos;
-          prototype.set_stamp( stamp );
+      // TODO JV
+      // prototype << readpos;
+      prototype.set_stamp( stamp );
 
-          // send delivers event to all targets with the same source
-          // and returns how many targets this event was delivered to
-          lcid += connections_[ tid ][ syn_id ]->send( tid, lcid, cm, prototype );
-        }
-      }
+      // send delivers event to all targets with the same source
+      // and returns how many targets this event was delivered to
+      lcid += connections_[ tid ][ syn_id ]->send( tid, lcid, cm, prototype );
     }
   }
 
@@ -1687,12 +1667,6 @@ nest::ConnectionManager::deliver_secondary_events( const size_t tid,
       done and recv_buffer[ kernel().mpi_manager.get_done_marker_position_in_secondary_events_recv_buffer( rank ) ];
   }
   return done;
-}
-
-void
-nest::ConnectionManager::compress_secondary_send_buffer_pos( const size_t tid )
-{
-  target_table_.compress_secondary_send_buffer_pos( tid );
 }
 
 void
@@ -1763,157 +1737,4 @@ void
 nest::ConnectionManager::unset_connections_have_changed()
 {
   connections_have_changed_ = false;
-}
-
-
-void
-nest::ConnectionManager::collect_compressed_spike_data( const size_t tid )
-{
-  if ( use_compressed_spikes_ )
-  {
-
-#pragma omp single
-    {
-      source_table_.resize_compressible_sources();
-    } // of omp single; implicit barrier
-
-    source_table_.collect_compressible_sources( tid );
-#pragma omp barrier
-#pragma omp single
-    {
-      source_table_.fill_compressed_spike_data( compressed_spike_data_ );
-    } // of omp single; implicit barrier
-  }
-}
-
-bool
-nest::ConnectionManager::fill_target_buffer( const size_t tid,
-  const size_t rank_start,
-  const size_t rank_end,
-  std::vector< TargetData >& send_buffer_target_data,
-  TargetSendBufferPosition& send_buffer_position )
-{
-  // At this point, NEST has at least one synapse type (because we can only get here if at least
-  // one connection has been created) and we know that iteration_state_ for each thread
-  // contains a valid entry.
-  const auto& csd_maps = source_table_.compressed_spike_data_map_;
-  auto syn_id = iteration_state_.at( tid ).first;
-  auto source_2_idx = iteration_state_.at( tid ).second;
-
-  if ( syn_id >= csd_maps.size() )
-  {
-    return true; // this thread has previously written all its targets
-  }
-
-  do
-  {
-    const auto& conn_model = kernel().model_manager.get_connection_model( syn_id, tid );
-    const bool is_primary = conn_model.has_property( ConnectionModelProperties::IS_PRIMARY );
-
-    while ( source_2_idx != csd_maps.at( syn_id ).end() )
-    {
-      const auto source_gid = source_2_idx->first;
-      const auto source_rank = kernel().mpi_manager.get_process_id_of_node_id( source_gid );
-      if ( not( rank_start <= source_rank and source_rank < rank_end ) )
-      {
-        // We are not responsible for this source.
-        ++source_2_idx;
-        continue;
-      }
-
-      if ( send_buffer_position.is_chunk_filled( source_rank ) )
-      {
-        // When the we have filled the buffer space for one rank, we stop. If we continued for other ranks,
-        // we would need to introduce "processed" markers to avoid multiple insertion (similar to base case).
-        // Since sources should be evenly distributed, this should not matter very much.
-        //
-        // We store where we need to continue and stop iteration for now.
-        iteration_state_.at( tid ) =
-          std::pair< size_t, std::map< size_t, CSDMapEntry >::const_iterator >( syn_id, source_2_idx );
-
-        return false; // there is data left to communicate
-      }
-
-      TargetData next_target_data;
-      next_target_data.set_is_primary( is_primary );
-      next_target_data.reset_marker();
-      next_target_data.set_source_tid(
-        kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( source_gid ) ) );
-      next_target_data.set_source_lid( kernel().vp_manager.node_id_to_lid( source_gid ) );
-
-      if ( is_primary )
-      {
-        TargetDataFields& target_fields = next_target_data.target_data;
-        target_fields.set_syn_id( syn_id );
-        target_fields.set_tid( 0 ); // meaningless, use 0 as fill
-        target_fields.set_lcid( source_2_idx->second.get_source_index() );
-      }
-      else
-      {
-        const auto target_thread = source_2_idx->second.get_target_thread();
-        const SpikeData& conn_info =
-          compressed_spike_data_[ syn_id ][ source_2_idx->second.get_source_index() ][ target_thread ];
-        assert( target_thread == static_cast< unsigned long >( conn_info.get_tid() ) );
-        const size_t relative_recv_buffer_pos =
-          get_secondary_recv_buffer_position( target_thread, syn_id, conn_info.get_lcid() )
-          - kernel().mpi_manager.get_recv_displacement_secondary_events_in_int( source_rank );
-
-        SecondaryTargetDataFields& secondary_fields = next_target_data.secondary_data;
-        secondary_fields.set_recv_buffer_pos( relative_recv_buffer_pos );
-        secondary_fields.set_syn_id( syn_id );
-      }
-
-      send_buffer_target_data.at( send_buffer_position.idx( source_rank ) ) = next_target_data;
-      send_buffer_position.increase( source_rank );
-
-      ++source_2_idx;
-    } // end while
-
-    ++syn_id;
-    if ( syn_id < csd_maps.size() )
-    {
-      source_2_idx = csd_maps.at( syn_id ).begin();
-    }
-  } while ( syn_id < csd_maps.size() );
-
-  // Store iteration state for this thread. If we get here, ther is nothing more to do for
-  // this thread so we store a non-existing syn_id with a meaningless iterator to inform that
-  // this thread has nothing to do in the next round.
-  iteration_state_.at( tid ) =
-    std::pair< size_t, std::map< size_t, CSDMapEntry >::const_iterator >( syn_id, source_2_idx );
-
-  // Mark end of data for this round
-  for ( size_t rank = rank_start; rank < rank_end; ++rank )
-  {
-    if ( send_buffer_position.idx( rank ) > send_buffer_position.begin( rank ) )
-    {
-      // We have written data for the rank, mark last written entry with END marker
-      send_buffer_target_data.at( send_buffer_position.idx( rank ) - 1 ).set_end_marker();
-    }
-    else
-    {
-      // We have not written anything, mark beginning of chunk with INVALID marker
-      send_buffer_target_data.at( send_buffer_position.begin( rank ) ).set_invalid_marker();
-    }
-  }
-
-  // If we get here, this thread has written everything.
-  return true;
-}
-
-void
-nest::ConnectionManager::initialize_iteration_state()
-{
-  const size_t num_threads = kernel().vp_manager.get_num_threads();
-  iteration_state_.clear();
-  iteration_state_.reserve( num_threads );
-
-  // This method only runs if at least one connection has been created,
-  // so we must have at least one synapse model and we can start iteration
-  // at the beginning of its compressed spike data map.
-  auto begin = source_table_.compressed_spike_data_map_.at( 0 ).cbegin();
-  for ( size_t t = 0; t < num_threads; ++t )
-  {
-    iteration_state_.push_back( std::pair< size_t, std::map< size_t, CSDMapEntry >::const_iterator >( 0, begin ) );
-  }
 }

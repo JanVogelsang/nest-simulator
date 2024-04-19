@@ -107,12 +107,18 @@ EventDeliveryManager::send_remote( size_t tid, SpikeEvent& e, const long lag )
   const size_t lid = kernel().vp_manager.node_id_to_lid( e.get_sender().get_node_id() );
   const auto& targets = kernel().connection_manager.get_remote_targets_of_local_node( tid, lid );
 
-  for ( const auto& target : targets )
+  const size_t target_thread = kernel().connection_manager.get_responsible_thread( e.get_sender().get_node_id() );
+
+  for ( synindex syn_id = 0; syn_id != targets.size(); ++syn_id )
   {
-    // Unroll spike multiplicity as plastic synapses only handle individual spikes.
-    for ( size_t i = 0; i < e.get_multiplicity(); ++i )
+    for ( const auto& target : targets[ syn_id ] )
     {
-      ( *emitted_spikes_register_[ tid ] ).emplace_back( target, lag );
+      // Unroll spike multiplicity as plastic synapses only handle individual spikes.
+      for ( size_t i = 0; i < e.get_multiplicity(); ++i )
+      {
+        emitted_spikes_register_[ syn_id ][ tid ]->
+          emplace_back( target.get_rank(), SpikeData( target_thread, syn_id, target.get_lcid(), lag ) );
+      }
     }
   }
 }
@@ -124,12 +130,17 @@ EventDeliveryManager::send_off_grid_remote( size_t tid, SpikeEvent& e, const lon
   const size_t lid = kernel().vp_manager.node_id_to_lid( e.get_sender().get_node_id() );
   const auto& targets = kernel().connection_manager.get_remote_targets_of_local_node( tid, lid );
 
-  for ( const auto& target : targets )
+  const size_t target_thread = kernel().connection_manager.get_responsible_thread( e.get_sender().get_node_id() );
+
+  for ( synindex syn_id = 0; syn_id != targets.size(); ++syn_id )
   {
-    // Unroll spike multiplicity as plastic synapses only handle individual spikes.
-    for ( size_t i = 0; i < e.get_multiplicity(); ++i )
+    for ( const auto& target : targets[ syn_id ] )
     {
-      ( *off_grid_emitted_spikes_register_[ tid ] ).emplace_back( target, lag, e.get_offset() );
+      // Unroll spike multiplicity as plastic synapses only handle individual spikes.
+      for ( size_t i = 0; i < e.get_multiplicity(); ++i )
+      {
+        off_grid_emitted_spikes_register_[ syn_id ][ tid ]->emplace_back( target.get_rank(), OffGridSpikeData( target_thread, syn_id, target.get_lcid(), lag, e.get_offset() ) );
+      }
     }
   }
 }
@@ -143,21 +154,15 @@ EventDeliveryManager::send_secondary( Node& source, SecondaryEvent& e )
 
   if ( source.has_proxies() )
   {
-
     // We need to consider every synapse type this event supports to
     // make sure also labeled and connection created by CopyModel are
     // considered.
     const std::set< synindex >& supported_syn_ids = e.get_supported_syn_ids();
     for ( const auto& syn_id : supported_syn_ids )
     {
-      const std::vector< size_t >& positions =
-        kernel().connection_manager.get_secondary_send_buffer_positions( tid, lid, syn_id );
-
-      for ( size_t i = 0; i < positions.size(); ++i )
-      {
-        std::vector< unsigned int >::iterator it = send_buffer_secondary_events_.begin() + positions[ i ];
-        e >> it;
-      }
+      // TODO JV: Write to corresponding buffer for this (syn_id, tid) pair
+      std::vector< unsigned int >::iterator it = send_buffer_secondary_events_.begin();
+      e >> it;
     }
     kernel().connection_manager.send_to_devices( tid, source_node_id, e );
   }

@@ -69,6 +69,7 @@ set( tics_per_ms "1000.0" CACHE STRING "Specify elementary unit of time [default
 set( tics_per_step "100" CACHE STRING "Specify resolution [default=100 tics per step]." )
 set( with-detailed-timers OFF CACHE STRING "Build with detailed internal time measurements [default=OFF]. Detailed timers can affect the performance." )
 set( target-bits-split "standard" CACHE STRING "Split of the 64-bit target neuron identifier type [default='standard']. 'standard' is recommended for most users. If running on more than 262144 MPI processes or more than 512 threads, change to 'hpc'." )
+set( with-legacy-conn-builder ON CACHE STRING "Use legacy connectivity building routines, which are less efficient, but allow comparing simulation results to previous NEST versions." )
 
 # generic build configuration
 option( static-libraries "Build static executable and libraries [default=OFF]" OFF )
@@ -142,6 +143,7 @@ nest_process_with_readline()
 nest_process_with_gsl()
 nest_process_with_openmp()
 nest_process_with_mpi()
+nest_process_with_legacy_conn_builder()
 nest_process_with_detailed_timers()
 nest_process_with_libneurosim()
 nest_process_with_music()

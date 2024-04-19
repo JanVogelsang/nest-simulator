@@ -352,7 +352,7 @@ nest::cm_default::handle( SpikeEvent& e )
   assert( e.get_delay_steps() > 0 );
   assert( e.get_rport() < syn_buffers_.size() );
 
-  syn_buffers_[ e.get_rport() ].add_value(
+  syn_buffers_[ e.get_rport() ].add_value( kernel().vp_manager.get_thread_id(),
     e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_multiplicity() );
 }
 
@@ -365,7 +365,7 @@ nest::cm_default::handle( CurrentEvent& e )
   const double w = e.get_weight();
 
   Compartment* compartment = c_tree_.get_compartment_opt( e.get_rport() );
-  compartment->currents.add_value( e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * c );
+  compartment->currents.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * c );
 }
 
 void

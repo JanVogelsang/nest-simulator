@@ -36,15 +36,11 @@ def reset_kernel():
     nest.ResetKernel()
 
 
-@pytest.mark.parametrize("use_compressed_spikes", [True, False])
-def test_connections_before_after_simulate(use_compressed_spikes):
+def test_connections_before_after_simulate():
     """Pre-condition:
     Test that GetConnection returns the same connection handles before
     and after calling Simulate for the case that connections are sorted
     by source and for the case that they are not sorted"""
-
-    nest.SetKernelStatus({"use_compressed_spikes": use_compressed_spikes})
-
     neurons = nest.Create("iaf_psc_alpha", 10)
     nest.Connect(neurons, neurons, conn_spec={"rule": "fixed_indegree", "indegree": 2})
 
@@ -57,13 +53,10 @@ def test_connections_before_after_simulate(use_compressed_spikes):
     assert connections_before == connections_after
 
 
-@pytest.mark.parametrize("use_compressed_spikes", [True, False])
-def test_connect_after_simulate(use_compressed_spikes):
+def test_connect_after_simulate():
     """
     The actual test for sorted and unsorted connections
     """
-    nest.SetKernelStatus({"use_compressed_spikes": use_compressed_spikes})
-
     neuron = nest.Create("iaf_psc_delta", params={"I_e": 500.0})
     parrot = nest.Create("parrot_neuron")
     dummies = nest.Create("iaf_psc_delta", 10)
@@ -88,10 +81,7 @@ def test_connect_after_simulate(use_compressed_spikes):
     assert len(connections) == 2
     assert connections[0].get("port") == 0
 
-    if use_compressed_spikes:
-        nest.GetConnections(target=parrot)[1].get("port") == 1
-    else:
-        nest.GetConnections(target=parrot)[1].get("port") == 101
+    nest.GetConnections(target=parrot)[1].get("port") == 101
 
     # Neuron will spike once more
     nest.Simulate(20.0)
@@ -100,10 +90,8 @@ def test_connect_after_simulate(use_compressed_spikes):
     assert len(connections) == 2
     assert connections[0].get("port") == 0
 
-    if use_compressed_spikes:
-        nest.GetConnections(target=parrot)[0].get("port") == 1
-    else:
-        nest.GetConnections(target=parrot)[0].get("port") == 101
+    nest.GetConnections(target=parrot)[0].get("port") == 101
+
     # One spike from before, additionally 1 more spike,
     # now 2 connections to parrot -> 3 events in total
     assert nest.GetStatus(recorder)[0]["n_events"] == 3

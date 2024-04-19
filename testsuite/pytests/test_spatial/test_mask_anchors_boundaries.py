@@ -93,7 +93,6 @@ home_path = os.path.abspath(os.path.dirname(__file__))
 
 def network(use_free_mask, mask_params, anchor, wrap, extent):
     nest.ResetKernel()
-    nest.use_compressed_spikes = False
 
     if use_free_mask:
         layer = nest.spatial.free(

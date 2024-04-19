@@ -329,7 +329,7 @@ iaf_psc_alpha::update( Time const& origin, const long from, const long to )
 
     // get read access to the correct input-buffer slot
     const size_t input_buffer_slot = kernel().event_delivery_manager.get_modulo( lag );
-    auto& input = B_.input_buffer_.get_values_all_channels( input_buffer_slot );
+    auto input = B_.input_buffer_.get_values_all_channels( input_buffer_slot );
 
     // Apply spikes delivered in this step; spikes arriving at T+1 have
     // an immediate effect on the state of the neuron
@@ -382,7 +382,7 @@ iaf_psc_alpha::handle( SpikeEvent& e )
   const double s = e.get_weight() * e.get_multiplicity();
 
   // separate buffer channels for excitatory and inhibitory inputs
-  B_.input_buffer_.add_value( input_buffer_slot, s > 0 ? Buffers_::SYN_EX : Buffers_::SYN_IN, s );
+  B_.input_buffer_.add_value( kernel().vp_manager.get_thread_id(), input_buffer_slot, s > 0 ? Buffers_::SYN_EX : Buffers_::SYN_IN, s );
 }
 
 void
@@ -396,7 +396,7 @@ iaf_psc_alpha::handle( CurrentEvent& e )
   const double I = e.get_current();
   const double w = e.get_weight();
 
-  B_.input_buffer_.add_value( input_buffer_slot, Buffers_::I0, w * I );
+  B_.input_buffer_.add_value( kernel().vp_manager.get_thread_id(), input_buffer_slot, Buffers_::I0, w * I );
 }
 
 void

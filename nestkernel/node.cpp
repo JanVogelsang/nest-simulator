@@ -462,26 +462,26 @@ Node::sends_secondary_event( SICEvent& )
 }
 
 double
-Node::get_LTD_value( double )
+Node::get_LTD_value( double ) const
 {
   throw UnexpectedEvent();
 }
 
 double
-Node::get_K_value( double )
+Node::get_K_value( double ) const
 {
   throw UnexpectedEvent();
 }
 
 
 void
-Node::get_K_values( double, double&, double&, double& )
+Node::get_K_values( double, double&, double&, double& ) const
 {
   throw UnexpectedEvent();
 }
 
 void
-nest::Node::get_history( double, double, std::deque< histentry >::iterator*, std::deque< histentry >::iterator* )
+nest::Node::get_history( double, double, std::deque< histentry >::const_iterator*, std::deque< histentry >::const_iterator* )
 {
   throw UnexpectedEvent();
 }
@@ -489,8 +489,8 @@ nest::Node::get_history( double, double, std::deque< histentry >::iterator*, std
 void
 nest::Node::get_LTP_history( double,
   double,
-  std::deque< histentry_extended >::iterator*,
-  std::deque< histentry_extended >::iterator* )
+  std::deque< histentry_extended >::const_iterator*,
+  std::deque< histentry_extended >::const_iterator* )
 {
   throw UnexpectedEvent();
 }
@@ -498,45 +498,45 @@ nest::Node::get_LTP_history( double,
 void
 nest::Node::get_urbanczik_history( double,
   double,
-  std::deque< histentry_extended >::iterator*,
-  std::deque< histentry_extended >::iterator*,
+  std::deque< histentry_extended >::const_iterator*,
+  std::deque< histentry_extended >::const_iterator*,
   int )
 {
   throw UnexpectedEvent();
 }
 
 double
-nest::Node::get_C_m( int )
+nest::Node::get_C_m( int ) const
 {
   throw UnexpectedEvent();
 }
 
 double
-nest::Node::get_g_L( int )
+nest::Node::get_g_L( int ) const
 {
   throw UnexpectedEvent();
 }
 
 double
-nest::Node::get_tau_L( int )
+nest::Node::get_tau_L( int ) const
 {
   throw UnexpectedEvent();
 }
 
 double
-nest::Node::get_tau_s( int )
+nest::Node::get_tau_s( int ) const
 {
   throw UnexpectedEvent();
 }
 
 double
-nest::Node::get_tau_syn_ex( int )
+nest::Node::get_tau_syn_ex( int ) const
 {
   throw UnexpectedEvent();
 }
 
 double
-nest::Node::get_tau_syn_in( int )
+nest::Node::get_tau_syn_in( int ) const
 {
   throw UnexpectedEvent();
 }

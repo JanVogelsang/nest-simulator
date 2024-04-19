@@ -242,6 +242,7 @@ public:
   get_target( const size_t tid ) const
   {
     return target_.get_target_ptr( tid );
+    // TODO JV: STDP other thread than owning one (history)
   }
   size_t
   get_rport() const

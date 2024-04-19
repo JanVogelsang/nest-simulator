@@ -616,7 +616,6 @@ const Name u_bar_plus( "u_bar_plus" );
 const Name u_ref_squared( "u_ref_squared" );
 const Name update_time_limit( "update_time_limit" );
 const Name upper_right( "upper_right" );
-const Name use_compressed_spikes( "use_compressed_spikes" );
 const Name use_wfr( "use_wfr" );
 
 const Name v( "v" );

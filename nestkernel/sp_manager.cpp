@@ -668,12 +668,6 @@ nest::SPManager::enable_structural_plasticity()
       "Structural plasticity can not be enabled if keep_source_table has been "
       "set to false." );
   }
-  if ( not kernel().connection_manager.use_compressed_spikes() )
-  {
-    throw KernelException(
-      "Structural plasticity can not be enabled if use_compressed_spikes "
-      "has been set to false." );
-  }
   structural_plasticity_enabled_ = true;
 }
 

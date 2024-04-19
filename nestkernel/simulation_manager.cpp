@@ -746,7 +746,6 @@ nest::SimulationManager::update_connection_infrastructure( const size_t tid )
 
   kernel().connection_manager.restructure_connection_tables( tid );
   kernel().connection_manager.sort_connections( tid );
-  kernel().connection_manager.collect_compressed_spike_data( tid );
 
 #pragma omp barrier // wait for all threads to finish sorting
 
@@ -763,9 +762,7 @@ nest::SimulationManager::update_connection_infrastructure( const size_t tid )
 
   if ( kernel().connection_manager.secondary_connections_exist() )
   {
-#pragma omp barrier
-    kernel().connection_manager.compute_compressed_secondary_recv_buffer_positions( tid );
-#pragma omp barrier
+#pragma omp barrier  // TODO JV: Do we need this barrier?
 #pragma omp single
     {
       kernel().mpi_manager.communicate_recv_counts_secondary_events();
@@ -780,21 +777,8 @@ nest::SimulationManager::update_connection_infrastructure( const size_t tid )
   }
 #endif
 
-  // communicate connection information from postsynaptic to
-  // presynaptic side
-  if ( kernel().connection_manager.use_compressed_spikes() )
-  {
-#pragma omp barrier
-#pragma omp single
-    {
-      kernel().connection_manager.initialize_iteration_state(); // could possibly be combined with s'th above
-    }
-    kernel().event_delivery_manager.gather_target_data_compressed( tid );
-  }
-  else
-  {
-    kernel().event_delivery_manager.gather_target_data( tid );
-  }
+  // communicate connection information from postsynaptic to presynaptic side
+  kernel().event_delivery_manager.gather_target_data( tid );
 
 #ifdef TIMER_DETAILED
 #pragma omp barrier
@@ -804,15 +788,9 @@ nest::SimulationManager::update_connection_infrastructure( const size_t tid )
   }
 #endif
 
-  if ( kernel().connection_manager.secondary_connections_exist() )
-  {
-    kernel().connection_manager.compress_secondary_send_buffer_pos( tid );
-  }
-
 #pragma omp barrier
 #pragma omp single
   {
-    kernel().connection_manager.clear_compressed_spike_data_map();
     kernel().node_manager.set_have_nodes_changed( false );
     kernel().connection_manager.unset_connections_have_changed();
   }
@@ -844,9 +822,10 @@ nest::SimulationManager::update_()
   std::vector< std::shared_ptr< WrappedThreadException > > exceptions_raised( kernel().vp_manager.get_num_threads() );
 
 // parallel section begins
-#pragma omp parallel
+// #pragma omp parallel
+  for(size_t tid = 0; tid != kernel().vp_manager.get_num_threads(); ++tid)
   {
-    const size_t tid = kernel().vp_manager.get_thread_id();
+    // const size_t tid = kernel().vp_manager.get_thread_id();
 
     // We update in a parallel region. Therefore, we need to catch
     // exceptions here and then handle them after the parallel region.

@@ -73,6 +73,25 @@ public:
     NO_CONNECTION
   };
 
+#define USE_LEGACY_CONN_BUILDER 1
+#ifdef USE_LEGACY_CONN_BUILDER
+  struct TemporaryConnection
+  {
+    Node& source;
+    Node& target;
+    synindex syn_id;
+    const DictionaryDatum& params;
+    double delay;
+    double weight;
+  };
+
+  std::vector< std::vector< TemporaryConnection > > temp_connections;
+
+  void create_connections();
+
+  size_t get_responsible_thread( const size_t source_node_id );
+#endif
+
   ConnectionManager();
   ~ConnectionManager() override;
 
@@ -84,9 +103,6 @@ public:
   bool valid_connection_rule( std::string );
 
   void compute_target_data_buffer_size();
-  void compute_compressed_secondary_recv_buffer_positions( const size_t tid );
-  void collect_compressed_spike_data( const size_t tid );
-  void clear_compressed_spike_data_map();
 
   /**
    * Add a connectivity rule, i.e. the respective ConnBuilderFactory.
@@ -264,7 +280,7 @@ public:
     const std::string& post_synaptic_element,
     std::vector< std::vector< size_t > >& targets );
 
-  const std::vector< Target >& get_remote_targets_of_local_node( const size_t tid, const size_t lid ) const;
+  const std::vector< std::vector< Target > >& get_remote_targets_of_local_node( const size_t tid, const size_t lid ) const;
 
   size_t get_target_node_id( const size_t tid, const synindex syn_id, const size_t lcid ) const;
 
@@ -310,11 +326,6 @@ public:
   void send_from_device( const size_t tid, const size_t ldid, Event& e );
 
   /**
-   * Send event e to all targets of node source on thread t
-   */
-  void send_local( size_t t, Node& source, Event& e );
-
-  /**
    * Resize the structures for the Connector objects if necessary.
    *
    * This function should be called after number of threads, min_delay,
@@ -352,12 +363,6 @@ public:
     size_t& target_rank,
     TargetData& next_target_data );
 
-  bool fill_target_buffer( const size_t tid,
-    const size_t rank_start,
-    const size_t rank_end,
-    std::vector< TargetData >& send_buffer_target_data,
-    TargetSendBufferPosition& send_buffer_position );
-
   void reject_last_target_data( const size_t tid );
 
   void save_source_table_entry_point( const size_t tid );
@@ -367,13 +372,6 @@ public:
   void restore_source_table_entry_point( const size_t tid );
 
   void add_target( const size_t tid, const size_t target_rank, const TargetData& target_data );
-
-  /**
-   * Returns whether spikes should be compressed.
-   *
-   * Implies that connections will be sorted by source.
-   */
-  bool use_compressed_spikes() const;
 
   /**
    * Sorts connections in the presynaptic infrastructure by increasing
@@ -420,19 +418,9 @@ public:
 
   void no_targets_to_process( const size_t tid );
 
-  const std::vector< size_t >&
-  get_secondary_send_buffer_positions( const size_t tid, const size_t lid, const synindex syn_id ) const;
-
-  /**
-   * Returns read position in MPI receive buffer for secondary connections.
-   */
-  size_t get_secondary_recv_buffer_position( const size_t tid, const synindex syn_id, const size_t lcid ) const;
-
   bool deliver_secondary_events( const size_t tid,
     const bool called_from_wfr_update,
     std::vector< unsigned int >& recv_buffer );
-
-  void compress_secondary_send_buffer_pos( const size_t tid );
 
   void resize_connections();
 
@@ -453,11 +441,6 @@ public:
   // public stop watch for benchmarking purposes
   // start and stop in high-level connect functions in nestmodule.cpp and nest.cpp
   Stopwatch sw_construction_connect;
-
-  const std::vector< SpikeData >& get_compressed_spike_data( const synindex syn_id, const size_t idx );
-
-  //! Set iteration_state_ entries for all threads to beginning of compressed_spike_data_map_.
-  void initialize_iteration_state();
 
 private:
   size_t get_num_target_data( const size_t tid ) const;
@@ -514,7 +497,6 @@ private:
    *
    * \param source A reference to the sending Node.
    * \param target A reference to the receiving Node.
-   * \param s_node_id The node ID of the sending Node.
    * \param tid The thread of the target node.
    * \param syn_id The synapse model to use.
    * \param params The parameters for the connection.
@@ -523,7 +505,6 @@ private:
    */
   void connect_( Node& source,
     Node& target,
-    const size_t s_node_id,
     const size_t tid,
     const synindex syn_id,
     const DictionaryDatum& params,
@@ -603,19 +584,6 @@ private:
    */
   SourceTable source_table_;
 
-  /**
-   * A structure to hold "unpacked" spikes on the postsynaptic side if
-   * spike compression is enabled. Internally arranged in a 3d
-   * structure: synapses|sources|target_threads
-   */
-  std::vector< std::vector< std::vector< SpikeData > > > compressed_spike_data_;
-
-  /**
-   * Stores absolute position in receive buffer of secondary events.
-   * structure: threads|synapses|position
-   */
-  std::vector< std::vector< std::vector< size_t > > > secondary_recv_buffer_pos_;
-
   std::map< size_t, size_t > buffer_pos_of_source_node_id_syn_id_;
 
   /**
@@ -654,16 +622,6 @@ private:
   //! true if GetConnections has been called.
   bool get_connections_has_been_called_;
 
-  /**
-   *  Whether to use spike compression; if a neuron has targets on
-   *  multiple threads of a process, this switch makes sure that only
-   *  a single packet is sent to the process instead of one packet per
-   *  target thread; implies sort_connections_by_source_ = true; for
-   *  more details see the discussion and sketch in
-   *  https://github.com/nest/nest-simulator/pull/1338
-   */
-  bool use_compressed_spikes_;
-
   //! Whether primary connections (spikes) exist.
   bool has_primary_connections_;
 
@@ -679,10 +637,6 @@ private:
   //! Maximum distance between (double) spike times in STDP that is
   //! still considered 0. See issue #894
   double stdp_eps_;
-
-  //! For each thread, store (syn_id, compressed_spike_data_map_::iterator) pair for next iteration while filling target
-  //! buffers
-  std::vector< std::pair< size_t, std::map< size_t, CSDMapEntry >::const_iterator > > iteration_state_;
 };
 
 inline bool
@@ -781,7 +735,7 @@ ConnectionManager::prepare_target_table( const size_t tid )
   target_table_.prepare( tid );
 }
 
-inline const std::vector< Target >&
+inline const std::vector< std::vector< Target > >&
 ConnectionManager::get_remote_targets_of_local_node( const size_t tid, const size_t lid ) const
 {
   return target_table_.get_targets( tid, lid );
@@ -809,22 +763,6 @@ ConnectionManager::get_next_target_data( const size_t tid,
   return source_table_.get_next_target_data( tid, rank_start, rank_end, target_rank, next_target_data );
 }
 
-inline const std::vector< size_t >&
-ConnectionManager::get_secondary_send_buffer_positions( const size_t tid,
-  const size_t lid,
-  const synindex syn_id ) const
-{
-  return target_table_.get_secondary_send_buffer_positions( tid, lid, syn_id );
-}
-
-inline size_t
-ConnectionManager::get_secondary_recv_buffer_position( const size_t tid,
-  const synindex syn_id,
-  const size_t lcid ) const
-{
-  return secondary_recv_buffer_pos_[ tid ][ syn_id ][ lcid ];
-}
-
 inline size_t
 ConnectionManager::get_num_connections_( const size_t tid, const synindex syn_id ) const
 {
@@ -847,12 +785,6 @@ inline bool
 ConnectionManager::secondary_connections_exist() const
 {
   return secondary_connections_exist_;
-}
-
-inline bool
-ConnectionManager::use_compressed_spikes() const
-{
-  return use_compressed_spikes_;
 }
 
 inline double
@@ -898,18 +830,6 @@ ConnectionManager::set_source_has_more_targets( const size_t tid,
   const bool more_targets )
 {
   connections_[ tid ][ syn_id ]->set_source_has_more_targets( lcid, more_targets );
-}
-
-inline const std::vector< SpikeData >&
-ConnectionManager::get_compressed_spike_data( const synindex syn_id, const size_t idx )
-{
-  return compressed_spike_data_[ syn_id ][ idx ];
-}
-
-inline void
-ConnectionManager::clear_compressed_spike_data_map()
-{
-  source_table_.clear_compressed_spike_data_map();
 }
 
 } // namespace nest

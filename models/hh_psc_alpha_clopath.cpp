@@ -495,12 +495,12 @@ nest::hh_psc_alpha_clopath::handle( SpikeEvent& e )
 
   if ( e.get_weight() > 0.0 )
   {
-    B_.spike_exc_.add_value( e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
+    B_.spike_exc_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
       e.get_weight() * e.get_multiplicity() );
   }
   else
   {
-    B_.spike_inh_.add_value( e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
+    B_.spike_inh_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
       e.get_weight() * e.get_multiplicity() );
   } // current input, keep negative weight
 }
@@ -514,7 +514,7 @@ nest::hh_psc_alpha_clopath::handle( CurrentEvent& e )
   const double w = e.get_weight();
 
   // add weighted current; HEP 2002-10-04
-  B_.currents_.add_value( e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * c );
+  B_.currents_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * c );
 }
 
 void

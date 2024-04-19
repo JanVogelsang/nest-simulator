@@ -471,7 +471,7 @@ nest::pp_psc_delta::handle( SpikeEvent& e )
   //     explicitly, since it depends on delay and offset within
   //     the update cycle.  The way it is done here works, but
   //     is clumsy and should be improved.
-  B_.spikes_.add_value(
+  B_.spikes_.add_value( kernel().vp_manager.get_thread_id(),
     e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_multiplicity() );
 }
 
@@ -484,7 +484,7 @@ nest::pp_psc_delta::handle( CurrentEvent& e )
   const double w = e.get_weight();
 
   // Add weighted current; HEP 2002-10-04
-  B_.currents_.add_value( e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * c );
+  B_.currents_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * c );
 }
 
 void

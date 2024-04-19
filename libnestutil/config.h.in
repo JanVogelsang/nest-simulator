@@ -179,6 +179,8 @@
 #define TARGET_BITS_SPLIT_STANDARD 0
 #define TARGET_BITS_SPLIT_HPC 1
 
+#cmakedefine USE_LEGACY_CONN_BUILDER 1
+
 /* Whether to enable detailed NEST internal timers */
 #cmakedefine TIMER_DETAILED 1
 
