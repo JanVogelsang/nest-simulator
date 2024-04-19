@@ -178,7 +178,7 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  bool send( Event& e, size_t t, const STDPPLHomCommonProperties& );
+  bool send( Event& e, const size_t t, const STDPPLHomCommonProperties& );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -207,11 +207,11 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, size_t receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const synindex syn_id, size_t receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
 
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
+    ConnectionBase::check_connection_( dummy_target, s, t, syn_id, receptor_type );
 
     t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
   }
@@ -256,7 +256,7 @@ constexpr ConnectionModelProperties stdp_pl_synapse_hom< targetidentifierT >::pr
  */
 template < typename targetidentifierT >
 inline bool
-stdp_pl_synapse_hom< targetidentifierT >::send( Event& e, size_t t, const STDPPLHomCommonProperties& cp )
+stdp_pl_synapse_hom< targetidentifierT >::send( Event& e, const size_t t, const STDPPLHomCommonProperties& cp )
 {
   // synapse STDP depressing/facilitation dynamics
 
@@ -264,7 +264,7 @@ stdp_pl_synapse_hom< targetidentifierT >::send( Event& e, size_t t, const STDPPL
 
   // t_lastspike_ = 0 initially
 
-  Node* target = get_target( t );
+  Node* target = get_target();
 
   double dendritic_delay = get_delay();
 

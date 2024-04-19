@@ -78,6 +78,7 @@ generate_max_value( const uint8_t num_bits )
 
 // Sizes of bitfields used in various classes in the kernel.
 
+// TODO JV: Check if we still need different splits and if all data structures are compatible with all splits
 #if TARGET_BITS_SPLIT == TARGET_BITS_SPLIT_STANDARD
 constexpr uint8_t NUM_BITS_RANK = 18U;
 constexpr uint8_t NUM_BITS_TID = 9U;
@@ -139,8 +140,10 @@ const synindex invalid_synindex = MAX_SYN_ID;
  */
 //! target index into thread local node vector
 typedef unsigned short targetindex;
-const targetindex invalid_targetindex = USHRT_MAX;
-__attribute__( ( __unused__ ) ) const size_t max_targetindex = invalid_targetindex - 1;
+constexpr uint8_t NUM_BITS_LID = sizeof(targetindex) * 8;
+constexpr uint64_t MAX_LID = generate_max_value( NUM_BITS_LID );
+constexpr size_t invalid_targetindex = MAX_LID;
+constexpr size_t max_targetindex = invalid_targetindex - 1;
 
 /**
  * Marker for invalid LCID values.
@@ -150,7 +153,7 @@ constexpr size_t invalid_lcid = MAX_LCID;
 /**
  * Value for invalid connection thread id.
  */
-constexpr size_t invalid_thread = std::numeric_limits< size_t >::max();
+constexpr size_t invalid_thread = generate_max_value( NUM_BITS_TID );
 
 /**
  * Value for invalid connection port number.

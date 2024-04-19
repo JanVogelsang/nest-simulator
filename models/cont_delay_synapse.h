@@ -147,7 +147,7 @@ public:
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  bool send( Event& e, size_t t, const CommonSynapseProperties& cp );
+  bool send( Event& e, const size_t t, const CommonSynapseProperties& cp );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -198,10 +198,10 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, size_t receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const synindex syn_id, size_t receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
+    ConnectionBase::check_connection_( dummy_target, s, t, syn_id, receptor_type );
   }
 
 private:
@@ -217,9 +217,9 @@ private:
  */
 template < typename targetidentifierT >
 inline bool
-cont_delay_synapse< targetidentifierT >::send( Event& e, size_t t, const CommonSynapseProperties& )
+cont_delay_synapse< targetidentifierT >::send( Event& e, const size_t t, const CommonSynapseProperties& )
 {
-  e.set_receiver( *get_target( t ) );
+  e.set_receiver( *get_target() );
   e.set_weight( weight_ );
   e.set_rport( get_rport() );
   double orig_event_offset = e.get_offset();

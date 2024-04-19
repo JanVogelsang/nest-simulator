@@ -125,7 +125,7 @@ public:
   using ConnectionBase::get_target;
 
   void
-  check_connection( Node& s, Node& t, size_t receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const synindex syn_id, size_t receptor_type, const CommonPropertiesType& )
   {
     DiffusionConnectionEvent ge;
 
@@ -145,7 +145,7 @@ public:
   {
     e.set_drift_factor( drift_factor_ );
     e.set_diffusion_factor( diffusion_factor_ );
-    e.set_receiver( *get_target( t ) );
+    e.set_receiver( *get_target() );
     e.set_rport( get_rport() );
     e();
 

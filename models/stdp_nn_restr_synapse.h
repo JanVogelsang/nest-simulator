@@ -174,7 +174,7 @@ public:
    * \param e The event to send
    * \param cp common properties of all synapses (empty).
    */
-  bool send( Event& e, size_t t, const CommonSynapseProperties& cp );
+  bool send( Event& e, const size_t t, const CommonSynapseProperties& cp );
 
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -191,11 +191,11 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, size_t receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const synindex syn_id, size_t receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
 
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
+    ConnectionBase::check_connection_( dummy_target, s, t, syn_id, receptor_type );
 
     t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
   }
@@ -244,14 +244,14 @@ constexpr ConnectionModelProperties stdp_nn_restr_synapse< targetidentifierT >::
  */
 template < typename targetidentifierT >
 inline bool
-stdp_nn_restr_synapse< targetidentifierT >::send( Event& e, size_t t, const CommonSynapseProperties& )
+stdp_nn_restr_synapse< targetidentifierT >::send( Event& e, const size_t t, const CommonSynapseProperties& )
 {
   // synapse STDP depressing/facilitation dynamics
   double t_spike = e.get_stamp().get_ms();
 
   // use accessor functions (inherited from Connection< >) to obtain delay and
   // target
-  Node* target = get_target( t );
+  Node* target = get_target();
   double dendritic_delay = get_delay();
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron

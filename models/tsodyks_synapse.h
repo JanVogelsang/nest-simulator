@@ -193,7 +193,7 @@ public:
    * \param e The event to send
    * \param cp Common properties to all synapses (empty).
    */
-  bool send( Event& e, size_t t, const CommonSynapseProperties& cp );
+  bool send( Event& e, const size_t t, const CommonSynapseProperties& cp );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -209,10 +209,10 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, size_t receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const synindex syn_id, size_t receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
+    ConnectionBase::check_connection_( dummy_target, s, t, syn_id, receptor_type );
   }
 
   void
@@ -243,12 +243,12 @@ constexpr ConnectionModelProperties tsodyks_synapse< targetidentifierT >::proper
  */
 template < typename targetidentifierT >
 inline bool
-tsodyks_synapse< targetidentifierT >::send( Event& e, size_t t, const CommonSynapseProperties& )
+tsodyks_synapse< targetidentifierT >::send( Event& e, const size_t t, const CommonSynapseProperties& )
 {
   const double t_spike = e.get_stamp().get_ms();
   const double h = t_spike - t_lastspike_;
 
-  Node* target = get_target( t );
+  Node* target = get_target();
 
 
   // t_lastspike_ = 0 initially

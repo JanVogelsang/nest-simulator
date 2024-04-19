@@ -60,7 +60,7 @@ nest::HistEntryEpropUpdate::HistEntryEpropUpdate( long t )
   : HistEntryEprop( t )
 {
   access_counter_ = std::vector< size_t >( kernel().vp_manager.get_num_threads(), 0 );
-  access_counter_[ 0 ] = 1;
+  access_counter_[ kernel().vp_manager.get_thread_id() ] = 1;
 }
 
 nest::HistEntryEpropFiringRateReg::HistEntryEpropFiringRateReg( long t, double firing_rate_reg )

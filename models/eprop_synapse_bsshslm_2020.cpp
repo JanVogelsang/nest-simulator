@@ -109,7 +109,7 @@ EpropSynapseBSSHSLM2020CommonProperties::set_status( const DictionaryDatum& d, C
 
 template <>
 void
-Connector< eprop_synapse_bsshslm_2020< TargetIdentifierPtrRport > >::disable_connection( const size_t lcid )
+Connector< eprop_synapse_bsshslm_2020< TargetIdentifierPtr > >::disable_connection( const size_t lcid )
 {
   assert( not C_[ lcid ].is_disabled() );
   C_[ lcid ].disable();
@@ -127,7 +127,7 @@ Connector< eprop_synapse_bsshslm_2020< TargetIdentifierIndex > >::disable_connec
 
 
 template <>
-Connector< eprop_synapse_bsshslm_2020< TargetIdentifierPtrRport > >::~Connector()
+Connector< eprop_synapse_bsshslm_2020< TargetIdentifierPtr > >::~Connector()
 {
   for ( auto& c : C_ )
   {

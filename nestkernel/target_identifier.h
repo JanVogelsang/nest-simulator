@@ -44,20 +44,21 @@ namespace nest
  *
  * See Kunkel et al, Front Neuroinform 8:78 (2014), Sec 3.3.
  */
-class TargetIdentifierPtrRport
+class TargetIdentifierPtr
 {
 
 public:
-  TargetIdentifierPtrRport()
+  TargetIdentifierPtr( const size_t delay )
     : target_( nullptr )
     , rport_( 0 )
+    , delay_( delay )
+    , more_targets_( false )
+    , disabled_( false )
   {
   }
 
-
-  TargetIdentifierPtrRport( const TargetIdentifierPtrRport& t ) = default;
-  TargetIdentifierPtrRport& operator=( const TargetIdentifierPtrRport& t ) = default;
-
+  TargetIdentifierPtr( const TargetIdentifierPtr& t ) = default;
+  TargetIdentifierPtr& operator=( const TargetIdentifierPtr& t ) = default;
 
   void
   get_status( DictionaryDatum& d ) const
@@ -71,7 +72,7 @@ public:
   }
 
   Node*
-  get_target_ptr( const size_t ) const
+  get_target_ptr() const
   {
     return target_;
   }
@@ -94,18 +95,92 @@ public:
     rport_ = rprt;
   }
 
+  /**
+   * Return the delay of the connection in steps
+   */
+  double
+  get_delay() const
+  {
+    return delay_;
+  }
+
+  /**
+   * Set the delay of the connection specified in steps
+   */
+  void
+  set_delay( const double d )
+  {
+    delay_ = d;
+  }
+
+  /**
+   * Return the delay of the connection in ms
+   */
+  double
+  get_delay_ms() const
+  {
+    return Time::delay_steps_to_ms( delay_ );
+  }
+
+  /**
+   * Set the delay of the connection specified in ms
+   */
+  void
+  set_delay_ms( const double d )
+  {
+    delay_ = Time::delay_ms_to_steps( d );
+  }
+
+  void
+  set_source_has_more_targets( const bool more_targets )
+  {
+    more_targets_ = more_targets;
+  }
+
+  bool
+  source_has_more_targets() const
+  {
+    return more_targets_;
+  }
+
+  /**
+   * Disables the synapse.
+   *
+   * @see is_disabled
+   */
+  void
+  disable()
+  {
+    disabled_ = true;
+  }
+
+  /**
+   * Returns a flag denoting if the synapse is disabled.
+   *
+   * @see disable
+   */
+  bool
+  is_disabled() const
+  {
+    return disabled_;
+  }
+
 private:
-  Node* target_; //!< Target node
-  size_t rport_; //!< Receiver port at the target node
+  Node* target_;       //!< Target node
+  unsigned int rport_; //!< Receiver port at the target node
+  unsigned int delay_ : NUM_BITS_DELAY;
+  bool more_targets_ : 1;
+  bool disabled_ : 1;
 };
 
+//! check legal size
+using success_target_identifier_idx_size = StaticAssert< sizeof( TargetIdentifierPtr ) == 16 >::success;
 
 /**
  * Class providing compact (hpc) target identified by index.
  *
- * This class represents a connection target using a thread-local index, while
- * fixing the rport to 0. Connection classes with this class as template
- * argument provide "hpc" synapses with minimal memory requirement.
+ * This class represents a connection target using a thread-local index, instead of a pointer. Connection classes with
+ * this class as template argument provide "hpc" synapses with minimal memory requirement.
  *
  * See Kunkel et al, Front Neuroinform 8:78 (2014), Sec 3.3.
  */
@@ -113,11 +188,14 @@ class TargetIdentifierIndex
 {
 
 public:
-  TargetIdentifierIndex()
-    : target_( invalid_targetindex )
+  TargetIdentifierIndex( const size_t delay )
+    : target_lid_( invalid_targetindex )
+    , target_thread_( invalid_thread )
+    , delay_( delay )
+    , more_targets_( false )
+    , disabled_( false )
   {
   }
-
 
   TargetIdentifierIndex( const TargetIdentifierIndex& t ) = default;
   TargetIdentifierIndex& operator=( const TargetIdentifierIndex& t ) = default;
@@ -127,24 +205,24 @@ public:
   get_status( DictionaryDatum& d ) const
   {
     // Do nothing if called on synapse prototype
-    if ( target_ != invalid_targetindex )
+    if ( target_lid_ != invalid_targetindex )
     {
-      def< long >( d, names::rport, 0 );
-      def< long >( d, names::target, target_ );
+      def< long >( d, names::rport, rport_ );
+      def< long >( d, names::target, target_lid_ );
     }
   }
 
   Node*
-  get_target_ptr( const size_t tid ) const
+  get_target_ptr() const
   {
-    assert( target_ != invalid_targetindex );
-    return kernel().node_manager.thread_lid_to_node( tid, target_ );
+    assert( target_lid_ != invalid_targetindex );
+    return kernel().node_manager.thread_lid_to_node( target_thread_, target_lid_ );
   }
 
   size_t
   get_rport() const
   {
-    return 0;
+    return rport_;
   }
 
   void set_target( Node* target );
@@ -152,18 +230,90 @@ public:
   void
   set_rport( size_t rprt )
   {
-    if ( rprt != 0 )
-    {
-      throw IllegalConnection(
-        "Only rport==0 allowed for HPC synapses. Use normal synapse models "
-        "instead. See Kunkel et al, Front Neuroinform 8:78 (2014), Sec "
-        "3.3.2." );
-    }
+    rport_ = rprt;
+  }
+
+  /**
+   * Return the delay of the connection in steps
+   */
+  double
+  get_delay() const
+  {
+    return delay_;
+  }
+
+  /**
+   * Set the delay of the connection specified in steps
+   */
+  void
+  set_delay( const double d )
+  {
+    delay_ = d;
+  }
+
+  /**
+   * Return the delay of the connection in ms
+   */
+  double
+  get_delay_ms() const
+  {
+    return Time::delay_steps_to_ms( delay_ );
+  }
+
+  /**
+   * Set the delay of the connection specified in ms
+   */
+  void
+  set_delay_ms( const double d )
+  {
+    delay_ = Time::delay_ms_to_steps( d );
+  }
+
+  void
+  set_source_has_more_targets( const bool more_targets )
+  {
+    more_targets_ = more_targets;
+  }
+
+  bool
+  source_has_more_targets() const
+  {
+    return more_targets_;
+  }
+
+  /**
+   * Disables the synapse.
+   *
+   * @see is_disabled
+   */
+  void
+  disable()
+  {
+    disabled_ = true;
+  }
+
+  /**
+   * Returns a flag denoting if the synapse is disabled.
+   *
+   * @see disable
+   */
+  bool
+  is_disabled() const
+  {
+    return disabled_;
   }
 
 private:
-  targetindex target_; //!< Target node
+  unsigned short rport_;
+  targetindex target_lid_; //!< Target node local index
+  unsigned int target_thread_ : NUM_BITS_TID;
+  unsigned int delay_ : NUM_BITS_DELAY;
+  bool more_targets_ : 1;
+  bool disabled_ : 1;
 };
+
+//! check legal size
+using success_target_identifier_idx_size = StaticAssert< sizeof( TargetIdentifierIndex ) == 8 >::success;
 
 inline void
 TargetIdentifierIndex::set_target( Node* target )
@@ -178,9 +328,9 @@ TargetIdentifierIndex::set_target( Node* target )
                        "See Kunkel et al, Front Neuroinform 8:78 (2014), Sec 3.3.2.",
         max_targetindex ) );
   }
-  target_ = target_lid;
+  target_lid_ = target_lid;
+  target_thread_ = target->get_thread();
 }
-
 
 } // namespace nest
 

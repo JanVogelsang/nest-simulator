@@ -37,13 +37,13 @@
 #include "nest_types.h"
 #include "node.h"
 #include "spikecounter.h"
-#include "syn_id_delay.h"
 
 // Includes from sli:
 #include "arraydatum.h"
 #include "dict.h"
 #include "dictutils.h"
 #include "doubledatum.h"
+#include "target_identifier.h"
 
 namespace nest
 {
@@ -120,8 +120,7 @@ public:
   static constexpr ConnectionModelProperties properties = ConnectionModelProperties::NONE;
 
   Connection()
-    : target_()
-    , syn_id_delay_( 1.0 )
+    : target_( 1.0 )
   {
   }
 
@@ -174,7 +173,7 @@ public:
   double
   get_delay() const
   {
-    return syn_id_delay_.get_delay_ms();
+    return target_.get_delay_ms();
   }
 
   /**
@@ -183,7 +182,7 @@ public:
   long
   get_delay_steps() const
   {
-    return syn_id_delay_.delay;
+    return target_.get_delay();
   }
 
   /**
@@ -192,7 +191,7 @@ public:
   void
   set_delay( const double delay )
   {
-    syn_id_delay_.set_delay_ms( delay );
+    target_.set_delay_ms( delay );
   }
 
   /**
@@ -201,25 +200,7 @@ public:
   void
   set_delay_steps( const long delay )
   {
-    syn_id_delay_.delay = delay;
-  }
-
-  /**
-   * Set the synapse id of the connection
-   */
-  void
-  set_syn_id( synindex syn_id )
-  {
-    syn_id_delay_.syn_id = syn_id;
-  }
-
-  /**
-   * Get the synapse id of the connection
-   */
-  synindex
-  get_syn_id() const
-  {
-    return syn_id_delay_.syn_id;
+    target_.set_delay( delay );
   }
 
   long
@@ -239,10 +220,9 @@ public:
     const CommonSynapseProperties& );
 
   Node*
-  get_target( const size_t tid ) const
+  get_target() const
   {
-    return target_.get_target_ptr( tid );
-    // TODO JV: STDP other thread than owning one (history)
+    return target_.get_target_ptr();
   }
   size_t
   get_rport() const
@@ -259,7 +239,7 @@ public:
   void
   set_source_has_more_targets( const bool more_targets )
   {
-    syn_id_delay_.set_source_has_more_targets( more_targets );
+    target_.set_source_has_more_targets( more_targets );
   }
 
   /**
@@ -271,7 +251,7 @@ public:
   bool
   source_has_more_targets() const
   {
-    return syn_id_delay_.source_has_more_targets();
+    return target_.source_has_more_targets();
   }
 
   /**
@@ -282,7 +262,7 @@ public:
   void
   disable()
   {
-    syn_id_delay_.disable();
+    target_.disable();
   }
 
   /**
@@ -293,7 +273,7 @@ public:
   bool
   is_disabled() const
   {
-    return syn_id_delay_.is_disabled();
+    return target_.is_disabled();
   }
 
 protected:
@@ -306,13 +286,11 @@ protected:
    * \param the last spike produced by the presynaptic neuron (for STDP and
    * maturing connections)
    */
-  void check_connection_( Node& dummy_target, Node& source, Node& target, const size_t receptor_type );
+  void check_connection_( Node& dummy_target, Node& source, Node& target, const synindex syn_id, const size_t receptor_type );
 
   // The order of the members below is critical as it influcences the size of the object.
   // Please leave unchanged!
   targetidentifierT target_;
-  // syn_id (9 bit), delay (21 bit) in timesteps of this connection and more_targets and disabled flags (each 1 bit)
-  SynIdDelay syn_id_delay_;
 };
 
 template < typename targetidentifierT >
@@ -323,19 +301,20 @@ inline void
 Connection< targetidentifierT >::check_connection_( Node& dummy_target,
   Node& source,
   Node& target,
+  const synindex syn_id,
   const size_t receptor_type )
 {
   // 1. does this connection support the event type sent by source
   // try to send event from source to dummy_target
   // this line might throw an exception
-  source.send_test_event( dummy_target, receptor_type, get_syn_id(), true );
+  source.send_test_event( dummy_target, receptor_type, syn_id, true );
 
   // 2. does the target accept the event type sent by source
   // try to send event from source to target
   // this returns the port of the incoming connection
   // p must be stored in the base class connection
   // this line might throw an exception
-  target_.set_rport( source.send_test_event( target, receptor_type, get_syn_id(), false ) );
+  target_.set_rport( source.send_test_event( target, receptor_type, syn_id, false ) );
 
   // 3. do the events sent by source mean the same thing as they are
   // interpreted in target?
@@ -353,7 +332,7 @@ template < typename targetidentifierT >
 inline void
 Connection< targetidentifierT >::get_status( DictionaryDatum& d ) const
 {
-  def< double >( d, names::delay, syn_id_delay_.get_delay_ms() );
+  def< double >( d, names::delay, target_.get_delay_ms() );
   target_.get_status( d );
 }
 
@@ -365,7 +344,7 @@ Connection< targetidentifierT >::set_status( const DictionaryDatum& d, Connector
   if ( updateValue< double >( d, names::delay, delay ) )
   {
     kernel().connection_manager.get_delay_checker().assert_valid_delay_ms( delay );
-    syn_id_delay_.set_delay_ms( delay );
+    target_.set_delay_ms( delay );
   }
   // no call to target_.set_status() because target and rport cannot be changed
 }
@@ -380,12 +359,12 @@ template < typename targetidentifierT >
 inline void
 Connection< targetidentifierT >::calibrate( const TimeConverter& tc )
 {
-  Time t = tc.from_old_steps( syn_id_delay_.delay );
-  syn_id_delay_.delay = t.get_steps();
+  Time t = tc.from_old_steps( target_.get_delay());
+  target_.set_delay( t.get_steps() );
 
-  if ( syn_id_delay_.delay == 0 )
+  if ( target_.get_delay()== 0 )
   {
-    syn_id_delay_.delay = 1;
+    target_.set_delay( 1 );
   }
 }
 

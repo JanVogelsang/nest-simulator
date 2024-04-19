@@ -109,10 +109,10 @@ M_ERROR = 30
 
 
 params = {
-    "num_threads": 2,  # total number of threads per process
+    "num_threads": 1,  # total number of threads per process
     "scale": 0.03,  # scaling factor of the network size
     # total network size = scale*11250 neurons
-    "simtime": 100.0,  # total simulation time in ms
+    "simtime": 250.0,  # total simulation time in ms
     "presimtime": 50.0,  # simulation time until reaching equilibrium
     "dt": 0.1,  # simulation step
     "record_spikes": True,  # switch to record spikes of excitatory
@@ -220,7 +220,6 @@ def build_network(logger):
     nest.local_num_threads = params["num_threads"]
     nest.resolution = params["dt"]
     nest.overwrite_files = True
-    nest.print_time = True
 
     nest.message(M_INFO, "build_network", "Creating excitatory population.")
     E_neurons = nest.Create("iaf_psc_alpha", NE, params=model_params)

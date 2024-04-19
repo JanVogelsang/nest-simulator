@@ -71,27 +71,27 @@ public:
   /**
    * Returns membrane capacitance
    */
-  double get_C_m( int comp ) override;
+  double get_C_m( int comp ) const override;
 
   /**
    * Returns leak conductance g_L
    */
-  double get_g_L( int comp ) override;
+  double get_g_L( int comp ) const override;
 
   /**
    * Returns time constant tau_L
    */
-  double get_tau_L( int comp ) override;
+  double get_tau_L( int comp ) const override;
 
   /**
    * Returns time constant tau_syn_ex
    */
-  double get_tau_syn_ex( int comp ) override;
+  double get_tau_syn_ex( int comp ) const override;
 
   /**
    * Returns time constant tau_syn_in
    */
-  double get_tau_syn_in( int comp ) override;
+  double get_tau_syn_in( int comp ) const override;
 
 protected:
   /**
@@ -110,35 +110,35 @@ private:
 
 template < class urbanczik_parameters >
 inline double
-UrbanczikArchivingNode< urbanczik_parameters >::get_C_m( int comp )
+UrbanczikArchivingNode< urbanczik_parameters >::get_C_m( int comp ) const
 {
   return urbanczik_params->C_m[ comp ];
 }
 
 template < class urbanczik_parameters >
 inline double
-UrbanczikArchivingNode< urbanczik_parameters >::get_g_L( int comp )
+UrbanczikArchivingNode< urbanczik_parameters >::get_g_L( int comp ) const
 {
   return urbanczik_params->g_L[ comp ];
 }
 
 template < class urbanczik_parameters >
 inline double
-UrbanczikArchivingNode< urbanczik_parameters >::get_tau_L( int comp )
+UrbanczikArchivingNode< urbanczik_parameters >::get_tau_L( int comp ) const
 {
   return urbanczik_params->C_m[ comp ] / urbanczik_params->g_L[ comp ];
 }
 
 template < class urbanczik_parameters >
 inline double
-UrbanczikArchivingNode< urbanczik_parameters >::get_tau_syn_ex( int comp )
+UrbanczikArchivingNode< urbanczik_parameters >::get_tau_syn_ex( int comp ) const
 {
   return urbanczik_params->tau_syn_ex[ comp ];
 }
 
 template < class urbanczik_parameters >
 inline double
-UrbanczikArchivingNode< urbanczik_parameters >::get_tau_syn_in( int comp )
+UrbanczikArchivingNode< urbanczik_parameters >::get_tau_syn_in( int comp ) const
 {
   return urbanczik_params->tau_syn_in[ comp ];
 }

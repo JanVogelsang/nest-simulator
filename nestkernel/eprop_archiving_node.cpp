@@ -47,18 +47,16 @@ void
 EpropArchivingNodeRecurrent::write_surrogate_gradient_to_history( const long time_step,
   const double surrogate_gradient )
 {
-  if ( eprop_indegree_ == 0 )
+  if ( has_eprop_connections_ )
   {
-    return;
+    eprop_history_.emplace_back( time_step, surrogate_gradient, 0.0 );
   }
-
-  eprop_history_.emplace_back( time_step, surrogate_gradient, 0.0 );
 }
 
 void
 EpropArchivingNodeRecurrent::write_learning_signal_to_history( const long time_step, const double learning_signal )
 {
-  if ( eprop_indegree_ == 0 )
+  if ( not has_eprop_connections_ )
   {
     return;
   }
@@ -79,7 +77,7 @@ EpropArchivingNodeRecurrent::write_firing_rate_reg_to_history( const long t_curr
   const double f_target,
   const double c_reg )
 {
-  if ( eprop_indegree_ == 0 )
+  if ( not has_eprop_connections_ )
   {
     return;
   }
@@ -126,7 +124,7 @@ EpropArchivingNodeRecurrent::erase_used_firing_rate_reg_history()
 
   while ( it_update_hist != update_history_.end() and it_reg_hist != firing_rate_reg_history_.end() )
   {
-    if ( it_update_hist->access_counter_ == 0 )
+    if ( std::accumulate( it_update_hist->access_counter_.begin(), it_update_hist->access_counter_.end(), static_cast< size_t >( 0 )) == 0 )
     {
       it_reg_hist = firing_rate_reg_history_.erase( it_reg_hist );
     }
@@ -151,14 +149,12 @@ EpropArchivingNodeReadout::EpropArchivingNodeReadout( const EpropArchivingNodeRe
 void
 EpropArchivingNodeReadout::write_error_signal_to_history( const long time_step, const double error_signal )
 {
-  if ( eprop_indegree_ == 0 )
+  if ( has_eprop_connections_ )
   {
-    return;
+    const long shift = delay_out_norm_;
+
+    eprop_history_.emplace_back( time_step - shift, error_signal );
   }
-
-  const long shift = delay_out_norm_;
-
-  eprop_history_.emplace_back( time_step - shift, error_signal );
 }
 
 

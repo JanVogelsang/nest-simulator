@@ -59,16 +59,16 @@ ModelManager::register_connection_model( const std::string& name )
 {
   // Required to check which variants to create
   ConnectorModel const* const dummy_model =
-    new GenericConnectorModel< ConnectionT< TargetIdentifierPtrRport > >( "dummy" );
+    new GenericConnectorModel< ConnectionT< TargetIdentifierPtr > >( "dummy" );
 
-  register_specific_connection_model_< ConnectionT< TargetIdentifierPtrRport > >( name );
+  register_specific_connection_model_< ConnectionT< TargetIdentifierPtr > >( name );
   if ( dummy_model->has_property( ConnectionModelProperties::SUPPORTS_HPC ) )
   {
     register_specific_connection_model_< ConnectionT< TargetIdentifierIndex > >( name + "_hpc" );
   }
   if ( dummy_model->has_property( ConnectionModelProperties::SUPPORTS_LBL ) )
   {
-    register_specific_connection_model_< ConnectionLabel< ConnectionT< TargetIdentifierPtrRport > > >( name + "_lbl" );
+    register_specific_connection_model_< ConnectionLabel< ConnectionT< TargetIdentifierPtr > > >( name + "_lbl" );
   }
 
   delete dummy_model;

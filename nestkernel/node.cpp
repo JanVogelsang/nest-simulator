@@ -249,7 +249,7 @@ Node::is_eprop_recurrent_node() const
 void
 Node::handle( SpikeEvent& )
 {
-  throw UnexpectedEvent( "The target node does not handle spike input." );
+    throw UnexpectedEvent( "The target node does not handle spike input." );
 }
 
 size_t
@@ -462,7 +462,7 @@ Node::sends_secondary_event( SICEvent& )
 }
 
 double
-Node::get_LTD_value( double ) const
+Node::get_LTD_value( double )
 {
   throw UnexpectedEvent();
 }
@@ -481,7 +481,7 @@ Node::get_K_values( double, double&, double&, double& ) const
 }
 
 void
-nest::Node::get_history( double, double, std::deque< histentry >::const_iterator*, std::deque< histentry >::const_iterator* )
+nest::Node::get_history( double, double, std::deque< histentry >::iterator*, std::deque< histentry >::iterator* )
 {
   throw UnexpectedEvent();
 }
@@ -489,8 +489,8 @@ nest::Node::get_history( double, double, std::deque< histentry >::const_iterator
 void
 nest::Node::get_LTP_history( double,
   double,
-  std::deque< histentry_extended >::const_iterator*,
-  std::deque< histentry_extended >::const_iterator* )
+  std::deque< histentry_extended >::iterator*,
+  std::deque< histentry_extended >::iterator* )
 {
   throw UnexpectedEvent();
 }
@@ -498,8 +498,8 @@ nest::Node::get_LTP_history( double,
 void
 nest::Node::get_urbanczik_history( double,
   double,
-  std::deque< histentry_extended >::const_iterator*,
-  std::deque< histentry_extended >::const_iterator*,
+  std::deque< histentry_extended >::iterator*,
+  std::deque< histentry_extended >::iterator*,
   int )
 {
   throw UnexpectedEvent();

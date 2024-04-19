@@ -282,7 +282,7 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  bool send( Event& e, size_t t, const STDPFACETSHWHomCommonProperties< targetidentifierT >& );
+  bool send( Event& e, const size_t t, const STDPFACETSHWHomCommonProperties< targetidentifierT >& );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -312,11 +312,11 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, size_t receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const synindex syn_id, size_t receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
 
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
+    ConnectionBase::check_connection_( dummy_target, s, t, syn_id, receptor_type );
 
     t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
   }
@@ -407,8 +407,7 @@ stdp_facetshw_synapse_hom< targetidentifierT >::lookup_( unsigned int discrete_w
  */
 template < typename targetidentifierT >
 inline bool
-stdp_facetshw_synapse_hom< targetidentifierT >::send( Event& e,
-  size_t t,
+stdp_facetshw_synapse_hom< targetidentifierT >::send( Event& e, const size_t t,
   const STDPFACETSHWHomCommonProperties< targetidentifierT >& cp )
 {
   // synapse STDP dynamics
@@ -503,7 +502,7 @@ stdp_facetshw_synapse_hom< targetidentifierT >::send( Event& e,
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
   std::deque< histentry >::iterator start;
   std::deque< histentry >::iterator finish;
-  get_target( t )->get_history( t_lastspike_ - dendritic_delay, t_spike - dendritic_delay, &start, &finish );
+  get_target()->get_history( t_lastspike_ - dendritic_delay, t_spike - dendritic_delay, &start, &finish );
 
   // facilitation due to the first postsynaptic spike since the last
   // pre-synaptic spike
@@ -526,7 +525,7 @@ stdp_facetshw_synapse_hom< targetidentifierT >::send( Event& e,
     a_acausal_ += std::exp( minus_dt_acausal / cp.tau_minus_ );
   }
 
-  e.set_receiver( *get_target( t ) );
+  e.set_receiver( *get_target() );
   e.set_weight( weight_ );
   e.set_delay_steps( get_delay_steps() );
   e.set_rport( get_rport() );

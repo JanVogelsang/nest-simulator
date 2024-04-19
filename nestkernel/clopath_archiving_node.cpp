@@ -72,7 +72,7 @@ nest::ClopathArchivingNode::init_clopath_buffers()
   // initialize the ltp-history
   ltd_hist_current_ = 0;
   ltd_hist_len_ = kernel().connection_manager.get_max_delay() + 1;
-  ltd_history_.resize( ltd_hist_len_, histentry_extended( 0.0, 0.0, 0 ) );
+  ltd_history_.resize( ltd_hist_len_, histentry_extended( 0.0, 0.0 ) );
 }
 
 void
@@ -141,7 +141,7 @@ nest::ClopathArchivingNode::get_LTD_value( double t )
       {
         return runner->dw_;
       }
-      ( runner->access_counter_ )++;
+      ++runner->access_counter_[ kernel().vp_manager.get_thread_id() ];
       ++runner;
     }
   }
@@ -175,7 +175,7 @@ nest::ClopathArchivingNode::get_LTP_history( double t1,
     *start = runner;
     while ( ( runner != ltp_history_.end() ) and runner->t_ - 1.0e-6 < t2 )
     {
-      ( runner->access_counter_ )++;
+      ++runner->access_counter_[ kernel().vp_manager.get_thread_id() ];
       ++runner;
     }
     *finish = runner;
@@ -222,7 +222,7 @@ nest::ClopathArchivingNode::write_LTD_history( const double t_ltd_ms, double u_b
   {
     const double dw = A_LTD_const_ ? A_LTD_ * ( u_bar_minus - theta_minus_ )
                                    : A_LTD_ * u_bar_bar * u_bar_bar * ( u_bar_minus - theta_minus_ ) / u_ref_squared_;
-    ltd_history_[ ltd_hist_current_ ] = histentry_extended( t_ltd_ms, dw, 0 );
+    ltd_history_[ ltd_hist_current_ ] = histentry_extended( t_ltd_ms, dw );
     ltd_hist_current_ = ( ltd_hist_current_ + 1 ) % ltd_hist_len_;
   }
 }
@@ -236,7 +236,7 @@ nest::ClopathArchivingNode::write_LTP_history( const double t_ltp_ms, double u, 
     // except the penultimate one. we might still need it.
     while ( ltp_history_.size() > 1 )
     {
-      if ( ltp_history_.front().access_counter_ >= n_incoming_ )
+      if ( std::accumulate(ltp_history_.front().access_counter_.begin(), ltp_history_.front().access_counter_.end(), static_cast< size_t >(0)) >= n_incoming_ )
       {
         ltp_history_.pop_front();
       }
@@ -248,7 +248,7 @@ nest::ClopathArchivingNode::write_LTP_history( const double t_ltp_ms, double u, 
     // dw is not the change of the synaptic weight since the factor
     // x_bar is not included (but later in the synapse)
     const double dw = A_LTP_ * ( u - theta_plus_ ) * ( u_bar_plus - theta_minus_ ) * Time::get_resolution().get_ms();
-    ltp_history_.push_back( histentry_extended( t_ltp_ms, dw, 0 ) );
+    ltp_history_.push_back( histentry_extended( t_ltp_ms, dw ) );
   }
 }
 

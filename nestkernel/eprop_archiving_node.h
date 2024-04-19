@@ -77,7 +77,7 @@ public:
 
 protected:
   //!< Number of incoming eprop synapses
-  size_t eprop_indegree_;
+  bool has_eprop_connections_;
 
   //! History of updates still needed by at least one synapse.
   std::vector< HistEntryEpropUpdate > update_history_;

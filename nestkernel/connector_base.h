@@ -255,7 +255,7 @@ public:
 
     // get target node ID here, where tid is available
     // necessary for hpc synapses using TargetIdentifierIndex
-    def< long >( dict, names::target, C_[ lcid ].get_target( tid )->get_node_id() );
+    def< long >( dict, names::target, C_[ lcid ].get_target()->get_node_id() );
   }
 
   void
@@ -290,7 +290,7 @@ public:
     {
       if ( synapse_label == UNLABELED_CONNECTION or C_[ lcid ].get_label() == synapse_label )
       {
-        const size_t current_target_node_id = C_[ lcid ].get_target( tid )->get_node_id();
+        const size_t current_target_node_id = C_[ lcid ].get_target()->get_node_id();
         if ( current_target_node_id == target_node_id or target_node_id == 0 )
         {
           conns.push_back(
@@ -312,7 +312,7 @@ public:
     {
       if ( synapse_label == UNLABELED_CONNECTION or C_[ lcid ].get_label() == synapse_label )
       {
-        const size_t current_target_node_id = C_[ lcid ].get_target( tid )->get_node_id();
+        const size_t current_target_node_id = C_[ lcid ].get_target()->get_node_id();
         if ( std::find( target_neuron_node_ids.begin(), target_neuron_node_ids.end(), current_target_node_id )
           != target_neuron_node_ids.end() )
         {
@@ -341,7 +341,7 @@ public:
   {
     for ( size_t lcid = 0; lcid < C_.size(); ++lcid )
     {
-      const size_t current_target_node_id = C_[ lcid ].get_target( tid )->get_node_id();
+      const size_t current_target_node_id = C_[ lcid ].get_target()->get_node_id();
       if ( current_target_node_id == target_node_id and not C_[ lcid ].is_disabled() )
       {
         source_lcids.push_back( lcid );
@@ -358,10 +358,10 @@ public:
     size_t lcid = start_lcid;
     while ( true )
     {
-      if ( C_[ lcid ].get_target( tid )->get_synaptic_elements( post_synaptic_element ) != 0.0
+      if ( C_[ lcid ].get_target()->get_synaptic_elements( post_synaptic_element ) != 0.0
         and not C_[ lcid ].is_disabled() )
       {
-        target_node_ids.push_back( C_[ lcid ].get_target( tid )->get_node_id() );
+        target_node_ids.push_back( C_[ lcid ].get_target()->get_node_id() );
       }
 
       if ( not C_[ lcid ].source_has_more_targets() )
@@ -376,7 +376,7 @@ public:
   size_t
   get_target_node_id( const size_t tid, const unsigned int lcid ) const override
   {
-    return C_[ lcid ].get_target( tid )->get_node_id();
+    return C_[ lcid ].get_target()->get_node_id();
   }
 
   void
@@ -469,7 +469,7 @@ public:
     size_t lcid = start_lcid;
     while ( true )
     {
-      if ( C_[ lcid ].get_target( tid )->get_node_id() == target_node_id and not C_[ lcid ].is_disabled() )
+      if ( C_[ lcid ].get_target()->get_node_id() == target_node_id and not C_[ lcid ].is_disabled() )
       {
         return lcid;
       }
@@ -490,7 +490,7 @@ public:
   {
     for ( size_t i = 0; i < matching_lcids.size(); ++i )
     {
-      if ( C_[ matching_lcids[ i ] ].get_target( tid )->get_node_id() == target_node_id )
+      if ( C_[ matching_lcids[ i ] ].get_target()->get_node_id() == target_node_id )
       {
         return matching_lcids[ i ];
       }

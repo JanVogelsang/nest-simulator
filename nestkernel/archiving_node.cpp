@@ -44,6 +44,7 @@ nest::ArchivingNode::ArchivingNode()
   , max_delay_( 0 )
   , last_spike_( -1.0 )
 {
+  n_incoming_per_thread_.resize( kernel().vp_manager.get_num_threads() );
 }
 
 nest::ArchivingNode::ArchivingNode( const ArchivingNode& n )
@@ -58,6 +59,7 @@ nest::ArchivingNode::ArchivingNode( const ArchivingNode& n )
   , max_delay_( n.max_delay_ )
   , last_spike_( n.last_spike_ )
 {
+  n_incoming_per_thread_.resize( kernel().vp_manager.get_num_threads() );
 }
 
 void
@@ -72,13 +74,10 @@ ArchivingNode::register_stdp_connection( double t_first_read, double delay )
         runner != history_.end() and ( t_first_read - runner->t_ > -1.0 * kernel().connection_manager.get_stdp_eps() );
         ++runner )
   {
-    for ( size_t tid = 0; tid != kernel().vp_manager.get_num_threads(); ++tid )
-    {
-      runner->access_counter_[ tid ]++;
-    }
+    runner->access_counter_[ kernel().vp_manager.get_thread_id() ]++;
   }
 
-  n_incoming_++;
+  ++n_incoming_per_thread_[ kernel().vp_manager.get_thread_id() ];
 
   max_delay_ = std::max( delay, max_delay_ );
 }
@@ -148,8 +147,8 @@ nest::ArchivingNode::get_K_values( double t,
 void
 nest::ArchivingNode::get_history( double t1,
   double t2,
-  std::deque< histentry >::const_iterator* start,
-  std::deque< histentry >::const_iterator* finish )
+  std::deque< histentry >::iterator* start,
+  std::deque< histentry >::iterator* finish )
 {
   *finish = history_.end();
   if ( history_.empty() )
@@ -191,9 +190,12 @@ nest::ArchivingNode::set_spiketime( Time const& t_sp, double offset )
     while ( history_.size() > 1 )
     {
       const double next_t_sp = history_[ 1 ].t_;
-      if ( std::accumulate(history_.front().access_counter_.begin(), history_.front().access_counter_.end(), 0) >= n_incoming_
-        and t_sp_ms - next_t_sp > max_delay_ + Time::delay_steps_to_ms( kernel().connection_manager.get_min_delay() )
-            + kernel().connection_manager.get_stdp_eps() )
+      if ( t_sp_ms - next_t_sp > max_delay_ + Time::delay_steps_to_ms( kernel().connection_manager.get_min_delay() )
+            + kernel().connection_manager.get_stdp_eps()
+        and std::accumulate( history_.front().access_counter_.begin(),
+              history_.front().access_counter_.end(),
+              static_cast< size_t >( 0 ) )
+          >= n_incoming_ )
       {
         history_.pop_front();
       }
@@ -267,6 +269,12 @@ nest::ArchivingNode::clear_history()
   Kminus_ = 0.0;
   Kminus_triplet_ = 0.0;
   history_.clear();
+}
+void
+ArchivingNode::pre_run_hook()
+{
+  n_incoming_ = std::accumulate( n_incoming_per_thread_.begin(), n_incoming_per_thread_.end(), 0 );
+  std::vector< size_t >().swap( n_incoming_per_thread_ );
 }
 
 

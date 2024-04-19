@@ -85,7 +85,7 @@ nest::UrbanczikArchivingNode< urbanczik_parameters >::get_urbanczik_history( dou
     *start = runner;
     while ( ( runner != urbanczik_history_[ comp - 1 ].end() ) and runner->t_ - 1.0e-6 < t2 )
     {
-      ( runner->access_counter_ )++;
+      ++runner->access_counter_[ kernel().vp_manager.get_thread_id() ];
       ++runner;
     }
     *finish = runner;
@@ -112,7 +112,7 @@ nest::UrbanczikArchivingNode< urbanczik_parameters >::write_urbanczik_history( T
     // except the penultimate one. we might still need it.
     while ( urbanczik_history_[ comp - 1 ].size() > 1 )
     {
-      if ( urbanczik_history_[ comp - 1 ].front().access_counter_ >= n_incoming_ )
+      if ( std::accumulate( urbanczik_history_[ comp - 1 ].front().access_counter_.begin(), urbanczik_history_[ comp - 1 ].front().access_counter_.end(), static_cast<size_t>( 0 )) >= n_incoming_ )
       {
         urbanczik_history_[ comp - 1 ].pop_front();
       }
@@ -124,7 +124,7 @@ nest::UrbanczikArchivingNode< urbanczik_parameters >::write_urbanczik_history( T
 
     double dPI = ( n_spikes - urbanczik_params->phi( V_W_star ) * Time::get_resolution().get_ms() )
       * urbanczik_params->h( V_W_star );
-    urbanczik_history_[ comp - 1 ].push_back( histentry_extended( t_ms, dPI, 0 ) );
+    urbanczik_history_[ comp - 1 ].push_back( histentry_extended( t_ms, dPI ) );
   }
 }
 

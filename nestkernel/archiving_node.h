@@ -53,6 +53,8 @@ public:
 
   ArchivingNode( const ArchivingNode& );
 
+  void pre_run_hook() override;
+
   /**
    * Return the Kminus (synaptic trace) value at time t (given in ms).
    *
@@ -76,15 +78,15 @@ public:
   /**
    * Return the triplet Kminus value for the associated iterator.
    */
-  // double get_K_triplet_value( const std::deque< histentry >::const_iterator& iter ) const;
+  // double get_K_triplet_value( const std::deque< histentry >::iterator& iter ) const;
 
   /**
    * Return the spike times (in steps) of spikes which occurred in the range [t1,t2].
    */
   void get_history( double t1,
     double t2,
-    std::deque< histentry >::const_iterator* start,
-    std::deque< histentry >::const_iterator* finish ) override;
+    std::deque< histentry >::iterator* start,
+    std::deque< histentry >::iterator* finish ) override;
 
   /**
    * Register a new incoming STDP connection.
@@ -122,6 +124,7 @@ protected:
   size_t n_incoming_;
 
 private:
+  std::vector< size_t > n_incoming_per_thread_;
   // sum exp(-(t-ti)/tau_minus)
   double Kminus_;
 

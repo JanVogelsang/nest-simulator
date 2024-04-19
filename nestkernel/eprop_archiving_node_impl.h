@@ -37,14 +37,14 @@ namespace nest
 template < typename HistEntryT >
 EpropArchivingNode< HistEntryT >::EpropArchivingNode()
   : Node()
-  , eprop_indegree_( 0 )
+  , has_eprop_connections_( false )
 {
 }
 
 template < typename HistEntryT >
 EpropArchivingNode< HistEntryT >::EpropArchivingNode( const EpropArchivingNode& n )
   : Node( n )
-  , eprop_indegree_( n.eprop_indegree_ )
+  , has_eprop_connections_( n.has_eprop_connections_ )
 {
 }
 
@@ -52,19 +52,20 @@ template < typename HistEntryT >
 void
 EpropArchivingNode< HistEntryT >::register_eprop_connection()
 {
-  ++eprop_indegree_;
+  has_eprop_connections_ = true;  // TODO JV: This could be written by multiple connections at the same time. Is that a problem?
 
   const long shift = get_shift();
 
   const auto it_hist = get_update_history( shift );
 
+  // TODO JV: Avoid this race condition somehow
   if ( it_hist == update_history_.end() or it_hist->t_ != shift )
   {
     update_history_.insert( it_hist, HistEntryEpropUpdate( shift ) );
   }
   else
   {
-    ++it_hist->access_counter_;  // TODO JV
+    ++it_hist->access_counter_[ kernel().vp_manager.get_thread_id() ];
   }
 }
 
@@ -72,7 +73,7 @@ template < typename HistEntryT >
 void
 EpropArchivingNode< HistEntryT >::write_update_to_history( const long t_previous_update, const long t_current_update )
 {
-  if ( eprop_indegree_ == 0 )
+  if ( not has_eprop_connections_ )
   {
     return;
   }

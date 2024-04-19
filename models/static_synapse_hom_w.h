@@ -140,10 +140,10 @@ public:
   void get_status( DictionaryDatum& d ) const;
 
   void
-  check_connection( Node& s, Node& t, size_t receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const synindex syn_id, size_t receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
+    ConnectionBase::check_connection_( dummy_target, s, t, syn_id, receptor_type );
   }
 
   /**
@@ -171,7 +171,7 @@ public:
   {
     e.set_weight( cp.get_weight() );
     e.set_delay_steps( get_delay_steps() );
-    e.set_receiver( *get_target( tid ) );
+    e.set_receiver( *get_target() );
     e.set_rport( get_rport() );
     e();
 

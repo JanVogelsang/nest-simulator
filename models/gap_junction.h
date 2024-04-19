@@ -116,7 +116,7 @@ public:
   using ConnectionBase::get_target;
 
   void
-  check_connection( Node& s, Node& t, size_t receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const synindex syn_id, size_t receptor_type, const CommonPropertiesType& )
   {
     GapJunctionEvent ge;
 
@@ -135,7 +135,7 @@ public:
   send( Event& e, size_t t, const CommonSynapseProperties& )
   {
     e.set_weight( weight_ );
-    e.set_receiver( *get_target( t ) );
+    e.set_receiver( *get_target() );
     e.set_rport( get_rport() );
     e();
     return true;

@@ -269,7 +269,7 @@ public:
   void set_status( const DictionaryDatum& d, ConnectorModel& cm );
 
   //! Send the spike event.
-  bool send( Event& e, size_t thread, const EpropSynapseBSSHSLM2020CommonProperties& cp );
+  bool send( Event& e, const size_t t, const EpropSynapseBSSHSLM2020CommonProperties& cp );
 
   //! Dummy node for testing the connection.
   class ConnTestDummyNode : public ConnTestDummyNodeBase
@@ -295,7 +295,7 @@ public:
    *
    * @note This sets the optimizer_ member.
    */
-  void check_connection( Node& s, Node& t, size_t receptor_type, const CommonPropertiesType& cp );
+  void check_connection( Node& s, Node& t, const synindex syn_id, size_t receptor_type, const CommonPropertiesType& cp );
 
   //! Set the synaptic weight to the provided value.
   void
@@ -348,13 +348,13 @@ constexpr ConnectionModelProperties eprop_synapse_bsshslm_2020< targetidentifier
 
 // Explicitly declare specializations of Connector methods that need to do special things for eprop_synapse_bsshslm_2020
 template <>
-void Connector< eprop_synapse_bsshslm_2020< TargetIdentifierPtrRport > >::disable_connection( const size_t lcid );
+void Connector< eprop_synapse_bsshslm_2020< TargetIdentifierPtr > >::disable_connection( const size_t lcid );
 
 template <>
 void Connector< eprop_synapse_bsshslm_2020< TargetIdentifierIndex > >::disable_connection( const size_t lcid );
 
 template <>
-Connector< eprop_synapse_bsshslm_2020< TargetIdentifierPtrRport > >::~Connector();
+Connector< eprop_synapse_bsshslm_2020< TargetIdentifierPtr > >::~Connector();
 
 template <>
 Connector< eprop_synapse_bsshslm_2020< TargetIdentifierIndex > >::~Connector();
@@ -469,6 +469,7 @@ template < typename targetidentifierT >
 inline void
 eprop_synapse_bsshslm_2020< targetidentifierT >::check_connection( Node& s,
   Node& t,
+  const synindex syn_id,
   size_t receptor_type,
   const CommonPropertiesType& cp )
 {
@@ -479,7 +480,7 @@ eprop_synapse_bsshslm_2020< targetidentifierT >::check_connection( Node& s,
   }
 
   ConnTestDummyNode dummy_target;
-  ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
+  ConnectionBase::check_connection_( dummy_target, s, t, syn_id, receptor_type );
 
   t.register_eprop_connection();
 
@@ -496,11 +497,10 @@ eprop_synapse_bsshslm_2020< targetidentifierT >::delete_optimizer()
 
 template < typename targetidentifierT >
 bool
-eprop_synapse_bsshslm_2020< targetidentifierT >::send( Event& e,
-  size_t thread,
+eprop_synapse_bsshslm_2020< targetidentifierT >::send( Event& e, const size_t,
   const EpropSynapseBSSHSLM2020CommonProperties& cp )
 {
-  Node* target = get_target( thread );
+  Node* target = get_target();
   assert( target );
 
   const long t_spike = e.get_stamp().get_steps();

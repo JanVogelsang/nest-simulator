@@ -156,7 +156,7 @@ public:
    * \param e The event to send
    * \param cp Common properties to all synapses (empty).
    */
-  bool send( Event& e, size_t t, const CommonSynapseProperties& cp );
+  bool send( Event& e, const size_t t, const CommonSynapseProperties& cp );
 
   class ConnTestDummyNode : public ConnTestDummyNodeBase
   {
@@ -172,10 +172,10 @@ public:
   };
 
   void
-  check_connection( Node& s, Node& t, size_t receptor_type, const CommonPropertiesType& )
+  check_connection( Node& s, Node& t, const synindex syn_id, size_t receptor_type, const CommonPropertiesType& )
   {
     ConnTestDummyNode dummy_target;
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
+    ConnectionBase::check_connection_( dummy_target, s, t, syn_id, receptor_type );
   }
 
   void
@@ -206,7 +206,7 @@ constexpr ConnectionModelProperties quantal_stp_synapse< targetidentifierT >::pr
  */
 template < typename targetidentifierT >
 inline bool
-quantal_stp_synapse< targetidentifierT >::send( Event& e, size_t t, const CommonSynapseProperties& )
+quantal_stp_synapse< targetidentifierT >::send( Event& e, const size_t t, const CommonSynapseProperties& )
 {
   const double t_spike = e.get_stamp().get_ms();
   const double h = t_spike - t_lastspike_;
@@ -229,7 +229,7 @@ quantal_stp_synapse< targetidentifierT >::send( Event& e, size_t t, const Common
 
   if ( send_spike )
   {
-    e.set_receiver( *get_target( t ) );
+    e.set_receiver( *get_target() );
     e.set_weight( n_release * weight_ );
     e.set_delay_steps( get_delay_steps() );
     e.set_rport( get_rport() );

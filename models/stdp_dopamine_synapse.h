@@ -249,7 +249,7 @@ public:
    * Send an event to the receiver of this connection.
    * \param e The event to send
    */
-  bool send( Event& e, size_t t, const STDPDopaCommonProperties& cp );
+  bool send( Event& e, const size_t t, const STDPDopaCommonProperties& cp );
 
   void trigger_update_weight( size_t t,
     const std::vector< spikecounter >& dopa_spikes,
@@ -285,7 +285,7 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, size_t receptor_type, const CommonPropertiesType& cp )
+  check_connection( Node& s, Node& t, const synindex syn_id, size_t receptor_type, const CommonPropertiesType& cp )
   {
     if ( not cp.volume_transmitter_ )
     {
@@ -293,7 +293,7 @@ public:
     }
 
     ConnTestDummyNode dummy_target;
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
+    ConnectionBase::check_connection_( dummy_target, s, t, syn_id, receptor_type );
 
     t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
   }
@@ -524,9 +524,9 @@ stdp_dopamine_synapse< targetidentifierT >::depress_( double kminus, const STDPD
  */
 template < typename targetidentifierT >
 inline bool
-stdp_dopamine_synapse< targetidentifierT >::send( Event& e, size_t t, const STDPDopaCommonProperties& cp )
+stdp_dopamine_synapse< targetidentifierT >::send( Event& e, const size_t t, const STDPDopaCommonProperties& cp )
 {
-  Node* target = get_target( t );
+  Node* target = get_target();
 
   // purely dendritic delay
   double dendritic_delay = get_delay();
@@ -594,7 +594,7 @@ stdp_dopamine_synapse< targetidentifierT >::trigger_update_weight( size_t t,
   // neuron
   std::deque< histentry >::iterator start;
   std::deque< histentry >::iterator finish;
-  get_target( t )->get_history( t_last_update_ - dendritic_delay, t_trig - dendritic_delay, &start, &finish );
+  get_target()->get_history( t_last_update_ - dendritic_delay, t_trig - dendritic_delay, &start, &finish );
 
   // facilitation due to postsyn. spikes since last update
   double t0 = t_last_update_;
