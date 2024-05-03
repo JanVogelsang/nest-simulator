@@ -96,14 +96,32 @@ EventDeliveryManager::initialize( const bool adjust_number_of_threads_or_rng_onl
   const size_t num_threads = kernel().vp_manager.get_num_threads();
   local_spike_counter_.resize( num_threads, 0 );
   reset_counters();
-  configure_spike_register();
+
+  emitted_spikes_register_.resize( num_threads );
+  off_grid_emitted_spikes_register_.resize( num_threads );
+  gather_completed_checker_.initialize( num_threads, false );
+
+#pragma omp parallel
+  {
+    const size_t tid = kernel().vp_manager.get_thread_id();
+
+    if ( not emitted_spikes_register_[ tid ] )
+    {
+      emitted_spikes_register_[ tid ] = new std::vector< SpikeDataWithRank >();
+    }
+
+    if ( not off_grid_emitted_spikes_register_[ tid ] )
+    {
+      off_grid_emitted_spikes_register_[ tid ] = new std::vector< OffGridSpikeDataWithRank >();
+    }
+  } // of omp parallel
 }
 
 void
 EventDeliveryManager::finalize( const bool )
 {
   const size_t num_conn_models = kernel().model_manager.get_num_connection_models();
-  for ( synindex syn_id = 0; syn_id != num_conn_models; ++syn_id )
+  /*for ( synindex syn_id = 0; syn_id != num_conn_models; ++syn_id )
   {
     // clear the spike buffers
     for ( auto& vec_spikedata_ptr : emitted_spikes_register_[ syn_id ] )
@@ -116,6 +134,18 @@ EventDeliveryManager::finalize( const bool )
     {
       delete vec_spikedata_ptr;
     }
+  }
+  off_grid_emitted_spikes_register_.clear();*/
+    // clear the spike buffers
+  for ( auto& vec_spikedata_ptr : emitted_spikes_register_ )
+  {
+    delete vec_spikedata_ptr;
+  }
+  emitted_spikes_register_.clear(); // remove stale pointers
+
+  for ( auto& vec_spikedata_ptr : off_grid_emitted_spikes_register_ )
+  {
+    delete vec_spikedata_ptr;
   }
   off_grid_emitted_spikes_register_.clear();
 
@@ -217,7 +247,7 @@ EventDeliveryManager::configure_spike_data_buffers()
   resize_send_recv_buffers_spike_data_();
 }
 
-void
+/*void
 EventDeliveryManager::configure_spike_register()
 {
   const size_t num_threads = kernel().vp_manager.get_num_threads();
@@ -244,6 +274,15 @@ EventDeliveryManager::configure_spike_register()
       }
     } // of omp parallel
   }
+#pragma omp parallel
+  {
+    const size_t tid = kernel().vp_manager.get_thread_id();
+    reset_spike_register_( tid );
+  }
+}*/
+void
+EventDeliveryManager::configure_spike_register()
+{
 #pragma omp parallel
   {
     const size_t tid = kernel().vp_manager.get_thread_id();
@@ -489,16 +528,18 @@ EventDeliveryManager::gather_spike_data_( std::vector< SpikeDataT >& send_buffer
 template < typename SpikeDataWithRankT, typename SpikeDataT >
 void
 EventDeliveryManager::collocate_spike_data_buffers_( SendBufferPosition& send_buffer_position,
-  std::vector< std::vector< std::vector< SpikeDataWithRankT >* > >& emitted_spikes_register,
+  // std::vector< std::vector< std::vector< SpikeDataWithRankT >* > >& emitted_spikes_register,
+  std::vector< std::vector< SpikeDataWithRankT >* >& emitted_spikes_register,
   std::vector< SpikeDataT >& send_buffer,
   std::vector< size_t >& num_spikes_per_rank )
 {
-  const size_t num_conn_models = kernel().model_manager.get_num_connection_models();
+  // const size_t num_conn_models = kernel().model_manager.get_num_connection_models();
   // First dimension: loop over synapse types
-  for ( synindex syn_id = 0; syn_id != num_conn_models; ++syn_id )
-  {
+  // for ( synindex syn_id = 0; syn_id != num_conn_models; ++syn_id )
+  // {
     // Second dimension: loop over writing thread
-    for ( auto& emitted_spikes_per_thread : emitted_spikes_register[ syn_id ] )
+    // for ( auto& emitted_spikes_per_thread : emitted_spikes_register[ syn_id ] )
+    for ( auto& emitted_spikes_per_thread : emitted_spikes_register )
     {
       // Third dimension: loop over entries
       for ( auto& emitted_spike : *emitted_spikes_per_thread )
@@ -519,7 +560,7 @@ EventDeliveryManager::collocate_spike_data_buffers_( SendBufferPosition& send_bu
         }
       }
     }
-  }
+  // }
 }
 
 template < typename SpikeDataT >
@@ -910,8 +951,6 @@ nest::EventDeliveryManager::distribute_target_data_buffers_( const size_t tid )
       const TargetData& target_data = recv_buffer_target_data_[ rank * send_recv_count_target_data_per_rank + i ];
       if ( target_data.get_source_tid() == tid )
       {
-        // std::cout << target_data.get_source_lid() << " - " << target_data.get_syn_id() << " - " <<
-        // target_data.get_target_lcid() << std::endl;
         kernel().connection_manager.add_target( tid, rank, target_data );
       }
 

@@ -109,7 +109,7 @@ EventDeliveryManager::send_remote( size_t tid, SpikeEvent& e, const long lag )
 
   const size_t target_thread = kernel().connection_manager.get_responsible_thread( e.get_sender().get_node_id() );
 
-  for ( synindex syn_id = 0; syn_id != targets.size(); ++syn_id )
+  /*for ( synindex syn_id = 0; syn_id != targets.size(); ++syn_id )
   {
     for ( const auto& target : targets[ syn_id ] )
     {
@@ -119,6 +119,14 @@ EventDeliveryManager::send_remote( size_t tid, SpikeEvent& e, const long lag )
         emitted_spikes_register_[ syn_id ][ tid ]->emplace_back(
           target.get_rank(), SpikeData( target_thread, syn_id, target.get_lcid(), lag ) );
       }
+    }
+  }*/
+  for ( const auto& target : targets )
+  {
+    // Unroll spike multiplicity as plastic synapses only handle individual spikes.
+    for ( size_t i = 0; i < e.get_multiplicity(); ++i )
+    {
+      emitted_spikes_register_[ tid ]->emplace_back( target.get_rank(), SpikeData( target.get_syn_id(), target.get_lcid(), lag ) );
     }
   }
 }
@@ -131,8 +139,7 @@ EventDeliveryManager::send_off_grid_remote( size_t tid, SpikeEvent& e, const lon
   const auto& targets = kernel().connection_manager.get_remote_targets_of_local_node( tid, lid );
 
   const size_t target_thread = kernel().connection_manager.get_responsible_thread( e.get_sender().get_node_id() );
-
-  for ( synindex syn_id = 0; syn_id != targets.size(); ++syn_id )
+  /*for ( synindex syn_id = 0; syn_id != targets.size(); ++syn_id )
   {
     for ( const auto& target : targets[ syn_id ] )
     {
@@ -142,6 +149,14 @@ EventDeliveryManager::send_off_grid_remote( size_t tid, SpikeEvent& e, const lon
         off_grid_emitted_spikes_register_[ syn_id ][ tid ]->emplace_back(
           target.get_rank(), OffGridSpikeData( target_thread, syn_id, target.get_lcid(), lag, e.get_offset() ) );
       }
+    }
+  }*/
+  for ( const auto& target : targets )
+  {
+    // Unroll spike multiplicity as plastic synapses only handle individual spikes.
+    for ( size_t i = 0; i < e.get_multiplicity(); ++i )
+    {
+      off_grid_emitted_spikes_register_[ tid ]->emplace_back( target.get_rank(), OffGridSpikeData( target_thread, target.get_syn_id(), target.get_lcid(), lag, e.get_offset() ) );
     }
   }
 }

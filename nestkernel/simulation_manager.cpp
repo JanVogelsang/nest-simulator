@@ -874,7 +874,7 @@ nest::SimulationManager::update_()
 #endif
             // Deliver spikes from receive buffer to ring buffers.
             kernel().event_delivery_manager.deliver_events( tid );
-
+#pragma omp barrier
 #ifdef TIMER_DETAILED
             if ( tid == 0 )
             {
@@ -912,7 +912,7 @@ nest::SimulationManager::update_()
 #endif
         } // if from_step == 0
 
-        // preliminary update of nodes that use waveform relaxtion, only
+        // preliminary update of nodes that use waveform relaxation, only
         // necessary if secondary connections exist and any node uses
         // wfr
         if ( kernel().connection_manager.secondary_connections_exist() and kernel().node_manager.wfr_is_used() )

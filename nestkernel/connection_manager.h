@@ -280,8 +280,9 @@ public:
     const std::string& post_synaptic_element,
     std::vector< std::vector< size_t > >& targets );
 
-  const std::vector< std::vector< Target > >& get_remote_targets_of_local_node( const size_t tid,
-    const size_t lid ) const;
+  // const std::vector< std::vector< Target > >& get_remote_targets_of_local_node( const size_t tid,
+  //   const size_t lid ) const;
+  const std::vector< Target >& get_remote_targets_of_local_node( const size_t tid, const size_t lid ) const;
 
   size_t get_target_node_id( const size_t tid, const synindex syn_id, const size_t lcid ) const;
 
@@ -736,7 +737,8 @@ ConnectionManager::prepare_target_table( const size_t tid )
   target_table_.prepare( tid );
 }
 
-inline const std::vector< std::vector< Target > >&
+// inline const std::vector< std::vector< Target > >&
+inline const std::vector< Target >&
 ConnectionManager::get_remote_targets_of_local_node( const size_t tid, const size_t lid ) const
 {
   return target_table_.get_targets( tid, lid );

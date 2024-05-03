@@ -53,12 +53,13 @@ class Target
 private:
   unsigned int target_rank_ : NUM_BITS_RANK;
   enum_status_target_id status_ : 1;
+  synindex syn_id_ : NUM_BITS_SYN_ID;
   unsigned int lcid_;
 
 public:
   Target() = default;
   Target( const Target& target );
-  Target( const size_t rank, const size_t lcid );
+  Target( const size_t rank, const size_t lcid, const synindex syn_id );
 
   Target& operator=( const Target& );
 
@@ -71,6 +72,16 @@ public:
    * Return local connection id.
    */
   size_t get_lcid() const;
+
+  /**
+   * Set synapse type id.
+   */
+  void set_syn_id( const synindex syn_id );
+
+  /**
+   * Return synapse type id.
+   */
+  size_t get_syn_id() const;
 
   /**
    * Set rank.
@@ -113,6 +124,7 @@ using success_target_size = StaticAssert< sizeof( Target ) == 8 >::success;
 
 inline Target::Target( const Target& other )
   : target_rank_( other.target_rank_ )
+  , syn_id_( other.syn_id_ )
   , lcid_( other.lcid_ )
 {
   set_status( TARGET_ID_UNPROCESSED ); // initialize
@@ -123,14 +135,16 @@ Target::operator=( const Target& other )
 {
   target_rank_ = other.target_rank_;
   lcid_ = other.lcid_;
+  syn_id_ = other.syn_id_;
   set_status( TARGET_ID_UNPROCESSED );
   return *this;
 }
 
-inline Target::Target( const size_t rank, const size_t lcid )
+inline Target::Target( const size_t rank, const size_t lcid, const synindex syn_id )
 {
   set_rank( rank );
   set_lcid( lcid );
+  set_syn_id( syn_id );
   set_status( TARGET_ID_UNPROCESSED ); // initialize
 }
 
@@ -145,6 +159,19 @@ inline size_t
 Target::get_lcid() const
 {
   return lcid_;
+}
+
+inline void
+Target::set_syn_id( const synindex syn_id )
+{
+  assert( syn_id < MAX_SYN_ID );
+  syn_id_ = syn_id;
+}
+
+inline size_t
+Target::get_syn_id() const
+{
+  return syn_id_;
 }
 
 inline void

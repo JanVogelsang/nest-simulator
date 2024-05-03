@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE( test_target_object_type_constructor )
     const size_t rank = std::rand() % ( MAX_RANK + 1 );
     const size_t lcid = std::rand() % MAX_LCID;
 
-    Target target_id_testInit( rank, lcid );
+    Target target_id_testInit( rank, lcid, 0 );
 
     BOOST_REQUIRE( target_id_testInit.get_rank() == rank );
     BOOST_REQUIRE( target_id_testInit.get_lcid() == lcid );

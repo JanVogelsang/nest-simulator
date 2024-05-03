@@ -273,7 +273,8 @@ private:
    */
   template < typename SpikeDataWithRankT, typename SpikeDataT >
   void collocate_spike_data_buffers_( SendBufferPosition& send_buffer_position,
-    std::vector< std::vector< std::vector< SpikeDataWithRankT >* > >& spike_register,
+    // std::vector< std::vector< std::vector< SpikeDataWithRankT >* > >& spike_register,
+    std::vector< std::vector< SpikeDataWithRankT >* >& spike_register,
     std::vector< SpikeDataT >& send_buffer,
     std::vector< size_t >& num_spikes_per_rank );
 
@@ -395,7 +396,8 @@ private:
    * @note We store here pointers to the vectors for the individual threads so that those vectors, including their
    * administrative metadata will be stored in thread-local memory.
    */
-  std::vector< std::vector< std::vector< SpikeDataWithRank >* > > emitted_spikes_register_;
+  // std::vector< std::vector< std::vector< SpikeDataWithRank >* > > emitted_spikes_register_;
+  std::vector< std::vector< SpikeDataWithRank >* > emitted_spikes_register_;
 
   /**
    * Register of emitted off-grid spikes.
@@ -409,7 +411,8 @@ private:
    * @note We store here pointers to the vectors for the individual threads so that those vectors, including their
    * administrative metadata will be stored in thread-local memory.
    */
-  std::vector< std::vector< std::vector< OffGridSpikeDataWithRank >* > > off_grid_emitted_spikes_register_;
+  // std::vector< std::vector< std::vector< OffGridSpikeDataWithRank >* > > off_grid_emitted_spikes_register_;
+  std::vector< std::vector< OffGridSpikeDataWithRank >* > off_grid_emitted_spikes_register_;
 
   /**
    * Buffer to collect the secondary events after serialization.
@@ -466,14 +469,16 @@ private:
 inline void
 EventDeliveryManager::reset_spike_register_( const size_t tid )
 {
-  for ( auto& arr : emitted_spikes_register_ )
+  /*for ( auto& arr : emitted_spikes_register_ )
   {
     arr[ tid ]->clear();
   }
   for ( auto& arr : off_grid_emitted_spikes_register_ )
   {
     arr[ tid ]->clear();
-  }
+  }*/
+  emitted_spikes_register_[ tid ]->clear();
+  off_grid_emitted_spikes_register_[ tid ]->clear();
 }
 
 inline bool
