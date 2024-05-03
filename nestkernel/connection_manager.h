@@ -77,8 +77,8 @@ public:
 #ifdef USE_LEGACY_CONN_BUILDER
   struct TemporaryConnection
   {
-    Node& source;
-    Node& target;
+    size_t source;
+    size_t target;
     synindex syn_id;
     const DictionaryDatum& params;
     double delay;
@@ -280,7 +280,8 @@ public:
     const std::string& post_synaptic_element,
     std::vector< std::vector< size_t > >& targets );
 
-  const std::vector< std::vector< Target > >& get_remote_targets_of_local_node( const size_t tid, const size_t lid ) const;
+  const std::vector< std::vector< Target > >& get_remote_targets_of_local_node( const size_t tid,
+    const size_t lid ) const;
 
   size_t get_target_node_id( const size_t tid, const synindex syn_id, const size_t lcid ) const;
 

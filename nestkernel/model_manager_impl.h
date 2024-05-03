@@ -58,8 +58,7 @@ void
 ModelManager::register_connection_model( const std::string& name )
 {
   // Required to check which variants to create
-  ConnectorModel const* const dummy_model =
-    new GenericConnectorModel< ConnectionT< TargetIdentifierPtr > >( "dummy" );
+  ConnectorModel const* const dummy_model = new GenericConnectorModel< ConnectionT< TargetIdentifierPtr > >( "dummy" );
 
   register_specific_connection_model_< ConnectionT< TargetIdentifierPtr > >( name );
   if ( dummy_model->has_property( ConnectionModelProperties::SUPPORTS_HPC ) )

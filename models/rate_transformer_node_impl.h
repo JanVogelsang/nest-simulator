@@ -167,6 +167,7 @@ template < class TNonlinearities >
 void
 nest::rate_transformer_node< TNonlinearities >::pre_run_hook()
 {
+  ArchivingNode::pre_run_hook();
   B_.logger_.init(); // ensures initialization in case mm connected after Simulate
 }
 
@@ -301,7 +302,8 @@ nest::rate_transformer_node< TNonlinearities >::handle( DelayedRateConnectionEve
     }
     else
     {
-      B_.delayed_rates_.add_value( kernel().vp_manager.get_thread_id(), delay + i, weight * nonlinearities_.input( e.get_coeffvalue( it ) ) );
+      B_.delayed_rates_.add_value(
+        kernel().vp_manager.get_thread_id(), delay + i, weight * nonlinearities_.input( e.get_coeffvalue( it ) ) );
     }
     ++i;
   }

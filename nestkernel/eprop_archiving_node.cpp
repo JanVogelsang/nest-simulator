@@ -124,7 +124,9 @@ EpropArchivingNodeRecurrent::erase_used_firing_rate_reg_history()
 
   while ( it_update_hist != update_history_.end() and it_reg_hist != firing_rate_reg_history_.end() )
   {
-    if ( std::accumulate( it_update_hist->access_counter_.begin(), it_update_hist->access_counter_.end(), static_cast< size_t >( 0 )) == 0 )
+    if ( std::accumulate(
+           it_update_hist->access_counter_.begin(), it_update_hist->access_counter_.end(), static_cast< size_t >( 0 ) )
+      == 0 )
     {
       it_reg_hist = firing_rate_reg_history_.erase( it_reg_hist );
     }

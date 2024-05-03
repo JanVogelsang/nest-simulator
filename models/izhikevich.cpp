@@ -184,6 +184,7 @@ nest::izhikevich::init_buffers_()
 void
 nest::izhikevich::pre_run_hook()
 {
+  ArchivingNode::pre_run_hook();
   B_.logger_.init();
 }
 
@@ -248,7 +249,8 @@ nest::izhikevich::handle( SpikeEvent& e )
 {
   assert( e.get_delay_steps() > 0 );
   B_.spikes_.add_value( kernel().vp_manager.get_thread_id(),
-    e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_multiplicity() );
+    e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
+    e.get_weight() * e.get_multiplicity() );
 }
 
 void
@@ -258,7 +260,9 @@ nest::izhikevich::handle( CurrentEvent& e )
 
   const double c = e.get_current();
   const double w = e.get_weight();
-  B_.currents_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * c );
+  B_.currents_.add_value( kernel().vp_manager.get_thread_id(),
+    e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
+    w * c );
 }
 
 void

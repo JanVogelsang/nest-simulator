@@ -24,7 +24,6 @@
 #include <iostream>
 
 // Includes from nestkernel:
-#include "connection_manager.h"
 #include "connection_manager_impl.h"
 #include "kernel_manager.h"
 #include "mpi_manager_impl.h"
@@ -335,3 +334,10 @@ nest::SourceTable::dump_sources() const
   } )
 }
 
+// TODO JV: Move to header and inline
+void
+nest::SourceTable::add_source( const size_t tid, const synindex syn_id, const size_t node_id, const bool is_primary )
+{
+  const Source src( node_id, is_primary );
+  sources_[ tid ][ syn_id ].push_back( src );
+}

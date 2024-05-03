@@ -52,7 +52,8 @@ template < typename HistEntryT >
 void
 EpropArchivingNode< HistEntryT >::register_eprop_connection()
 {
-  has_eprop_connections_ = true;  // TODO JV: This could be written by multiple connections at the same time. Is that a problem?
+  has_eprop_connections_ =
+    true; // TODO JV: This could be written by multiple connections at the same time. Is that a problem?
 
   const long shift = get_shift();
 
@@ -156,7 +157,7 @@ EpropArchivingNode< HistEntryT >::erase_used_update_history()
   auto it_hist = update_history_.begin();
   while ( it_hist != update_history_.end() )
   {
-    if ( std::accumulate(it_hist->access_counter_.begin(), it_hist->access_counter_.end(), 0) == 0 )
+    if ( std::accumulate( it_hist->access_counter_.begin(), it_hist->access_counter_.end(), 0 ) == 0 )
     {
       // erase() invalidates the iterator, but returns a new, valid iterator
       it_hist = update_history_.erase( it_hist );

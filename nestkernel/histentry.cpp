@@ -31,7 +31,7 @@ nest::histentry::histentry( double t, double Kminus, double Kminus_triplet )
   access_counter_ = std::vector< size_t >( kernel().vp_manager.get_num_threads(), 0 );
 }
 
-nest::histentry_extended::histentry_extended( double t, double dw)
+nest::histentry_extended::histentry_extended( double t, double dw )
   : t_( t )
   , dw_( dw )
 {

@@ -249,7 +249,7 @@ Node::is_eprop_recurrent_node() const
 void
 Node::handle( SpikeEvent& )
 {
-    throw UnexpectedEvent( "The target node does not handle spike input." );
+  throw UnexpectedEvent( "The target node does not handle spike input." );
 }
 
 size_t

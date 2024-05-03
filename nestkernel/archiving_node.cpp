@@ -69,7 +69,6 @@ ArchivingNode::register_stdp_connection( double t_first_read, double delay )
   // this input, so that we safely increment the incoming number of
   // connections afterwards without leaving spikes in the history.
   // For details see bug #218. MH 08-04-22
-
   for ( std::deque< histentry >::iterator runner = history_.begin();
         runner != history_.end() and ( t_first_read - runner->t_ > -1.0 * kernel().connection_manager.get_stdp_eps() );
         ++runner )
@@ -273,7 +272,7 @@ nest::ArchivingNode::clear_history()
 void
 ArchivingNode::pre_run_hook()
 {
-  n_incoming_ = std::accumulate( n_incoming_per_thread_.begin(), n_incoming_per_thread_.end(), 0 );
+  n_incoming_ = std::accumulate( n_incoming_per_thread_.begin(), n_incoming_per_thread_.end(), n_incoming_ );
   std::vector< size_t >().swap( n_incoming_per_thread_ );
 }
 

@@ -278,6 +278,7 @@ nest::iaf_psc_exp_ps_lossless::init_buffers_()
 void
 nest::iaf_psc_exp_ps_lossless::pre_run_hook()
 {
+  ArchivingNode::pre_run_hook();
   // ensures initialization in case mm connected after Simulate
   B_.logger_.init();
 
@@ -502,7 +503,9 @@ nest::iaf_psc_exp_ps_lossless::handle( CurrentEvent& e )
   const double w = e.get_weight();
 
   // add weighted current; HEP 2002-10-04
-  B_.currents_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( nest::kernel().simulation_manager.get_slice_origin() ), w * c );
+  B_.currents_.add_value( kernel().vp_manager.get_thread_id(),
+    e.get_rel_delivery_steps( nest::kernel().simulation_manager.get_slice_origin() ),
+    w * c );
 }
 
 void

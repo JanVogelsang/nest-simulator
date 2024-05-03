@@ -463,8 +463,8 @@ struct SpikeDataWithRank
   const SpikeData spike_data; //! data on spike transmitted
 
   SpikeDataWithRank( const size_t rank, SpikeData&& spike_data )
-  : rank(rank)
-  , spike_data( std::move( spike_data ) )
+    : rank( rank )
+    , spike_data( std::move( spike_data ) )
   {
   }
 };
@@ -480,8 +480,8 @@ struct OffGridSpikeDataWithRank
   const OffGridSpikeData spike_data; //! data on spike transmitted
 
   OffGridSpikeDataWithRank( const size_t rank, OffGridSpikeData&& spike_data )
-  : rank(rank)
-  , spike_data( std::move( spike_data ) )
+    : rank( rank )
+    , spike_data( std::move( spike_data ) )
   {
   }
 };

@@ -240,12 +240,11 @@ EventDeliveryManager::configure_spike_register()
       }
       if ( not off_grid_emitted_spikes_register_[ syn_id ][ tid ] )
       {
-        off_grid_emitted_spikes_register_[ syn_id ][ tid ] =
-          new std::vector< OffGridSpikeDataWithRank >();
+        off_grid_emitted_spikes_register_[ syn_id ][ tid ] = new std::vector< OffGridSpikeDataWithRank >();
       }
     } // of omp parallel
   }
-  #pragma omp parallel
+#pragma omp parallel
   {
     const size_t tid = kernel().vp_manager.get_thread_id();
     reset_spike_register_( tid );
@@ -681,11 +680,11 @@ EventDeliveryManager::deliver_events_( const size_t tid, const std::vector< Spik
       for ( size_t j = 0; j < SPIKES_PER_BATCH; ++j )
       {
         const SpikeDataT& spike_data = recv_buffer[ rank * spike_buffer_size_per_rank + i * SPIKES_PER_BATCH + j ];
-        se_batch[ j ].set_stamp( prepared_timestamps[ spike_data.get_lag() ] );
-        se_batch[ j ].set_offset( spike_data.get_offset() );
         tid_batch[ j ] = spike_data.get_tid();
         syn_id_batch[ j ] = spike_data.get_syn_id();
         lcid_batch[ j ] = spike_data.get_lcid();
+        se_batch[ j ].set_stamp( prepared_timestamps[ spike_data.get_lag() ] );
+        se_batch[ j ].set_offset( spike_data.get_offset() );
         se_batch[ j ].set_sender_node_id_info( tid_batch[ j ], syn_id_batch[ j ], lcid_batch[ j ] );
       }
       for ( size_t j = 0; j < SPIKES_PER_BATCH; ++j )
@@ -702,11 +701,11 @@ EventDeliveryManager::deliver_events_( const size_t tid, const std::vector< Spik
     {
       const SpikeDataT& spike_data =
         recv_buffer[ rank * spike_buffer_size_per_rank + num_batches * SPIKES_PER_BATCH + j ];
-      se_batch[ j ].set_stamp( prepared_timestamps[ spike_data.get_lag() ] );
-      se_batch[ j ].set_offset( spike_data.get_offset() );
       tid_batch[ j ] = spike_data.get_tid();
       syn_id_batch[ j ] = spike_data.get_syn_id();
       lcid_batch[ j ] = spike_data.get_lcid();
+      se_batch[ j ].set_stamp( prepared_timestamps[ spike_data.get_lag() ] );
+      se_batch[ j ].set_offset( spike_data.get_offset() );
       se_batch[ j ].set_sender_node_id_info( tid_batch[ j ], syn_id_batch[ j ], lcid_batch[ j ] );
     }
     for ( size_t j = 0; j < num_remaining_entries; ++j )
@@ -716,7 +715,7 @@ EventDeliveryManager::deliver_events_( const size_t tid, const std::vector< Spik
         kernel().connection_manager.send( tid_batch[ j ], syn_id_batch[ j ], lcid_batch[ j ], cm, se_batch[ j ] );
       }
     }
-  }   // for rank
+  } // for rank
 }
 
 
@@ -911,6 +910,8 @@ nest::EventDeliveryManager::distribute_target_data_buffers_( const size_t tid )
       const TargetData& target_data = recv_buffer_target_data_[ rank * send_recv_count_target_data_per_rank + i ];
       if ( target_data.get_source_tid() == tid )
       {
+        // std::cout << target_data.get_source_lid() << " - " << target_data.get_syn_id() << " - " <<
+        // target_data.get_target_lcid() << std::endl;
         kernel().connection_manager.add_target( tid, rank, target_data );
       }
 

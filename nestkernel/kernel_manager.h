@@ -48,6 +48,8 @@
 #include "compose.hpp"
 #include <fstream>
 
+#include <syncstream> // todo jv: debug
+
 /** @BeginDocumentation
  Name: kernel - Global properties of the simulation kernel.
 
@@ -281,6 +283,8 @@ public:
   ModelManager model_manager;
   MUSICManager music_manager;
   NodeManager node_manager;
+
+  std::osyncstream out;
   /**@}*/
 private:
   //! All managers, order determines initialization and finalization order (latter backwards)

@@ -48,13 +48,13 @@ class TargetIdentifierPtr
 {
 
 public:
-  TargetIdentifierPtr( const size_t delay )
+  TargetIdentifierPtr( const double delay )
     : target_( nullptr )
     , rport_( 0 )
-    , delay_( delay )
     , more_targets_( false )
     , disabled_( false )
   {
+    set_delay_ms( delay );
   }
 
   TargetIdentifierPtr( const TargetIdentifierPtr& t ) = default;
@@ -188,13 +188,13 @@ class TargetIdentifierIndex
 {
 
 public:
-  TargetIdentifierIndex( const size_t delay )
+  TargetIdentifierIndex( const double delay )
     : target_lid_( invalid_targetindex )
     , target_thread_( invalid_thread )
-    , delay_( delay )
     , more_targets_( false )
     , disabled_( false )
   {
+    set_delay_ms( delay );
   }
 
   TargetIdentifierIndex( const TargetIdentifierIndex& t ) = default;

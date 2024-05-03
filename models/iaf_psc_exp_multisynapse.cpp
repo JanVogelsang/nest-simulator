@@ -274,6 +274,7 @@ iaf_psc_exp_multisynapse::init_buffers_()
 void
 nest::iaf_psc_exp_multisynapse::pre_run_hook()
 {
+  ArchivingNode::pre_run_hook();
   // ensures initialization in case mm connected after Simulate
   B_.logger_.init();
 
@@ -366,7 +367,8 @@ iaf_psc_exp_multisynapse::handle( SpikeEvent& e )
   assert( e.get_delay_steps() > 0 );
 
   B_.spikes_[ e.get_rport() - 1 ].add_value( kernel().vp_manager.get_thread_id(),
-    e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_multiplicity() );
+    e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
+    e.get_weight() * e.get_multiplicity() );
 }
 
 void
@@ -378,7 +380,9 @@ iaf_psc_exp_multisynapse::handle( CurrentEvent& e )
   const double w = e.get_weight();
 
   // add weighted current; HEP 2002-10-04
-  B_.currents_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * I );
+  B_.currents_.add_value( kernel().vp_manager.get_thread_id(),
+    e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
+    w * I );
 }
 
 void

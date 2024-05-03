@@ -302,7 +302,7 @@ GenericConnectorModel< ConnectionT >::add_connection_( Node& src,
   {
     // No homogeneous Connector with this syn_id exists, we need to create a new
     // homogeneous Connector.
-    thread_local_connectors[ syn_id ] = new Connector< ConnectionT >( syn_id );
+    thread_local_connectors[ syn_id ] = new Connector< ConnectionT >( syn_id, kernel().out );
   }
 
   ConnectorBase* connector = thread_local_connectors[ syn_id ];

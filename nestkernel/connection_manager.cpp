@@ -855,10 +855,10 @@ nest::ConnectionManager::create_connections()
     {
       ConnectorModel& conn_model = kernel().model_manager.get_connection_model( conn.syn_id, tid );
       const bool is_primary = conn_model.has_property( ConnectionModelProperties::IS_PRIMARY );
-      const size_t target_thread = get_responsible_thread( conn.source.get_node_id() );
+      const size_t target_thread = get_responsible_thread( conn.source );
       conn_model.add_connection(
-        conn.source, conn.target, connections_[ target_thread ], conn.syn_id, conn.params, conn.delay, conn.weight );
-      source_table_.add_source( target_thread, conn.syn_id, conn.source.get_node_id(), is_primary );
+        *kernel().node_manager.get_node_or_proxy(conn.source), *kernel().node_manager.get_node_or_proxy(conn.target), connections_[ target_thread ], conn.syn_id, conn.params, conn.delay, conn.weight );
+      source_table_.add_source( target_thread, conn.syn_id, conn.source, is_primary );
     }
     temp_connections[ tid ].clear();
   }
@@ -912,7 +912,7 @@ nest::ConnectionManager::connect_( Node& source,
 
   const bool is_primary = conn_model.has_property( ConnectionModelProperties::IS_PRIMARY );
 #ifdef USE_LEGACY_CONN_BUILDER
-  temp_connections[ tid ].push_back( TemporaryConnection { source, target, syn_id, params, delay, weight } );
+  temp_connections[ tid ].push_back( TemporaryConnection { source.get_node_id(), target.get_node_id(), syn_id, params, delay, weight } );
 #else
   conn_model.add_connection( source, target, connections_[ tid ], syn_id, params, delay, weight );
   source_table_.add_source( tid, syn_id, source.get_node_id(), is_primary );
@@ -1630,7 +1630,7 @@ nest::ConnectionManager::deliver_secondary_events( const size_t tid,
     kernel().simulation_manager.get_slice_origin() + Time::step( 1 - kernel().connection_manager.get_min_delay() );
 
   // TODO: The syn_ids per index can be precomputed
-  synindex syn_id = 0;  // recv_buffer[0].get_syn_id();
+  synindex syn_id = 0; // recv_buffer[0].get_syn_id();
 
   const ConnectorModel& conn_model = kernel().model_manager.get_connection_model( syn_id, tid );
   const bool supports_wfr = conn_model.has_property( ConnectionModelProperties::SUPPORTS_WFR );
@@ -1639,7 +1639,7 @@ nest::ConnectionManager::deliver_secondary_events( const size_t tid,
     SecondaryEvent& prototype = kernel().model_manager.get_secondary_event_prototype( syn_id, tid );
     size_t lcid = 0;
 
-    for (auto& data_entry : recv_buffer )
+    for ( auto& data_entry : recv_buffer )
     {
       // TODO JV: See TODO above
       /*if ( syn_id != data_entry.get_syn_id() )

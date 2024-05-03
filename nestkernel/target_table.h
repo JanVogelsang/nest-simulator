@@ -82,7 +82,7 @@ public:
    * Returns all targets of a neuron. Used for filling
    * EventDeliveryManager::emitted_spikes_register_.
    */
-  const std::vector< std::vector< Target >>& get_targets( const size_t tid, const size_t lid ) const;
+  const std::vector< std::vector< Target > >& get_targets( const size_t tid, const size_t lid ) const;
 
   /**
    * Clears all entries of targets_.

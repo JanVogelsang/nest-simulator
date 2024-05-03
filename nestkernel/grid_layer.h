@@ -294,7 +294,8 @@ template < int D >
 void
 GridLayer< D >::insert_global_positions_ntree_( Ntree< D, size_t >& tree, NodeCollectionPTR node_collection )
 {
-  insert_global_positions_( std::inserter( tree, tree.end() ), node_collection );
+  assert( false ); // todo jv: debug
+  // insert_global_positions_( std::inserter( tree, tree.end() ), node_collection );
 }
 
 template < int D >

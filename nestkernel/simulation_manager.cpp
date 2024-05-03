@@ -762,7 +762,7 @@ nest::SimulationManager::update_connection_infrastructure( const size_t tid )
 
   if ( kernel().connection_manager.secondary_connections_exist() )
   {
-#pragma omp barrier  // TODO JV: Do we need this barrier?
+#pragma omp barrier // TODO JV: Do we need this barrier?
 #pragma omp single
     {
       kernel().mpi_manager.communicate_recv_counts_secondary_events();
@@ -821,11 +821,10 @@ nest::SimulationManager::update_()
 
   std::vector< std::shared_ptr< WrappedThreadException > > exceptions_raised( kernel().vp_manager.get_num_threads() );
 
-// parallel section begins
-// #pragma omp parallel
-  for(size_t tid = 0; tid != kernel().vp_manager.get_num_threads(); ++tid)
+  // parallel section begins
+#pragma omp parallel
   {
-    // const size_t tid = kernel().vp_manager.get_thread_id();
+    const size_t tid = kernel().vp_manager.get_thread_id();
 
     // We update in a parallel region. Therefore, we need to catch
     // exceptions here and then handle them after the parallel region.

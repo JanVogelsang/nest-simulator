@@ -96,7 +96,8 @@ parrot_neuron::handle( SpikeEvent& e )
   // Repeat only spikes incoming on port 0, port 1 will be ignored
   if ( 0 == e.get_rport() )
   {
-    B_.n_spikes_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
+    B_.n_spikes_.add_value( kernel().vp_manager.get_thread_id(),
+      e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
       static_cast< double >( e.get_multiplicity() ) );
   }
 }

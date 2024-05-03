@@ -38,9 +38,9 @@ class histentry
 public:
   histentry( double t, double Kminus, double Kminus_triplet );
 
-  double t_;              //!< point in time when spike occurred (in ms)
-  double Kminus_;         //!< value of Kminus at that time
-  double Kminus_triplet_; //!< value of triplet STDP Kminus at that time
+  double t_;                             //!< point in time when spike occurred (in ms)
+  double Kminus_;                        //!< value of Kminus at that time
+  double Kminus_triplet_;                //!< value of triplet STDP Kminus at that time
   std::vector< size_t > access_counter_; //!< access counter to enable removal of the entry, once all neurons read it
 };
 

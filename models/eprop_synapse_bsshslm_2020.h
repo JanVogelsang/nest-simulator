@@ -295,7 +295,8 @@ public:
    *
    * @note This sets the optimizer_ member.
    */
-  void check_connection( Node& s, Node& t, const synindex syn_id, size_t receptor_type, const CommonPropertiesType& cp );
+  void
+  check_connection( Node& s, Node& t, const synindex syn_id, size_t receptor_type, const CommonPropertiesType& cp );
 
   //! Set the synaptic weight to the provided value.
   void
@@ -497,7 +498,8 @@ eprop_synapse_bsshslm_2020< targetidentifierT >::delete_optimizer()
 
 template < typename targetidentifierT >
 bool
-eprop_synapse_bsshslm_2020< targetidentifierT >::send( Event& e, const size_t,
+eprop_synapse_bsshslm_2020< targetidentifierT >::send( Event& e,
+  const size_t,
   const EpropSynapseBSSHSLM2020CommonProperties& cp )
 {
   Node* target = get_target();

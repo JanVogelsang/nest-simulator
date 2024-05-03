@@ -658,7 +658,7 @@ NodeManager::prepare_nodes()
     {
       for ( SparseNodeArray::const_iterator it = local_nodes_[ t ].begin(); it != local_nodes_[ t ].end(); ++it )
       {
-        prepare_node_( ( it )->get_node() );
+        prepare_node_( it->get_node() );
         if ( not( it->get_node() )->is_frozen() )
         {
           ++num_active_nodes;

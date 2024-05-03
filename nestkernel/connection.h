@@ -286,7 +286,11 @@ protected:
    * \param the last spike produced by the presynaptic neuron (for STDP and
    * maturing connections)
    */
-  void check_connection_( Node& dummy_target, Node& source, Node& target, const synindex syn_id, const size_t receptor_type );
+  void check_connection_( Node& dummy_target,
+    Node& source,
+    Node& target,
+    const synindex syn_id,
+    const size_t receptor_type );
 
   // The order of the members below is critical as it influcences the size of the object.
   // Please leave unchanged!
@@ -359,10 +363,10 @@ template < typename targetidentifierT >
 inline void
 Connection< targetidentifierT >::calibrate( const TimeConverter& tc )
 {
-  Time t = tc.from_old_steps( target_.get_delay());
+  Time t = tc.from_old_steps( target_.get_delay() );
   target_.set_delay( t.get_steps() );
 
-  if ( target_.get_delay()== 0 )
+  if ( target_.get_delay() == 0 )
   {
     target_.set_delay( 1 );
   }

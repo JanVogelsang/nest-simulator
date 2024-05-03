@@ -128,6 +128,7 @@ nest::music_message_in_proxy::init_buffers_()
 void
 nest::music_message_in_proxy::pre_run_hook()
 {
+  ArchivingNode::pre_run_hook();
   // only publish the port once,
   if ( not S_.published_ )
   {

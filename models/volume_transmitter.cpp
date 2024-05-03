@@ -141,6 +141,7 @@ nest::volume_transmitter::update( const Time&, const long from, const long to )
 void
 nest::volume_transmitter::handle( SpikeEvent& e )
 {
-  B_.neuromodulatory_spikes_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
+  B_.neuromodulatory_spikes_.add_value( kernel().vp_manager.get_thread_id(),
+    e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
     static_cast< double >( e.get_multiplicity() ) );
 }

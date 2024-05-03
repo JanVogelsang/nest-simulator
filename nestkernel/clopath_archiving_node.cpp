@@ -236,7 +236,10 @@ nest::ClopathArchivingNode::write_LTP_history( const double t_ltp_ms, double u, 
     // except the penultimate one. we might still need it.
     while ( ltp_history_.size() > 1 )
     {
-      if ( std::accumulate(ltp_history_.front().access_counter_.begin(), ltp_history_.front().access_counter_.end(), static_cast< size_t >(0)) >= n_incoming_ )
+      if ( std::accumulate( ltp_history_.front().access_counter_.begin(),
+             ltp_history_.front().access_counter_.end(),
+             static_cast< size_t >( 0 ) )
+        >= n_incoming_ )
       {
         ltp_history_.pop_front();
       }

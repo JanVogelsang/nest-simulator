@@ -112,7 +112,10 @@ nest::UrbanczikArchivingNode< urbanczik_parameters >::write_urbanczik_history( T
     // except the penultimate one. we might still need it.
     while ( urbanczik_history_[ comp - 1 ].size() > 1 )
     {
-      if ( std::accumulate( urbanczik_history_[ comp - 1 ].front().access_counter_.begin(), urbanczik_history_[ comp - 1 ].front().access_counter_.end(), static_cast<size_t>( 0 )) >= n_incoming_ )
+      if ( std::accumulate( urbanczik_history_[ comp - 1 ].front().access_counter_.begin(),
+             urbanczik_history_[ comp - 1 ].front().access_counter_.end(),
+             static_cast< size_t >( 0 ) )
+        >= n_incoming_ )
       {
         urbanczik_history_[ comp - 1 ].pop_front();
       }

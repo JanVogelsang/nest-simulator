@@ -274,13 +274,6 @@ public:
 };
 
 inline void
-SourceTable::add_source( const size_t tid, const synindex syn_id, const size_t node_id, const bool is_primary )
-{
-  const Source src( node_id, is_primary );
-  sources_[ tid ][ syn_id ].push_back( src );
-}
-
-inline void
 SourceTable::clear( const size_t tid )
 {
   for ( std::vector< BlockVector< Source > >::iterator it = sources_[ tid ].begin(); it != sources_[ tid ].end(); ++it )

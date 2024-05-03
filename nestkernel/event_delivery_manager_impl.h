@@ -116,8 +116,8 @@ EventDeliveryManager::send_remote( size_t tid, SpikeEvent& e, const long lag )
       // Unroll spike multiplicity as plastic synapses only handle individual spikes.
       for ( size_t i = 0; i < e.get_multiplicity(); ++i )
       {
-        emitted_spikes_register_[ syn_id ][ tid ]->
-          emplace_back( target.get_rank(), SpikeData( target_thread, syn_id, target.get_lcid(), lag ) );
+        emitted_spikes_register_[ syn_id ][ tid ]->emplace_back(
+          target.get_rank(), SpikeData( target_thread, syn_id, target.get_lcid(), lag ) );
       }
     }
   }
@@ -139,7 +139,8 @@ EventDeliveryManager::send_off_grid_remote( size_t tid, SpikeEvent& e, const lon
       // Unroll spike multiplicity as plastic synapses only handle individual spikes.
       for ( size_t i = 0; i < e.get_multiplicity(); ++i )
       {
-        off_grid_emitted_spikes_register_[ syn_id ][ tid ]->emplace_back( target.get_rank(), OffGridSpikeData( target_thread, syn_id, target.get_lcid(), lag, e.get_offset() ) );
+        off_grid_emitted_spikes_register_[ syn_id ][ tid ]->emplace_back(
+          target.get_rank(), OffGridSpikeData( target_thread, syn_id, target.get_lcid(), lag, e.get_offset() ) );
       }
     }
   }

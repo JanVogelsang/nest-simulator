@@ -59,7 +59,7 @@ private:
 
   static constexpr int MAX_LID = generate_max_value( NUM_BITS_LID );
 
-  size_t syn_id_ : NUM_BITS_SYN_ID;     //!< connection synapse type
+  size_t syn_id_ : NUM_BITS_SYN_ID;    //!< connection synapse type
   size_t source_lid_ : NUM_BITS_LID;   //!< local id of pre-synaptic neuron
   size_t source_tid_ : NUM_BITS_TID;   //!< thread index of pre-synaptic neuron
   size_t target_lcid_ : NUM_BITS_LCID; //!< first target connection local id
@@ -128,7 +128,8 @@ TargetData::is_invalid_marker() const
   return marker_ == TARGET_DATA_ID_INVALID;
 }
 
-inline void TargetData::set_syn_id( const synindex syn_id )
+inline void
+TargetData::set_syn_id( const synindex syn_id )
 {
   assert( syn_id < MAX_SYN_ID );
   syn_id_ = syn_id;

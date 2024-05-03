@@ -264,6 +264,7 @@ nest::iaf_psc_alpha_ps::init_buffers_()
 void
 nest::iaf_psc_alpha_ps::pre_run_hook()
 {
+  ArchivingNode::pre_run_hook();
   B_.logger_.init();
 
   V_.h_ms_ = Time::get_resolution().get_ms();
@@ -483,7 +484,9 @@ nest::iaf_psc_alpha_ps::handle( CurrentEvent& e )
   const double w = e.get_weight();
 
   // add weighted current; HEP 2002-10-04
-  B_.currents_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( nest::kernel().simulation_manager.get_slice_origin() ), w * c );
+  B_.currents_.add_value( kernel().vp_manager.get_thread_id(),
+    e.get_rel_delivery_steps( nest::kernel().simulation_manager.get_slice_origin() ),
+    w * c );
 }
 
 void

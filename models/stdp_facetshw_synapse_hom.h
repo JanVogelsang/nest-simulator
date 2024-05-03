@@ -407,7 +407,8 @@ stdp_facetshw_synapse_hom< targetidentifierT >::lookup_( unsigned int discrete_w
  */
 template < typename targetidentifierT >
 inline bool
-stdp_facetshw_synapse_hom< targetidentifierT >::send( Event& e, const size_t t,
+stdp_facetshw_synapse_hom< targetidentifierT >::send( Event& e,
+  const size_t t,
   const STDPFACETSHWHomCommonProperties< targetidentifierT >& cp )
 {
   // synapse STDP dynamics

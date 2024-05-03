@@ -140,7 +140,7 @@ const synindex invalid_synindex = MAX_SYN_ID;
  */
 //! target index into thread local node vector
 typedef unsigned short targetindex;
-constexpr uint8_t NUM_BITS_LID = sizeof(targetindex) * 8;
+constexpr uint8_t NUM_BITS_LID = sizeof( targetindex ) * 8;
 constexpr uint64_t MAX_LID = generate_max_value( NUM_BITS_LID );
 constexpr size_t invalid_targetindex = MAX_LID;
 constexpr size_t max_targetindex = invalid_targetindex - 1;

@@ -236,6 +236,7 @@ nest::iaf_psc_delta::init_buffers_()
 void
 nest::iaf_psc_delta::pre_run_hook()
 {
+  ArchivingNode::pre_run_hook();
   B_.logger_.init();
 
   const double h = Time::get_resolution().get_ms();
@@ -341,7 +342,8 @@ nest::iaf_psc_delta::handle( SpikeEvent& e )
   //     the update cycle.  The way it is done here works, but
   //     is clumsy and should be improved.
   B_.spikes_.add_value( kernel().vp_manager.get_thread_id(),
-    e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_multiplicity() );
+    e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
+    e.get_weight() * e.get_multiplicity() );
 }
 
 void
@@ -353,7 +355,9 @@ nest::iaf_psc_delta::handle( CurrentEvent& e )
   const double w = e.get_weight();
 
   // add weighted current; HEP 2002-10-04
-  B_.currents_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * c );
+  B_.currents_.add_value( kernel().vp_manager.get_thread_id(),
+    e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
+    w * c );
 }
 
 void

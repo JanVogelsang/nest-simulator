@@ -786,7 +786,7 @@ public:
   virtual void get_LTP_history( double t1,
     double t2,
     std::deque< histentry_extended >::iterator* start,
-    std::deque< histentry_extended >::iterator* finish);
+    std::deque< histentry_extended >::iterator* finish );
   // for Urbanczik synapse
   virtual void get_urbanczik_history( double t1,
     double t2,

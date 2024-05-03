@@ -249,6 +249,7 @@ iaf_psc_alpha::init_buffers_()
 void
 iaf_psc_alpha::pre_run_hook()
 {
+  ArchivingNode::pre_run_hook();
   // ensures initialization in case mm connected after Simulate
   B_.logger_.init();
 
@@ -345,6 +346,11 @@ iaf_psc_alpha::update( Time const& origin, const long from, const long to )
     V_.weighted_spikes_in_ = input[ Buffers_::SYN_IN ];
     S_.dI_in_ += V_.IPSCInitialValue_ * V_.weighted_spikes_in_;
 
+    if ( get_node_id() != -1 )
+    {
+      // std::cout << get_node_id() << " - " << kernel().simulation_manager.get_clock().get_ms() << " - "  <<
+      // input[Buffers_::SYN_EX] << std::endl;
+    }
     // threshold crossing
     if ( S_.y3_ >= P_.Theta_ )
     {
@@ -382,7 +388,9 @@ iaf_psc_alpha::handle( SpikeEvent& e )
   const double s = e.get_weight() * e.get_multiplicity();
 
   // separate buffer channels for excitatory and inhibitory inputs
-  B_.input_buffer_.add_value( kernel().vp_manager.get_thread_id(), input_buffer_slot, s > 0 ? Buffers_::SYN_EX : Buffers_::SYN_IN, s );
+  B_.input_buffer_.add_value(
+    kernel().vp_manager.get_thread_id(), input_buffer_slot, s > 0 ? Buffers_::SYN_EX : Buffers_::SYN_IN, s );
+  // std::cout << get_node_id() << " - " << input_buffer_slot << " - " << s << std::endl;
 }
 
 void

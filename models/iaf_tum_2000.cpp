@@ -300,6 +300,7 @@ nest::iaf_tum_2000::init_buffers_()
 void
 nest::iaf_tum_2000::pre_run_hook()
 {
+  ArchivingNode::pre_run_hook();
   // ensures initialization in case mm connected after Simulate
   B_.logger_.init();
 
@@ -462,7 +463,8 @@ nest::iaf_tum_2000::handle( SpikeEvent& e )
   }
 
   // separate buffer channels for excitatory and inhibitory inputs
-  B_.input_buffer_.add_value( kernel().vp_manager.get_thread_id(), input_buffer_slot, s > 0 ? Buffers_::SYN_EX : Buffers_::SYN_IN, s );
+  B_.input_buffer_.add_value(
+    kernel().vp_manager.get_thread_id(), input_buffer_slot, s > 0 ? Buffers_::SYN_EX : Buffers_::SYN_IN, s );
 }
 
 void

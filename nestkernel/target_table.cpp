@@ -70,6 +70,5 @@ nest::TargetTable::add_target( const size_t tid, const size_t target_rank, const
 
   vector_util::grow( targets_[ tid ][ lid ] ); // TODO JV: Does this really make sense?
 
-  targets_[ tid ][ lid ][ target_data.get_syn_id() ].push_back(
-    Target( target_rank, target_data.get_target_lcid() ) );
+  targets_[ tid ][ lid ][ target_data.get_syn_id() ].push_back( Target( target_rank, target_data.get_target_lcid() ) );
 }

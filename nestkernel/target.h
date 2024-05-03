@@ -129,8 +129,8 @@ Target::operator=( const Target& other )
 
 inline Target::Target( const size_t rank, const size_t lcid )
 {
-  set_rank(rank);
-  set_lcid(lcid);
+  set_rank( rank );
+  set_lcid( lcid );
   set_status( TARGET_ID_UNPROCESSED ); // initialize
 }
 

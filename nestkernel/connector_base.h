@@ -28,6 +28,7 @@
 
 // C++ includes:
 #include <cstdlib>
+#include <syncstream>
 #include <vector>
 
 // Includes from libnestutil:
@@ -222,10 +223,12 @@ class Connector : public ConnectorBase
 private:
   BlockVector< ConnectionT > C_;
   const synindex syn_id_;
+  std::osyncstream& out;
 
 public:
-  explicit Connector( const synindex syn_id )
+  explicit Connector( const synindex syn_id, std::osyncstream& out )
     : syn_id_( syn_id )
+    , out( out )
   {
   }
 
@@ -414,6 +417,7 @@ public:
         {
           send_weight_event( tid, lcid + lcid_offset, e, cp );
         }
+        out << e.retrieve_sender_node_id_from_source_table() << " - " << conn.get_target()->get_node_id() << " - " << std::endl;
       }
       if ( not conn.source_has_more_targets() )
       {

@@ -714,6 +714,7 @@ nest::ht_neuron::get_synapse_constant( double tau_1, double tau_2, double g_peak
 void
 nest::ht_neuron::pre_run_hook()
 {
+  ArchivingNode::pre_run_hook();
   // ensures initialization in case mm connected after Simulate
   B_.logger_.init();
 
@@ -857,7 +858,8 @@ nest::ht_neuron::handle( SpikeEvent& e )
   assert( e.get_rport() < B_.spike_inputs_.size() );
 
   B_.spike_inputs_[ e.get_rport() ].add_value( kernel().vp_manager.get_thread_id(),
-    e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_multiplicity() );
+    e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
+    e.get_weight() * e.get_multiplicity() );
 }
 
 void
@@ -869,7 +871,9 @@ nest::ht_neuron::handle( CurrentEvent& e )
   const double w = e.get_weight();
 
   // add weighted current; HEP 2002-10-04
-  B_.currents_.add_value( kernel().vp_manager.get_thread_id(), e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * I );
+  B_.currents_.add_value( kernel().vp_manager.get_thread_id(),
+    e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ),
+    w * I );
 }
 
 void
