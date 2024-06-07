@@ -88,8 +88,6 @@ public:
   std::vector< std::vector< TemporaryConnection > > temp_connections;
 
   void create_connections();
-
-  size_t get_responsible_thread( const size_t source_node_id );
 #endif
 
   ConnectionManager();
@@ -488,8 +486,7 @@ private:
   void delete_connections_();
 
   /**
-   * connect_ is used to establish a connection between a sender and
-   * receiving node which both have proxies.
+   * connect_ is used to establish a connection between a sender and receiving node which both have proxies.
    *
    * The parameters delay and weight have the default value numerics::nan.
    * numerics::nan is a special value, which describes double values that
@@ -514,8 +511,8 @@ private:
     const double weight = numerics::nan );
 
   /**
-   * connect_to_device_ is used to establish a connection between a sender and
-   * receiving node if the sender has proxies, and the receiver does not.
+   * connect_to_device_ is used to establish a connection between a sender and receiving node if the sender has proxies,
+   * and the receiver does not.
    *
    * The parameters delay and weight have the default value NAN.
    * NAN is a special value in cmath, which describes double values that
@@ -541,8 +538,8 @@ private:
     const double weight = NAN );
 
   /**
-   * connect_from_device_ is used to establish a connection between a sender and
-   * receiving node if the sender does not have proxies.
+   * connect_from_device_ is used to establish a connection between a sender and receiving node if the sender does not
+   * have proxies.
    *
    * The parameters delay and weight have the default value NAN.
    * NAN is a special value in cmath, which describes double values that
@@ -572,26 +569,23 @@ private:
   void increase_connection_count( const size_t tid, const synindex syn_id );
 
   /**
-   * A structure to hold the Connector objects which in turn hold the
-   * connection information. Corresponds to a three dimensional
-   * structure: threads|synapses|connections
+   * A structure to hold the Connector objects which in turn hold the connection information. Corresponds to a three
+   * dimensional structure: threads|synapses|connections
    */
   std::vector< std::vector< ConnectorBase* > > connections_;
 
   /**
-   * A structure to hold the node IDs of presynaptic neurons during
-   * postsynaptic connection creation, before the connection
-   * information has been transferred to the presynaptic side.
-   * Internally arranged in a 3d structure: threads|synapses|node IDs
+   * A structure to hold the node IDs of presynaptic neurons during postsynaptic connection creation, before the
+   * connection information has been transferred to the presynaptic side. Internally arranged in a 3d structure:
+   * threads|synapses|node IDs
    */
   SourceTable source_table_;
 
   std::map< size_t, size_t > buffer_pos_of_source_node_id_syn_id_;
 
   /**
-   * A structure to hold the information about targets for each
-   * neuron on the presynaptic side. Internally arranged in a 3d
-   * structure: threads|localnodes|targets
+   * A structure to hold the information about targets for each neuron on the presynaptic side. Internally arranged in
+   * a 3d structure: threads|localnodes|targets
    */
   TargetTable target_table_;
 
@@ -600,8 +594,7 @@ private:
   std::vector< DelayChecker > delay_checkers_;
 
   /**
-   * A structure to count the number of synapses of a specific
-   * type. Arranged in a 2d structure: threads|synapsetypes.
+   * A structure to count the number of synapses of a specific type. Arranged in a 2d structure: threads|synapsetypes.
    */
   std::vector< std::vector< size_t > > num_connections_;
 
@@ -636,9 +629,11 @@ private:
   //! Check for secondary connections (e.g., gap junctions) on each thread.
   PerThreadBoolIndicator check_secondary_connections_;
 
-  //! Maximum distance between (double) spike times in STDP that is
-  //! still considered 0. See issue #894
+  //! Maximum distance between (double) spike times in STDP that is still considered 0. See issue #894
   double stdp_eps_;
+
+  //! Precomputed responsible thread for each rank+thread combination for connection-creation (pseudo-2D-array)
+  std::vector< size_t > source_to_responsible_thread_;
 };
 
 inline bool
@@ -675,6 +670,10 @@ ConnectionManager::clear_source_table( const size_t tid )
   {
     source_table_.clear( tid );
   }
+#pragma omp master
+  {
+    std::vector< size_t >().swap( source_to_responsible_thread_ );
+  };
 }
 
 inline bool

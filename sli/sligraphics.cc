@@ -131,13 +131,12 @@ SLIgraphics::ReadPGMFunction::openPGMFile( StringDatum* filename ) const
 }
 
 void
-SLIgraphics::ReadPGMFunction::readMagicNumber( std::istream* in, char* magic ) const
+SLIgraphics::ReadPGMFunction::readMagicNumber( std::istream* in, char (&magic)[2] ) const
 {
   // reads in the magic number which determines the file format
   try
   {
-    assert( false ); // todo jv: debug
-    // *in >> magic;
+    *in >> magic;
   }
   catch ( std::exception& e )
   {

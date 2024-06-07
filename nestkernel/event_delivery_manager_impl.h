@@ -76,7 +76,7 @@ EventDeliveryManager::send< SpikeEvent >( Node& source, SpikeEvent& e, const lon
     e.set_stamp( kernel().simulation_manager.get_slice_origin() + Time::step( lag + 1 ) );
     e.set_sender( source );
 
-    if ( source.is_off_grid() )
+    if ( off_grid_spiking_ )
     {
       send_off_grid_remote( tid, e, lag );
     }
@@ -107,26 +107,13 @@ EventDeliveryManager::send_remote( size_t tid, SpikeEvent& e, const long lag )
   const size_t lid = kernel().vp_manager.node_id_to_lid( e.get_sender().get_node_id() );
   const auto& targets = kernel().connection_manager.get_remote_targets_of_local_node( tid, lid );
 
-  const size_t target_thread = kernel().connection_manager.get_responsible_thread( e.get_sender().get_node_id() );
-
-  /*for ( synindex syn_id = 0; syn_id != targets.size(); ++syn_id )
-  {
-    for ( const auto& target : targets[ syn_id ] )
-    {
-      // Unroll spike multiplicity as plastic synapses only handle individual spikes.
-      for ( size_t i = 0; i < e.get_multiplicity(); ++i )
-      {
-        emitted_spikes_register_[ syn_id ][ tid ]->emplace_back(
-          target.get_rank(), SpikeData( target_thread, syn_id, target.get_lcid(), lag ) );
-      }
-    }
-  }*/
   for ( const auto& target : targets )
   {
     // Unroll spike multiplicity as plastic synapses only handle individual spikes.
     for ( size_t i = 0; i < e.get_multiplicity(); ++i )
     {
-      emitted_spikes_register_[ tid ]->emplace_back( target.get_rank(), SpikeData( target.get_syn_id(), target.get_lcid(), lag ) );
+      ( *emitted_spikes_register_[ tid ] )[ target.get_rank() ].push_back(
+        SpikeData( target.get_syn_id(), target.get_lcid(), lag ) );
     }
   }
 }
@@ -138,25 +125,13 @@ EventDeliveryManager::send_off_grid_remote( size_t tid, SpikeEvent& e, const lon
   const size_t lid = kernel().vp_manager.node_id_to_lid( e.get_sender().get_node_id() );
   const auto& targets = kernel().connection_manager.get_remote_targets_of_local_node( tid, lid );
 
-  const size_t target_thread = kernel().connection_manager.get_responsible_thread( e.get_sender().get_node_id() );
-  /*for ( synindex syn_id = 0; syn_id != targets.size(); ++syn_id )
-  {
-    for ( const auto& target : targets[ syn_id ] )
-    {
-      // Unroll spike multiplicity as plastic synapses only handle individual spikes.
-      for ( size_t i = 0; i < e.get_multiplicity(); ++i )
-      {
-        off_grid_emitted_spikes_register_[ syn_id ][ tid ]->emplace_back(
-          target.get_rank(), OffGridSpikeData( target_thread, syn_id, target.get_lcid(), lag, e.get_offset() ) );
-      }
-    }
-  }*/
   for ( const auto& target : targets )
   {
     // Unroll spike multiplicity as plastic synapses only handle individual spikes.
     for ( size_t i = 0; i < e.get_multiplicity(); ++i )
     {
-      off_grid_emitted_spikes_register_[ tid ]->emplace_back( target.get_rank(), OffGridSpikeData( target_thread, target.get_syn_id(), target.get_lcid(), lag, e.get_offset() ) );
+      ( *off_grid_emitted_spikes_register_[ tid ] )[ target.get_rank() ].push_back(
+        OffGridSpikeData( target.get_syn_id(), target.get_lcid(), lag, e.get_offset() ) );
     }
   }
 }
@@ -164,7 +139,8 @@ EventDeliveryManager::send_off_grid_remote( size_t tid, SpikeEvent& e, const lon
 inline void
 EventDeliveryManager::send_secondary( Node& source, SecondaryEvent& e )
 {
-  const size_t tid = kernel().vp_manager.get_thread_id();
+  assert( false ); // TODO JV
+  /*const size_t tid = kernel().vp_manager.get_thread_id();
   const size_t source_node_id = source.get_node_id();
   const size_t lid = kernel().vp_manager.node_id_to_lid( source_node_id );
 
@@ -187,7 +163,7 @@ EventDeliveryManager::send_secondary( Node& source, SecondaryEvent& e )
     send_local_( source, e, 0 ); // need to pass lag (last argument), but not
                                  // used in template specialization, so pass
                                  // zero as dummy value
-  }
+  }*/
 }
 
 inline size_t

@@ -527,7 +527,7 @@ binary_neuron< TGainfunction >::handle( SpikeEvent& e )
 
 
   const long m = e.get_multiplicity();
-  const long node_id = e.retrieve_sender_node_id_from_source_table();
+  const long node_id = e.retrieve_sender_node_id_from_source_table( kernel().vp_manager.get_thread_id() );
   const Time& t_spike = e.get_stamp();
 
   if ( m == 1 )

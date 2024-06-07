@@ -38,7 +38,7 @@
 #include <iostream>
 #include <limits>
 #include <numeric>
-#include <vector>
+#include <span>
 
 // Includes from libnestutil:
 #include "manager_interface.h"
@@ -125,8 +125,7 @@ public:
    */
   void mpi_abort( int exitcode );
 
-  // gather all send_buffer vectors on other mpi process to recv_buffer
-  // vector
+  // gather all send_buffer vectors on other mpi process to recv_buffer vector
   void communicate( std::vector< long >& send_buffer, std::vector< long >& recv_buffer );
 
   /**
@@ -177,6 +176,12 @@ public:
 
   bool is_mpi_used();
 
+  size_t get_num_source_groups_per_rank() const;
+
+  size_t get_num_source_groups_per_thread() const;
+
+  size_t get_num_source_groups() const;
+
   /**
    * Returns total size of MPI buffer for communication of connections.
    */
@@ -221,17 +226,14 @@ public:
 #endif /* HAVE_MPI */
 
   template < class D >
-  void communicate_Alltoall( std::vector< D >& send_buffer,
-    std::vector< D >& recv_buffer,
-    const unsigned int send_recv_count );
+  void
+  communicate_Alltoall( std::span< D > send_buffer, std::span< D > recv_buffer, const unsigned int send_recv_count );
   template < class D >
-  void communicate_target_data_Alltoall( std::vector< D >& send_buffer, std::vector< D >& recv_buffer );
+  void communicate_target_data_Alltoall( std::span< D > send_buffer, std::span< D > recv_buffer );
   template < class D >
-  void communicate_spike_data_Alltoall( std::vector< D >& send_buffer, std::vector< D >& recv_buffer );
+  void communicate_spike_data_Alltoall( std::span< D > send_buffer, std::span< D > recv_buffer );
   template < class D >
-  void communicate_off_grid_spike_data_Alltoall( std::vector< D >& send_buffer, std::vector< D >& recv_buffer );
-  template < class D >
-  void communicate_secondary_events_Alltoallv( std::vector< D >& send_buffer, std::vector< D >& recv_buffer );
+  void communicate_secondary_events_Alltoallv( std::span< D > send_buffer, std::span< D > recv_buffer );
 
   /**
    * Ensure all processes have reached the same stage by waiting until all
@@ -253,8 +255,8 @@ public:
   double time_communicate_alltoall( int num_bytes, int samples = 1000 );
   double time_communicate_alltoallv( int num_bytes, int samples = 1000 );
 
-  void set_buffer_size_target_data( size_t buffer_size );
-  void set_buffer_size_spike_data( size_t buffer_size );
+  void set_send_recv_count_target_data_per_rank( const size_t send_recv_count_target_data_per_rank );
+  void set_send_recv_count_spike_data_per_rank( const size_t send_recv_count_spike_data_per_rank );
 
   /**
    * Increases the size of the MPI buffer for communication of connections if it
@@ -311,22 +313,17 @@ public:
   void communicate_recv_counts_secondary_events();
 
 private:
-  int num_processes_;              //!< number of MPI processes
-  int rank_;                       //!< rank of the MPI process
-  int send_buffer_size_;           //!< expected size of send buffer
-  int recv_buffer_size_;           //!< size of receive buffer
-  bool use_mpi_;                   //!< whether MPI is used
-  size_t buffer_size_target_data_; //!< total size of MPI buffer for
-  // communication of connections
+  int num_processes_;               //!< number of MPI processes
+  int rank_;                        //!< rank of the MPI process
+  int send_buffer_size_;            //!< expected size of send buffer
+  int recv_buffer_size_;            //!< size of receive buffer
+  bool use_mpi_;                    //!< whether MPI is used
+  size_t source_groups_per_rank_;   //!< The number of source groups each rank defines
+  size_t source_groups_per_thread_; //!< The number of source groups each thread is responsible for
 
-  size_t buffer_size_spike_data_; //!< total size of MPI buffer for
-  // communication of spikes
+  size_t max_buffer_size_target_data_; //!< maximal size of MPI buffer for communication of connections
 
-  size_t max_buffer_size_target_data_; //!< maximal size of MPI buffer for
-  // communication of connections
-
-  bool adaptive_target_buffers_; //!< whether MPI buffers for communication of
-  // connections resize on the fly
+  bool adaptive_target_buffers_; //!< whether MPI buffers for communication of connections resize on the fly
 
   double growth_factor_buffer_spike_data_;
   double growth_factor_buffer_target_data_;
@@ -520,9 +517,27 @@ MPIManager::is_mpi_used()
 }
 
 inline size_t
+MPIManager::get_num_source_groups_per_rank() const
+{
+  return source_groups_per_rank_;
+}
+
+inline size_t
+MPIManager::get_num_source_groups_per_thread() const
+{
+  return source_groups_per_thread_;
+}
+
+inline size_t
+MPIManager::get_num_source_groups() const
+{
+  return source_groups_per_rank_ * num_processes_;
+}
+
+inline size_t
 MPIManager::get_buffer_size_target_data() const
 {
-  return buffer_size_target_data_;
+  return send_recv_count_target_data_per_rank_ * num_processes_;
 }
 
 inline unsigned int
@@ -534,7 +549,7 @@ MPIManager::get_send_recv_count_target_data_per_rank() const
 inline size_t
 MPIManager::get_buffer_size_spike_data() const
 {
-  return buffer_size_spike_data_;
+  return send_recv_count_spike_data_per_rank_ * num_processes_;
 }
 
 inline unsigned int
@@ -560,54 +575,46 @@ MPIManager::get_recv_buffer_size_secondary_events_in_int() const
 }
 
 inline void
-MPIManager::set_buffer_size_target_data( const size_t buffer_size )
+MPIManager::set_send_recv_count_target_data_per_rank( const size_t send_recv_count_target_data_per_rank )
 {
-  assert( buffer_size >= static_cast< size_t >( 2 * get_num_processes() ) );
-  if ( buffer_size <= max_buffer_size_target_data_ )
+  assert( send_recv_count_target_data_per_rank >= 2 );
+  if ( send_recv_count_target_data_per_rank * num_processes_ <= max_buffer_size_target_data_ )
   {
-    buffer_size_target_data_ = buffer_size;
+    send_recv_count_target_data_per_rank_ = send_recv_count_target_data_per_rank;
   }
   else
   {
-    buffer_size_target_data_ = max_buffer_size_target_data_;
+    send_recv_count_target_data_per_rank_ = max_buffer_size_target_data_ / num_processes_;
   }
-  send_recv_count_target_data_per_rank_ = static_cast< size_t >(
-    floor( static_cast< double >( get_buffer_size_target_data() ) / static_cast< double >( get_num_processes() ) ) );
-
-  assert( send_recv_count_target_data_per_rank_ * get_num_processes() <= get_buffer_size_target_data() );
 }
 
 inline void
-MPIManager::set_buffer_size_spike_data( const size_t buffer_size )
+MPIManager::set_send_recv_count_spike_data_per_rank( const size_t send_recv_count_spike_data_per_rank )
 {
-  assert( buffer_size >= static_cast< size_t >( 2 * get_num_processes() ) );
-  buffer_size_spike_data_ = buffer_size;
+  // We need to be able to sent at least one spike per source group
+  assert( send_recv_count_spike_data_per_rank >= 2 * source_groups_per_rank_ + 1 );
 
-  send_recv_count_spike_data_per_rank_ = floor( get_buffer_size_spike_data() / get_num_processes() );
-
-  assert( send_recv_count_spike_data_per_rank_ * get_num_processes() <= get_buffer_size_spike_data() );
+  send_recv_count_spike_data_per_rank_ = send_recv_count_spike_data_per_rank;
 }
 
 inline bool
 MPIManager::increase_buffer_size_target_data()
 {
   assert( adaptive_target_buffers_ );
-  if ( buffer_size_target_data_ >= max_buffer_size_target_data_ )
+  if ( send_recv_count_target_data_per_rank_ * num_processes_ >= max_buffer_size_target_data_ )
   {
     return false;
   }
   else
   {
-    if ( buffer_size_target_data_ * growth_factor_buffer_target_data_ < max_buffer_size_target_data_ )
+    if ( send_recv_count_target_data_per_rank_ * num_processes_ * growth_factor_buffer_target_data_ < max_buffer_size_target_data_ )
     {
-      // this also adjusts send_recv_count_target_data_per_rank_
-      set_buffer_size_target_data(
-        static_cast< size_t >( floor( buffer_size_target_data_ * growth_factor_buffer_target_data_ ) ) );
+      set_send_recv_count_target_data_per_rank(
+        static_cast< size_t >( floor( send_recv_count_target_data_per_rank_ * growth_factor_buffer_target_data_ ) ) );
     }
     else
     {
-      // this also adjusts send_recv_count_target_data_per_rank_
-      set_buffer_size_target_data( max_buffer_size_target_data_ );
+      set_send_recv_count_target_data_per_rank( max_buffer_size_target_data_ / num_processes_ );
     }
     return true;
   }
@@ -635,12 +642,12 @@ MPIManager::mpi_abort( int )
 }
 
 inline void
-MPIManager::communicate( std::vector< int >& )
+MPIManager::communicate( std::span< int >& )
 {
 }
 
 inline void
-MPIManager::communicate( std::vector< long >& )
+MPIManager::communicate( std::span< long >& )
 {
 }
 
@@ -700,22 +707,22 @@ MPIManager::time_communicate_alltoallv( int, int )
 #ifdef HAVE_MPI
 template < class D >
 void
-MPIManager::communicate_Alltoall( std::vector< D >& send_buffer,
-  std::vector< D >& recv_buffer,
+MPIManager::communicate_Alltoall( std::span< D > send_buffer,
+  std::span< D > recv_buffer,
   const unsigned int send_recv_count )
 {
-  void* send_buffer_int = static_cast< void* >( &send_buffer[ 0 ] );
-  void* recv_buffer_int = static_cast< void* >( &recv_buffer[ 0 ] );
+  void* send_buffer_int = static_cast< void* >( send_buffer.data() );
+  void* recv_buffer_int = static_cast< void* >( recv_buffer.data() );
 
   communicate_Alltoall_( send_buffer_int, recv_buffer_int, send_recv_count );
 }
 
 template < class D >
 void
-MPIManager::communicate_secondary_events_Alltoallv( std::vector< D >& send_buffer, std::vector< D >& recv_buffer )
+MPIManager::communicate_secondary_events_Alltoallv( std::span< D > send_buffer, std::span< D > recv_buffer )
 {
-  void* send_buffer_int = static_cast< void* >( &send_buffer[ 0 ] );
-  void* recv_buffer_int = static_cast< void* >( &recv_buffer[ 0 ] );
+  void* send_buffer_int = static_cast< void* >( send_buffer.data() );
+  void* recv_buffer_int = static_cast< void* >( recv_buffer.data() );
 
   communicate_Alltoallv_( send_buffer_int,
     &send_counts_secondary_events_in_int_per_rank_[ 0 ],
@@ -728,8 +735,8 @@ MPIManager::communicate_secondary_events_Alltoallv( std::vector< D >& send_buffe
 #else // HAVE_MPI
 template < class D >
 void
-MPIManager::MPIManager::communicate_Alltoall( std::vector< D >& send_buffer,
-  std::vector< D >& recv_buffer,
+MPIManager::MPIManager::communicate_Alltoall( std::span< D >& send_buffer,
+  std::span< D >& recv_buffer,
   const unsigned int )
 {
   recv_buffer.swap( send_buffer );
@@ -737,7 +744,7 @@ MPIManager::MPIManager::communicate_Alltoall( std::vector< D >& send_buffer,
 
 template < class D >
 void
-MPIManager::communicate_secondary_events_Alltoallv( std::vector< D >& send_buffer, std::vector< D >& recv_buffer )
+MPIManager::communicate_secondary_events_Alltoallv( std::span< D >& send_buffer, std::span< D >& recv_buffer )
 {
   recv_buffer.swap( send_buffer );
 }
@@ -746,7 +753,7 @@ MPIManager::communicate_secondary_events_Alltoallv( std::vector< D >& send_buffe
 
 template < class D >
 void
-MPIManager::communicate_target_data_Alltoall( std::vector< D >& send_buffer, std::vector< D >& recv_buffer )
+MPIManager::communicate_target_data_Alltoall( std::span< D > send_buffer, std::span< D > recv_buffer )
 {
   const size_t send_recv_count_target_data_in_int_per_rank =
     sizeof( TargetData ) / sizeof( unsigned int ) * send_recv_count_target_data_per_rank_;
@@ -756,23 +763,14 @@ MPIManager::communicate_target_data_Alltoall( std::vector< D >& send_buffer, std
 
 template < class D >
 void
-MPIManager::communicate_spike_data_Alltoall( std::vector< D >& send_buffer, std::vector< D >& recv_buffer )
+MPIManager::communicate_spike_data_Alltoall( std::span< D > send_buffer, std::span< D > recv_buffer )
 {
   const size_t send_recv_count_spike_data_in_int_per_rank =
-    sizeof( SpikeData ) / sizeof( unsigned int ) * send_recv_count_spike_data_per_rank_;
+    sizeof( D ) / sizeof( unsigned int ) * send_buffer.size() / num_processes_;
 
   communicate_Alltoall( send_buffer, recv_buffer, send_recv_count_spike_data_in_int_per_rank );
 }
 
-template < class D >
-void
-MPIManager::communicate_off_grid_spike_data_Alltoall( std::vector< D >& send_buffer, std::vector< D >& recv_buffer )
-{
-  const size_t send_recv_count_off_grid_spike_data_in_int_per_rank =
-    sizeof( OffGridSpikeData ) / sizeof( unsigned int ) * send_recv_count_spike_data_per_rank_;
-
-  communicate_Alltoall( send_buffer, recv_buffer, send_recv_count_off_grid_spike_data_in_int_per_rank );
-}
 }
 
 #endif /* MPI_MANAGER_H */

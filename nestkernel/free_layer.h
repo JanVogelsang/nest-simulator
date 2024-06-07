@@ -333,7 +333,7 @@ template < int D >
 void
 FreeLayer< D >::insert_global_positions_ntree_( Ntree< D, size_t >& tree, NodeCollectionPTR node_collection )
 {
-  assert( false ); // todo jv: debug
+  assert( false );  // TODO JV: Debug
   // communicate_positions_( std::inserter( tree, tree.end() ), node_collection );
 }
 

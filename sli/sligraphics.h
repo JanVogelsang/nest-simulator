@@ -42,7 +42,7 @@ class SLIgraphics : public SLIModule
   {
   private:
     std::istream* openPGMFile( StringDatum* ) const;        //!< opens the file
-    void readMagicNumber( std::istream*, char[ 2 ] ) const; //!< reads the magic number into string magic
+    void readMagicNumber( std::istream*, char (&magic)[ 2 ] ) const; //!< reads the magic number into string magic
     void initRead( std::istream*, int&, int&, int& ) const; //!< reads width, height, maxval
     void readImage( std::istream*, char[ 2 ], std::vector< long >&, int, int, int ) const; //!< reads the image
 

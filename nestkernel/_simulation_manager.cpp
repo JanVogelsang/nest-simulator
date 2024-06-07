@@ -76,10 +76,6 @@ nest::SimulationManager::initialize( const bool adjust_number_of_threads_or_rng_
     return;
   }
 
-  //volatile int debug = 0;
-  //while(debug == 0)
-  sleep(5);
-
   Time::reset_to_defaults();
   Time::reset_resolution();
 
@@ -843,7 +839,6 @@ nest::SimulationManager::update_()
 
         // Do not deliver events at beginning of first slice, nothing can be there yet
         // and invalid markers have not been properly set in send buffers.
-        // TODO JV: We might not need this if anymore
         if ( slice_ > 0 and from_step_ == 0 )
         {
           // Deliver secondary events before primary events

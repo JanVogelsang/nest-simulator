@@ -113,6 +113,7 @@ nest::ConnectionManager::initialize( const bool adjust_number_of_threads_or_rng_
     sw_construction_connect.reset();
   }
 
+  const size_t num_ranks = kernel().mpi_manager.get_num_processes();
   const size_t num_threads = kernel().vp_manager.get_num_threads();
   connections_.resize( num_threads );
   temp_connections.resize( num_threads );
@@ -122,8 +123,7 @@ nest::ConnectionManager::initialize( const bool adjust_number_of_threads_or_rng_
   secondary_connections_exist_ = false;
   check_secondary_connections_.initialize( num_threads, false );
 
-  // We need to obtain this while in serial context to avoid problems when
-  // increasing the number of threads.
+  // We need to obtain this while in serial context to avoid problems when increasing the number of threads.
   const size_t num_conn_models = kernel().model_manager.get_num_connection_models();
 
 #pragma omp parallel
@@ -141,6 +141,19 @@ nest::ConnectionManager::initialize( const bool adjust_number_of_threads_or_rng_
 
   std::vector< std::vector< size_t > > tmp2( kernel().vp_manager.get_num_threads(), std::vector< size_t >() );
   num_connections_.swap( tmp2 );
+
+  // Precompute responsible thread for each rank+thread combination for connection-creation
+  const size_t num_vps = num_ranks * num_threads;
+  const size_t vps_per_source_group = num_vps / kernel().mpi_manager.get_num_source_groups();
+  source_to_responsible_thread_.resize( num_vps );
+  for ( size_t rank = 0; rank != num_ranks; ++rank )
+  {
+    for ( size_t tid = 0; tid != num_threads; ++tid )
+    {
+      const size_t source_group = ( rank * num_threads + tid ) / vps_per_source_group;
+      source_to_responsible_thread_[ rank * num_threads + tid ] = source_group / kernel().mpi_manager.get_num_source_groups_per_thread();
+    }
+  }
 }
 
 void
@@ -855,27 +868,20 @@ nest::ConnectionManager::create_connections()
     {
       ConnectorModel& conn_model = kernel().model_manager.get_connection_model( conn.syn_id, tid );
       const bool is_primary = conn_model.has_property( ConnectionModelProperties::IS_PRIMARY );
-      const size_t target_thread = get_responsible_thread( conn.source );
-      conn_model.add_connection(
-        *kernel().node_manager.get_node_or_proxy(conn.source), *kernel().node_manager.get_node_or_proxy(conn.target), connections_[ target_thread ], conn.syn_id, conn.params, conn.delay, conn.weight );
+      const size_t target_thread =
+        source_to_responsible_thread_[ kernel().mpi_manager.get_process_id_of_node_id( conn.source ) * num_threads
+          + kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( conn.source ) ) ];
+      conn_model.add_connection( *kernel().node_manager.get_node_or_proxy( conn.source ),
+        *kernel().node_manager.get_node_or_proxy( conn.target ),
+        connections_[ target_thread ],
+        conn.syn_id,
+        conn.params,
+        conn.delay,
+        conn.weight );
       source_table_.add_source( target_thread, conn.syn_id, conn.source, is_primary );
     }
     temp_connections[ tid ].clear();
   }
-}
-
-size_t
-nest::ConnectionManager::get_responsible_thread( const size_t source_node_id )
-{
-  // TODO JV: Optimize
-  const size_t vps_per_source_group = kernel().mpi_manager.get_num_processes();
-  const size_t vp = kernel().vp_manager.node_id_to_vp( source_node_id );
-  const size_t source_tid = kernel().vp_manager.vp_to_thread( vp );
-  const size_t vp_thread_ordered =
-    source_tid + kernel().mpi_manager.get_process_id_of_vp( vp ) * kernel().mpi_manager.get_num_processes();
-  const size_t tid = vp_thread_ordered / vps_per_source_group;
-  assert( tid < kernel().vp_manager.get_num_threads() );
-  return tid;
 }
 #endif
 
@@ -912,7 +918,8 @@ nest::ConnectionManager::connect_( Node& source,
 
   const bool is_primary = conn_model.has_property( ConnectionModelProperties::IS_PRIMARY );
 #ifdef USE_LEGACY_CONN_BUILDER
-  temp_connections[ tid ].push_back( TemporaryConnection { source.get_node_id(), target.get_node_id(), syn_id, params, delay, weight } );
+  temp_connections[ tid ].push_back(
+    TemporaryConnection { source.get_node_id(), target.get_node_id(), syn_id, params, delay, weight } );
 #else
   conn_model.add_connection( source, target, connections_[ tid ], syn_id, params, delay, weight );
   source_table_.add_source( tid, syn_id, source.get_node_id(), is_primary );
@@ -1145,7 +1152,7 @@ nest::ConnectionManager::get_connections( const DictionaryDatum& params )
   }
 
   // We check, whether a synapse model is given. If not, we will iterate all.
-  size_t syn_id = 0;
+  size_t syn_id;
   if ( not syn_model_t.empty() )
   {
     const std::string synmodel_name = getValue< std::string >( syn_model_t );
@@ -1476,27 +1483,23 @@ nest::ConnectionManager::sort_connections( const size_t tid )
 void
 nest::ConnectionManager::compute_target_data_buffer_size()
 {
-  // Determine number of target data on this rank. Since each thread
-  // has its own data structures, we need to count connections on every
-  // thread separately to compute the total number of sources.
+  // TODO JV: Shouldn't one count the maximum number of target data that must be sent to a specific rank instead?
+  // Determine number of target data on this rank. Since each thread has its own data structures, we need to count
+  // connections on every thread separately to compute the total number of sources.
   size_t num_target_data = 0;
   for ( size_t tid = 0; tid < kernel().vp_manager.get_num_threads(); ++tid )
   {
     num_target_data += get_num_target_data( tid );
   }
 
-  // Determine maximum number of target data across all ranks, because
-  // all ranks need identically sized buffers.
+  // Determine maximum number of target data across all ranks, because all ranks need identically sized buffers.
   std::vector< long > global_num_target_data( kernel().mpi_manager.get_num_processes() );
   global_num_target_data[ kernel().mpi_manager.get_rank() ] = num_target_data;
   kernel().mpi_manager.communicate( global_num_target_data );
   const size_t max_num_target_data = *std::max_element( global_num_target_data.begin(), global_num_target_data.end() );
 
-  // MPI buffers should have at least two entries per process
-  const size_t min_num_target_data = 2 * kernel().mpi_manager.get_num_processes();
-
   // Adjust target data buffers accordingly
-  kernel().mpi_manager.set_buffer_size_target_data( std::max( min_num_target_data, max_num_target_data ) );
+  kernel().mpi_manager.set_send_recv_count_target_data_per_rank( std::max( 2UL, max_num_target_data / static_cast<size_t>( kernel().mpi_manager.get_num_processes() ) ) );
 }
 
 nest::ConnectionManager::ConnectionType

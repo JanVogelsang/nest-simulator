@@ -36,7 +36,6 @@ nest::TargetTable::initialize()
 #pragma omp parallel
   {
     const size_t tid = kernel().vp_manager.get_thread_id();
-    // targets_[ tid ] = std::vector< std::vector< std::vector< Target > > >();
     targets_[ tid ] = std::vector< std::vector< Target > >();
   } // of omp parallel
 }
@@ -44,7 +43,6 @@ nest::TargetTable::initialize()
 void
 nest::TargetTable::finalize()
 {
-  // std::vector< std::vector< std::vector< std::vector< Target > > > >().swap( targets_ );
   std::vector< std::vector< std::vector< Target > > >().swap( targets_ );
 }
 
@@ -56,13 +54,6 @@ nest::TargetTable::prepare( const size_t tid )
   const size_t num_local_nodes = kernel().node_manager.get_max_num_local_nodes() + 1;
 
   targets_[ tid ].resize( num_local_nodes );
-
-  /*for ( size_t lid = 0; lid < num_local_nodes; ++lid )
-  {
-    // resize to maximal possible synapse-type index
-    // TODO JV: This produces lots of empty vectors, compress this somehow
-    targets_[ tid ][ lid ].resize( kernel().model_manager.get_num_connection_models() );
-  }*/
 }
 
 void
@@ -70,8 +61,7 @@ nest::TargetTable::add_target( const size_t tid, const size_t target_rank, const
 {
   const size_t lid = target_data.get_source_lid();
 
-  vector_util::grow( targets_[ tid ][ lid ] ); // TODO JV: Does this really make sense?
+  vector_util::grow( targets_[ tid ][ lid ] );
 
-  // targets_[ tid ][ lid ][ target_data.get_syn_id() ].push_back( Target( target_rank, target_data.get_target_lcid() ) );
   targets_[ tid ][ lid ].push_back( Target( target_rank, target_data.get_target_lcid(), target_data.get_syn_id() ) );
 }

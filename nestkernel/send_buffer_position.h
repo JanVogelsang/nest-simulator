@@ -35,74 +35,15 @@ namespace nest
 {
 
 /**
- * This class simplifies keeping track of write position in MPI buffer
- * while collocating spikes.
+ * This class simplifies keeping track of the current position in the spike register.
  */
-class SendBufferPosition
+struct SendBufferPosition
 {
-private:
-  std::vector< size_t > begin_; //!< first entry for rank
-  std::vector< size_t > end_;   //!< one beyond last entry for rank
-  std::vector< size_t > idx_;   //!< next entry in rank to write to
+  std::vector< size_t > tid_; //!< For each rank, the last thread for which spikes were copied to send buffer
+  std::vector< size_t > idx_; //!< For each rank, the spike position until all spikes have been copied to send buffer
 
-public:
   SendBufferPosition();
-
-  /**
-   * Returns begin index of specified rank in MPI buffer.
-   */
-  size_t begin( const size_t rank ) const;
-
-  /**
-   * Returns end index of specified rank in MPI buffer.
-   */
-  size_t end( const size_t rank ) const;
-
-  /**
-   * Returns current index of specified rank in MPI buffer.
-   */
-  size_t idx( const size_t rank ) const;
-
-  /**
-   * Returns whether the part of the buffer on the specified rank has been filled.
-   *
-   * @param rank Rank denoting which part of the buffer we check
-   */
-  bool is_chunk_filled( const size_t rank ) const;
-
-  void increase( const size_t rank );
 };
-
-inline size_t
-SendBufferPosition::idx( const size_t rank ) const
-{
-  return idx_[ rank ];
-}
-
-inline size_t
-SendBufferPosition::begin( const size_t rank ) const
-{
-  return begin_[ rank ];
-}
-
-inline size_t
-SendBufferPosition::end( const size_t rank ) const
-{
-  return end_[ rank ];
-}
-
-inline bool
-SendBufferPosition::is_chunk_filled( const size_t rank ) const
-{
-  return idx_[ rank ] == end_[ rank ];
-}
-
-inline void
-SendBufferPosition::increase( const size_t rank )
-{
-  ++idx_[ rank ];
-}
-
 
 /**
  * This class simplifies keeping track of write position in MPI buffer

@@ -84,7 +84,7 @@ public:
 };
 
 //! check legal size
-using success_target_data_size = StaticAssert< sizeof( TargetData ) == 8 >::success; // TODO JV: Reduce this to 8
+using success_target_data_size = StaticAssert< sizeof( TargetData ) == 8 >::success;
 
 inline void
 TargetData::reset_marker()

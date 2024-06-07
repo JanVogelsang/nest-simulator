@@ -2020,15 +2020,14 @@ NestModule::SelectNodesByMask_g_a_MFunction::execute( SLIInterpreter* i ) const
       throw TypeMismatch( "2D layer", "other type" );
     }
 
-    assert( false ); // todo jv: debug
-    /* MaskedLayer< 2 > ml = MaskedLayer< 2 >( *layer, mask, false, layer_nc );
+     MaskedLayer< 2 > ml = MaskedLayer< 2 >( *layer, mask, false, layer_nc );
 
     for ( Ntree< 2, size_t >::masked_iterator it = ml.begin( Position< 2 >( anchor[ 0 ], anchor[ 1 ] ) );
           it != ml.end();
           ++it )
     {
       mask_node_ids.push_back( it->second );
-    }*/
+    }
   }
   else
   {

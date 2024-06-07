@@ -47,7 +47,7 @@ Event::Event()
 }
 
 size_t
-Event::retrieve_sender_node_id_from_source_table() const
+Event::retrieve_sender_node_id_from_source_table( const size_t tid ) const
 {
   if ( sender_node_id_ > 0 )
   {
@@ -56,7 +56,7 @@ Event::retrieve_sender_node_id_from_source_table() const
   else
   {
     const size_t node_id = kernel().connection_manager.get_source_node_id(
-      sender_spike_data_.get_tid(), sender_spike_data_.get_syn_id(), sender_spike_data_.get_lcid() );
+      tid, sender_spike_data_.get_syn_id(), sender_spike_data_.get_lcid() );
     return node_id;
   }
 }

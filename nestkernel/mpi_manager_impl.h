@@ -67,9 +67,9 @@ nest::MPIManager::communicate_Allgatherv( std::vector< T >& send_buffer,
   MPI_Allgatherv( &( *send_buffer.begin() ),
     send_buffer.size(),
     MPI_Type< T >::type,
-    &recv_buffer[ 0 ],
-    &recv_counts[ 0 ],
-    &displacements[ 0 ],
+    recv_buffer.data(),
+    recv_counts.data(),
+    displacements.data(),
     MPI_Type< T >::type,
     comm );
 }

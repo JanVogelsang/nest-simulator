@@ -26,17 +26,8 @@
 #include "send_buffer_position.h"
 
 nest::SendBufferPosition::SendBufferPosition()
-  : begin_( kernel().mpi_manager.get_num_processes(), 0 )
-  , end_( kernel().mpi_manager.get_num_processes(), 0 )
-  , idx_( kernel().mpi_manager.get_num_processes(), 0 )
 {
-  const size_t num_procs = kernel().mpi_manager.get_num_processes();
-  const size_t send_recv_count_per_rank = kernel().mpi_manager.get_send_recv_count_spike_data_per_rank();
-
-  for ( size_t rank = 0; rank < num_procs; ++rank )
-  {
-    begin_[ rank ] = rank * send_recv_count_per_rank;
-    end_[ rank ] = ( rank + 1 ) * send_recv_count_per_rank;
-    idx_[ rank ] = begin_[ rank ];
-  }
+  const size_t num_ranks = kernel().mpi_manager.get_num_processes();
+  tid_.resize( num_ranks, 0 );
+  idx_.resize( num_ranks, 0 );
 }
