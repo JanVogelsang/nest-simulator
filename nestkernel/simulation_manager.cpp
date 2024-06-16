@@ -523,14 +523,18 @@ nest::SimulationManager::prepare()
   // this call sets the member variables
   kernel().connection_manager.update_delay_extrema_();
   kernel().event_delivery_manager.init_moduli();
+  kernel().node_manager.ensure_valid_thread_local_ids();
 
   // if at the beginning of a simulation, set up spike buffers
   if ( not simulated_ )
   {
     kernel().event_delivery_manager.configure_spike_data_buffers();
+    kernel().connection_manager.load_connections_from_file();
   }
+  // TODO JV: Debug
+  kernel().random_manager.finalize(false);
+  kernel().random_manager.initialize(false);
 
-  kernel().node_manager.ensure_valid_thread_local_ids();
   kernel().node_manager.prepare_nodes();
 
   // we have to do enter_runtime after prepare_nodes, since we use

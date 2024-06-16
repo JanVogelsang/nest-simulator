@@ -88,6 +88,19 @@ public:
     target_ = target;
   }
 
+  void set_target( const size_t target_thread, const size_t target_lid )
+  {
+    kernel().node_manager.ensure_valid_thread_local_ids();
+    if ( target_lid > max_targetindex )
+    {
+      throw IllegalConnection(
+        String::compose( "HPC synapses support at most %1 nodes per thread. "
+                         "See Kunkel et al, Front Neuroinform 8:78 (2014), Sec 3.3.2.",
+          max_targetindex ) );
+    }
+    target_ = kernel().node_manager.get_local_nodes( target_thread ).get_node_by_index( target_lid );
+  }
+
   void
   set_rport( size_t rprt )
   {
@@ -148,6 +161,18 @@ public:
   }
 
   void set_target( Node* target );
+
+  void set_target( const size_t, const size_t target_lid )
+  {
+    if ( target_lid > max_targetindex )
+    {
+      throw IllegalConnection(
+        String::compose( "HPC synapses support at most %1 nodes per thread. "
+                         "See Kunkel et al, Front Neuroinform 8:78 (2014), Sec 3.3.2.",
+          max_targetindex ) );
+    }
+    target_ = target_lid;
+  }
 
   void
   set_rport( size_t rprt )

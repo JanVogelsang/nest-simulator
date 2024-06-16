@@ -381,6 +381,8 @@ public:
    */
   void sort_connections( const size_t tid );
 
+  void load_connections_from_file(); // TODO JV: Debug
+
   /**
    * Removes disabled connections (of structural plasticity)
    */

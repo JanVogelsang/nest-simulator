@@ -101,6 +101,10 @@ public:
     const double delay = NAN,
     const double weight = NAN ) = 0;
 
+  // TODO JV: Debug
+  virtual void add_connector( const synindex syn_id, ConnectorBase*& connector ) = 0;
+  virtual void set_target(ConnectorBase*& connector, size_t i, size_t target_thread, size_t target_lid) = 0;
+
   virtual ConnectorModel* clone( std::string, synindex syn_id ) const = 0;
 
   virtual void calibrate( const TimeConverter& tc ) = 0;
@@ -180,6 +184,10 @@ public:
     const DictionaryDatum& d,
     const double delay,
     const double weight ) override;
+
+  // TODO JV: Debug
+  void add_connector( const synindex syn_id, ConnectorBase*& connector ) override;
+  void set_target(ConnectorBase*& connector, size_t i, size_t target_thread, size_t target_lid) override;
 
   ConnectorModel* clone( std::string, synindex ) const override;
 

@@ -243,6 +243,17 @@ public:
   {
     return target_.get_target_ptr( tid );
   }
+
+  void set_target(Node* target)
+  {
+    target_.set_target(target);
+  }
+
+  void set_target( const size_t target_thread, const size_t target_lid )
+  {
+    target_.set_target(target_thread, target_lid);
+  }
+
   size_t
   get_rport() const
   {

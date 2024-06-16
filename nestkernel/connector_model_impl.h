@@ -321,6 +321,21 @@ GenericConnectorModel< ConnectionT >::add_connection_( Node& src,
   vc->push_back( std::move( connection ) );
 }
 
+template < typename ConnectionT >
+void
+GenericConnectorModel< ConnectionT >::add_connector( const synindex syn_id, ConnectorBase*& connector )
+{
+  connector = new Connector< ConnectionT >( syn_id );
+}
+
+template < typename ConnectionT >
+void
+GenericConnectorModel< ConnectionT >::set_target(ConnectorBase*& connector, size_t i, size_t target_thread, size_t target_lid)
+{
+  Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connector );
+  vc->set_target( i, target_thread, target_lid );
+}
+
 } // namespace nest
 
 #endif

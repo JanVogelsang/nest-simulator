@@ -28,6 +28,7 @@
 
 // C++ includes:
 #include <cstdlib>
+#include <fstream>
 #include <vector>
 
 // Includes from libnestutil:
@@ -211,6 +212,8 @@ public:
    * Remove disabled connections from the connector.
    */
   virtual void remove_disabled_connections( const size_t first_disabled_index ) = 0;
+
+  virtual void dump_connections( std::ostream& connections_out, const size_t tid ) = 0;
 };
 
 /**
@@ -244,6 +247,12 @@ public:
   size() const override
   {
     return C_.size();
+  }
+
+  void
+  set_target(size_t i, size_t target_thread, size_t target_lid)
+  {
+    C_[i].set_target( target_thread, target_lid );
   }
 
   void
@@ -511,6 +520,15 @@ public:
   {
     assert( C_[ first_disabled_index ].is_disabled() );
     C_.erase( C_.begin() + first_disabled_index, C_.end() );
+  }
+
+  void dump_connections( std::ostream& connections_out, const size_t tid ) override
+  {
+    for(ConnectionT& conn : C_)
+    {
+      Node* target = conn.get_target(tid);
+      connections_out << target->get_thread() << "-" << target->get_thread_lid() << std::endl;
+    }
   }
 };
 
