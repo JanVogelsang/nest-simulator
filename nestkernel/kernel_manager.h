@@ -284,7 +284,6 @@ public:
   MUSICManager music_manager;
   NodeManager node_manager;
 
-  std::osyncstream out;
   /**@}*/
 private:
   //! All managers, order determines initialization and finalization order (latter backwards)

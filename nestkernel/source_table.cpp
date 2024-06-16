@@ -308,7 +308,6 @@ nest::SourceTable::get_next_target_data( const size_t tid,
 
     // we are about to return a valid entry, so mark it as processed
     current_source.set_processed( true );
-
     current_position.decrease();
     return true; // found a valid entry
   }

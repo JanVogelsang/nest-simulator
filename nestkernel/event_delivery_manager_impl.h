@@ -113,7 +113,7 @@ EventDeliveryManager::send_remote( size_t tid, SpikeEvent& e, const long lag )
     for ( size_t i = 0; i < e.get_multiplicity(); ++i )
     {
       ( *emitted_spikes_register_[ tid ] )[ target.get_rank() ].push_back(
-        SpikeData( target.get_syn_id(), target.get_lcid(), lag ) );
+        SpikeData( target.get_syn_id(), target.get_lcid(), 0, lag ) );
     }
   }
 }
@@ -131,7 +131,7 @@ EventDeliveryManager::send_off_grid_remote( size_t tid, SpikeEvent& e, const lon
     for ( size_t i = 0; i < e.get_multiplicity(); ++i )
     {
       ( *off_grid_emitted_spikes_register_[ tid ] )[ target.get_rank() ].push_back(
-        OffGridSpikeData( target.get_syn_id(), target.get_lcid(), lag, e.get_offset() ) );
+        OffGridSpikeData( target.get_syn_id(), target.get_lcid(), 0, lag, e.get_offset() ) );
     }
   }
 }

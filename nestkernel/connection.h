@@ -219,11 +219,22 @@ public:
     const double,
     const CommonSynapseProperties& );
 
+  void set_target(Node* target)
+  {
+    target_.set_target(target);
+  }
+
+  void set_target( const size_t target_thread, const size_t target_lid )
+  {
+    target_.set_target(target_thread, target_lid);
+  }
+
   Node*
   get_target() const
   {
     return target_.get_target_ptr();
   }
+
   size_t
   get_rport() const
   {

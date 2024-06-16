@@ -924,7 +924,7 @@ inline void
 Event::set_sender_node_id_info( const synindex syn_id, const size_t lcid )
 {
   // lag and offset of SpikeData are not used here
-  sender_spike_data_.set( syn_id, lcid, 0, 0.0 );
+  sender_spike_data_.set( syn_id, lcid, 0, 0, 0.0 );
 }
 
 inline Node&

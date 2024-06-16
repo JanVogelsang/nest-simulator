@@ -51,10 +51,12 @@ enum enum_status_target_id : unsigned int
 class Target
 {
 private:
-  unsigned int target_rank_ : NUM_BITS_RANK;
+  size_t target_rank_ : NUM_BITS_RANK;
   enum_status_target_id status_ : 1;
   synindex syn_id_ : NUM_BITS_SYN_ID;
   unsigned int lcid_;
+  // size_t lcid_ : NUM_BITS_LCID;
+  // size_t num_connections_ : 9;
 
 public:
   Target() = default;

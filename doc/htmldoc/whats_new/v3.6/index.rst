@@ -64,7 +64,7 @@ the property `volume_transmitter` of the synapse's common properties:
 +==================================================+==================================================+
 |  ::                                              |  ::                                              |
 |                                                  |                                                  |
-|     vt = nest.Create("volume_tranmitter")        |     vt = nest.Create("volume_tranmitter")        |
+|     vt = nest.Create("volume_transmitter")        |     vt = nest.Create("volume_transmitter")        |
 |     nest.SetDefaults(                            |     nest.SetDefaults(                            |
 |         "stdp_dopamine_synapse",                 |         "stdp_dopamine_synapse",                 |
 |         {"vt": vol.get("global_id")}             |          {"volume_transmitter": vt}              |
@@ -94,4 +94,4 @@ Changes in NEST Server
 ----------------------
 
 We improved the security in NEST Server. Now to use NEST Server, users can modify the security options.
-See :ref:`section on setting these varialbles <sec_server_vars>` in our NEST Server guide.
+See :ref:`section on setting these variables <sec_server_vars>` in our NEST Server guide.

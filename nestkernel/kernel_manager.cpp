@@ -61,7 +61,6 @@ nest::KernelManager::KernelManager()
   , model_manager()
   , music_manager()
   , node_manager()
-  , out( std::cout )
   , managers( { &logging_manager,
       &mpi_manager,
       &vp_manager,

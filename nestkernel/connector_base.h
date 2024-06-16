@@ -28,6 +28,7 @@
 
 // C++ includes:
 #include <cstdlib>
+#include <fstream>
 #include <syncstream>
 #include <vector>
 
@@ -212,6 +213,7 @@ public:
    * Remove disabled connections from the connector.
    */
   virtual void remove_disabled_connections( const size_t first_disabled_index ) = 0;
+  virtual void dump_connections( std::ostream& connections_out ) = 0;
 };
 
 /**
@@ -223,12 +225,10 @@ class Connector : public ConnectorBase
 private:
   BlockVector< ConnectionT > C_;
   const synindex syn_id_;
-  std::osyncstream& out;
 
 public:
-  explicit Connector( const synindex syn_id, std::osyncstream& out )
+  explicit Connector( const synindex syn_id )
     : syn_id_( syn_id )
-    , out( out )
   {
   }
 
@@ -247,6 +247,13 @@ public:
   size() const override
   {
     return C_.size();
+  }
+
+  // TODO JV: Debug
+  void
+  set_target(size_t i, size_t target_thread, size_t target_lid)
+  {
+    C_[i].set_target( target_thread, target_lid );
   }
 
   void
@@ -514,6 +521,15 @@ public:
   {
     assert( C_[ first_disabled_index ].is_disabled() );
     C_.erase( C_.begin() + first_disabled_index, C_.end() );
+  }
+
+  void dump_connections( std::ostream& connections_out ) override
+  {
+    for(ConnectionT& conn : C_)
+    {
+      Node* target = conn.get_target();
+      connections_out << target->get_thread() << "-" << target->get_thread_lid() << std::endl;
+    }
   }
 };
 

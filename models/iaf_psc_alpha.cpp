@@ -385,7 +385,6 @@ iaf_psc_alpha::handle( SpikeEvent& e )
   // separate buffer channels for excitatory and inhibitory inputs
   B_.input_buffer_.add_value(
     kernel().vp_manager.get_thread_id(), input_buffer_slot, s > 0 ? Buffers_::SYN_EX : Buffers_::SYN_IN, s );
-
 }
 
 void

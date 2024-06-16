@@ -25,6 +25,8 @@
 // C++ includes:
 #include <algorithm>
 #include <cassert>
+#include <filesystem>
+#include <fstream>
 #include <iomanip>
 #include <limits>
 #include <set>
@@ -151,7 +153,8 @@ nest::ConnectionManager::initialize( const bool adjust_number_of_threads_or_rng_
     for ( size_t tid = 0; tid != num_threads; ++tid )
     {
       const size_t source_group = ( rank * num_threads + tid ) / vps_per_source_group;
-      source_to_responsible_thread_[ rank * num_threads + tid ] = source_group / kernel().mpi_manager.get_num_source_groups_per_thread();
+      source_to_responsible_thread_[ rank * num_threads + tid ] =
+        source_group / kernel().mpi_manager.get_num_source_groups_per_thread();
     }
   }
 }
@@ -1465,19 +1468,104 @@ nest::ConnectionManager::get_targets( const std::vector< size_t >& sources,
   }
 }
 
+// TODO JV: Debug
+void
+nest::ConnectionManager::load_connections_from_file()
+{
+  if ( std::filesystem::exists(
+         "connections_" + std::to_string( kernel().mpi_manager.get_num_processes() - 1 ) + ".dat" ) )
+  {
+    has_primary_connections_ = true;
+    char delimiter;
+    size_t t, num_connections;
+    synindex syn_id;
+    std::string line;
+    std::ifstream connections_in( "connections_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat" );
+    std::ifstream sources_in( "sources_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat" );
+    while ( std::getline( connections_in, line ) )
+    {
+      std::stringstream ss( line );
+      ss >> t >> delimiter >> syn_id >> delimiter >> num_connections >> delimiter;
+
+#pragma omp parallel shared( t, num_connections, syn_id, connections_in, sources_in )
+      {
+        if ( kernel().vp_manager.get_thread_id() == t )
+        {
+          DictionaryDatum p( new Dictionary );
+          ConnectorModel& conn_model = *kernel().model_manager.get_connection_models( t )[ syn_id ];
+          if ( not connections_[ t ][ syn_id ] )
+          {
+            conn_model.add_connector( syn_id, connections_[ t ][ syn_id ] );
+          }
+          for ( size_t i = 0; i != num_connections; ++i )
+          {
+            std::getline( sources_in, line );
+            size_t source_id = std::stoul( line );
+            source_table_.sources_[ t ][ syn_id ].push_back( Source( source_id, true ) );
+            std::getline( connections_in, line );
+            size_t target_thread, target_id;
+            std::stringstream target_stream( line );
+            target_stream >> target_thread >> delimiter >> target_id;
+            conn_model.add_connection( *kernel().node_manager.get_node_or_proxy( source_id ),
+              *kernel().node_manager.get_local_nodes( target_thread ).get_node_by_index( target_id ),
+              connections_[ t ],
+              syn_id,
+              p,
+              numerics::nan,
+              numerics::nan );
+            increase_connection_count( t, syn_id );
+          }
+        }
+      }
+    }
+    connections_in.close();
+    sources_in.close();
+  }
+}
+
 void
 nest::ConnectionManager::sort_connections( const size_t tid )
 {
-  assert( not source_table_.is_cleared() );
-  // TODO: Sorting not required in large-scale case
-  for ( synindex syn_id = 0; syn_id < connections_[ tid ].size(); ++syn_id )
+  // TODO JV: Debug
+  if ( not std::filesystem::exists(
+         "connections_" + std::to_string( kernel().mpi_manager.get_num_processes() - 1 ) + ".dat" ) )
   {
-    if ( connections_[ tid ][ syn_id ] )
+    assert( not source_table_.is_cleared() );
+    // TODO JV: Sorting not required in large-scale case
+    for ( synindex syn_id = 0; syn_id < connections_[ tid ].size(); ++syn_id )
     {
-      connections_[ tid ][ syn_id ]->sort_connections( source_table_.get_thread_local_sources( tid )[ syn_id ] );
+      if ( connections_[ tid ][ syn_id ] )
+      {
+        connections_[ tid ][ syn_id ]->sort_connections( source_table_.get_thread_local_sources( tid )[ syn_id ] );
+      }
+    }
+    remove_disabled_connections( tid );
+
+#pragma omp barrier
+#pragma omp master
+    {
+      std::ofstream connections_out( "connections_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat" );
+      std::ofstream sources_out( "sources_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat" );
+
+      for ( size_t t = 0; t != kernel().vp_manager.get_num_threads(); ++t )
+      {
+        for ( synindex syn_id = 0; syn_id < connections_[ t ].size(); ++syn_id )
+        {
+          if ( connections_[ t ][ syn_id ] )
+          {
+            connections_out << t << "-" << syn_id << "-" << connections_[ t ][ syn_id ]->size() << std::endl;
+            connections_[ t ][ syn_id ]->dump_connections( connections_out );
+            for ( Source& source : source_table_.sources_[ t ][ syn_id ] )
+            {
+              sources_out << source.get_node_id() << std::endl;
+            }
+          }
+        }
+      }
+      connections_out.close();
+      sources_out.close();
     }
   }
-  remove_disabled_connections( tid );
 }
 
 void
@@ -1499,7 +1587,8 @@ nest::ConnectionManager::compute_target_data_buffer_size()
   const size_t max_num_target_data = *std::max_element( global_num_target_data.begin(), global_num_target_data.end() );
 
   // Adjust target data buffers accordingly
-  kernel().mpi_manager.set_send_recv_count_target_data_per_rank( std::max( 2UL, max_num_target_data / static_cast<size_t>( kernel().mpi_manager.get_num_processes() ) ) );
+  kernel().mpi_manager.set_send_recv_count_target_data_per_rank(
+    std::max( 2UL, max_num_target_data / static_cast< size_t >( kernel().mpi_manager.get_num_processes() ) ) );
 }
 
 nest::ConnectionManager::ConnectionType

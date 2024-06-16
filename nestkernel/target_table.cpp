@@ -63,5 +63,6 @@ nest::TargetTable::add_target( const size_t tid, const size_t target_rank, const
 
   vector_util::grow( targets_[ tid ][ lid ] );
 
+  // TODO: Calculate lcid on the fly based on last seen lcid to make space for num_connections (see spike_data.h)
   targets_[ tid ][ lid ].push_back( Target( target_rank, target_data.get_target_lcid(), target_data.get_syn_id() ) );
 }

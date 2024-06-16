@@ -40,7 +40,7 @@ struct SpikeDataPayload
   size_t lcid : NUM_BITS_LCID;       //!< local connection index
   size_t lag : NUM_BITS_LAG;   //!< lag in this min-delay interval
   synindex syn_id : NUM_BITS_SYN_ID; //!< synapse-type index
-  size_t dummy : 14;
+  size_t num_connections : 14;  //!< The number of synapses receiving the spike on the target process
 };
 //! check legal size
 using success_spike_data_size = StaticAssert< sizeof( SpikeDataPayload ) == 8 >::success;
@@ -71,7 +71,7 @@ protected:
 public:
   SpikeData();
   SpikeData( const SpikeData& rhs );
-  SpikeData( const synindex syn_id, const size_t lcid, const unsigned int lag );
+  SpikeData( const synindex syn_id, const size_t lcid, const size_t num_connections, const unsigned int lag );
   SpikeData( const size_t offset, const size_t num_spikes );
 
   SpikeData& operator=( const SpikeData& rhs );
@@ -79,7 +79,7 @@ public:
   // SpikeData( SpikeData&& rhs) = default;
 
   //! Required in connection with direct-send events.
-  void set( const synindex syn_id, const size_t lcid, const unsigned int lag, const double offset );
+  void set( const synindex syn_id, const size_t lcid, const size_t num_connections, const unsigned int lag, const double offset );
 
   void set( const size_t offset, const size_t num_spikes );
 
@@ -97,6 +97,16 @@ public:
    * @note Allows each rank to send the locally required buffer size per rank.
    */
   void set_lcid( size_t );
+
+  /**
+   * Returns number of connections receiving this spike.
+   */
+  size_t get_num_connections() const;
+
+  /**
+   * Sets num_connections value.
+   */
+  void set_num_connections( size_t );
 
   /**
    * Returns lag in min-delay interval.
@@ -143,12 +153,12 @@ inline SpikeData::SpikeData()
 }
 
 inline SpikeData::SpikeData( const SpikeData& rhs )
-  : data( rhs.get_lcid(), rhs.get_lag(), rhs.get_syn_id(), 0 )
+  : data( rhs.get_lcid(), rhs.get_lag(), rhs.get_syn_id(), rhs.get_num_connections() )
 {
 }
 
-inline SpikeData::SpikeData( const synindex syn_id, const size_t lcid, const unsigned int lag )
-  : data( lcid, lag, syn_id, 0 )
+inline SpikeData::SpikeData( const synindex syn_id, const size_t lcid, const size_t num_connections, const unsigned int lag )
+  : data( lcid, lag, syn_id, num_connections )
 {
 }
 
@@ -163,7 +173,7 @@ SpikeData::operator=( const SpikeData& rhs )
   data.lcid = rhs.get_lcid();
   data.lag = rhs.get_lag();
   data.syn_id = rhs.get_syn_id();
-  data.dummy = rhs.data.dummy;
+  data.num_connections = rhs.data.num_connections;
 
   // meta.num_spikes = rhs.get_num_spikes();
   // meta.offset = rhs.get_source_group_offset();
@@ -171,13 +181,14 @@ SpikeData::operator=( const SpikeData& rhs )
 }
 
 inline void
-SpikeData::set( const synindex syn_id, const size_t lcid, const unsigned int lag, const double )
+SpikeData::set( const synindex syn_id, const size_t lcid, const size_t num_connections, const unsigned int lag, const double )
 {
   assert( syn_id < MAX_SYN_ID );
   assert( lcid < MAX_LCID );
   assert( lag < MAX_LAG );
 
   data.lcid = lcid;
+  data.num_connections = num_connections;
   data.lag = lag;
   data.syn_id = syn_id;
 }
@@ -196,6 +207,7 @@ SpikeData::set( const TargetT& target, const unsigned int lag )
   // the assertions in the above function are granted by the TargetT object!
   assert( lag < MAX_LAG );
   data.lcid = target.get_lcid();
+  data.num_connections = target.get_num_connections();
   data.lag = lag;
   data.syn_id = target.get_syn_id();
 }
@@ -211,6 +223,19 @@ SpikeData::set_lcid( size_t value )
 {
   assert( value < MAX_LCID );
   data.lcid = value;
+}
+
+inline size_t
+SpikeData::get_num_connections() const
+{
+  return data.num_connections;
+}
+
+inline void
+SpikeData::set_num_connections( size_t value )
+{
+  assert( value < MAX_LCID );
+  data.num_connections = value;
 }
 
 inline unsigned int
@@ -262,11 +287,11 @@ private:
 
 public:
   OffGridSpikeData();
-  OffGridSpikeData( const synindex syn_id, const size_t lcid, const unsigned int lag, const double offset );
+  OffGridSpikeData( const synindex syn_id, const size_t lcid, const size_t num_connections, const unsigned int lag, const double offset );
   OffGridSpikeData( const OffGridSpikeData& rhs );
   OffGridSpikeData& operator=( const OffGridSpikeData& rhs );
   OffGridSpikeData& operator=( const SpikeData& rhs );
-  void set( const synindex syn_id, const size_t lcid, const unsigned int lag, const double offset );
+  void set( const synindex syn_id, const size_t lcid, const size_t num_connections, const unsigned int lag, const double offset );
 
   template < class TargetT >
   void set( const TargetT& target, const unsigned int lag );
@@ -284,9 +309,10 @@ inline OffGridSpikeData::OffGridSpikeData()
 
 inline OffGridSpikeData::OffGridSpikeData( const synindex syn_id,
   const size_t lcid,
+  const size_t num_connections,
   const unsigned int lag,
   const double offset )
-  : SpikeData( syn_id, lcid, lag )
+  : SpikeData( syn_id, lcid, num_connections, lag )
   , offset_( offset )
 {
 }
@@ -301,6 +327,7 @@ inline OffGridSpikeData&
 OffGridSpikeData::operator=( const OffGridSpikeData& rhs )
 {
   data.lcid = rhs.get_lcid();
+  data.num_connections = rhs.get_num_connections();
   data.lag = rhs.get_lag();
   data.syn_id = rhs.get_syn_id();
   offset_ = rhs.offset_;
@@ -313,6 +340,7 @@ OffGridSpikeData::operator=( const SpikeData& rhs )
   // Need to use get_*() here, direct access to protected members of base-class instance is prohibited,
   // see example in https://en.cppreference.com/w/cpp/language/access.
   data.lcid = rhs.get_lcid();
+  data.num_connections = rhs.get_num_connections();
   data.lag = rhs.get_lag();
   data.syn_id = rhs.get_syn_id();
   offset_ = 0;
@@ -320,13 +348,14 @@ OffGridSpikeData::operator=( const SpikeData& rhs )
 }
 
 inline void
-OffGridSpikeData::set( const synindex syn_id, const size_t lcid, const unsigned int lag, const double offset )
+OffGridSpikeData::set( const synindex syn_id, const size_t lcid, const size_t num_connections, const unsigned int lag, const double offset )
 {
   assert( syn_id < MAX_SYN_ID );
   assert( lcid < MAX_LCID );
   assert( lag < MAX_LAG );
 
   data.lcid = lcid;
+  data.num_connections = num_connections;
   data.lag = lag;
   data.syn_id = syn_id;
   offset_ = offset;

@@ -302,7 +302,7 @@ GenericConnectorModel< ConnectionT >::add_connection_( Node& src,
   {
     // No homogeneous Connector with this syn_id exists, we need to create a new
     // homogeneous Connector.
-    thread_local_connectors[ syn_id ] = new Connector< ConnectionT >( syn_id, kernel().out );
+    thread_local_connectors[ syn_id ] = new Connector< ConnectionT >( syn_id );
   }
 
   ConnectorBase* connector = thread_local_connectors[ syn_id ];
@@ -313,6 +313,21 @@ GenericConnectorModel< ConnectionT >::add_connection_( Node& src,
 
   Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connector );
   vc->push_back( std::move( connection ) );
+}
+
+template < typename ConnectionT >
+void
+GenericConnectorModel< ConnectionT >::add_connector( const synindex syn_id, ConnectorBase*& connector )
+{
+  connector = new Connector< ConnectionT >( syn_id );
+}
+
+template < typename ConnectionT >
+void
+GenericConnectorModel< ConnectionT >::set_target(ConnectorBase*& connector, size_t i, size_t target_thread, size_t target_lid)
+{
+  Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connector );
+  vc->set_target( i, target_thread, target_lid );
 }
 
 } // namespace nest
