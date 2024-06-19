@@ -527,7 +527,10 @@ public:
     for(ConnectionT& conn : C_)
     {
       Node* target = conn.get_target(tid);
-      connections_out << target->get_thread() << "-" << target->get_thread_lid() << std::endl;
+      const size_t thread_id = target->get_thread();
+      const size_t thread_lid = target->get_thread_lid();
+      connections_out.write(reinterpret_cast<const char*>(&thread_id), sizeof(thread_id));
+      connections_out.write(reinterpret_cast<const char*>(&thread_lid), sizeof(thread_lid));
     }
   }
 };

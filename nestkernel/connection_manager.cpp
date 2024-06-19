@@ -1443,16 +1443,15 @@ nest::ConnectionManager::load_connections_from_file()
          "connections_" + std::to_string( kernel().mpi_manager.get_num_processes() - 1 ) + ".dat" ) )
   {
     has_primary_connections_ = true;
-    char delimiter;
     size_t t, num_connections;
     synindex syn_id;
-    std::string line;
-    std::ifstream connections_in( "connections_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat" );
-    std::ifstream sources_in( "sources_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat" );
-    while ( std::getline( connections_in, line ) )
+    std::ifstream connections_in( "connections_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat", std::ios::binary );
+    std::ifstream sources_in( "sources_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat", std::ios::binary );
+    while ( connections_in.peek() != EOF )
     {
-      std::stringstream ss( line );
-      ss >> t >> delimiter >> syn_id >> delimiter >> num_connections >> delimiter;
+      connections_in.read(reinterpret_cast<char*>(&t), sizeof(t));
+      connections_in.read(reinterpret_cast<char*>(&syn_id), sizeof(syn_id));
+      connections_in.read(reinterpret_cast<char*>(&num_connections), sizeof(num_connections));
 
 #pragma omp parallel shared( t, num_connections, syn_id, connections_in, sources_in )
       {
@@ -1466,13 +1465,12 @@ nest::ConnectionManager::load_connections_from_file()
           }
           for ( size_t i = 0; i != num_connections; ++i )
           {
-            std::getline( sources_in, line );
-            size_t source_id = std::stoul( line );
+            size_t source_id;
+            sources_in.read(reinterpret_cast<char*>(&source_id), sizeof(source_id));
             source_table_.sources_[ t ][ syn_id ].push_back( Source( source_id, true ) );
-            std::getline( connections_in, line );
             size_t target_thread, target_id;
-            std::stringstream target_stream( line );
-            target_stream >> target_thread >> delimiter >> target_id;
+            connections_in.read(reinterpret_cast<char*>(&target_thread), sizeof(target_thread));
+            connections_in.read(reinterpret_cast<char*>(&target_id), sizeof(target_id));
             conn_model.add_connection( *kernel().node_manager.get_node_or_proxy( source_id ),
               *kernel().node_manager.get_local_nodes( target_thread ).get_node_by_index( target_id ),
               connections_[ t ],
@@ -1511,8 +1509,8 @@ nest::ConnectionManager::sort_connections( const size_t tid )
 #pragma omp barrier
 #pragma omp master
     {
-      std::ofstream connections_out( "connections_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat" );
-      std::ofstream sources_out( "sources_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat" );
+      std::ofstream connections_out( "connections_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat", std::ios::binary );
+      std::ofstream sources_out( "sources_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat", std::ios::binary );
 
       for ( size_t t = 0; t != kernel().vp_manager.get_num_threads(); ++t )
       {
@@ -1520,11 +1518,15 @@ nest::ConnectionManager::sort_connections( const size_t tid )
         {
           if ( connections_[ t ][ syn_id ] )
           {
-            connections_out << t << "-" << syn_id << "-" << connections_[ t ][ syn_id ]->size() << std::endl;
+            const size_t num_connections = connections_[ t ][ syn_id ]->size();
+            connections_out.write(reinterpret_cast<const char*>(&t), sizeof(t));
+            connections_out.write(reinterpret_cast<const char*>(&syn_id), sizeof(syn_id));
+            connections_out.write(reinterpret_cast<const char*>(&num_connections), sizeof(num_connections));
             connections_[ t ][ syn_id ]->dump_connections( connections_out, t );
             for ( Source& source : source_table_.sources_[ t ][ syn_id ] )
             {
-              sources_out << source.get_node_id() << std::endl;
+              const size_t source_node_id = source.get_node_id();
+              sources_out.write(reinterpret_cast<const char*>(&source_node_id), sizeof(source_node_id));
             }
           }
         }
