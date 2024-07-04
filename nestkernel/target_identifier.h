@@ -88,7 +88,8 @@ public:
     target_ = target;
   }
 
-  void set_target( const size_t target_thread, const size_t target_lid )
+  void
+  set_target( const size_t target_thread, const size_t target_lid )
   {
     kernel().node_manager.ensure_valid_thread_local_ids();
     if ( target_lid > max_targetindex )
@@ -162,7 +163,8 @@ public:
 
   void set_target( Node* target );
 
-  void set_target( const size_t, const size_t target_lid )
+  void
+  set_target( const size_t, const size_t target_lid )
   {
     if ( target_lid > max_targetindex )
     {

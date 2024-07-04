@@ -532,8 +532,8 @@ nest::SimulationManager::prepare()
     kernel().connection_manager.load_connections_from_file();
   }
   // TODO JV: Debug
-  kernel().random_manager.finalize(false);
-  kernel().random_manager.initialize(false);
+  kernel().random_manager.finalize( false );
+  kernel().random_manager.initialize( false );
 
   kernel().node_manager.prepare_nodes();
 

@@ -213,7 +213,14 @@ public:
    */
   virtual void remove_disabled_connections( const size_t first_disabled_index ) = 0;
 
+#ifdef HAVE_SIONLIB
+  virtual void dump_connections( const int sionlib_file_id,
+    const size_t chunk_size,
+    const size_t chunk_size_left,
+    const size_t tid ) = 0;
+#else
   virtual void dump_connections( std::ostream& connections_out, const size_t tid ) = 0;
+#endif
 };
 
 /**
@@ -250,9 +257,9 @@ public:
   }
 
   void
-  set_target(size_t i, size_t target_thread, size_t target_lid)
+  set_target( size_t i, size_t target_thread, size_t target_lid )
   {
-    C_[i].set_target( target_thread, target_lid );
+    C_[ i ].set_target( target_thread, target_lid );
   }
 
   void
@@ -522,17 +529,14 @@ public:
     C_.erase( C_.begin() + first_disabled_index, C_.end() );
   }
 
-  void dump_connections( std::ostream& connections_out, const size_t tid ) override
-  {
-    for(ConnectionT& conn : C_)
-    {
-      Node* target = conn.get_target(tid);
-      const size_t thread_id = target->get_thread();
-      const size_t thread_lid = target->get_thread_lid();
-      connections_out.write(reinterpret_cast<const char*>(&thread_id), sizeof(thread_id));
-      connections_out.write(reinterpret_cast<const char*>(&thread_lid), sizeof(thread_lid));
-    }
-  }
+#ifdef HAVE_SIONLIB
+  void dump_connections( const int sionlib_file_id,
+    const size_t chunk_size,
+    const size_t chunk_size_left,
+    const size_t tid ) override;
+#else
+  void dump_connections( std::ostream& connections_out, const size_t tid ) override;
+#endif
 };
 
 } // of namespace nest

@@ -33,6 +33,7 @@
 #include <iomanip>
 #include <limits>
 #include <set>
+#include <sion.h>
 #include <vector>
 
 // Includes from libnestutil:
@@ -1439,19 +1440,105 @@ nest::ConnectionManager::get_targets( const std::vector< size_t >& sources,
 void
 nest::ConnectionManager::load_connections_from_file()
 {
+#if defined( HAVE_SIONLIB ) && defined( HAVE_MPI )
+  if ( std::filesystem::exists( "connections.sion" ) )
+  {
+    has_primary_connections_ = true;
+
+#pragma omp parallel
+    {
+      const size_t tid = kernel().vp_manager.get_thread_id();
+      auto communicator = kernel().mpi_manager.get_communicator();
+      int numFiles = 1;
+      sion_int64 chunksize;
+      sion_int32 fsblksize = -1;
+      FILE* fileptr = nullptr;
+      char* newfname = nullptr;
+      int rank = kernel().mpi_manager.get_rank();
+
+      size_t t, num_connections, source_id;
+      synindex syn_id;
+      unsigned char thread_id;
+      unsigned int thread_lid;
+      constexpr size_t num_chars_thread = ( sizeof( t ) + sizeof( char ) / 2 ) / sizeof( char );
+      constexpr size_t num_chars_syn_id = ( sizeof( syn_id ) + sizeof( char ) / 2 ) / sizeof( char );
+      constexpr size_t num_chars_num_connections = ( sizeof( num_connections ) + sizeof( char ) / 2 ) / sizeof( char );
+      constexpr size_t num_chars_thread_id = ( sizeof( thread_id ) + sizeof( char ) / 2 ) / sizeof( char );
+      constexpr size_t num_chars_thread_lid = ( sizeof( thread_lid ) + sizeof( char ) / 2 ) / sizeof( char );
+      constexpr size_t num_chars_source_id = ( sizeof( source_id ) + sizeof( char ) / 2 ) / sizeof( char );
+
+      int sid_connections = sion_paropen_ompi( "connections.sion",
+        "br",
+        &numFiles,
+        communicator,
+        &communicator,
+        &chunksize,
+        &fsblksize,
+        &rank,
+        &fileptr,
+        &newfname );
+      int sid_sources = sion_paropen_ompi( "sources.sion",
+        "br",
+        &numFiles,
+        communicator,
+        &communicator,
+        &chunksize,
+        &fsblksize,
+        &rank,
+        &fileptr,
+        &newfname );
+
+      while ( not sion_feof( sid_connections ) )
+      {
+        assert( not sion_feof( sid_sources ) );
+        sion_fread( reinterpret_cast< char* >( &t ), sizeof( char ), num_chars_thread, sid_connections );
+        sion_fread( reinterpret_cast< char* >( &syn_id ), sizeof( char ), num_chars_syn_id, sid_connections );
+        sion_fread(
+          reinterpret_cast< char* >( &num_connections ), sizeof( char ), num_chars_num_connections, sid_connections );
+        assert( tid == t );
+
+        DictionaryDatum p( new Dictionary );
+        ConnectorModel& conn_model = *kernel().model_manager.get_connection_models( t )[ syn_id ];
+        if ( not connections_[ t ][ syn_id ] )
+        {
+          conn_model.add_connector( syn_id, connections_[ t ][ syn_id ] );
+        }
+        for ( size_t i = 0; i != num_connections; ++i )
+        {
+          sion_fread( reinterpret_cast< char* >( &source_id ), sizeof( char ), num_chars_source_id, sid_sources );
+          source_table_.sources_[ t ][ syn_id ].push_back( Source( source_id, true ) );
+          sion_fread( reinterpret_cast< char* >( &thread_id ), sizeof( char ), num_chars_thread_id, sid_connections );
+          sion_fread( reinterpret_cast< char* >( &thread_lid ), sizeof( char ), num_chars_thread_lid, sid_connections );
+          conn_model.add_connection( *kernel().node_manager.get_node_or_proxy( source_id ),
+            *kernel().node_manager.get_local_nodes( thread_id ).get_node_by_index( thread_lid ),
+            connections_[ t ],
+            syn_id,
+            p,
+            numerics::nan,
+            numerics::nan );
+          increase_connection_count( t, syn_id );
+        }
+      }
+      sion_parclose_ompi( sid_connections );
+      sion_parclose_ompi( sid_sources );
+    }
+  }
+#else
   if ( std::filesystem::exists(
          "connections_" + std::to_string( kernel().mpi_manager.get_num_processes() - 1 ) + ".dat" ) )
   {
     has_primary_connections_ = true;
     size_t t, num_connections;
     synindex syn_id;
-    std::ifstream connections_in( "connections_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat", std::ios::binary );
-    std::ifstream sources_in( "sources_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat", std::ios::binary );
+    std::ifstream connections_in(
+      "connections_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat", std::ios::binary );
+    std::ifstream sources_in(
+      "sources_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat", std::ios::binary );
     while ( connections_in.peek() != EOF )
     {
-      connections_in.read(reinterpret_cast<char*>(&t), sizeof(t));
-      connections_in.read(reinterpret_cast<char*>(&syn_id), sizeof(syn_id));
-      connections_in.read(reinterpret_cast<char*>(&num_connections), sizeof(num_connections));
+      connections_in.read( reinterpret_cast< char* >( &t ), sizeof( t ) );
+      connections_in.read( reinterpret_cast< char* >( &syn_id ), sizeof( syn_id ) );
+      connections_in.read( reinterpret_cast< char* >( &num_connections ), sizeof( num_connections ) );
 
 #pragma omp parallel shared( t, num_connections, syn_id, connections_in, sources_in )
       {
@@ -1466,11 +1553,12 @@ nest::ConnectionManager::load_connections_from_file()
           for ( size_t i = 0; i != num_connections; ++i )
           {
             size_t source_id;
-            sources_in.read(reinterpret_cast<char*>(&source_id), sizeof(source_id));
+            sources_in.read( reinterpret_cast< char* >( &source_id ), sizeof( source_id ) );
             source_table_.sources_[ t ][ syn_id ].push_back( Source( source_id, true ) );
-            size_t target_thread, target_id;
-            connections_in.read(reinterpret_cast<char*>(&target_thread), sizeof(target_thread));
-            connections_in.read(reinterpret_cast<char*>(&target_id), sizeof(target_id));
+            unsigned char target_thread;
+            unsigned int target_id;
+            connections_in.read( reinterpret_cast< char* >( &target_thread ), sizeof( target_thread ) );
+            connections_in.read( reinterpret_cast< char* >( &target_id ), sizeof( target_id ) );
             conn_model.add_connection( *kernel().node_manager.get_node_or_proxy( source_id ),
               *kernel().node_manager.get_local_nodes( target_thread ).get_node_by_index( target_id ),
               connections_[ t ],
@@ -1486,14 +1574,19 @@ nest::ConnectionManager::load_connections_from_file()
     connections_in.close();
     sources_in.close();
   }
+#endif
 }
 
 void
 nest::ConnectionManager::sort_connections( const size_t tid )
 {
   // TODO JV: Debug
+#if defined( HAVE_SIONLIB ) && defined( HAVE_MPI )
+  if ( not std::filesystem::exists( "connections.sion" ) )
+#else
   if ( not std::filesystem::exists(
          "connections_" + std::to_string( kernel().mpi_manager.get_num_processes() - 1 ) + ".dat" ) )
+#endif
   {
     assert( not source_table_.is_cleared() );
     // TODO JV: Sorting not required in large-scale case
@@ -1506,11 +1599,85 @@ nest::ConnectionManager::sort_connections( const size_t tid )
     }
     remove_disabled_connections( tid );
 
+#if defined( HAVE_SIONLIB ) && defined( HAVE_MPI )
+    auto communicator = kernel().mpi_manager.get_communicator();
+    int numFiles = 1;
+    sion_int64 chunksize = std::accumulate( num_connections_[ tid ].begin(), num_connections_[ tid ].end(), 0 );
+    sion_int32 fsblksize = -1;
+    FILE* fileptr = nullptr;
+    char* newfname = nullptr;
+    int rank = kernel().mpi_manager.get_rank();
+
+    size_t num_connections;
+    synindex syn_id;
+    constexpr size_t num_chars_thread = ( sizeof( tid ) + sizeof( char ) / 2 ) / sizeof( char );
+    constexpr size_t num_chars_syn_id = ( sizeof( syn_id ) + sizeof( char ) / 2 ) / sizeof( char );
+    constexpr size_t num_chars_num_connections = ( sizeof( num_connections ) + sizeof( char ) / 2 ) / sizeof( char );
+    constexpr size_t meta_buf_size = num_chars_thread + num_chars_syn_id + num_chars_num_connections;
+    char buf[ meta_buf_size ];
+
+    int sid = sion_paropen_ompi( "connections.sion",
+      "bw",
+      &numFiles,
+      communicator,
+      &communicator,
+      &chunksize,
+      &fsblksize,
+      &rank,
+      &fileptr,
+      &newfname );
+    size_t bytes_left_in_chunk = chunksize;
+    for ( syn_id = 0; syn_id < connections_[ tid ].size(); ++syn_id )
+    {
+      if ( connections_[ tid ][ syn_id ] )
+      {
+        num_connections = connections_[ tid ][ syn_id ]->size();
+        strncpy( buf, reinterpret_cast< const char* >( &tid ), num_chars_thread );
+        strncpy( buf + num_chars_thread, reinterpret_cast< const char* >( &syn_id ), num_chars_syn_id );
+        strncpy( buf + num_chars_thread + num_chars_syn_id,
+          reinterpret_cast< const char* >( &num_connections ),
+          num_chars_num_connections );
+        bytes_left_in_chunk -=
+          ( sion_fwrite( buf, sizeof( char ), meta_buf_size, sid ) + sizeof( char ) / 2 ) / sizeof( char );
+        connections_[ tid ][ syn_id ]->dump_connections( sid, chunksize, bytes_left_in_chunk, tid );
+      }
+    }
+    sion_parclose_ompi( sid );
+
+    sid = sion_paropen_ompi( "sources.sion",
+      "bw",
+      &numFiles,
+      communicator,
+      &communicator,
+      &chunksize,
+      &fsblksize,
+      &rank,
+      &fileptr,
+      &newfname );
+    for ( syn_id = 0; syn_id < source_table_.sources_[ tid ].size(); ++syn_id )
+    {
+      if ( source_table_.sources_[ tid ][ syn_id ].size() )
+      {
+        for ( Source& source : source_table_.sources_[ tid ][ syn_id ] )
+        {
+          const size_t source_node_id = source.get_node_id();
+          assert( source_node_id != 0 );
+          sion_fwrite( reinterpret_cast< const char* >( &source_node_id ),
+            sizeof( char ),
+            sizeof( source_node_id ) / sizeof( char ),
+            sid );
+        }
+      }
+    }
+    sion_parclose_ompi( sid );
+#else
 #pragma omp barrier
 #pragma omp master
     {
-      std::ofstream connections_out( "connections_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat", std::ios::binary );
-      std::ofstream sources_out( "sources_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat", std::ios::binary );
+      std::ofstream connections_out(
+        "connections_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat", std::ios::binary );
+      std::ofstream sources_out(
+        "sources_" + std::to_string( kernel().mpi_manager.get_rank() ) + ".dat", std::ios::binary );
 
       for ( size_t t = 0; t != kernel().vp_manager.get_num_threads(); ++t )
       {
@@ -1519,14 +1686,14 @@ nest::ConnectionManager::sort_connections( const size_t tid )
           if ( connections_[ t ][ syn_id ] )
           {
             const size_t num_connections = connections_[ t ][ syn_id ]->size();
-            connections_out.write(reinterpret_cast<const char*>(&t), sizeof(t));
-            connections_out.write(reinterpret_cast<const char*>(&syn_id), sizeof(syn_id));
-            connections_out.write(reinterpret_cast<const char*>(&num_connections), sizeof(num_connections));
+            connections_out.write( reinterpret_cast< const char* >( &t ), sizeof( t ) );
+            connections_out.write( reinterpret_cast< const char* >( &syn_id ), sizeof( syn_id ) );
+            connections_out.write( reinterpret_cast< const char* >( &num_connections ), sizeof( num_connections ) );
             connections_[ t ][ syn_id ]->dump_connections( connections_out, t );
             for ( Source& source : source_table_.sources_[ t ][ syn_id ] )
             {
               const size_t source_node_id = source.get_node_id();
-              sources_out.write(reinterpret_cast<const char*>(&source_node_id), sizeof(source_node_id));
+              sources_out.write( reinterpret_cast< const char* >( &source_node_id ), sizeof( source_node_id ) );
             }
           }
         }
@@ -1534,6 +1701,7 @@ nest::ConnectionManager::sort_connections( const size_t tid )
       connections_out.close();
       sources_out.close();
     }
+#endif
   }
 }
 

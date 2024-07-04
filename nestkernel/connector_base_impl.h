@@ -28,6 +28,8 @@
 // Includes from models:
 #include "weight_recorder.h"
 
+#include <sion.h>
+
 #ifndef CONNECTOR_BASE_IMPL_H
 #define CONNECTOR_BASE_IMPL_H
 
@@ -60,6 +62,65 @@ Connector< ConnectionT >::send_weight_event( const size_t tid,
     wr_e();
   }
 }
+
+#if defined( HAVE_SIONLIB ) && defined( HAVE_MPI )
+template < typename ConnectionT >
+void
+Connector< ConnectionT >::dump_connections( const int sionlib_file_id,
+  const size_t chunk_size,
+  const size_t chunk_size_left,
+  const size_t tid )
+{
+  size_t chars_left_in_chunk = chunk_size_left;
+  size_t buf_start = chunk_size - chunk_size_left;
+  char* buf = static_cast< char* >( malloc( chunk_size ) );
+  unsigned char thread_id;
+  unsigned int thread_lid;
+  constexpr size_t num_chars_thread_id = ( sizeof( thread_id ) + sizeof( char ) / 2 ) / sizeof( char );
+  constexpr size_t num_chars_thread_lid = ( sizeof( thread_lid ) + sizeof( char ) / 2 ) / sizeof( char );
+  for ( ConnectionT& conn : C_ )
+  {
+    Node* target = conn.get_target( tid );
+    thread_id = target->get_thread();
+    thread_lid = target->get_thread_lid();
+
+    assert( chunk_size - chars_left_in_chunk + 5 <= chunk_size );
+    strncpy(
+      buf + chunk_size - chars_left_in_chunk, reinterpret_cast< const char* >( &thread_id ), num_chars_thread_id );
+    chars_left_in_chunk -= num_chars_thread_id;
+    strncpy(
+      buf + chunk_size - chars_left_in_chunk, reinterpret_cast< const char* >( &thread_lid ), num_chars_thread_lid );
+    chars_left_in_chunk -= num_chars_thread_lid;
+    if ( chars_left_in_chunk < num_chars_thread_id + num_chars_thread_lid )
+    {
+      chars_left_in_chunk -=
+        ( sion_fwrite( buf + buf_start, sizeof( char ), chunk_size - chars_left_in_chunk - buf_start, sionlib_file_id )
+          + sizeof( char ) / 2 )
+        / sizeof( char );
+      chars_left_in_chunk = chunk_size;
+      buf_start = 0;
+    }
+  }
+  if ( chars_left_in_chunk != chunk_size )
+  {
+    sion_fwrite( buf + buf_start, sizeof( char ), chunk_size - chars_left_in_chunk - buf_start, sionlib_file_id );
+  }
+}
+#else
+template < typename ConnectionT >
+void
+Connector< ConnectionT >::dump_connections( std::ostream& connections_out )
+{
+  for ( ConnectionT& conn : C_ )
+  {
+    Node* target = conn.get_target( tid );
+    const size_t thread_id = target->get_thread();
+    const size_t thread_lid = target->get_thread_lid();
+    connections_out.write( reinterpret_cast< const char* >( &thread_id ), sizeof( thread_id ) );
+    connections_out.write( reinterpret_cast< const char* >( &thread_lid ), sizeof( thread_lid ) );
+  }
+}
+#endif
 
 } // of namespace nest
 

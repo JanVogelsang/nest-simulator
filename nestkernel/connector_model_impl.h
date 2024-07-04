@@ -330,7 +330,10 @@ GenericConnectorModel< ConnectionT >::add_connector( const synindex syn_id, Conn
 
 template < typename ConnectionT >
 void
-GenericConnectorModel< ConnectionT >::set_target(ConnectorBase*& connector, size_t i, size_t target_thread, size_t target_lid)
+GenericConnectorModel< ConnectionT >::set_target( ConnectorBase*& connector,
+  size_t i,
+  size_t target_thread,
+  size_t target_lid )
 {
   Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connector );
   vc->set_target( i, target_thread, target_lid );

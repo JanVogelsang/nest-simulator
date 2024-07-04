@@ -103,7 +103,7 @@ public:
 
   // TODO JV: Debug
   virtual void add_connector( const synindex syn_id, ConnectorBase*& connector ) = 0;
-  virtual void set_target(ConnectorBase*& connector, size_t i, size_t target_thread, size_t target_lid) = 0;
+  virtual void set_target( ConnectorBase*& connector, size_t i, size_t target_thread, size_t target_lid ) = 0;
 
   virtual ConnectorModel* clone( std::string, synindex syn_id ) const = 0;
 
@@ -187,7 +187,7 @@ public:
 
   // TODO JV: Debug
   void add_connector( const synindex syn_id, ConnectorBase*& connector ) override;
-  void set_target(ConnectorBase*& connector, size_t i, size_t target_thread, size_t target_lid) override;
+  void set_target( ConnectorBase*& connector, size_t i, size_t target_thread, size_t target_lid ) override;
 
   ConnectorModel* clone( std::string, synindex ) const override;
 
