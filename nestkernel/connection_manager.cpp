@@ -1449,7 +1449,7 @@ nest::ConnectionManager::load_connections_from_file()
     {
       const size_t tid = kernel().vp_manager.get_thread_id();
       auto communicator = kernel().mpi_manager.get_communicator();
-      int numFiles = 1;
+      int numFiles = kernel().mpi_manager.get_num_processes();
       sion_int64 chunksize;
       sion_int32 fsblksize = -1;
       FILE* fileptr = nullptr;
@@ -1601,7 +1601,7 @@ nest::ConnectionManager::sort_connections( const size_t tid )
 
 #if defined( HAVE_SIONLIB ) && defined( HAVE_MPI )
     auto communicator = kernel().mpi_manager.get_communicator();
-    int numFiles = 1;
+    int numFiles = kernel().mpi_manager.get_num_processes();
     sion_int64 chunksize = std::accumulate( num_connections_[ tid ].begin(), num_connections_[ tid ].end(), 0 );
     sion_int32 fsblksize = -1;
     FILE* fileptr = nullptr;
