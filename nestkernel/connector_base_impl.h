@@ -111,7 +111,7 @@ Connector< ConnectionT >::dump_connections( const int sionlib_file_id,
 #else
 template < typename ConnectionT >
 void
-Connector< ConnectionT >::dump_connections( std::ostream& connections_out )
+Connector< ConnectionT >::dump_connections( std::ostream& connections_out, const size_t tid )
 {
   for ( ConnectionT& conn : C_ )
   {
