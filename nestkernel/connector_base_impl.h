@@ -28,7 +28,9 @@
 // Includes from models:
 #include "weight_recorder.h"
 
+#ifdef HAVE_SIONLIB
 #include <sion.h>
+#endif
 
 #ifndef CONNECTOR_BASE_IMPL_H
 #define CONNECTOR_BASE_IMPL_H
