@@ -33,8 +33,11 @@
 #include <iomanip>
 #include <limits>
 #include <set>
-#include <sion.h>
 #include <vector>
+
+#ifdef HAVE_SIONLIB
+#include <sion.h>
+#endif
 
 // Includes from libnestutil:
 #include "compose.hpp"
