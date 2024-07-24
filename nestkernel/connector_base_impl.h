@@ -116,8 +116,8 @@ Connector< ConnectionT >::dump_connections( std::ostream& connections_out, const
   for ( ConnectionT& conn : C_ )
   {
     Node* target = conn.get_target( tid );
-    const size_t thread_id = target->get_thread();
-    const size_t thread_lid = target->get_thread_lid();
+    const unsigned char thread_id = target->get_thread();
+    const unsigned int thread_lid = target->get_thread_lid();
     connections_out.write( reinterpret_cast< const char* >( &thread_id ), sizeof( thread_id ) );
     connections_out.write( reinterpret_cast< const char* >( &thread_lid ), sizeof( thread_lid ) );
   }
