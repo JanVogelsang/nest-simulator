@@ -182,7 +182,7 @@ def build_network(logger):
     nest.Connect(E_stimulus, E_neurons, {"rule": "all_to_all"}, {"synapse_model": "syn_ex"})
     nest.Connect(E_stimulus, I_neurons, {"rule": "all_to_all"}, {"synapse_model": "syn_ex"})
 
-    if not os.path.exists("../../hpc_test/connections_0.dat") and not os.path.exists("connections.sion"):
+    if not os.path.exists("connections_0.dat") and not os.path.exists("connections.sion"):
         nest.message(M_INFO, "build_network", "Connecting excitatory -> excitatory population.")
 
         nest.Connect(
@@ -218,6 +218,8 @@ def build_network(logger):
             {"rule": "fixed_indegree", "indegree": CI, "allow_autapses": False, "allow_multapses": True},
             {"synapse_model": "syn_in"},
         )
+        nest.Prepare()
+        exit(0)
 
     if params["record_spikes"]:
         if params["num_threads"] != 1:
