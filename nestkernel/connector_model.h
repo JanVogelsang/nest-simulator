@@ -161,6 +161,7 @@ private:
 
   ConnectionT default_connection_;
   size_t receptor_type_;
+  synindex syn_id_;
 
 public:
   GenericConnectorModel( const std::string name )

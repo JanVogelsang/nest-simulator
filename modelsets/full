@@ -103,6 +103,7 @@ spike_generator
 spin_detector
 spike_train_injector
 static_synapse
+static_synapse_ptr
 static_synapse_hom_w
 stdp_dopamine_synapse
 stdp_nn_pre_centered_synapse

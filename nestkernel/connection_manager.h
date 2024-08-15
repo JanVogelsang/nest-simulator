@@ -342,6 +342,8 @@ public:
 
   void prepare_target_table( const size_t tid );
 
+  void prepare_connections();
+
   void resize_target_table_devices_to_number_of_neurons();
 
   void resize_target_table_devices_to_number_of_synapse_types();
@@ -911,6 +913,21 @@ inline void
 ConnectionManager::clear_compressed_spike_data_map()
 {
   source_table_.clear_compressed_spike_data_map();
+}
+
+inline void
+ConnectionManager::prepare_connections()
+{
+  for ( size_t tid = 0; tid != connections_.size(); ++tid )
+  {
+    for ( size_t syn_id = 0; syn_id != connections_[ tid ].size(); ++syn_id )
+    {
+      if ( connections_[ tid ][ syn_id ] )
+      {
+        connections_[ tid ][ syn_id ]->prepare( tid );
+      }
+    }
+  }
 }
 
 } // namespace nest

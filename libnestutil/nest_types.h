@@ -93,6 +93,7 @@ constexpr uint8_t NUM_BITS_MARKER_SPIKE_DATA = 2U;
 constexpr uint8_t NUM_BITS_LAG = 14U;
 constexpr uint8_t NUM_BITS_DELAY = 21U;
 constexpr uint8_t NUM_BITS_NODE_ID = 62U;
+constexpr uint8_t NUM_BITS_LID = 17U;
 
 // Maximally allowed values for bitfields
 
@@ -102,6 +103,7 @@ constexpr int64_t MAX_TID = generate_max_value( NUM_BITS_TID );
 constexpr uint64_t MAX_SYN_ID = generate_max_value( NUM_BITS_SYN_ID );
 constexpr uint64_t DISABLED_NODE_ID = generate_max_value( NUM_BITS_NODE_ID );
 constexpr uint64_t MAX_NODE_ID = DISABLED_NODE_ID - 1;
+constexpr int MAX_LID = generate_max_value( NUM_BITS_LID );
 
 /**
  * Type for Time tics.

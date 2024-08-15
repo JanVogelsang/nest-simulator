@@ -1,5 +1,5 @@
 /*
- *  bernoulli_synapse.h
+ *  static_synapse_ptr.h
  *
  *  This file is part of NEST.
  *
@@ -20,13 +20,11 @@
  *
  */
 
-
-#ifndef BERNOULLI_SYNAPSE_H
-#define BERNOULLI_SYNAPSE_H
+#ifndef STATICSYNAPSEPTR_H
+#define STATICSYNAPSEPTR_H
 
 // Includes from nestkernel:
 #include "connection.h"
-#include "kernel_manager.h"
 
 namespace nest
 {
@@ -36,27 +34,13 @@ namespace nest
 Short description
 +++++++++++++++++
 
-Static synapse with stochastic transmission
+Synapse type for static connections
 
 Description
 +++++++++++
 
-Spikes are transmitted by ``bernoulli_synapse`` following a Bernoulli
-trial with success probability ``p_transmit``. This synaptic mechanism was
-inspired by the results described in [1]_ of greater transmission
-probability for stronger excitatory connections and it was previously
-applied in [2]_ and [3]_.
-
-``bernoulli_synapse`` does not support any kind of plasticity. It simply
-stores the parameters target, weight, transmission probability, delay
-and receiver port for each connection.
-
-Parameters
-++++++++++
-
-=========== ====== ===================================================
- p_transmit real   Transmission probability, must be between 0 and 1
-=========== ====== ===================================================
+``static_synapse`` does not support any kind of plasticity. It simply stores
+the parameters target, weight, delay and receiver port for each connection.
 
 Transmits
 +++++++++
@@ -64,40 +48,25 @@ Transmits
 SpikeEvent, RateEvent, CurrentEvent, ConductanceEvent,
 DoubleDataEvent, DataLoggingRequest
 
-References
-++++++++++
-
-.. [1] Lefort S, Tomm C, Sarria J-C F, Petersen CCH (2009). The excitatory
-       neuronal network of the C2 barrel column in mouse primary
-       somatosensory cortex. Neuron, 61(2):301-316.
-       DOI: https://doi.org/10.1016/j.neuron.2008.12.020.
-
-.. [2] Teramae J, Tsubo Y, Fukai T (2012). Optimal spike-based communication
-       in excitable networks with strong-sparse and weak-dense  links,
-       Scientific Reports 2,485. DOI: https://doi.org/10.1038/srep00485
-
-.. [3] Omura Y, Carvalho MM, Inokuchi K, Fukai T (2015). A lognormal recurrent
-       network model for burst generation during hippocampal sharp waves.
-       Journal of Neuroscience, 35(43):14585-14601.
-       DOI: https://doi.org/10.1523/JNEUROSCI.4944-14.2015
-
 See also
 ++++++++
 
-static_synapse, static_synapse_hom_w
+tsodyks_synapse, stdp_synapse
 
 Examples using this model
 +++++++++++++++++++++++++
 
-.. listexamples:: bernoulli_synapse
+.. listexamples:: static_synapse
 
 EndUserDocs */
 
-void register_bernoulli_synapse( const std::string& name );
+void register_static_synapse_ptr( const std::string& name );
 
 template < typename targetidentifierT >
-class bernoulli_synapse : public Connection< targetidentifierT >
+class static_synapse_ptr : public Connection< targetidentifierT >
 {
+  double weight_;
+
 public:
   // this line determines which common properties to use
   typedef CommonSynapseProperties CommonPropertiesType;
@@ -111,10 +80,9 @@ public:
    * Default Constructor.
    * Sets default values for all parameters. Needed by GenericConnectorModel.
    */
-  bernoulli_synapse()
+  static_synapse_ptr()
     : ConnectionBase()
     , weight_( 1.0 )
-    , p_transmit_( 1.0 )
   {
   }
 
@@ -122,8 +90,8 @@ public:
    * Copy constructor from a property object.
    * Needs to be defined properly in order for GenericConnector to work.
    */
-  bernoulli_synapse( const bernoulli_synapse& rhs ) = default;
-  bernoulli_synapse& operator=( const bernoulli_synapse& rhs ) = default;
+  static_synapse_ptr( const static_synapse_ptr& rhs ) = default;
+  static_synapse_ptr& operator=( const static_synapse_ptr& rhs ) = default;
 
   // Explicitly declare all methods inherited from the dependent base
   // ConnectionBase. This avoids explicit name prefixes in all places these
@@ -145,6 +113,41 @@ public:
     {
       return invalid_port;
     }
+    size_t
+    handles_test_event( RateEvent&, size_t ) override
+    {
+      return invalid_port;
+    }
+    size_t
+    handles_test_event( DataLoggingRequest&, size_t ) override
+    {
+      return invalid_port;
+    }
+    size_t
+    handles_test_event( CurrentEvent&, size_t ) override
+    {
+      return invalid_port;
+    }
+    size_t
+    handles_test_event( ConductanceEvent&, size_t ) override
+    {
+      return invalid_port;
+    }
+    size_t
+    handles_test_event( DoubleDataEvent&, size_t ) override
+    {
+      return invalid_port;
+    }
+    size_t
+    handles_test_event( DSSpikeEvent&, size_t ) override
+    {
+      return invalid_port;
+    }
+    size_t
+    handles_test_event( DSCurrentEvent&, size_t ) override
+    {
+      return invalid_port;
+    }
   };
 
   void
@@ -154,25 +157,39 @@ public:
     ConnectionBase::check_connection_( dummy_target, s, t, syn_id, receptor_type );
   }
 
-  bool
-  send( Event& e, size_t t, const CommonSynapseProperties& )
+  void
+  prepare( const size_t tid )
   {
-    SpikeEvent e_spike = static_cast< SpikeEvent& >( e );
-
-    assert( e_spike.get_multiplicity() == 1 );
-
-    const bool send_spike = get_vp_specific_rng( t )->drand() < p_transmit_;
-
-    if ( send_spike )
+    ConnectionBase::prepare( tid );
+    // separate buffer channels for excitatory and inhibitory inputs
+    if ( weight_ > 0 )
     {
-      e.set_weight( weight_ );
-      e.set_delay_steps( get_delay_steps() );
-      e.set_receiver( *get_target( t ) );
-      e.set_rport( get_rport() );
-      e();
+      ++ConnectionBase::target_.buffer_ptr_;
     }
+  }
 
-    return send_spike;
+  bool
+  send( Event& e, const size_t, const CommonSynapseProperties& )
+  {
+    e.set_delay_steps( get_delay_steps() );
+
+    size_t input_buffer_slot = kernel().event_delivery_manager.get_modulo(
+      e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ) );
+    ConnectionBase::target_.buffer_ptr_[ input_buffer_slot * 3 ] += weight_;
+
+    return true;
+  }
+
+  bool
+  send( DSSpikeEvent& e, const size_t, const CommonSynapseProperties& )
+  {
+    e.set_weight( weight_ );
+    e.set_delay_steps( get_delay_steps() );
+    size_t input_buffer_slot = kernel().event_delivery_manager.get_modulo(
+      e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ) );
+    e.set_spike_buffer( ConnectionBase::target_.buffer_ptr_ + input_buffer_slot * 3 );
+    e();
+    return true;
   }
 
   void get_status( DictionaryDatum& d ) const;
@@ -184,39 +201,28 @@ public:
   {
     weight_ = w;
   }
-
-private:
-  double weight_;
-  double p_transmit_;
 };
 
 template < typename targetidentifierT >
-constexpr ConnectionModelProperties bernoulli_synapse< targetidentifierT >::properties;
+constexpr ConnectionModelProperties static_synapse_ptr< targetidentifierT >::properties;
 
 template < typename targetidentifierT >
 void
-bernoulli_synapse< targetidentifierT >::get_status( DictionaryDatum& d ) const
+static_synapse_ptr< targetidentifierT >::get_status( DictionaryDatum& d ) const
 {
   ConnectionBase::get_status( d );
   def< double >( d, names::weight, weight_ );
-  def< double >( d, names::p_transmit, p_transmit_ );
   def< long >( d, names::size_of, sizeof( *this ) );
 }
 
 template < typename targetidentifierT >
 void
-bernoulli_synapse< targetidentifierT >::set_status( const DictionaryDatum& d, ConnectorModel& cm )
+static_synapse_ptr< targetidentifierT >::set_status( const DictionaryDatum& d, ConnectorModel& cm )
 {
   ConnectionBase::set_status( d, cm );
   updateValue< double >( d, names::weight, weight_ );
-  updateValue< double >( d, names::p_transmit, p_transmit_ );
-
-  if ( p_transmit_ < 0 or p_transmit_ > 1 )
-  {
-    throw BadProperty( "Spike transmission probability must be in [0, 1]." );
-  }
 }
 
 } // namespace
 
-#endif /* #ifndef BERNOULLI_SYNAPSE_H */
+#endif /* #ifndef STATICSYNAPSEPTR_H */

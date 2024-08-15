@@ -371,6 +371,12 @@ iaf_psc_alpha::update( Time const& origin, const long from, const long to )
   }
 }
 
+std::array< double, 3 >*
+iaf_psc_alpha::get_buffer_ptr( const size_t tid )
+{
+  return B_.input_buffer_.get_buffer_ptr( tid );
+}
+
 void
 iaf_psc_alpha::handle( SpikeEvent& e )
 {

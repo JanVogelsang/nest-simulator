@@ -125,6 +125,12 @@ public:
     return nullptr;
   }
 
+  virtual std::array< double, 3 >*
+  get_buffer_ptr( const size_t tid )
+  {
+    return nullptr;
+  };
+
   /**
    * Returns true if the node has proxies on remote threads.
    *

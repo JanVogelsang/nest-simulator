@@ -117,6 +117,9 @@ public:
   template < template < typename targetidentifierT > class ConnectionT >
   void register_connection_model( const std::string& name );
 
+  template < template < typename targetidentifierT > class ConnectionT >
+  void register_connection_model_spike_buffer( const std::string& name );
+
   /**
    * Copy an existing model and register it as a new model.
    *

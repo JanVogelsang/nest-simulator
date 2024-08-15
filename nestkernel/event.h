@@ -131,6 +131,9 @@ public:
    */
   Node& get_receiver() const;
 
+  void set_spike_buffer( double* );
+  double* get_spike_buffer() const;
+
   /**
    * Return node ID of receiving Node.
    */
@@ -330,8 +333,12 @@ protected:
   // problem, we store sender and receiver as pointers and use
   // references in the interface.
   // Thus, we can still ensure that the pointers are never nullptr.
-  Node* sender_;   //!< Pointer to sender or nullptr.
-  Node* receiver_; //!< Pointer to receiver or nullptr.
+  Node* sender_; //!< Pointer to sender or nullptr.
+  union
+  {
+    Node* receiver_; //!< Pointer to receiver or nullptr.
+    double* spike_buffer_;
+  };
 
 
   /**
@@ -909,6 +916,12 @@ Event::set_receiver( Node& r )
 }
 
 inline void
+Event::set_spike_buffer( double* buf )
+{
+  spike_buffer_ = buf;
+}
+
+inline void
 Event::set_sender( Node& s )
 {
   sender_ = &s;
@@ -931,6 +944,12 @@ inline Node&
 Event::get_receiver() const
 {
   return *receiver_;
+}
+
+inline double*
+Event::get_spike_buffer() const
+{
+  return spike_buffer_;
 }
 
 inline Node&
@@ -983,6 +1002,7 @@ Event::get_delay_steps() const
 inline long
 Event::get_rel_delivery_steps( const Time& t ) const
 {
+  // TODO JV: Why don't we just store the lag instead of actual stamp?
   if ( stamp_steps_ == 0 )
   {
     stamp_steps_ = stamp_.get_steps();

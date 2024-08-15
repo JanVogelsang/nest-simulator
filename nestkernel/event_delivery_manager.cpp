@@ -181,8 +181,7 @@ void
 EventDeliveryManager::get_status( DictionaryDatum& dict )
 {
   def< bool >( dict, names::off_grid_spiking, off_grid_spiking_ );
-  def< unsigned long >(
-    dict, names::local_spike_counter, std::accumulate( local_spike_counter_.begin(), local_spike_counter_.end(), 0 ) );
+  def< ArrayDatum >( dict, names::local_spike_counter, ArrayDatum( local_spike_counter_ ) );
   def< double >( dict, names::spike_buffer_shrink_limit, send_recv_buffer_shrink_limit_ );
   def< double >( dict, names::spike_buffer_shrink_spare, send_recv_buffer_shrink_spare_ );
   def< double >( dict, names::spike_buffer_grow_extra, send_recv_buffer_grow_extra_ );

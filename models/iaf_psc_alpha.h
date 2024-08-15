@@ -238,6 +238,8 @@ public:
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
 
+  std::array< double, 3 >* get_buffer_ptr( const size_t tid ) override;
+
 private:
   void init_buffers_() override;
   void pre_run_hook() override;

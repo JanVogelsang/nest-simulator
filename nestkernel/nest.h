@@ -59,6 +59,9 @@ void register_logger_client( const deliver_logging_event_ptr client_callback );
 template < template < typename > class ConnectorModelT >
 void register_connection_model( const std::string& name );
 
+template < template < typename > class ConnectorModelT >
+void register_connection_model_spike_buffer( const std::string& name );
+
 /**
  * Register node model (i.e. an instance of a class inheriting from `Node`).
  */

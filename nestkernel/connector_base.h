@@ -82,6 +82,8 @@ public:
    */
   virtual size_t size() const = 0;
 
+  virtual void prepare( const size_t tid ) = 0;
+
   /**
    * Write status of the connection at position lcid to the dictionary
    * dict.
@@ -154,6 +156,7 @@ public:
    * Send the event e to all connections of this Connector.
    */
   virtual void send_to_all( const size_t tid, const std::vector< ConnectorModel* >& cm, Event& e ) = 0;
+  virtual void send_ds_to_all( const size_t tid, const std::vector< ConnectorModel* >& cm, DSSpikeEvent& e ) = 0;
 
   /**
    * Send the event e to the connection at position lcid. Return bool
@@ -256,6 +259,16 @@ public:
     return C_.size();
   }
 
+  void
+  prepare( const size_t tid ) override
+  {
+    for ( size_t lcid = 0; lcid < C_.size(); ++lcid )
+    {
+      C_[ lcid ].prepare( tid );
+    }
+  }
+
+  // TODO JV: Debug
   void
   set_target( size_t i, size_t target_thread, size_t target_lid )
   {
@@ -397,6 +410,19 @@ public:
 
   void
   send_to_all( const size_t tid, const std::vector< ConnectorModel* >& cm, Event& e ) override
+  {
+    auto const& cp = static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties();
+
+    for ( size_t lcid = 0; lcid < C_.size(); ++lcid )
+    {
+      e.set_port( lcid );
+      assert( not C_[ lcid ].is_disabled() );
+      C_[ lcid ].send( e, tid, cp );
+    }
+  }
+
+  void
+  send_ds_to_all( const size_t tid, const std::vector< ConnectorModel* >& cm, DSSpikeEvent& e ) override
   {
     auto const& cp = static_cast< GenericConnectorModel< ConnectionT >* >( cm[ syn_id_ ] )->get_common_properties();
 

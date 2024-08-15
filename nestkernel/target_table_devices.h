@@ -241,7 +241,7 @@ TargetTableDevices::send_from_device( const size_t tid,
   {
     if ( *it )
     {
-      ( *it )->send_to_all( tid, cm, e );
+      ( *it )->send_ds_to_all( tid, cm, static_cast< DSSpikeEvent& >( e ) );
     }
   }
 }

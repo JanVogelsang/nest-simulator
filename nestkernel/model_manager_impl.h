@@ -74,6 +74,13 @@ ModelManager::register_connection_model( const std::string& name )
   delete dummy_model;
 }
 
+template < template < typename targetidentifierT > class ConnectionT >
+void
+ModelManager::register_connection_model_spike_buffer( const std::string& name )
+{
+  register_specific_connection_model_< ConnectionT< TargetIdentifierSpikeBuffer > >( name );
+}
+
 template < typename CompleteConnectionT >
 void
 ModelManager::register_specific_connection_model_( const std::string& name )

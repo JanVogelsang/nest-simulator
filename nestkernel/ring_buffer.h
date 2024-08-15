@@ -36,6 +36,7 @@
 namespace nest
 {
 
+// TODO JV: Documentation
 /**
  *  Buffer Layout.
  *
@@ -381,6 +382,12 @@ public:
   void resize();
 
   size_t size() const;
+
+  std::array< double, num_channels >*
+  get_buffer_ptr( const size_t )
+  {
+    return buffer_.data();
+  }
 
 private:
   /**

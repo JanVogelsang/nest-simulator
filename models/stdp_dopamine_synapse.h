@@ -285,7 +285,7 @@ public:
    * \param receptor_type The ID of the requested receptor type
    */
   void
-  check_connection( Node& s, Node& t, size_t receptor_type, const CommonPropertiesType& cp )
+  check_connection( Node& s, Node& t, const synindex syn_id, size_t receptor_type, const CommonPropertiesType& cp )
   {
     if ( not cp.volume_transmitter_ )
     {
@@ -293,7 +293,7 @@ public:
     }
 
     ConnTestDummyNode dummy_target;
-    ConnectionBase::check_connection_( dummy_target, s, t, receptor_type );
+    ConnectionBase::check_connection_( dummy_target, s, t, syn_id, receptor_type );
 
     t.register_stdp_connection( t_lastspike_ - get_delay(), get_delay() );
   }

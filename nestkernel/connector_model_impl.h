@@ -207,14 +207,14 @@ template < typename ConnectionT >
 size_t
 GenericConnectorModel< ConnectionT >::get_syn_id() const
 {
-  return default_connection_.get_syn_id();
+  return syn_id_;
 }
 
 template < typename ConnectionT >
 void
 GenericConnectorModel< ConnectionT >::set_syn_id( synindex syn_id )
 {
-  default_connection_.set_syn_id( syn_id );
+  syn_id_ = syn_id;
 }
 
 template < typename ConnectionT >
@@ -313,7 +313,7 @@ GenericConnectorModel< ConnectionT >::add_connection_( Node& src,
 
   ConnectorBase* connector = thread_local_connectors[ syn_id ];
   // The following line will throw an exception, if it does not work.
-  connection.check_connection( src, tgt, receptor_type, get_common_properties() );
+  connection.check_connection( src, tgt, syn_id, receptor_type, get_common_properties() );
 
   assert( connector );
 

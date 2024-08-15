@@ -547,6 +547,8 @@ nest::SimulationManager::prepare()
 
   kernel().node_manager.prepare_nodes();
 
+  kernel().connection_manager.prepare_connections();
+
   // we have to do enter_runtime after prepare_nodes, since we use
   // calibrate to map the ports of MUSIC devices, which has to be done
   // before enter_runtime
@@ -901,9 +903,9 @@ nest::SimulationManager::update_()
 
             DETAILED_TIMER_STOP( sw_deliver_spike_data_, tid );
             // TODO JV: Debug
-            DETAILED_TIMER_START( sw_idle_, tid );
-#pragma omp barrier
-            DETAILED_TIMER_STOP( sw_idle_, tid );
+            // DETAILED_TIMER_START( sw_idle_, tid );
+            // #pragma omp barrier
+            // DETAILED_TIMER_STOP( sw_idle_, tid );
           }
 
 #ifdef HAVE_MUSIC

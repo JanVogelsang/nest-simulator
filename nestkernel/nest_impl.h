@@ -37,6 +37,13 @@ register_connection_model( const std::string& name )
   kernel().model_manager.register_connection_model< ConnectorModelT >( name );
 }
 
+template < template < typename > class ConnectorModelT >
+void
+register_connection_model_spike_buffer( const std::string& name )
+{
+  kernel().model_manager.register_connection_model_spike_buffer< ConnectorModelT >( name );
+}
+
 template < typename NodeModelT >
 void
 register_node_model( const std::string& name, std::string deprecation_info )
