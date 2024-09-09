@@ -194,7 +194,7 @@ EventDeliveryManager::get_status( DictionaryDatum& dict )
 #ifdef TIMER_DETAILED
   def< double >( dict, names::time_collocate_spike_data, sw_collocate_spike_data_.elapsed() );
   def< double >( dict, names::time_communicate_spike_data, sw_communicate_spike_data_.elapsed() );
-  def< double >( dict, names::time_communicate_target_data, sw_communicate_target_data_.elapsed() );
+  OUTPUT_TIMER( dict, names::time_communicate_target_data, sw_communicate_target_data_ );
 #endif
 }
 
@@ -811,7 +811,9 @@ EventDeliveryManager::gather_target_data( const size_t tid )
         resize_send_recv_buffers_target_data();
       }
     } // of omp master; (no barrier)
+    DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).start();
 #pragma omp barrier
+    DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).stop();
 
     kernel().connection_manager.restore_source_table_entry_point( tid );
 
@@ -826,19 +828,17 @@ EventDeliveryManager::gather_target_data( const size_t tid )
       set_complete_marker_target_data_( assigned_ranks, send_buffer_position );
     }
     kernel().connection_manager.save_source_table_entry_point( tid );
+    DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).start();
 #pragma omp barrier
+    DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).stop();
     kernel().connection_manager.clean_source_table( tid );
 
+    DETAILED_TIMER( sw_communicate_target_data_, tid ).start();
 #pragma omp master
     {
-#ifdef TIMER_DETAILED
-      sw_communicate_target_data_.start();
-#endif
       kernel().mpi_manager.communicate_target_data_Alltoall( send_buffer_target_data_, recv_buffer_target_data_ );
-#ifdef TIMER_DETAILED
-      sw_communicate_target_data_.stop();
-#endif
     } // of omp master (no barriers!)
+    DETAILED_TIMER( sw_communicate_target_data_, tid ).stop();
 #pragma omp barrier
 
     const bool distribute_completed = distribute_target_data_buffers_( tid );
@@ -883,7 +883,9 @@ EventDeliveryManager::gather_target_data_compressed( const size_t tid )
         resize_send_recv_buffers_target_data();
       }
     } // of omp master; no barrier
+    DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).start();
 #pragma omp barrier
+    DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).stop();
 
     TargetSendBufferPosition send_buffer_position(
       assigned_ranks, kernel().mpi_manager.get_send_recv_count_target_data_per_rank() );
@@ -898,17 +900,15 @@ EventDeliveryManager::gather_target_data_compressed( const size_t tid )
       set_complete_marker_target_data_( assigned_ranks, send_buffer_position );
     }
 
+    DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).start();
 #pragma omp barrier
+    DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).stop();
 
 #pragma omp master
     {
-#ifdef TIMER_DETAILED
-      sw_communicate_target_data_.start();
-#endif
+      DETAILED_TIMER( sw_communicate_target_data_, tid ).start();
       kernel().mpi_manager.communicate_target_data_Alltoall( send_buffer_target_data_, recv_buffer_target_data_ );
-#ifdef TIMER_DETAILED
-      sw_communicate_target_data_.stop();
-#endif
+      DETAILED_TIMER( sw_communicate_target_data_, tid ).stop();
     } // of omp master (no barrier)
 #pragma omp barrier
 
@@ -925,7 +925,9 @@ EventDeliveryManager::gather_target_data_compressed( const size_t tid )
       {
         buffer_size_target_data_has_changed_ = kernel().mpi_manager.increase_buffer_size_target_data();
       } // of omp master (no barrier)
+      DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).start();
 #pragma omp barrier
+      DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).stop();
     }
 
   } // of while
