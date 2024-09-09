@@ -514,6 +514,7 @@ nest::SimulationManager::prepare()
   }
 
   // reset profiling timers
+  reset_timers_for_preparation();
   reset_timers_for_dynamics();
   kernel().event_delivery_manager.reset_timers_for_dynamics();
 
