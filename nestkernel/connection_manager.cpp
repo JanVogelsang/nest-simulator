@@ -1592,7 +1592,6 @@ nest::ConnectionManager::sort_connections( const size_t tid )
 #endif
   {
     assert( not source_table_.is_cleared() );
-    // TODO JV: Sorting not required in large-scale case
     for ( synindex syn_id = 0; syn_id < connections_[ tid ].size(); ++syn_id )
     {
       if ( connections_[ tid ][ syn_id ] )

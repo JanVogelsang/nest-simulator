@@ -471,7 +471,7 @@ private:
   // (intended for internal core developers, not for use in the public API)
   SingleStopwatch sw_collocate_spike_data_;
   SingleStopwatch sw_communicate_spike_data_;
-  Stopwatch sw_communicate_target_data_;
+  SingleStopwatch sw_communicate_target_data_;
 #endif
 };
 
