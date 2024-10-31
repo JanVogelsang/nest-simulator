@@ -429,7 +429,9 @@ EventDeliveryManager::gather_spike_data_( std::vector< SpikeDataT >& send_buffer
 #ifdef TIMER_DETAILED
     {
       sw_collocate_spike_data_.stop();
+#ifdef HAVE_MPI
       MPI_Barrier( kernel().mpi_manager.get_communicator() );
+#endif
       sw_communicate_spike_data_.start();
     }
 #endif
@@ -834,57 +836,36 @@ EventDeliveryManager::gather_target_data( const size_t tid )
     DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).stop();
     kernel().connection_manager.clean_source_table( tid );
 
-
-#pragma omp parallel
-    {
-      // parallel code
-      // parallel timer
-    }
-
-    // sequential code
-    // timer
-
-#pragma omp parallel
-    {
-      // parallel code
-      // parallel timer
-
-#pragma omp master {
-      //
-    };
-// synchronization start
-#pragma omp barrier
-    // synchronization end
-  };
-
-#pragma omp master
-  {
-#ifdef TIMER_DETAILED
-    MPI_Barrier( kernel().mpi_manager.get_communicator() );
-    sw_communicate_target_data_.start();
-#endif
-    kernel().mpi_manager.communicate_target_data_Alltoall( send_buffer_target_data_, recv_buffer_target_data_ );
-#ifdef TIMER_DETAILED
-    sw_communicate_target_data_.stop();
-#endif
-  } // of omp master (no barriers!)
-#pragma omp barrier
-
-  const bool distribute_completed = distribute_target_data_buffers_( tid );
-  gather_completed_checker_.logical_and( tid, distribute_completed );
-
-  // resize mpi buffers, if necessary and allowed
-  if ( gather_completed_checker_.any_false() and kernel().mpi_manager.adaptive_target_buffers() )
-  {
 #pragma omp master
     {
-      buffer_size_target_data_has_changed_ = kernel().mpi_manager.increase_buffer_size_target_data();
-    }
+#ifdef TIMER_DETAILED
+#ifdef HAVE_MPI
+      MPI_Barrier( kernel().mpi_manager.get_communicator() );
+#endif
+      sw_communicate_target_data_.start();
+#endif
+      kernel().mpi_manager.communicate_target_data_Alltoall( send_buffer_target_data_, recv_buffer_target_data_ );
+#ifdef TIMER_DETAILED
+      sw_communicate_target_data_.stop();
+#endif
+    } // of omp master (no barriers!)
 #pragma omp barrier
-  }
-} // of while
 
-kernel().connection_manager.clear_source_table( tid );
+    const bool distribute_completed = distribute_target_data_buffers_( tid );
+    gather_completed_checker_.logical_and( tid, distribute_completed );
+
+    // resize mpi buffers, if necessary and allowed
+    if ( gather_completed_checker_.any_false() and kernel().mpi_manager.adaptive_target_buffers() )
+    {
+#pragma omp master
+      {
+        buffer_size_target_data_has_changed_ = kernel().mpi_manager.increase_buffer_size_target_data();
+      }
+#pragma omp barrier
+    }
+  } // of while
+
+  kernel().connection_manager.clear_source_table( tid );
 }
 
 void
@@ -936,7 +917,9 @@ EventDeliveryManager::gather_target_data_compressed( const size_t tid )
 #pragma omp master
     {
 #ifdef TIMER_DETAILED
+#ifdef HAVE_MPI
       MPI_Barrier( kernel().mpi_manager.get_communicator() );
+#endif
       sw_communicate_target_data_.start();
 #endif
       kernel().mpi_manager.communicate_target_data_Alltoall( send_buffer_target_data_, recv_buffer_target_data_ );

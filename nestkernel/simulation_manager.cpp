@@ -534,8 +534,12 @@ nest::SimulationManager::prepare()
     kernel().connection_manager.load_connections_from_file();
   }
   // TODO JV: Debug
+  DictionaryDatum d( new Dictionary ), s( new Dictionary );
+  kernel().random_manager.get_status( s );
+  def< long >( d, names::rng_seed, getValue< long >( s, names::rng_seed ) );
   kernel().random_manager.finalize( false );
   kernel().random_manager.initialize( false );
+  kernel().random_manager.set_status( d );
 
   kernel().node_manager.prepare_nodes();
 
