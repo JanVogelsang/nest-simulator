@@ -52,9 +52,15 @@ namespace nest
 #endif
 
 #ifdef TIMER_DETAILED
-#define DETAILED_TIMER( timer, tid ) TIMER( timer, tid )
+#define DETAILED_TIMER_START( timer, tid ) TIMER( timer, tid ).start();
 #else
-#define DETAILED_TIMER( timer, tid )
+#define DETAILED_TIMER_START( timer, tid )
+#endif
+
+#ifdef TIMER_DETAILED
+#define DETAILED_TIMER_STOP( timer, tid ) TIMER( timer, tid ).stop();
+#else
+#define DETAILED_TIMER_STOP( timer, tid )
 #endif
 
 // TODO JV: Update docs

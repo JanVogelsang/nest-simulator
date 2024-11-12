@@ -748,21 +748,21 @@ nest::SimulationManager::call_update_()
 void
 nest::SimulationManager::update_connection_infrastructure( const size_t tid )
 {
-  DETAILED_TIMER( sw_idle_, tid ).start();
+  DETAILED_TIMER_START( sw_idle_, tid );
 #pragma omp barrier
-  DETAILED_TIMER( sw_idle_, tid ).stop();
+  DETAILED_TIMER_STOP( sw_idle_, tid );
 
   TIMER( sw_communicate_prepare_, tid ).start();
 
   kernel().connection_manager.sort_connections( tid );
-  DETAILED_TIMER( sw_gather_target_data_, tid ).start();
+  DETAILED_TIMER_START( sw_gather_target_data_, tid );
   kernel().connection_manager.restructure_connection_tables( tid );
   kernel().connection_manager.collect_compressed_spike_data( tid );
-  DETAILED_TIMER( sw_gather_target_data_, tid ).stop();
+  DETAILED_TIMER_STOP( sw_gather_target_data_, tid );
 
-  DETAILED_TIMER( sw_idle_, tid ).start();
+  DETAILED_TIMER_START( sw_idle_, tid );
 #pragma omp barrier // wait for all threads to finish sorting
-  DETAILED_TIMER( sw_idle_, tid ).stop();
+  DETAILED_TIMER_STOP( sw_idle_, tid );
 
 #pragma omp single
   {
@@ -779,9 +779,9 @@ nest::SimulationManager::update_connection_infrastructure( const size_t tid )
   {
 #pragma omp barrier
     kernel().connection_manager.compute_compressed_secondary_recv_buffer_positions( tid );
-    DETAILED_TIMER( sw_idle_, tid ).start();
+    DETAILED_TIMER_START( sw_idle_, tid );
 #pragma omp barrier
-    DETAILED_TIMER( sw_idle_, tid ).stop();
+    DETAILED_TIMER_STOP( sw_idle_, tid );
 #pragma omp single
     {
       kernel().mpi_manager.communicate_recv_counts_secondary_events();
@@ -789,7 +789,7 @@ nest::SimulationManager::update_connection_infrastructure( const size_t tid )
     }
   }
 
-  DETAILED_TIMER( sw_gather_target_data_, tid ).start();
+  DETAILED_TIMER_START( sw_gather_target_data_, tid );
 
   // communicate connection information from postsynaptic to
   // presynaptic side
@@ -807,23 +807,23 @@ nest::SimulationManager::update_connection_infrastructure( const size_t tid )
     kernel().event_delivery_manager.gather_target_data( tid );
   }
 
-  DETAILED_TIMER( sw_gather_target_data_, tid ).stop();
+  DETAILED_TIMER_STOP( sw_gather_target_data_, tid );
 
   if ( kernel().connection_manager.secondary_connections_exist() )
   {
     kernel().connection_manager.compress_secondary_send_buffer_pos( tid );
   }
 
-  DETAILED_TIMER( sw_idle_, tid ).start();
+  DETAILED_TIMER_START( sw_idle_, tid );
 #pragma omp barrier
-  DETAILED_TIMER( sw_idle_, tid ).stop();
+  DETAILED_TIMER_STOP( sw_idle_, tid );
 #pragma omp single
   {
     kernel().connection_manager.clear_compressed_spike_data_map();
     kernel().node_manager.set_have_nodes_changed( false );
     kernel().connection_manager.unset_connections_have_changed();
   }
-  DETAILED_TIMER( sw_communicate_prepare_, tid ).stop();
+  DETAILED_TIMER_STOP( sw_communicate_prepare_, tid );
 }
 
 bool
@@ -873,19 +873,19 @@ nest::SimulationManager::update_()
           // from the time step preceding the arrival of the spike triggering the weight update.
           if ( kernel().connection_manager.secondary_connections_exist() )
           {
-            DETAILED_TIMER( sw_deliver_secondary_data_, tid ).start();
+            DETAILED_TIMER_START( sw_deliver_secondary_data_, tid );
             kernel().event_delivery_manager.deliver_secondary_events( tid, false );
-            DETAILED_TIMER( sw_deliver_secondary_data_, tid ).stop();
+            DETAILED_TIMER_STOP( sw_deliver_secondary_data_, tid );
           }
 
           if ( kernel().connection_manager.has_primary_connections() )
           {
-            DETAILED_TIMER( sw_deliver_spike_data_, tid ).start();
+            DETAILED_TIMER_START( sw_deliver_spike_data_, tid );
             // Deliver spikes from receive buffer to ring buffers.
             kernel().event_delivery_manager.deliver_events( tid );
 
 
-            DETAILED_TIMER( sw_deliver_spike_data_, tid ).stop();
+            DETAILED_TIMER_STOP( sw_deliver_spike_data_, tid );
           }
 
 #ifdef HAVE_MUSIC
@@ -895,9 +895,9 @@ nest::SimulationManager::update_()
           // MUSIC *before* MUSIC time is advanced
 
           // wait until all threads are done -> synchronize
-          DETAILED_TIMER( sw_idle_, tid ).start();
+          DETAILED_TIMER_START( sw_idle_, tid );
 #pragma omp barrier
-          DETAILED_TIMER( sw_idle_, tid ).stop();
+          DETAILED_TIMER_STOP( sw_idle_, tid );
 // the following block is executed by the master thread only
 // the other threads are enforced to wait at the end of the block
 #pragma omp master
@@ -958,9 +958,9 @@ nest::SimulationManager::update_()
 #pragma omp critical
             done.push_back( done_p );
             // parallel section ends, wait until all threads are done -> synchronize
-            DETAILED_TIMER( sw_idle_, tid ).start();
+            DETAILED_TIMER_START( sw_idle_, tid );
 #pragma omp barrier
-            DETAILED_TIMER( sw_idle_, tid ).stop();
+            DETAILED_TIMER_STOP( sw_idle_, tid );
 
 // the following block is executed by a single thread
 // the other threads wait at the end of the block
@@ -1020,9 +1020,9 @@ nest::SimulationManager::update_()
             Node* node = i->get_node();
             node->update_synaptic_elements( Time( Time::step( clock_.get_steps() + from_step_ ) ).get_ms() );
           }
-          DETAILED_TIMER( sw_idle_, tid ).start();
+          DETAILED_TIMER_START( sw_idle_, tid );
 #pragma omp barrier
-          DETAILED_TIMER( sw_idle_, tid ).stop();
+          DETAILED_TIMER_STOP( sw_idle_, tid );
 #pragma omp single
           {
             kernel().sp_manager.update_structural_plasticity();
@@ -1044,7 +1044,7 @@ nest::SimulationManager::update_()
 
         } // of structural plasticity
 
-        DETAILED_TIMER( sw_update_, tid ).start();
+        DETAILED_TIMER_START( sw_update_, tid );
         const SparseNodeArray& thread_local_nodes = kernel().node_manager.get_local_nodes( tid );
 
         for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
@@ -1056,12 +1056,12 @@ nest::SimulationManager::update_()
           }
         }
 
-        DETAILED_TIMER( sw_update_, tid ).stop();
+        DETAILED_TIMER_STOP( sw_update_, tid );
 
         // parallel section ends, wait until all threads are done -> synchronize
-        DETAILED_TIMER( sw_idle_, tid ).start();
+        DETAILED_TIMER_START( sw_idle_, tid );
 #pragma omp barrier
-        DETAILED_TIMER( sw_idle_, tid ).stop();
+        DETAILED_TIMER_STOP( sw_idle_, tid );
 
         // the following block is executed by the master thread only
         // the other threads are enforced to wait at the end of the block
@@ -1071,21 +1071,21 @@ nest::SimulationManager::update_()
         {
           if ( kernel().connection_manager.has_primary_connections() )
           {
-            DETAILED_TIMER( sw_gather_spike_data_, tid ).start();
+            DETAILED_TIMER_START( sw_gather_spike_data_, tid );
 #pragma omp master
             {
               kernel().event_delivery_manager.gather_spike_data();
             }
-            DETAILED_TIMER( sw_gather_spike_data_, tid ).stop();
+            DETAILED_TIMER_STOP( sw_gather_spike_data_, tid );
           }
           if ( kernel().connection_manager.secondary_connections_exist() )
           {
-            DETAILED_TIMER( sw_gather_secondary_data_, tid ).start();
+            DETAILED_TIMER_START( sw_gather_secondary_data_, tid );
 #pragma omp master
             {
               kernel().event_delivery_manager.gather_secondary_events( true );
             }
-            DETAILED_TIMER( sw_gather_secondary_data_, tid ).stop();
+            DETAILED_TIMER_STOP( sw_gather_secondary_data_, tid );
           }
         }
 
@@ -1114,9 +1114,9 @@ nest::SimulationManager::update_()
 #ifdef HAVE_SIONLIB
         kernel().io_manager.post_step_hook();
         // enforce synchronization after post-step activities of the recording backends
-        DETAILED_TIMER( sw_idle_, tid ).start();
+        DETAILED_TIMER_START( sw_idle_, tid );
 #pragma omp barrier
-        DETAILED_TIMER( sw_idle_, tid ).stop();
+        DETAILED_TIMER_STOP( sw_idle_, tid );
 #endif
 
         const double end_current_update = sw_simulate_.elapsed();

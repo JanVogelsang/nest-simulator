@@ -814,9 +814,9 @@ EventDeliveryManager::gather_target_data( const size_t tid )
         resize_send_recv_buffers_target_data();
       }
     } // of omp master; (no barrier)
-    DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).start();
+    DETAILED_TIMER_START( kernel().simulation_manager.get_idle_stopwatch(), tid );
 #pragma omp barrier
-    DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).stop();
+    DETAILED_TIMER_STOP( kernel().simulation_manager.get_idle_stopwatch(), tid );
 
     kernel().connection_manager.restore_source_table_entry_point( tid );
 
@@ -831,9 +831,9 @@ EventDeliveryManager::gather_target_data( const size_t tid )
       set_complete_marker_target_data_( assigned_ranks, send_buffer_position );
     }
     kernel().connection_manager.save_source_table_entry_point( tid );
-    DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).start();
+    DETAILED_TIMER_START( kernel().simulation_manager.get_idle_stopwatch(), tid );
 #pragma omp barrier
-    DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).stop();
+    DETAILED_TIMER_STOP( kernel().simulation_manager.get_idle_stopwatch(), tid );
     kernel().connection_manager.clean_source_table( tid );
 
 #pragma omp master
@@ -893,9 +893,9 @@ EventDeliveryManager::gather_target_data_compressed( const size_t tid )
         resize_send_recv_buffers_target_data();
       }
     } // of omp master; no barrier
-    DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).start();
+    DETAILED_TIMER_START( kernel().simulation_manager.get_idle_stopwatch(), tid );
 #pragma omp barrier
-    DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).stop();
+    DETAILED_TIMER_STOP( kernel().simulation_manager.get_idle_stopwatch(), tid );
 
     TargetSendBufferPosition send_buffer_position(
       assigned_ranks, kernel().mpi_manager.get_send_recv_count_target_data_per_rank() );
@@ -910,9 +910,9 @@ EventDeliveryManager::gather_target_data_compressed( const size_t tid )
       set_complete_marker_target_data_( assigned_ranks, send_buffer_position );
     }
 
-    DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).start();
+    DETAILED_TIMER_START( kernel().simulation_manager.get_idle_stopwatch(), tid );
 #pragma omp barrier
-    DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).stop();
+    DETAILED_TIMER_STOP( kernel().simulation_manager.get_idle_stopwatch(), tid );
 
 #pragma omp master
     {
@@ -942,9 +942,9 @@ EventDeliveryManager::gather_target_data_compressed( const size_t tid )
       {
         buffer_size_target_data_has_changed_ = kernel().mpi_manager.increase_buffer_size_target_data();
       } // of omp master (no barrier)
-      DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).start();
+      DETAILED_TIMER_START( kernel().simulation_manager.get_idle_stopwatch(), tid );
 #pragma omp barrier
-      DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).stop();
+      DETAILED_TIMER_STOP( kernel().simulation_manager.get_idle_stopwatch(), tid );
     }
 
   } // of while

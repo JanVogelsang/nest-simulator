@@ -189,11 +189,13 @@ public:
   Time get_eprop_learning_window() const;
   bool get_eprop_reset_neurons_on_update() const;
 
+#ifdef TIMER_DETAILED
   Stopwatch&
   get_idle_stopwatch()
   {
     return sw_idle_;
   }
+#endif
 
 private:
   void call_update_(); //!< actually run simulation, aka wrap update_

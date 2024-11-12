@@ -229,9 +229,9 @@ nest::SourceTable::compute_buffer_pos_for_unique_secondary_sources( const size_t
       }
     }
   }
-  DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).start();
+  DETAILED_TIMER_START( kernel().simulation_manager.get_idle_stopwatch(), tid );
 #pragma omp barrier
-  DETAILED_TIMER( kernel().simulation_manager.get_idle_stopwatch(), tid ).stop();
+  DETAILED_TIMER_STOP( kernel().simulation_manager.get_idle_stopwatch(), tid );
 
 #pragma omp single
   {
