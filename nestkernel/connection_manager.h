@@ -376,10 +376,9 @@ public:
   bool use_compressed_spikes() const;
 
   /**
-   * Sorts connections in the presynaptic infrastructure by increasing
-   * source node ID.
+   * Sorts connections in the presynaptic infrastructure by increasing source node ID.
    */
-  void sort_connections( const size_t tid );
+  bool sort_connections( const size_t tid );
 
   void load_connections_from_file(); // TODO JV: Debug
 

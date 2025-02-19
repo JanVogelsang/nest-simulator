@@ -156,6 +156,8 @@ nest_process_userdoc()
 nest_process_devdoc()
 nest_process_full_logging()
 
+find_package( VTune )
+
 nest_process_models()
 
 # These two function calls must come last, as to prevent unwanted interactions of the newly set flags
@@ -283,7 +285,8 @@ set( MODULE_LINK_LIBS
   "${MPI_CXX_LIBRARIES}"
   "${OpenMP_CXX_LIBRARIES}"
   "${SIONLIB_LIBRARIES}"
-  "${BOOST_LIBRARIES}" )
+  "${BOOST_LIBRARIES}"
+  "${VTUNE_LIBRARIES}" )
 
 if ( with-libraries )
   set( MODULE_LINK_LIBS "${MODULE_LINK_LIBS};${with-libraries}" )
@@ -312,7 +315,7 @@ foreach ( INC ${ALL_INCLUDES_tmp} ${with-includes} )
     set( ALL_INCLUDES "${ALL_INCLUDES} -I${INC}" )
   endif ()
 endforeach ()
-set( ALL_INCLUDES "${ALL_INCLUDES} ${SIONLIB_INCLUDE}" )
+set( ALL_INCLUDES "${ALL_INCLUDES} ${SIONLIB_INCLUDE}" ${VTUNE_INCLUDE} )
 
 ################################################################################
 ##################           File generation here             ##################

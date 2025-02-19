@@ -1580,7 +1580,7 @@ nest::ConnectionManager::load_connections_from_file()
 #endif
 }
 
-void
+bool
 nest::ConnectionManager::sort_connections( const size_t tid )
 {
   // TODO JV: Debug
@@ -1706,7 +1706,9 @@ nest::ConnectionManager::sort_connections( const size_t tid )
       sources_out.close();
     }
 #endif
+    return true;
   }
+  return false;
 }
 
 void

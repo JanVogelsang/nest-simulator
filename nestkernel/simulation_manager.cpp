@@ -26,7 +26,10 @@
 #include <sys/time.h>
 
 // C++ includes:
-#include <clang/18/include/omp.h>
+// #include <clang/18/include/omp.h>
+// #ifdef HAVE_VTUNE
+#include <ittnotify.h> // VTune
+// #endif
 #include <limits>
 #include <vector>
 
@@ -689,7 +692,7 @@ nest::SimulationManager::cleanup()
   kernel().node_manager.finalize_nodes();
   prepared_ = false;
 
-  omp_control_tool( omp_control_tool_end, 0, nullptr );
+  // omp_control_tool(omp_control_tool_end, 0, nullptr);
 }
 
 void
@@ -734,9 +737,9 @@ nest::SimulationManager::call_update_()
   simulating_ = true;
   simulated_ = true;
 
-  omp_control_tool( omp_control_tool_start, 0, nullptr );
+  // omp_control_tool(omp_control_tool_start, 0, nullptr);
   update_();
-  omp_control_tool( omp_control_tool_pause, 0, nullptr );
+  // omp_control_tool(omp_control_tool_pause, 0, nullptr);
 
   simulating_ = false;
 
@@ -756,11 +759,13 @@ nest::SimulationManager::update_connection_infrastructure( const size_t tid )
   DETAILED_TIMER_START( sw_idle_, tid );
 #pragma omp barrier
   DETAILED_TIMER_STOP( sw_idle_, tid );
+  DETAILED_TIMER_START( sw_communicate_prepare_, tid );
 
-  TIMER( sw_communicate_prepare_, tid ).start();
-
-  kernel().connection_manager.sort_connections( tid );
-  DETAILED_TIMER_START( sw_gather_target_data_, tid );
+  if ( kernel().connection_manager.sort_connections( tid ) )
+  {
+    return;
+  }
+  DETAILED_TIMER_START( sw_gather_target_data_, tid )
   kernel().connection_manager.restructure_connection_tables( tid );
   kernel().connection_manager.collect_compressed_spike_data( tid );
   DETAILED_TIMER_STOP( sw_gather_target_data_, tid );
@@ -859,6 +864,11 @@ nest::SimulationManager::update_()
     // exceptions here and then handle them after the parallel region.
     try
     {
+      __itt_domain* domain = __itt_domain_create( "NEST.Simulate" );
+      __itt_string_handle* handle_work = __itt_string_handle_create( "simulate" );
+      __itt_thread_set_name( ( "thread #" + std::to_string( tid ) ).data() );
+      __itt_task_begin( domain, __itt_null, __itt_null, handle_work );
+
       do
       {
         if ( print_time_ )
@@ -890,6 +900,10 @@ nest::SimulationManager::update_()
             kernel().event_delivery_manager.deliver_events( tid );
 
             DETAILED_TIMER_STOP( sw_deliver_spike_data_, tid );
+            // TODO JV: Debug
+            DETAILED_TIMER_START( sw_idle_, tid );
+#pragma omp barrier
+            DETAILED_TIMER_STOP( sw_idle_, tid );
           }
 
 #ifdef HAVE_MUSIC
@@ -1141,6 +1155,8 @@ nest::SimulationManager::update_()
         Node* node = i->get_node();
         node->update_synaptic_elements( Time( Time::step( clock_.get_steps() + to_step_ ) ).get_ms() );
       }
+
+      __itt_task_end( domain );
     }
     catch ( std::exception& e )
     {
