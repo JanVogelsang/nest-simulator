@@ -26,6 +26,7 @@
 #include <sys/time.h>
 
 // C++ includes:
+#include <clang/18/include/omp.h>
 #include <limits>
 #include <vector>
 
@@ -687,6 +688,8 @@ nest::SimulationManager::cleanup()
 
   kernel().node_manager.finalize_nodes();
   prepared_ = false;
+
+  omp_control_tool( omp_control_tool_end, 0, nullptr );
 }
 
 void
@@ -731,7 +734,9 @@ nest::SimulationManager::call_update_()
   simulating_ = true;
   simulated_ = true;
 
+  omp_control_tool( omp_control_tool_start, 0, nullptr );
   update_();
+  omp_control_tool( omp_control_tool_pause, 0, nullptr );
 
   simulating_ = false;
 
@@ -883,7 +888,6 @@ nest::SimulationManager::update_()
             DETAILED_TIMER_START( sw_deliver_spike_data_, tid );
             // Deliver spikes from receive buffer to ring buffers.
             kernel().event_delivery_manager.deliver_events( tid );
-
 
             DETAILED_TIMER_STOP( sw_deliver_spike_data_, tid );
           }

@@ -111,8 +111,6 @@ SendBufferPosition::increase( const size_t rank )
 class TargetSendBufferPosition
 {
 private:
-  size_t begin_rank_;
-  size_t end_rank_;
   size_t max_size_;
   size_t num_target_data_written_;
   size_t send_recv_count_per_rank_;
@@ -159,9 +157,7 @@ public:
 
 inline TargetSendBufferPosition::TargetSendBufferPosition( const AssignedRanks& assigned_ranks,
   const unsigned int send_recv_count_per_rank )
-  : begin_rank_( assigned_ranks.begin )
-  , end_rank_( assigned_ranks.end )
-  , max_size_( assigned_ranks.max_size )
+  : max_size_( assigned_ranks.max_size )
   , num_target_data_written_( 0 )
   , send_recv_count_per_rank_( send_recv_count_per_rank )
 {
@@ -182,8 +178,6 @@ inline TargetSendBufferPosition::TargetSendBufferPosition( const AssignedRanks& 
 inline size_t
 TargetSendBufferPosition::rank_to_index_( const size_t rank ) const
 {
-  assert( begin_rank_ <= rank );
-  assert( rank < end_rank_ );
   return rank % max_size_;
 }
 
