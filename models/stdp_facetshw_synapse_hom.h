@@ -501,10 +501,12 @@ stdp_facetshw_synapse_hom< targetidentifierT >::send( Event& e,
 
   double dendritic_delay = Time( Time::step( get_delay_steps() ) ).get_ms();
 
+  Node* target = static_cast< Node* >( get_target( t ) );
+
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
   std::deque< histentry >::iterator start;
   std::deque< histentry >::iterator finish;
-  get_target( t )->get_history( t_lastspike_ - dendritic_delay, t_spike - dendritic_delay, &start, &finish );
+  target->get_history( t_lastspike_ - dendritic_delay, t_spike - dendritic_delay, &start, &finish );
 
   // facilitation due to the first postsynaptic spike since the last
   // pre-synaptic spike

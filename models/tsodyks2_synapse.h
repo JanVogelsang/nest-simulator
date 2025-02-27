@@ -226,7 +226,7 @@ template < typename targetidentifierT >
 inline void
 tsodyks2_synapse< targetidentifierT >::send( Event& e, size_t t, const CommonSynapseProperties& )
 {
-  Node* target = get_target( t );
+  Node* target = static_cast< Node* >( get_target( t ) );
   const double t_spike = e.get_stamp().get_ms();
   const double h = t_spike - t_lastspike_;
   double x_decay = std::exp( -h / tau_rec_ );

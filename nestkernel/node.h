@@ -44,7 +44,7 @@
 #include "dictdatum.h"
 
 /** @file node.h
- * Declarations for base class Node
+ * Declarations for base class Node and NodeBase
  */
 
 namespace nest
@@ -53,54 +53,7 @@ class Model;
 class ArchivingNode;
 class TimeConverter;
 
-
-/**
- * @defgroup user_interface Model developer interface.
- *
- * Functions and classes important for implementing new Node and
- * Model classes.
- */
-
-/**
- * Base class for all NEST network objects.
- *
- * Class Node is the top of the simulation object hierarchy. It
- * defines the most general interface to a network element.
- *
- * Class Node provide the interface for
- * - updating the dynamic state of an object
- * - connecting nodes, using particular Events
- * - accepting connection requests
- * - handling incoming events
- * A new type of Node must be derived from this base class and
- * implement its interface.
- * In order to keep the inheritance hierarchy flat, it is encouraged
- * to directly subclass from base class Node.
- *
- * @see class Event
- * @ingroup user_interface
- */
-
-/** @BeginDocumentation
-
-   Name: Node - General properties of all nodes.
-
-   Parameters:
-   frozen     booltype    - Whether the node is updated during simulation
-   global_id  integertype - The node ID of the node (cf. local_id)
-   local      booltype    - Whether the node is available on the local process
-   model      literaltype - The model type the node was created from
-   state      integertype - The state of the node (see the help on elementstates
-                            for details)
-   thread     integertype - The id of the thread the node is assigned to (valid
-                            locally)
-   vp         integertype - The id of the virtual process the node is assigned
-                            to (valid globally)
-
-   SeeAlso: GetStatus, SetStatus, elementstates
- */
-
-class Node
+class NodeBase
 {
   friend class NodeManager;
   friend class ModelManager;
@@ -108,18 +61,17 @@ class Node
   friend class Model;
   friend class SimulationManager;
 
-  Node& operator=( const Node& ); //!< not implemented
+  NodeBase& operator=( const NodeBase& ); //!< not implemented
 
 public:
-  Node();
-  Node( Node const& );
-  virtual ~Node();
+  NodeBase();
+  NodeBase( NodeBase const& );
+  virtual ~NodeBase();
 
   /**
-   * This function creates a new object by calling the derived class' copy constructor and
-   * returning its pointer.
+   * This function creates a new object by calling the derived class' copy constructor and returning its pointer.
    */
-  virtual Node*
+  virtual NodeBase*
   clone() const
   {
     return nullptr;
@@ -131,27 +83,7 @@ public:
    * This is used to discriminate between different types of nodes, when adding
    * new nodes to the network.
    */
-  virtual bool has_proxies() const;
-
-  /**
-   * Returns true if the node supports the Urbanczik-Senn plasticity rule
-   */
-  virtual bool supports_urbanczik_archiving() const;
-
-  /**
-   * Returns true if the node only receives events from nodes/devices
-   * on the same thread.
-   */
-  virtual bool local_receiver() const;
-
-  /**
-   * Returns true if the node exists only once per process, but does
-   * not have proxies on remote threads.
-   *
-   * This is used to discriminate between different types of nodes, when adding new
-   * nodes to the network. As of now, this function is only true for MUSIC related proxies?
-   */
-  virtual bool one_node_per_process() const;
+  virtual bool has_proxies() const = 0;
 
   /**
    * Returns true if the node sends/receives off-grid events.
@@ -166,7 +98,7 @@ public:
    *
    * This is implemented because the use of RTTI is rather expensive.
    */
-  virtual bool is_proxy() const;
+  virtual bool is_proxy() const = 0;
 
   /**
    * Return class name.
@@ -180,32 +112,26 @@ public:
   /**
    * Return the element type of the node.
    *
-   * The returned Name is a free label describing the class of network
-   * elements a node belongs to. Currently used values are "neuron",
-   * "recorder", "stimulator", and "other", which are all defined as
-   * static Name objects in the names namespace.
-   * This function is overwritten with a corresponding value in the
-   * derived classes
+   * The returned Name is a free label describing the class of network elements a node belongs to. Currently used values
+   * are "neuron", "recorder", "stimulator", and "other", which are all defined as static Name objects in the names
+   * namespace.
+   * This function is overwritten with a corresponding value in the derived classes.
    */
-  virtual Name get_element_type() const;
+  virtual Name get_element_type() const = 0;
 
   /**
-   * Return global Network ID.
+   * Returns true if the node exists only once per process, but does
+   * not have proxies on remote threads.
    *
-   * Returns the global network ID of the Node.
-   * Each node has a unique network ID which can be used to access
-   * the Node comparable to a pointer.
-   *
-   * The smallest valid node ID is 1.
+   * This is used to discriminate between different types of nodes, when adding new
+   * nodes to the network. As of now, this function is only true for MUSIC related proxies?
    */
-  size_t get_node_id() const;
-
+  virtual bool one_node_per_process() const = 0;
 
   /**
    * Return model ID of the node.
    *
-   * Returns the model ID of the model for this node.
-   * Model IDs start with 0.
+   * Returns the model ID of the model for this node. Model IDs start with 0.
    * @note The model ID is not stored in the model prototype instance.
    *       It is only set when actual nodes are created from a prototype.
    */
@@ -215,17 +141,6 @@ public:
    * Returns true if node is frozen, i.e., shall not be updated.
    */
   bool is_frozen() const;
-
-  /**
-   * Returns true if the node uses the waveform relaxation method
-   */
-  bool node_uses_wfr() const;
-
-  /**
-   * Sets node_uses_wfr_ member variable
-   * (to be able to set it to "true" for any class derived from Node)
-   */
-  void set_node_uses_wfr( const bool );
 
   /**
    * Initialize node prior to first simulation after node has been created.
@@ -296,24 +211,6 @@ public:
   virtual void update( Time const&, const long, const long ) = 0;
 
   /**
-   * Bring the node from state $t$ to $t+n*dt$, sends SecondaryEvents
-   * (e.g. GapJunctionEvent) and resets state variables to values at $t$.
-   *
-   * n->wfr_update(T, from, to) performs the update steps beginning
-   * at T+from .. T+to-1.
-   *
-   * Does not emit spikes, does not log state variables.
-   *
-   * throws UnexpectedEvent if not reimplemented in derived class
-   *
-   * @param Time   network time at beginning of time slice.
-   * @param long initial step inside time slice
-   * @param long post-final step inside time slice
-   *
-   */
-  virtual bool wfr_update( Time const&, const long, const long );
-
-  /**
    * @defgroup status_interface Configuration interface.
    *
    * Functions and infrastructure, responsible for the configuration
@@ -337,7 +234,7 @@ public:
    * @param d Dictionary with named parameter settings.
    * @ingroup status_interface
    */
-  virtual void set_status( const DictionaryDatum& ) = 0;
+  virtual void set_status( const DictionaryDatum& );
 
   /**
    * Export properties of the node by setting
@@ -346,7 +243,7 @@ public:
    * @param d Dictionary.
    * @ingroup status_interface
    */
-  virtual void get_status( DictionaryDatum& ) const = 0;
+  virtual void get_status( DictionaryDatum& ) const;
 
 public:
   /**
@@ -361,56 +258,6 @@ public:
    *
    * @see Event
    */
-
-  /**
-   * Send an event to the receiving_node passed as an argument.
-   *
-   * This is required during the connection handshaking to test,
-   * if the receiving_node can handle the event type and receptor_type sent
-   * by the source node.
-   *
-   * If dummy_target is true, this indicates that receiving_node is derived from
-   * ConnTestDummyNodeBase and used in the first call to send_test_event().
-   * This can be ignored in most cases, but Nodes sending DS*Events to their
-   * own event hooks and then *Events to their proper targets must send
-   * DS*Events when called with the dummy target, and *Events when called with
-   * the real target, see #478.
-   */
-  virtual size_t send_test_event( Node& receiving_node, size_t receptor_type, synindex syn_id, bool dummy_target );
-
-  /**
-   * Check if the node can handle a particular event and receptor type.
-   *
-   * This function is called upon connection setup by send_test_event().
-   *
-   * handles_test_event() function is used to verify that the receiver
-   * can handle the event. It can also be used by the receiver to
-   * return information to the sender in form of the returned port.
-   * The default implementation throws an IllegalConnection
-   * exception.  Any node class should define handles_test_event()
-   * functions for all those event types it can handle.
-   *
-   * See Kunkel et al, Front Neuroinform 8:78 (2014), Sec 3.
-   *
-   * @note The semantics of all other handles_test_event() functions is
-   * identical.
-   * @ingroup event_interface
-   * @throws IllegalConnection
-   */
-  virtual size_t handles_test_event( SpikeEvent&, size_t receptor_type );
-  virtual size_t handles_test_event( WeightRecorderEvent&, size_t receptor_type );
-  virtual size_t handles_test_event( RateEvent&, size_t receptor_type );
-  virtual size_t handles_test_event( DataLoggingRequest&, size_t receptor_type );
-  virtual size_t handles_test_event( CurrentEvent&, size_t receptor_type );
-  virtual size_t handles_test_event( ConductanceEvent&, size_t receptor_type );
-  virtual size_t handles_test_event( DoubleDataEvent&, size_t receptor_type );
-  virtual size_t handles_test_event( DSSpikeEvent&, size_t receptor_type );
-  virtual size_t handles_test_event( DSCurrentEvent&, size_t receptor_type );
-  virtual size_t handles_test_event( GapJunctionEvent&, size_t receptor_type );
-  virtual size_t handles_test_event( InstantaneousRateConnectionEvent&, size_t receptor_type );
-  virtual size_t handles_test_event( DiffusionConnectionEvent&, size_t receptor_type );
-  virtual size_t handles_test_event( DelayedRateConnectionEvent&, size_t receptor_type );
-  virtual size_t handles_test_event( SICEvent&, size_t receptor_type );
 
   /**
    * Required to check, if source neuron may send a SecondaryEvent.
@@ -462,13 +309,56 @@ public:
    */
   virtual void sends_secondary_event( SICEvent& sic );
 
+
   /**
-   * Register a STDP connection
+   * Send an event to the receiving_node passed as an argument.
    *
-   * @throws IllegalConnection
+   * This is required during the connection handshaking to test,
+   * if the receiving_node can handle the event type and receptor_type sent
+   * by the source node.
    *
+   * If dummy_target is true, this indicates that receiving_node is derived from
+   * ConnTestDummyNodeBase and used in the first call to send_test_event().
+   * This can be ignored in most cases, but Nodes sending DS*Events to their
+   * own event hooks and then *Events to their proper targets must send
+   * DS*Events when called with the dummy target, and *Events when called with
+   * the real target, see #478.
    */
-  virtual void register_stdp_connection( double, double );
+  virtual size_t send_test_event( NodeBase& receiving_node, size_t receptor_type, synindex syn_id, bool dummy_target );
+
+  /**
+   * Check if the node can handle a particular event and receptor type.
+   *
+   * This function is called upon connection setup by send_test_event().
+   *
+   * handles_test_event() function is used to verify that the receiver
+   * can handle the event. It can also be used by the receiver to
+   * return information to the sender in form of the returned port.
+   * The default implementation throws an IllegalConnection
+   * exception.  Any node class should define handles_test_event()
+   * functions for all those event types it can handle.
+   *
+   * See Kunkel et al, Front Neuroinform 8:78 (2014), Sec 3.
+   *
+   * @note The semantics of all other handles_test_event() functions is
+   * identical.
+   * @ingroup event_interface
+   * @throws IllegalConnection
+   */
+  virtual size_t handles_test_event( SpikeEvent&, size_t receptor_type );
+  virtual size_t handles_test_event( WeightRecorderEvent&, size_t receptor_type );
+  virtual size_t handles_test_event( RateEvent&, size_t receptor_type );
+  virtual size_t handles_test_event( DataLoggingRequest&, size_t receptor_type );
+  virtual size_t handles_test_event( CurrentEvent&, size_t receptor_type );
+  virtual size_t handles_test_event( ConductanceEvent&, size_t receptor_type );
+  virtual size_t handles_test_event( DoubleDataEvent&, size_t receptor_type );
+  virtual size_t handles_test_event( DSSpikeEvent&, size_t receptor_type );
+  virtual size_t handles_test_event( DSCurrentEvent&, size_t receptor_type );
+  virtual size_t handles_test_event( GapJunctionEvent&, size_t receptor_type );
+  virtual size_t handles_test_event( InstantaneousRateConnectionEvent&, size_t receptor_type );
+  virtual size_t handles_test_event( DiffusionConnectionEvent&, size_t receptor_type );
+  virtual size_t handles_test_event( DelayedRateConnectionEvent&, size_t receptor_type );
+  virtual size_t handles_test_event( SICEvent&, size_t receptor_type );
 
   /**
    * Handle incoming spike events.
@@ -476,8 +366,7 @@ public:
    * @param thrd Id of the calling thread.
    * @param e Event object.
    *
-   * This handler has to be implemented if a Node should
-   * accept spike events.
+   * This handler has to be implemented if a Node should accept spike events.
    * @see class SpikeEvent
    * @ingroup event_interface
    */
@@ -489,8 +378,7 @@ public:
    * @param thrd Id of the calling thread.
    * @param e Event object.
    *
-   * This handler has to be implemented if a Node should
-   * accept weight recording events.
+   * This handler has to be implemented if a Node should accept weight recording events.
    * @see class WeightRecordingEvent
    * @ingroup event_interface
    */
@@ -595,6 +483,348 @@ public:
    * @throws UnexpectedEvent
    */
   virtual void handle( SICEvent& e );
+
+  /**
+   * @defgroup SP_functions Structural Plasticity in NEST.
+   *
+   * Functions related to accessibility and setup of variables required for
+   * the implementation of a model of Structural Plasticity in NEST.
+   *
+   */
+
+  /**
+   * Set the model id.
+   *
+   * This method is called by NodeManager::add_node() when a node is created.
+   * @see get_model_id()
+   */
+  void set_model_id( int );
+
+  /**
+   * Execute post-initialization actions in node models.
+   *
+   * This method is called by NodeManager::add_node() on a node once
+   * is fully initialized, i.e. after node ID, nc, model_id, thread, vp is
+   * set.
+   */
+  void set_initialized();
+
+  /**
+   * @returns type of signal this node produces
+   * used in check_connection to only connect neurons which send / receive
+   * compatible information
+   */
+  virtual SignalType
+  sends_signal() const
+  {
+    return SPIKE;
+  }
+
+  /**
+   * @returns type of signal this node consumes
+   * used in check_connection to only connect neurons which send / receive
+   * compatible information
+   */
+  virtual SignalType
+  receives_signal() const
+  {
+    return SPIKE;
+  }
+
+  /**
+   * Returns true if node is model prototype.
+   */
+  bool is_model_prototype() const;
+
+  /**
+   * set thread local index
+
+   */
+  void set_thread_lid( const size_t );
+
+  /**
+   * get thread local index
+   */
+  size_t get_thread_lid() const;
+
+  /**
+   * Store the number of the thread to which the node is assigned.
+   *
+   * The assignment is done after node creation by the Network class.
+   * @see: NodeManager::add_node().
+   */
+  void set_thread( size_t );
+
+  /**
+   * Retrieve the number of the thread to which the node is assigned.
+   */
+  size_t get_thread() const;
+
+  /**
+   * Store the number of the virtual process to which the node is assigned.
+   *
+   * This is assigned to the node in NodeManager::add_node().
+   */
+  void set_vp( size_t );
+
+  /**
+   * Retrieve the number of the virtual process to which the node is assigned.
+   */
+  size_t get_vp() const;
+
+  /**
+   * Member of DeprecationWarning class to be used by models if parameters are
+   * deprecated.
+   */
+  DeprecationWarning deprecation_warning;
+
+protected:
+  /**
+   * Configure state variables depending on runtime information.
+   *
+   * Overload this method if the node needs to adapt state variables prior to
+   * first simulation to runtime information, e.g., the number of incoming
+   * connections.
+   */
+  virtual void init_state_();
+
+  /**
+   * Configure persistent internal data structures.
+   *
+   * Let node configure persistent internal data structures, such as input
+   * buffers or ODE solvers, to runtime information prior to first simulation.
+   */
+  virtual void init_buffers_();
+
+  virtual void set_initialized_();
+
+  Model& get_model_() const;
+
+  //! Mark node as frozen.
+  void
+  set_frozen_( bool frozen )
+  {
+    frozen_ = frozen;
+  }
+
+  /**
+   * Auxiliary function to downcast a Node to a concrete class derived from
+   * Node.
+   * @note This function is used to convert generic Node references to specific
+   *       ones when intializing parameters or state from a prototype.
+   */
+  template < typename ConcreteNode >
+  const ConcreteNode& downcast( const NodeBase& );
+
+protected:
+  /**
+   * Local id of this node in the thread-local vector of nodes.
+   */
+  size_t thread_lid_;
+
+  /**
+   * Model ID.
+   *
+   * It is only set for actual node instances, not for instances of class Node
+   * representing model prototypes. Model prototypes always have model_id_==-1.
+   * @see get_model_id(), set_model_id()
+   */
+  int model_id_;
+
+  bool frozen_;      //!< node shall not be updated if true
+  bool initialized_; //!< state and buffers have been initialized
+
+  size_t thread_; //!< thread node is assigned to
+  size_t vp_;     //!< virtual process node is assigned to
+};
+
+
+/**
+ * @defgroup user_interface Model developer interface.
+ *
+ * Functions and classes important for implementing new Node and
+ * Model classes.
+ */
+
+/**
+ * Base class for all NEST network objects.
+ *
+ * Class Node is the top of the simulation object hierarchy. It
+ * defines the most general interface to a network element.
+ *
+ * Class Node provide the interface for
+ * - updating the dynamic state of an object
+ * - connecting nodes, using particular Events
+ * - accepting connection requests
+ * - handling incoming events
+ * A new type of Node must be derived from this base class and
+ * implement its interface.
+ * In order to keep the inheritance hierarchy flat, it is encouraged
+ * to directly subclass from base class Node.
+ *
+ * @see class Event
+ * @ingroup user_interface
+ */
+
+inline bool
+NodeBase::is_frozen() const
+{
+  return frozen_;
+}
+
+/** @BeginDocumentation
+
+   Name: Node - General properties of all nodes.
+
+   Parameters:
+   frozen     booltype    - Whether the node is updated during simulation
+   global_id  integertype - The node ID of the node (cf. local_id)
+   local      booltype    - Whether the node is available on the local process
+   model      literaltype - The model type the node was created from
+   state      integertype - The state of the node (see the help on elementstates
+                            for details)
+   thread     integertype - The id of the thread the node is assigned to (valid
+                            locally)
+   vp         integertype - The id of the virtual process the node is assigned
+                            to (valid globally)
+
+   SeeAlso: GetStatus, SetStatus, elementstates
+ */
+
+class Node : public NodeBase
+{
+  friend class NodeManager;
+  friend class ModelManager;
+  friend class proxynode;
+  friend class Model;
+  friend class SimulationManager;
+
+  Node& operator=( const Node& ); //!< not implemented
+
+public:
+  Node();
+  Node( Node const& );
+
+  /**
+   * Returns true if the node supports the Urbanczik-Senn plasticity rule
+   */
+  virtual bool supports_urbanczik_archiving() const;
+
+  /**
+   * Returns true if the node only receives events from nodes/devices on the same thread.
+   */
+  virtual bool local_receiver() const;
+
+  /**
+   * Returns true if the node exists only once per process, but does
+   * not have proxies on remote threads.
+   *
+   * This is used to discriminate between different types of nodes, when adding new
+   * nodes to the network. As of now, this function is only true for MUSIC related proxies?
+   */
+  bool one_node_per_process() const override;
+
+  /**
+   * Returns true if the node is a proxy node.
+   *
+   * This is implemented because the use of RTTI is rather expensive.
+   */
+  bool is_proxy() const override;
+
+  /**
+   * Return the element type of the node.
+   *
+   * The returned Name is a free label describing the class of network
+   * elements a node belongs to. Currently used values are "neuron",
+   * "recorder", "stimulator", and "other", which are all defined as
+   * static Name objects in the names namespace.
+   * This function is overwritten with a corresponding value in the
+   * derived classes
+   */
+  Name get_element_type() const override;
+
+  /**
+   * Return global Network ID.
+   *
+   * Returns the global network ID of the Node.
+   * Each node has a unique network ID which can be used to access
+   * the Node comparable to a pointer.
+   *
+   * The smallest valid node ID is 1.
+   */
+  size_t get_node_id() const;
+
+  /**
+   * Returns true if the node uses the waveform relaxation method
+   */
+  bool node_uses_wfr() const;
+
+  /**
+   * Sets node_uses_wfr_ member variable
+   * (to be able to set it to "true" for any class derived from Node)
+   */
+  void set_node_uses_wfr( const bool );
+
+  /**
+   * Bring the node from state $t$ to $t+n*dt$, sends SecondaryEvents
+   * (e.g. GapJunctionEvent) and resets state variables to values at $t$.
+   *
+   * n->wfr_update(T, from, to) performs the update steps beginning
+   * at T+from .. T+to-1.
+   *
+   * Does not emit spikes, does not log state variables.
+   *
+   * throws UnexpectedEvent if not reimplemented in derived class
+   *
+   * @param Time   network time at beginning of time slice.
+   * @param long initial step inside time slice
+   * @param long post-final step inside time slice
+   *
+   */
+  virtual bool wfr_update( Time const&, const long, const long );
+
+  /**
+   * @defgroup status_interface Configuration interface.
+   *
+   * Functions and infrastructure, responsible for the configuration
+   * of Nodes from the SLI Interpreter level.
+   *
+   * Each node can be configured from the SLI level through a named
+   * parameter interface. In order to change parameters, the user
+   * can specify name value pairs for each parameter. These pairs
+   * are stored in a data structure which is called Dictionary.
+   * Likewise, the user can query the configuration of any node by
+   * requesting a dictionary with name value pairs.
+   *
+   * The configuration interface consists of four functions which
+   * implement storage and retrieval of named parameter sets.
+   */
+
+  /**
+   * Export properties of the node by setting
+   * entries in the status dictionary.
+   *
+   * @param d Dictionary.
+   * @ingroup status_interface
+   */
+  void get_status( DictionaryDatum& ) const override;
+
+public:
+  /**
+   * Returns true if the node has proxies on remote threads.
+   *
+   * This is used to discriminate between different types of nodes, when adding
+   * new nodes to the network.
+   */
+  bool has_proxies() const override;
+
+  /**
+   * Register a STDP connection
+   *
+   * @throws IllegalConnection
+   *
+   */
+  virtual void register_stdp_connection( double, double );
 
   /**
    * @defgroup SP_functions Structural Plasticity in NEST.
@@ -742,72 +972,12 @@ public:
   virtual double get_tau_syn_in( int comp );
 
   /**
-   * Modify Event object parameters during event delivery.
-   *
-   * Some Nodes want to perform a function on an event for each
-   * of their targets. An example is the poisson_generator which
-   * needs to draw a random number for each target. The DSSpikeEvent,
-   * DirectSendingSpikeEvent, calls sender->event_hook(thread, *this)
-   * in its operator() function instead of calling target->handle().
-   * The default implementation of Node::event_hook() just calls
-   * target->handle(DSSpikeEvent&). Any reimplementation must also
-   * execute this call. Otherwise the event will not be delivered.
-   * If needed, target->handle(DSSpikeEvent) may be called more than
-   * once.
-   */
-  virtual void event_hook( DSSpikeEvent& );
-
-  virtual void event_hook( DSCurrentEvent& );
-
-  /**
-   * Store the number of the thread to which the node is assigned.
-   *
-   * The assignment is done after node creation by the Network class.
-   * @see: NodeManager::add_node().
-   */
-  void set_thread( size_t );
-
-  /**
-   * Retrieve the number of the thread to which the node is assigned.
-   */
-  size_t get_thread() const;
-
-  /**
-   * Store the number of the virtual process to which the node is assigned.
-   *
-   * This is assigned to the node in NodeManager::add_node().
-   */
-  void set_vp( size_t );
-
-  /**
-   * Retrieve the number of the virtual process to which the node is assigned.
-   */
-  size_t get_vp() const;
-
-  /**
-   * Set the model id.
-   *
-   * This method is called by NodeManager::add_node() when a node is created.
-   * @see get_model_id()
-   */
-  void set_model_id( int );
-
-  /**
-   * Execute post-initialization actions in node models.
-   *
-   * This method is called by NodeManager::add_node() on a node once
-   * is fully initialized, i.e. after node ID, nc, model_id, thread, vp is
-   * set.
-   */
-  void set_initialized();
-
-  /**
    * @returns type of signal this node produces
    * used in check_connection to only connect neurons which send / receive
    * compatible information
    */
-  virtual SignalType
-  sends_signal() const
+  SignalType
+  sends_signal() const override
   {
     return SPIKE;
   }
@@ -817,62 +987,11 @@ public:
    * used in check_connection to only connect neurons which send / receive
    * compatible information
    */
-  virtual SignalType
-  receives_signal() const
+  SignalType
+  receives_signal() const override
   {
     return SPIKE;
   }
-
-
-  /**
-   *  Return a dictionary with the node's properties.
-   *
-   *  get_status_base() first gets a dictionary with the basic
-   *  information of an element, using get_status_dict_(). It then
-   *  calls the custom function get_status(DictionaryDatum) with
-   *  the created status dictionary as argument.
-   */
-  DictionaryDatum get_status_base();
-
-  /**
-   * Set status dictionary of a node.
-   *
-   * Forwards to set_status() of the derived class.
-   * @internal
-   */
-  void set_status_base( const DictionaryDatum& );
-
-  /**
-   * Returns true if node is model prototype.
-   */
-  bool is_model_prototype() const;
-
-  /**
-   * set thread local index
-
-   */
-  void set_thread_lid( const size_t );
-
-  /**
-   * get thread local index
-   */
-  size_t get_thread_lid() const;
-
-  /**
-   * Sets the local device id.
-   *
-   * Throws an error if used on a non-device node.
-   * @see get_local_device_id
-   */
-  virtual void set_local_device_id( const size_t lsdid );
-
-  /**
-   * Gets the local device id.
-   *
-   * Throws an error if used on a non-device node.
-   * @see set_local_device_id
-   */
-  virtual size_t get_local_device_id() const;
 
   /**
    * Member of DeprecationWarning class to be used by models if parameters are
@@ -883,53 +1002,6 @@ public:
 private:
   void set_node_id_( size_t ); //!< Set global node id
 
-  /** Return a new dictionary datum .
-   *
-   * This function is called by get_status_base() and returns a new
-   * empty dictionary by default.  Some nodes may contain a
-   * permanent status dictionary which is then returned by
-   * get_status_dict_().
-   */
-  virtual DictionaryDatum get_status_dict_();
-
-protected:
-  /**
-   * Configure state variables depending on runtime information.
-   *
-   * Overload this method if the node needs to adapt state variables prior to
-   * first simulation to runtime information, e.g., the number of incoming
-   * connections.
-   */
-  virtual void init_state_();
-
-  /**
-   * Configure persistent internal data structures.
-   *
-   * Let node configure persistent internal data structures, such as input
-   * buffers or ODE solvers, to runtime information prior to first simulation.
-   */
-  virtual void init_buffers_();
-
-  virtual void set_initialized_();
-
-  Model& get_model_() const;
-
-  //! Mark node as frozen.
-  void
-  set_frozen_( bool frozen )
-  {
-    frozen_ = frozen;
-  }
-
-  /**
-   * Auxiliary function to downcast a Node to a concrete class derived from
-   * Node.
-   * @note This function is used to convert generic Node references to specific
-   *       ones when intializing parameters or state from a prototype.
-   */
-  template < typename ConcreteNode >
-  const ConcreteNode& downcast( const Node& );
-
 private:
   /**
    * Global Element ID (node ID).
@@ -937,32 +1009,13 @@ private:
    * The node ID is unique within the network. The smallest valid node ID is 1.
    */
   size_t node_id_;
-
-  /**
-   * Local id of this node in the thread-local vector of nodes.
-   */
-  size_t thread_lid_;
-
-  /**
-   * Model ID.
-   *
-   * It is only set for actual node instances, not for instances of class Node
-   * representing model prototypes. Model prototypes always have model_id_==-1.
-   * @see get_model_id(), set_model_id()
-   */
-  int model_id_;
-
-  size_t thread_;      //!< thread node is assigned to
-  size_t vp_;          //!< virtual process node is assigned to
-  bool frozen_;        //!< node shall not be updated if true
-  bool initialized_;   //!< state and buffers have been initialized
   bool node_uses_wfr_; //!< node uses waveform relaxation method
 };
 
 inline bool
-Node::is_frozen() const
+Node::supports_urbanczik_archiving() const
 {
-  return frozen_;
+  return false;
 }
 
 inline bool
@@ -971,22 +1024,10 @@ Node::node_uses_wfr() const
   return node_uses_wfr_;
 }
 
-inline bool
-Node::supports_urbanczik_archiving() const
-{
-  return false;
-}
-
 inline void
 Node::set_node_uses_wfr( const bool uwfr )
 {
   node_uses_wfr_ = uwfr;
-}
-
-inline bool
-Node::has_proxies() const
-{
-  return true;
 }
 
 inline bool
@@ -1002,9 +1043,72 @@ Node::one_node_per_process() const
 }
 
 inline bool
-Node::is_off_grid() const
+NodeBase::is_off_grid() const
 {
   return false;
+}
+
+inline int
+NodeBase::get_model_id() const
+{
+  return model_id_;
+}
+
+inline void
+NodeBase::set_model_id( int i )
+{
+  model_id_ = i;
+}
+
+inline bool
+NodeBase::is_model_prototype() const
+{
+  return vp_ == invalid_thread;
+}
+
+inline void
+NodeBase::set_thread( size_t t )
+{
+  thread_ = t;
+}
+
+inline size_t
+NodeBase::get_thread() const
+{
+  return thread_;
+}
+
+inline void
+NodeBase::set_vp( size_t vp )
+{
+  vp_ = vp;
+}
+
+inline size_t
+NodeBase::get_vp() const
+{
+  return vp_;
+}
+
+inline void
+NodeBase::set_thread_lid( const size_t tlid )
+{
+  thread_lid_ = tlid;
+}
+
+inline size_t
+NodeBase::get_thread_lid() const
+{
+  return thread_lid_;
+}
+
+template < typename ConcreteNode >
+const ConcreteNode&
+NodeBase::downcast( const NodeBase& n )
+{
+  ConcreteNode const* tp = dynamic_cast< ConcreteNode const* >( &n );
+  assert( tp != 0 );
+  return *tp;
 }
 
 inline bool
@@ -1025,75 +1129,16 @@ Node::get_node_id() const
   return node_id_;
 }
 
-
 inline void
 Node::set_node_id_( size_t i )
 {
   node_id_ = i;
 }
 
-
-inline int
-Node::get_model_id() const
-{
-  return model_id_;
-}
-
-inline void
-Node::set_model_id( int i )
-{
-  model_id_ = i;
-}
-
 inline bool
-Node::is_model_prototype() const
+Node::has_proxies() const
 {
-  return vp_ == invalid_thread;
-}
-
-inline void
-Node::set_thread( size_t t )
-{
-  thread_ = t;
-}
-
-inline size_t
-Node::get_thread() const
-{
-  return thread_;
-}
-
-inline void
-Node::set_vp( size_t vp )
-{
-  vp_ = vp;
-}
-
-inline size_t
-Node::get_vp() const
-{
-  return vp_;
-}
-
-template < typename ConcreteNode >
-const ConcreteNode&
-Node::downcast( const Node& n )
-{
-  ConcreteNode const* tp = dynamic_cast< ConcreteNode const* >( &n );
-  assert( tp != 0 );
-  return *tp;
-}
-
-inline void
-Node::set_thread_lid( const size_t tlid )
-{
-  thread_lid_ = tlid;
-}
-
-inline size_t
-Node::get_thread_lid() const
-{
-  return thread_lid_;
+  return true;
 }
 
 } // namespace

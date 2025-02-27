@@ -60,12 +60,6 @@ Event::retrieve_sender_node_id_from_source_table() const
   }
 }
 
-size_t
-Event::get_receiver_node_id() const
-{
-  return receiver_->get_node_id();
-}
-
 void
 SpikeEvent::operator()()
 {
@@ -81,7 +75,7 @@ WeightRecorderEvent::operator()()
 void
 DSSpikeEvent::operator()()
 {
-  sender_->event_hook( *this );
+  static_cast< Device* >( sender_ )->event_hook( *this );
 }
 
 void
@@ -99,7 +93,7 @@ CurrentEvent::operator()()
 void
 DSCurrentEvent::operator()()
 {
-  sender_->event_hook( *this );
+  static_cast< Device* >( sender_ )->event_hook( *this );
 }
 
 void

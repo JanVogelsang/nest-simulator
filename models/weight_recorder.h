@@ -27,7 +27,6 @@
 #include <vector>
 
 // Includes from nestkernel:
-#include "device_node.h"
 #include "event.h"
 #include "exceptions.h"
 #include "kernel_manager.h"
@@ -102,12 +101,6 @@ public:
     return false;
   }
 
-  bool
-  local_receiver() const override
-  {
-    return true;
-  }
-
   Name
   get_element_type() const override
   {
@@ -119,10 +112,6 @@ public:
    * @see Technical Issues / Virtual Functions: Overriding, Overloading, and
    * Hiding
    */
-  using Node::handle;
-  using Node::handles_test_event;
-  using Node::receives_signal;
-
   void handle( WeightRecorderEvent& ) override;
 
   size_t handles_test_event( WeightRecorderEvent&, size_t ) override;
@@ -133,9 +122,13 @@ public:
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
 
+  void
+  update( const nest::Time&, const long, const long ) override
+  {
+  }
+
 private:
   void pre_run_hook() override;
-  void update( Time const&, const long, const long ) override;
 
   struct Parameters_
   {

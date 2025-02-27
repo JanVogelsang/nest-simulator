@@ -238,7 +238,7 @@ public:
     const double,
     const CommonSynapseProperties& );
 
-  Node*
+  NodeBase*
   get_target( const size_t tid ) const
   {
     return target_.get_target_ptr( tid );
@@ -403,6 +403,7 @@ SecondaryEvent*
 Connection< targetidentifierT >::get_secondary_event()
 {
   assert( false );
+  return nullptr;
 }
 
 } // namespace nest

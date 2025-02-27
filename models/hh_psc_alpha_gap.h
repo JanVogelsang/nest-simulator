@@ -180,7 +180,7 @@ public:
   using Node::handles_test_event;
   using Node::sends_secondary_event;
 
-  size_t send_test_event( Node& target, size_t receptor_type, synindex, bool ) override;
+  size_t send_test_event( NodeBase& target, size_t receptor_type, synindex, bool ) override;
 
   void handle( SpikeEvent& ) override;
   void handle( CurrentEvent& ) override;
@@ -395,7 +395,7 @@ hh_psc_alpha_gap::wfr_update( Time const& origin, const long from, const long to
 }
 
 inline size_t
-hh_psc_alpha_gap::send_test_event( Node& target, size_t receptor_type, synindex, bool )
+hh_psc_alpha_gap::send_test_event( NodeBase& target, size_t receptor_type, synindex, bool )
 {
   SpikeEvent se;
   se.set_sender( *this );

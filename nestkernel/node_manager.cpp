@@ -31,8 +31,7 @@
 #include "logging.h"
 
 // Includes from nestkernel:
-#include "event_delivery_manager.h"
-#include "genericmodel.h"
+#include "device.h"
 #include "kernel_manager.h"
 #include "model.h"
 #include "model_manager_impl.h"
@@ -53,7 +52,7 @@ NodeManager::NodeManager()
   , wfr_is_used_( false )
   , wfr_network_size_( 0 ) // zero to force update
   , num_active_nodes_( 0 )
-  , num_thread_local_devices_()
+  , thread_local_devices_( kernel().vp_manager.get_num_threads() )
   , have_nodes_changed_( true )
   , exceptions_raised_() // cannot call kernel(), not complete yet
 {
@@ -72,7 +71,7 @@ NodeManager::initialize()
   // explicitly force construction of wfr_nodes_vec_ to ensure consistent state
   wfr_network_size_ = 0;
   local_nodes_.resize( kernel().vp_manager.get_num_threads() );
-  num_thread_local_devices_.resize( kernel().vp_manager.get_num_threads(), 0 );
+  thread_local_devices_.resize( kernel().vp_manager.get_num_threads() );
   ensure_valid_thread_local_ids();
 
   sw_construction_create_.reset();
@@ -96,11 +95,12 @@ NodeManager::change_number_of_threads()
 DictionaryDatum
 NodeManager::get_status( size_t idx )
 {
-  Node* target = get_mpi_local_node_or_device_head( idx );
+  NodeBase* target = get_mpi_local_node_or_device_head( idx );
 
   assert( target );
 
-  DictionaryDatum d = target->get_status_base();
+  DictionaryDatum d = DictionaryDatum( new Dictionary );
+  target->get_status( d );
 
   return d;
 }
@@ -125,10 +125,8 @@ NodeManager::add_node( size_t model_id, long n )
   const size_t max_node_id = min_node_id + n - 1;
   if ( max_node_id < min_node_id )
   {
-    LOG( M_ERROR,
-      "NodeManager::add_node",
-      "Requested number of nodes will overflow the memory. "
-      "No nodes were created" );
+    LOG(
+      M_ERROR, "NodeManager::add_node", "Requested number of nodes will overflow the memory. No nodes were created" );
     throw KernelException( "OutOfMemory" );
   }
 
@@ -163,8 +161,7 @@ NodeManager::add_node( size_t model_id, long n )
     }
   }
 
-  // activate off-grid communication only after nodes have been created
-  // successfully
+  // activate off-grid communication only after nodes have been created successfully
   if ( model->is_off_grid() )
   {
     kernel().event_delivery_manager.set_off_grid_communication( true );
@@ -212,7 +209,7 @@ NodeManager::add_neurons_( Model& model, size_t min_node_id, size_t max_node_id 
 
       while ( node_id <= max_node_id )
       {
-        Node* node = model.create( t );
+        Node* node = static_cast< Node* >( model.create( t ) );
         node->set_node_id_( node_id );
         node->set_model_id( model.get_model_id() );
         node->set_thread( t );
@@ -247,20 +244,15 @@ NodeManager::add_devices_( Model& model, size_t min_node_id, size_t max_node_id 
 
       for ( size_t node_id = min_node_id; node_id <= max_node_id; ++node_id )
       {
-        // keep track of number of thread local devices
-        ++num_thread_local_devices_[ t ];
-
-        Node* node = model.create( t );
-        node->set_node_id_( node_id );
+        Device* node = static_cast< Device* >( model.create( t ) );
         node->set_model_id( model.get_model_id() );
         node->set_thread( t );
         node->set_vp( kernel().vp_manager.thread_to_vp( t ) );
-        node->set_local_device_id( num_thread_local_devices_[ t ] - 1 );
+        node->set_thread_lid( thread_local_devices_[ t ].size() );
         node->set_initialized();
 
-        local_nodes_[ t ].add_local_node( *node );
+        thread_local_devices_[ t ].push_back( node );
       }
-      local_nodes_[ t ].set_max_node_id( max_node_id );
     }
     catch ( std::exception& err )
     {
@@ -283,21 +275,16 @@ NodeManager::add_music_nodes_( Model& model, size_t min_node_id, size_t max_node
       {
         for ( size_t node_id = min_node_id; node_id <= max_node_id; ++node_id )
         {
-          // keep track of number of thread local devices
-          ++num_thread_local_devices_[ t ];
-
-          Node* node = model.create( 0 );
-          node->set_node_id_( node_id );
+          Device* node = static_cast< Device* >( model.create( 0 ) );
           node->set_model_id( model.get_model_id() );
           node->set_thread( 0 );
           node->set_vp( kernel().vp_manager.thread_to_vp( 0 ) );
-          node->set_local_device_id( num_thread_local_devices_[ t ] - 1 );
+          node->set_thread_lid( thread_local_devices_[ t ].size() );
           node->set_initialized();
 
-          local_nodes_[ 0 ].add_local_node( *node );
+          thread_local_devices_[ 0 ].push_back( node );
         }
       }
-      local_nodes_.at( t ).set_max_node_id( max_node_id );
     }
     catch ( std::exception& err )
     {
@@ -320,9 +307,9 @@ NodeManager::node_id_to_node_collection( const size_t node_id ) const
 }
 
 NodeCollectionPTR
-NodeManager::node_id_to_node_collection( Node* node ) const
+NodeManager::node_id_to_node_collection( const Node* node ) const
 {
-  return node_id_to_node_collection( node->get_node_id() );
+  return node_id_to_node_collection( node->has_proxies() ? node->get_node_id() : node->get_thread_lid() );
 }
 
 void
@@ -424,7 +411,7 @@ NodeManager::get_nodes( const DictionaryDatum& params, const bool local_only )
 }
 
 bool
-NodeManager::is_local_node( Node* n ) const
+NodeManager::is_local_node( const Node* n ) const
 {
   return kernel().vp_manager.is_local_vp( n->get_vp() );
 }
@@ -446,7 +433,7 @@ NodeManager::get_max_num_local_nodes() const
 size_t
 NodeManager::get_num_thread_local_devices( size_t t ) const
 {
-  return num_thread_local_devices_[ t ];
+  return thread_local_devices_[ t ].size();
 }
 
 Node*
@@ -485,12 +472,12 @@ NodeManager::get_node_or_proxy( size_t node_id )
   return node;
 }
 
-Node*
+NodeBase*
 NodeManager::get_mpi_local_node_or_device_head( size_t node_id )
 {
   size_t t = kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( node_id ) );
 
-  Node* node = local_nodes_[ t ].get_node_by_node_id( node_id );
+  NodeBase* node = local_nodes_[ t ].get_node_by_node_id( node_id );
 
   if ( not node )
   {
@@ -504,17 +491,17 @@ NodeManager::get_mpi_local_node_or_device_head( size_t node_id )
   return node;
 }
 
-std::vector< Node* >
-NodeManager::get_thread_siblings( size_t node_id ) const
+std::vector< NodeBase* >
+NodeManager::get_thread_siblings( const size_t node_lid ) const
 {
   size_t num_threads = kernel().vp_manager.get_num_threads();
-  std::vector< Node* > siblings( num_threads );
+  std::vector< NodeBase* > siblings( num_threads );
   for ( size_t t = 0; t < num_threads; ++t )
   {
-    Node* node = local_nodes_[ t ].get_node_by_node_id( node_id );
+    NodeBase* node = local_nodes_[ t ].get_node_by_index( node_lid );
     if ( not node )
     {
-      throw NoThreadSiblingsAvailable( node_id );
+      throw NoThreadSiblingsAvailable( node_lid );
     }
 
     siblings[ t ] = node;
@@ -526,10 +513,8 @@ NodeManager::get_thread_siblings( size_t node_id ) const
 void
 NodeManager::ensure_valid_thread_local_ids()
 {
-  // Check if the network size changed, in order to not enter
-  // the critical region if it is not necessary. Note that this
-  // test also covers that case that nodes have been deleted
-  // by reset.
+  // Check if the network size changed, in order to not enter the critical region if it is not necessary. Note that this
+  // test also covers that case that nodes have been deleted by reset.
   if ( size() == wfr_network_size_ )
   {
     return;
@@ -618,7 +603,7 @@ NodeManager::set_status_single_node_( Node& target, const DictionaryDatum& d, bo
     {
       d->clear_access_flags();
     }
-    target.set_status_base( d );
+    target.set_status( d );
 
     // TODO: Not sure this check should be at single neuron level; advantage is
     // it stops after first failure.
@@ -627,7 +612,7 @@ NodeManager::set_status_single_node_( Node& target, const DictionaryDatum& d, bo
 }
 
 void
-NodeManager::prepare_node_( Node* n )
+NodeManager::prepare_node_( NodeBase* n )
 {
   // Frozen nodes are initialized and calibrated, so that they
   // have ring buffers and can accept incoming spikes.

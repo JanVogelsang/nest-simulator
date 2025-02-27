@@ -132,7 +132,7 @@ public:
    *
    * @ingroup NESTio
    */
-  virtual void enroll( const Node* node, StimulationDevice& device, const DictionaryDatum& d ) {};
+  virtual void enroll( StimulationDevice& device, const DictionaryDatum& d ) {};
 
   /**
    * Disenroll a `StimulationDevice` from the `StimulationBackend`.
@@ -150,7 +150,7 @@ public:
    *
    * @ingroup NESTio
    */
-  virtual void disenroll( const Node* node, StimulationDevice& device ) {};
+  virtual void disenroll( StimulationDevice& device ) {};
 
   /**
    * Initialize global backend-specific data structures.
@@ -179,6 +179,13 @@ public:
    * @ingroup NESTio
    */
   virtual void post_run_hook() = 0;
+
+  /**
+   * Prepare stimulation backend before a single simulation step.
+   *
+   * @ingroup NESTio
+   */
+  virtual void pre_step_hook() = 0;
 
   /**
    * Clean up stimulation backend after a single simulation step.

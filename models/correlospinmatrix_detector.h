@@ -240,7 +240,7 @@ private:
      * @returns true if the state needs to be reset after a change of
      *          binwidth or tau_max.
      */
-    bool set( const DictionaryDatum&, const correlospinmatrix_detector&, Node* );
+    bool set( const DictionaryDatum&, const correlospinmatrix_detector& );
 
     Time get_default_delta_tau();
   };
@@ -322,7 +322,7 @@ inline void
 correlospinmatrix_detector::set_status( const DictionaryDatum& d )
 {
   Parameters_ ptmp = P_;
-  const bool reset_required = ptmp.set( d, *this, this );
+  const bool reset_required = ptmp.set( d, *this );
 
   device_.set_status( d );
   P_ = ptmp;

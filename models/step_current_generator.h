@@ -29,7 +29,6 @@
 
 // Includes from nestkernel:
 #include "connection.h"
-#include "device_node.h"
 #include "event.h"
 #include "nest_types.h"
 #include "ring_buffer.h"
@@ -105,20 +104,14 @@ EndUserDocs */
 
 void register_step_current_generator( const std::string& name );
 
-class step_current_generator : public DeviceNode, public StimulationDevice
+class step_current_generator : public StimulationDevice
 {
 
 public:
   step_current_generator();
   step_current_generator( const step_current_generator& );
 
-  //! Allow multimeter to connect to local instances
-  bool local_receiver() const override;
-
-  size_t send_test_event( Node&, size_t, synindex, bool ) override;
-
-  using Node::handle;
-  using Node::handles_test_event;
+  size_t send_test_event( NodeBase&, size_t, synindex, bool ) override;
 
   void handle( DataLoggingRequest& ) override;
 
@@ -138,11 +131,6 @@ private:
 
   void update( Time const&, long, long ) override;
 
-  void
-  set_initialized_() final
-  {
-    StimulationDevice::set_initialized_( this );
-  }
   Name
   get_element_type() const override
   {
@@ -166,13 +154,12 @@ private:
     bool allow_offgrid_amp_times_;
 
     Parameters_(); //!< Sets default parameter values
-    Parameters_( const Parameters_&, Buffers_& );
     Parameters_( const Parameters_& );
     Parameters_& operator=( const Parameters_& p );
 
     void get( DictionaryDatum& ) const; //!< Store current values in dictionary
     //! Set values from dictionary
-    void set( const DictionaryDatum&, Buffers_&, Node* );
+    void set( const DictionaryDatum&, Buffers_&, const NodeBase* );
 
     /**
      * Return time as Time object if valid, otherwise throw BadProperty
@@ -227,7 +214,7 @@ private:
 };
 
 inline size_t
-step_current_generator::send_test_event( Node& target, size_t receptor_type, synindex syn_id, bool )
+step_current_generator::send_test_event( NodeBase& target, size_t receptor_type, synindex syn_id, bool )
 {
   StimulationDevice::enforce_single_syn_type( syn_id );
 
@@ -251,7 +238,7 @@ inline void
 step_current_generator::get_status( DictionaryDatum& d ) const
 {
   P_.get( d );
-  StimulationDevice::get_status( this, d );
+  StimulationDevice::get_status( d );
 
   ( *d )[ names::recordables ] = recordablesMap_.get_list();
 }
@@ -265,17 +252,10 @@ step_current_generator::set_status( const DictionaryDatum& d )
   // We now know that ptmp is consistent. We do not write it back
   // to P_ before we are also sure that the properties to be set
   // in the parent class are internally consistent.
-  StimulationDevice::set_status( this, d );
+  StimulationDevice::set_status( d );
 
   // if we get here, temporaries contain consistent set of properties
   P_ = ptmp;
-}
-
-//! Allow multimeter to connect to local instances
-inline bool
-step_current_generator::local_receiver() const
-{
-  return true;
 }
 
 inline StimulationDevice::Type

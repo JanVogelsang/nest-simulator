@@ -142,7 +142,7 @@ public:
    */
   void mpi_abort( int exitcode );
 
-  // gather all send_buffer vectors on other mpi process to recv_buffer
+  // gather all send_buffer vectors on other mpi process to recv_buffer_
   // vector
   void communicate( std::vector< long >& send_buffer, std::vector< long >& recv_buffer );
 
@@ -746,17 +746,17 @@ MPIManager::communicate_secondary_events_Alltoallv( std::vector< D >& send_buffe
 template < class D >
 void
 MPIManager::MPIManager::communicate_Alltoall( std::vector< D >& send_buffer,
-  std::vector< D >& recv_buffer,
+  std::vector< D >& recv_buffer_,
   const unsigned int )
 {
-  recv_buffer.swap( send_buffer );
+  recv_buffer_.swap( send_buffer );
 }
 
 template < class D >
 void
-MPIManager::communicate_secondary_events_Alltoallv( std::vector< D >& send_buffer, std::vector< D >& recv_buffer )
+MPIManager::communicate_secondary_events_Alltoallv( std::vector< D >& send_buffer, std::vector< D >& recv_buffer_ )
 {
-  recv_buffer.swap( send_buffer );
+  recv_buffer_.swap( send_buffer );
 }
 
 #endif /* HAVE_MPI */

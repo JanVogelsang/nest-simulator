@@ -264,7 +264,7 @@ stdp_pl_synapse_hom< targetidentifierT >::send( Event& e, size_t t, const STDPPL
 
   // t_lastspike_ = 0 initially
 
-  Node* target = get_target( t );
+  Node* target = static_cast< Node* >( get_target( t ) );
 
   double dendritic_delay = get_delay();
 

@@ -50,7 +50,7 @@ void
 nest::RecordingBackendMemory::enroll( const RecordingDevice& device, const DictionaryDatum& params )
 {
   size_t t = device.get_thread();
-  size_t node_id = device.get_node_id();
+  size_t node_id = device.get_thread_lid();
 
   device_data_map::value_type::iterator device_data = device_data_[ t ].find( node_id );
   if ( device_data == device_data_[ t ].end() )
@@ -66,7 +66,7 @@ void
 nest::RecordingBackendMemory::disenroll( const RecordingDevice& device )
 {
   size_t t = device.get_thread();
-  size_t node_id = device.get_node_id();
+  size_t node_id = device.get_thread_lid();
 
   device_data_map::value_type::iterator device_data = device_data_[ t ].find( node_id );
   if ( device_data != device_data_[ t ].end() )
@@ -81,7 +81,7 @@ nest::RecordingBackendMemory::set_value_names( const RecordingDevice& device,
   const std::vector< Name >& long_value_names )
 {
   const size_t t = device.get_thread();
-  const size_t node_id = device.get_node_id();
+  const size_t node_id = device.get_thread_lid();
 
   device_data_map::value_type::iterator device_data = device_data_[ t ].find( node_id );
   assert( device_data != device_data_[ t ].end() );
@@ -107,7 +107,7 @@ nest::RecordingBackendMemory::write( const RecordingDevice& device,
   const std::vector< long >& long_values )
 {
   size_t t = device.get_thread();
-  size_t node_id = device.get_node_id();
+  size_t node_id = device.get_thread_lid();
 
   device_data_[ t ][ node_id ].push_back( event, double_values, long_values );
 }
@@ -130,7 +130,8 @@ void
 nest::RecordingBackendMemory::get_device_status( const RecordingDevice& device, DictionaryDatum& d ) const
 {
   const size_t t = device.get_thread();
-  const size_t node_id = device.get_node_id();
+  // TODO JV
+  const size_t node_id = 0; // device.get_node_id();
 
   const auto device_data = device_data_[ t ].find( node_id );
   if ( device_data != device_data_[ t ].end() )
@@ -141,6 +142,12 @@ nest::RecordingBackendMemory::get_device_status( const RecordingDevice& device, 
 
 void
 nest::RecordingBackendMemory::post_run_hook()
+{
+  // nothing to do
+}
+
+void
+nest::RecordingBackendMemory::pre_step_hook()
 {
   // nothing to do
 }

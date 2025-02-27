@@ -152,6 +152,7 @@ extern const Name delta_tau;
 extern const Name dendritic_curr;
 extern const Name dendritic_exc;
 extern const Name dendritic_inh;
+extern const Name device;
 extern const Name dg;
 extern const Name dg_ex;
 extern const Name dg_in;

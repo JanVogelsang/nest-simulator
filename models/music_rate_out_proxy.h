@@ -35,7 +35,6 @@
 #include <music.hh>
 
 // Includes from nestkernel:
-#include "device_node.h"
 #include "event.h"
 #include "exceptions.h"
 #include "nest_types.h"
@@ -89,7 +88,7 @@ EndUserDocs */
 
 namespace nest
 {
-class music_rate_out_proxy : public DeviceNode
+class music_rate_out_proxy : public Device
 {
 
 public:
@@ -98,15 +97,11 @@ public:
   ~music_rate_out_proxy();
 
   bool
-  has_proxies() const
+  has_proxies() const override
   {
     return false;
   }
-  bool
-  local_receiver() const
-  {
-    return true;
-  }
+
   bool
   one_node_per_process() const
   {

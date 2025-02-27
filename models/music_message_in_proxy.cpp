@@ -95,14 +95,14 @@ nest::music_message_in_proxy::State_::set( const DictionaryDatum&, const Paramet
  * ---------------------------------------------------------------- */
 
 nest::music_message_in_proxy::music_message_in_proxy()
-  : DeviceNode()
+  : Device()
   , P_()
   , S_()
 {
 }
 
 nest::music_message_in_proxy::music_message_in_proxy( const music_message_in_proxy& n )
-  : DeviceNode( n )
+  : Device( n )
   , P_( n.P_ )
   , S_( n.S_ )
 {

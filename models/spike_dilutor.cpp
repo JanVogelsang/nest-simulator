@@ -26,7 +26,6 @@
 #include "dict_util.h"
 
 // Includes from nestkernel:
-#include "device_node.h"
 #include "event_delivery_manager_impl.h"
 #include "exceptions.h"
 #include "kernel_manager.h"
@@ -63,7 +62,7 @@ nest::spike_dilutor::Parameters_::get( DictionaryDatum& d ) const
 }
 
 void
-nest::spike_dilutor::Parameters_::set( const DictionaryDatum& d, Node* node )
+nest::spike_dilutor::Parameters_::set( const DictionaryDatum& d, const NodeBase* node )
 {
   updateValueParam< double >( d, names::p_copy, p_copy_, node );
   if ( p_copy_ < 0 or p_copy_ > 1 )
@@ -77,14 +76,14 @@ nest::spike_dilutor::Parameters_::set( const DictionaryDatum& d, Node* node )
  * ---------------------------------------------------------------- */
 
 nest::spike_dilutor::spike_dilutor()
-  : DeviceNode()
+  : Device()
   , device_()
   , P_()
 {
 }
 
 nest::spike_dilutor::spike_dilutor( const spike_dilutor& n )
-  : DeviceNode( n )
+  : Device( n )
   , device_( n.device_ )
   , P_( n.P_ )
 {

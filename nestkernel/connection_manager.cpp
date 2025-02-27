@@ -235,7 +235,7 @@ nest::ConnectionManager::get_synapse_status( const size_t source_node_id,
   }
   else if ( not source->has_proxies() )
   {
-    const size_t ldid = source->get_local_device_id();
+    const size_t ldid = source->get_thread_lid();
     target_table_devices_.get_synapse_status_from_device( tid, ldid, syn_id, dict, lcid );
   }
   else
@@ -276,7 +276,7 @@ nest::ConnectionManager::set_synapse_status( const size_t source_node_id,
     }
     else if ( not source->has_proxies() )
     {
-      const size_t ldid = source->get_local_device_id();
+      const size_t ldid = source->get_thread_lid();
       target_table_devices_.set_synapse_status_from_device( tid, ldid, syn_id, cm, dict, lcid );
     }
     else
@@ -451,10 +451,10 @@ nest::ConnectionManager::connect( TokenArray sources, TokenArray targets, const 
   // Connect all sources to all targets
   for ( auto&& source : sources )
   {
-    auto source_node = kernel().node_manager.get_node_or_proxy( source );
+    Node* source_node = kernel().node_manager.get_node_or_proxy( source );
     for ( auto&& target : targets )
     {
-      auto target_node = kernel().node_manager.get_node_or_proxy( target );
+      Node* target_node = kernel().node_manager.get_node_or_proxy( target );
       auto target_thread = target_node->get_thread();
       connect_( *source_node, *target_node, source, target_thread, syn_id, syn_spec );
     }
@@ -1474,7 +1474,7 @@ nest::ConnectionManager::compute_compressed_secondary_recv_buffer_positions( con
 }
 
 nest::ConnectionManager::ConnectionType
-nest::ConnectionManager::connection_required( Node*& source, Node*& target, size_t tid )
+nest::ConnectionManager::connection_required( Node* source, Node* target, size_t tid )
 {
   // The caller has to check and guarantee that the target is not a
   // proxy and that it is on thread tid.
@@ -1592,7 +1592,7 @@ nest::ConnectionManager::set_stdp_eps( const double stdp_eps )
   }
 }
 
-// recv_buffer can not be a const reference as iterators used in
+// recv_buffer_ can not be a const reference as iterators used in
 // secondary events must not be const
 bool
 nest::ConnectionManager::deliver_secondary_events( const size_t tid,

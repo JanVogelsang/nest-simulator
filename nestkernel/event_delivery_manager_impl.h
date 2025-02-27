@@ -34,55 +34,57 @@ namespace nest
 
 template < class EventT >
 inline void
-EventDeliveryManager::send_local_( Node& source, EventT& e, const long lag )
+EventDeliveryManager::send_local_( NodeBase& source, EventT& e, const long lag )
 {
   assert( not source.has_proxies() );
   e.set_stamp( kernel().simulation_manager.get_slice_origin() + Time::step( lag + 1 ) );
   e.set_sender( source );
   const size_t t = source.get_thread();
-  const size_t ldid = source.get_local_device_id();
+  const size_t ldid = source.get_thread_lid();
   kernel().connection_manager.send_from_device( t, ldid, e );
 }
 
 inline void
-EventDeliveryManager::send_local_( Node& source, SecondaryEvent& e, const long )
+EventDeliveryManager::send_local_( NodeBase& source, SecondaryEvent& e, const long )
 {
   assert( not source.has_proxies() );
   e.set_stamp( kernel().simulation_manager.get_slice_origin() + Time::step( 1 ) );
   e.set_sender( source );
   const size_t t = source.get_thread();
-  const size_t ldid = source.get_local_device_id();
+  const size_t ldid = source.get_thread_lid();
   kernel().connection_manager.send_from_device( t, ldid, e );
 }
 
 template < class EventT >
 inline void
-EventDeliveryManager::send( Node& source, EventT& e, const long lag )
+EventDeliveryManager::send( NodeBase& source, EventT& e, const long lag )
 {
   send_local_( source, e, lag );
 }
 
 template <>
 inline void
-EventDeliveryManager::send< SpikeEvent >( Node& source, SpikeEvent& e, const long lag )
+EventDeliveryManager::send< SpikeEvent >( NodeBase& source, SpikeEvent& e, const long lag )
 {
   const size_t tid = source.get_thread();
-  const size_t source_node_id = source.get_node_id();
-  e.set_sender_node_id( source_node_id );
   if ( source.has_proxies() )
   {
+    const size_t source_node_id = static_cast< Node& >( source ).get_node_id();
+    e.set_sender_node_id( source_node_id );
+
     local_spike_counter_[ tid ] += e.get_multiplicity();
 
     e.set_stamp( kernel().simulation_manager.get_slice_origin() + Time::step( lag + 1 ) );
     e.set_sender( source );
 
+    const size_t sender_lid = kernel().vp_manager.node_id_to_lid( source_node_id );
     if ( source.is_off_grid() )
     {
-      send_off_grid_remote( tid, e, lag );
+      send_off_grid_remote( tid, sender_lid, e, lag );
     }
     else
     {
-      send_remote( tid, e, lag );
+      send_remote( tid, sender_lid, e, lag );
     }
     kernel().connection_manager.send_to_devices( tid, source_node_id, e );
   }
@@ -94,18 +96,16 @@ EventDeliveryManager::send< SpikeEvent >( Node& source, SpikeEvent& e, const lon
 
 template <>
 inline void
-EventDeliveryManager::send< DSSpikeEvent >( Node& source, DSSpikeEvent& e, const long lag )
+EventDeliveryManager::send< DSSpikeEvent >( NodeBase& source, DSSpikeEvent& e, const long lag )
 {
-  e.set_sender_node_id( source.get_node_id() );
   send_local_( source, e, lag );
 }
 
 inline void
-EventDeliveryManager::send_remote( size_t tid, SpikeEvent& e, const long lag )
+EventDeliveryManager::send_remote( const size_t tid, const size_t sender_lid, SpikeEvent& e, const long lag )
 {
   // Put the spike in a buffer for the remote machines
-  const size_t lid = kernel().vp_manager.node_id_to_lid( e.get_sender().get_node_id() );
-  const auto& targets = kernel().connection_manager.get_remote_targets_of_local_node( tid, lid );
+  const auto& targets = kernel().connection_manager.get_remote_targets_of_local_node( tid, sender_lid );
 
   for ( const auto& target : targets )
   {
@@ -118,11 +118,10 @@ EventDeliveryManager::send_remote( size_t tid, SpikeEvent& e, const long lag )
 }
 
 inline void
-EventDeliveryManager::send_off_grid_remote( size_t tid, SpikeEvent& e, const long lag )
+EventDeliveryManager::send_off_grid_remote( const size_t tid, const size_t sender_lid, SpikeEvent& e, const long lag )
 {
   // Put the spike in a buffer for the remote machines
-  const size_t lid = kernel().vp_manager.node_id_to_lid( e.get_sender().get_node_id() );
-  const auto& targets = kernel().connection_manager.get_remote_targets_of_local_node( tid, lid );
+  const auto& targets = kernel().connection_manager.get_remote_targets_of_local_node( tid, sender_lid );
 
   for ( const auto& target : targets )
   {
@@ -135,14 +134,14 @@ EventDeliveryManager::send_off_grid_remote( size_t tid, SpikeEvent& e, const lon
 }
 
 inline void
-EventDeliveryManager::send_secondary( Node& source, SecondaryEvent& e )
+EventDeliveryManager::send_secondary( NodeBase& source, SecondaryEvent& e )
 {
   const size_t tid = kernel().vp_manager.get_thread_id();
-  const size_t source_node_id = source.get_node_id();
-  const size_t lid = kernel().vp_manager.node_id_to_lid( source_node_id );
 
   if ( source.has_proxies() )
   {
+    const size_t source_node_id = static_cast< Node& >( source ).get_node_id();
+    const size_t lid = kernel().vp_manager.node_id_to_lid( source_node_id );
 
     // We need to consider every synapse type this event supports to
     // make sure also labeled and connection created by CopyModel are

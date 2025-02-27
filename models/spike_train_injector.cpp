@@ -158,7 +158,7 @@ spike_train_injector::Parameters_::set( const DictionaryDatum& d,
   State_& s,
   const Time& origin,
   const Time& now,
-  Node* node )
+  const NodeBase* node )
 {
   bool precise_times_changed = updateValueParam< bool >( d, names::precise_times, precise_times_, node );
   bool shift_now_spikes_changed = updateValueParam< bool >( d, names::shift_now_spikes, shift_now_spikes_, node );
@@ -260,16 +260,14 @@ spike_train_injector::State_::State_()
  * ---------------------------------------------------------------- */
 
 spike_train_injector::spike_train_injector()
-  : Node()
-  , StimulationDevice()
+  : StimulationDevice()
   , S_()
   , P_()
 {
 }
 
 spike_train_injector::spike_train_injector( const spike_train_injector& n )
-  : Node( n )
-  , StimulationDevice( n )
+  : StimulationDevice( n )
   , S_( n.S_ )
   , P_( n.P_ )
 {
@@ -279,12 +277,6 @@ spike_train_injector::spike_train_injector( const spike_train_injector& n )
 /* ----------------------------------------------------------------
  * Node initialization functions
  * ---------------------------------------------------------------- */
-
-void
-spike_train_injector::init_state_()
-{
-  Node::init_state_();
-}
 
 void
 spike_train_injector::init_buffers_()

@@ -151,14 +151,6 @@ public:
   void get_status( DictionaryDatum& d ) const override;
   void set_status( const DictionaryDatum& d ) override;
 
-  /**
-   * Since volume transmitters are duplicated on each thread, and are
-   * hence treated just as devices during node creation, we need to
-   * define the corresponding setter and getter for local_device_id.
-   **/
-  void set_local_device_id( const size_t ldid ) override;
-  size_t get_local_device_id() const override;
-
   const std::vector< spikecounter >& deliver_spikes();
 
 private:
@@ -191,8 +183,6 @@ private:
 
   Parameters_ P_;
   Buffers_ B_;
-
-  size_t local_device_id_;
 };
 
 inline size_t
@@ -225,18 +215,6 @@ inline const std::vector< nest::spikecounter >&
 volume_transmitter::deliver_spikes()
 {
   return B_.spikecounter_;
-}
-
-inline void
-volume_transmitter::set_local_device_id( const size_t ldid )
-{
-  local_device_id_ = ldid;
-}
-
-inline size_t
-volume_transmitter::get_local_device_id() const
-{
-  return local_device_id_;
 }
 
 } // namespace

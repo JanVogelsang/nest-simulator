@@ -28,7 +28,6 @@
 #include <vector>
 
 // Includes from nestkernel:
-#include "device_node.h"
 #include "event.h"
 #include "exceptions.h"
 #include "nest_timeconverter.h"
@@ -111,26 +110,12 @@ public:
   {
     return false;
   }
-  bool
-  local_receiver() const override
-  {
-    return true;
-  }
 
   Name
   get_element_type() const override
   {
     return names::recorder;
   }
-
-  /**
-   * Import sets of overloaded virtual functions.
-   * @see Technical Issues / Virtual Functions: Overriding, Overloading, and
-   * Hiding
-   */
-  using Node::handle;
-  using Node::handles_test_event;
-  using Node::receives_signal;
 
   void handle( SpikeEvent& ) override;
 

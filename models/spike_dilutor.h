@@ -25,7 +25,6 @@
 
 // Includes from nestkernel:
 #include "connection.h"
-#include "device_node.h"
 #include "event.h"
 #include "nest_types.h"
 #include "ring_buffer.h"
@@ -86,7 +85,7 @@ EndUserDocs */
 
 void register_spike_dilutor( const std::string& name );
 
-class spike_dilutor : public DeviceNode
+class spike_dilutor : public Device
 {
 
 public:
@@ -99,23 +98,13 @@ public:
     return false;
   }
 
-  bool
-  local_receiver() const override
-  {
-    return true;
-  }
-
   Name
   get_element_type() const override
   {
     return names::stimulator;
   }
 
-  using Node::event_hook;
-  using Node::handle;
-  using Node::handles_test_event; // new
-
-  size_t send_test_event( Node&, size_t, synindex, bool ) override;
+  size_t send_test_event( NodeBase&, size_t, synindex, bool ) override;
   size_t handles_test_event( SpikeEvent&, size_t ) override;
   void handle( SpikeEvent& ) override;
 
@@ -125,7 +114,7 @@ public:
   void
   set_initialized_() final
   {
-    device_.set_initialized_( this );
+    device_.set_initialized_();
   }
 
 private:
@@ -150,8 +139,8 @@ private:
     Parameters_( const Parameters_& ) = default;
     Parameters_& operator=( const Parameters_& ) = default;
 
-    void get( DictionaryDatum& ) const;             //!< Store current values in dictionary
-    void set( const DictionaryDatum&, Node* node ); //!< Set values from dictionary
+    void get( DictionaryDatum& ) const;                       //!< Store current values in dictionary
+    void set( const DictionaryDatum&, const NodeBase* node ); //!< Set values from dictionary
   };
 
   struct Buffers_
@@ -170,12 +159,16 @@ private:
     }
 
   public:
-    using StimulationDevice::set_initialized_;
     void
-    set_initialized_( const Node* node )
+    update( const nest::Time&, const long, const long ) override
     {
-      StimulationDevice::set_initialized_( node );
     }
+
+    void
+    set_initialized_() override
+    {
+      Device::set_initialized_();
+    };
   } device_;
 
   Parameters_ P_;
@@ -183,7 +176,7 @@ private:
 };
 
 inline size_t
-spike_dilutor::send_test_event( Node& target, size_t receptor_type, synindex syn_id, bool )
+spike_dilutor::send_test_event( NodeBase& target, size_t receptor_type, synindex syn_id, bool )
 {
   device_.enforce_single_syn_type( syn_id );
 

@@ -34,9 +34,9 @@
 namespace nest
 {
 
-template < typename ConnectionT >
+template < typename ConnectionT, template < typename > class VectorT >
 void
-Connector< ConnectionT >::send_weight_event( const size_t tid,
+Connector< ConnectionT, VectorT >::send_weight_event( const size_t tid,
   const unsigned int lcid,
   Event& e,
   const CommonSynapseProperties& cp )
@@ -54,9 +54,9 @@ Connector< ConnectionT >::send_weight_event( const size_t tid,
     wr_e.set_sender_node_id( kernel().connection_manager.get_source_node_id( tid, syn_id_, lcid ) );
     wr_e.set_weight( e.get_weight() );
     wr_e.set_delay_steps( e.get_delay_steps() );
-    wr_e.set_receiver( *static_cast< Node* >( cp.get_weight_recorder() ) );
+    wr_e.set_receiver( *static_cast< NodeBase* >( cp.get_weight_recorder() ) );
     // Set the node_id of the postsynaptic node as receiver node ID
-    wr_e.set_receiver_node_id( e.get_receiver_node_id() );
+    wr_e.set_receiver_node_id( static_cast< Node& >( e.get_receiver() ).get_node_id() ); // TODO JV
     wr_e();
   }
 }

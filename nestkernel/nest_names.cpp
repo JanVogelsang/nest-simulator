@@ -126,6 +126,7 @@ const Name delta_tau( "delta_tau" );
 const Name dendritic_curr( "dendritic_curr" );
 const Name dendritic_exc( "dendritic_exc" );
 const Name dendritic_inh( "dendritic_inh" );
+const Name device( "device" );
 const Name dg( "dg" );
 const Name dg_ex( "dg_ex" );
 const Name dg_in( "dg_in" );

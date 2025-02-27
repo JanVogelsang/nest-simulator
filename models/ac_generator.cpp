@@ -132,7 +132,7 @@ nest::ac_generator::State_::get( DictionaryDatum& d ) const
 }
 
 void
-nest::ac_generator::Parameters_::set( const DictionaryDatum& d, Node* node )
+nest::ac_generator::Parameters_::set( const DictionaryDatum& d, const NodeBase* node )
 {
   updateValueParam< double >( d, names::amplitude, amp_, node );
   updateValueParam< double >( d, names::offset, offset_, node );

@@ -38,7 +38,6 @@
 #include <music.hh>
 
 // Includes from nestkernel:
-#include "device_node.h"
 #include "nest_types.h"
 
 // Includes from sli:
@@ -95,7 +94,7 @@ Examples using this model
 
 EndUserDocs */
 
-class music_cont_in_proxy : public DeviceNode
+class music_cont_in_proxy : public Device
 {
 
 public:
@@ -103,7 +102,7 @@ public:
   music_cont_in_proxy( const music_cont_in_proxy& );
 
   bool
-  has_proxies() const
+  has_proxies() const override
   {
     return false;
   }

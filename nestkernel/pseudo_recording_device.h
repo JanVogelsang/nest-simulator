@@ -90,6 +90,8 @@ public:
    *  device is active if start_ < T <= stop_.
    */
   bool is_active( Time const& T ) const override;
+
+  void update( const nest::Time&, const long, const long ) override {};
 };
 
 inline PseudoRecordingDevice::PseudoRecordingDevice()

@@ -94,7 +94,7 @@ public:
   using Node::receives_signal;
   using Node::sends_signal;
 
-  size_t send_test_event( Node&, size_t, synindex, bool ) override;
+  size_t send_test_event( NodeBase&, size_t, synindex, bool ) override;
 
   void handle( SpikeEvent& ) override;
   void handle( CurrentEvent& ) override;
@@ -230,7 +230,7 @@ private:
 
 template < class TGainfunction >
 inline size_t
-binary_neuron< TGainfunction >::send_test_event( Node& target, size_t receptor_type, synindex, bool )
+binary_neuron< TGainfunction >::send_test_event( NodeBase& target, size_t receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

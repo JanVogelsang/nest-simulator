@@ -99,7 +99,7 @@ public:
   using Node::handles_test_event;
 
   void handle( SpikeEvent& ) override;
-  size_t send_test_event( Node&, size_t, synindex, bool ) override;
+  size_t send_test_event( NodeBase&, size_t, synindex, bool ) override;
   size_t handles_test_event( SpikeEvent&, size_t ) override;
 
   void get_status( DictionaryDatum& ) const override;
@@ -131,7 +131,7 @@ private:
 };
 
 inline size_t
-parrot_neuron_ps::send_test_event( Node& target, size_t receptor_type, synindex, bool )
+parrot_neuron_ps::send_test_event( NodeBase& target, size_t receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

@@ -29,7 +29,6 @@
 
 // Includes from nestkernel:
 #include "connection.h"
-#include "device_node.h"
 #include "event.h"
 #include "nest_time.h"
 #include "nest_types.h"
@@ -235,28 +234,19 @@ EndUserDocs
 */
 void register_spike_generator( const std::string& name );
 
-class spike_generator : public DeviceNode, public StimulationDevice
+class spike_generator : public StimulationDevice
 {
 
 public:
   spike_generator();
   spike_generator( const spike_generator& );
 
-  size_t send_test_event( Node&, size_t, synindex, bool ) override;
+  size_t send_test_event( NodeBase&, size_t, synindex, bool ) override;
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
 
   StimulationDevice::Type get_type() const override;
   void set_data_from_stimulation_backend( std::vector< double >& input_spikes ) override;
-
-
-  /**
-   * Import sets of overloaded virtual functions.
-   * @see Technical Issues / Virtual Functions: Overriding, Overloading, and
-   * Hiding
-   */
-  using Node::event_hook;
-  using Node::sends_signal;
 
   void event_hook( DSSpikeEvent& ) override;
 
@@ -273,11 +263,6 @@ private:
 
   void update( Time const&, const long, const long ) override;
 
-  void
-  set_initialized_() final
-  {
-    StimulationDevice::set_initialized_( this );
-  }
   Name
   get_element_type() const override
   {
@@ -327,7 +312,7 @@ private:
      *       spike_times_ or spike_weights_ vector has been filled with
      *       new data, or if the origin was reset.
      */
-    void set( const DictionaryDatum&, State_&, const Time&, const Time&, Node* node );
+    void set( const DictionaryDatum&, State_&, const Time&, const Time&, const NodeBase* node );
 
     /**
      * Insert spike time to arrays, throw BadProperty for invalid spike times.
@@ -346,7 +331,7 @@ private:
 };
 
 inline size_t
-spike_generator::send_test_event( Node& target, size_t receptor_type, synindex syn_id, bool dummy_target )
+spike_generator::send_test_event( NodeBase& target, size_t receptor_type, synindex syn_id, bool dummy_target )
 {
   enforce_single_syn_type( syn_id );
 
@@ -368,7 +353,7 @@ inline void
 spike_generator::get_status( DictionaryDatum& d ) const
 {
   P_.get( d );
-  StimulationDevice::get_status( this, d );
+  StimulationDevice::get_status( d );
 }
 
 inline void
@@ -395,7 +380,7 @@ nest::spike_generator::set_status( const DictionaryDatum& d )
   // We now know that ptmp is consistent. We do not write it back
   // to P_ before we are also sure that the properties to be set
   // in the parent class are internally consistent.
-  StimulationDevice::set_status( this, d );
+  StimulationDevice::set_status( d );
 
   // if we get here, temporary contains consistent set of properties
   P_ = ptmp;

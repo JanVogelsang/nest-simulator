@@ -33,7 +33,6 @@
 
 // Includes from nestkernel:
 #include "connection.h"
-#include "device_node.h"
 #include "event.h"
 #include "nest_types.h"
 
@@ -92,7 +91,7 @@ Examples using this model
 
 EndUserDocs */
 
-class music_event_in_proxy : public DeviceNode
+class music_event_in_proxy : public Device
 {
 
 public:
@@ -100,7 +99,7 @@ public:
   music_event_in_proxy( const music_event_in_proxy& );
 
   bool
-  has_proxies() const
+  has_proxies() const override
   {
     return false;
   }
@@ -119,7 +118,7 @@ public:
   using Node::handles_test_event;
 
   void handle( SpikeEvent& );
-  size_t send_test_event( Node&, size_t, synindex, bool );
+  size_t send_test_event( NodeBase&, size_t, synindex, bool );
 
   void get_status( DictionaryDatum& ) const;
   void set_status( const DictionaryDatum& );
@@ -172,7 +171,7 @@ private:
 };
 
 inline size_t
-music_event_in_proxy::send_test_event( Node& target, size_t receptor_type, synindex, bool )
+music_event_in_proxy::send_test_event( NodeBase& target, size_t receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

@@ -325,7 +325,7 @@ nest::MPIManager::communicate( std::vector< long >& local_nodes, std::vector< lo
   global_nodes.resize( num_globals, 0L );
 
   // Set up displacements vector. Entry i specifies the displacement (relative
-  // to recv_buffer ) at which to place the incoming data from process i
+  // to recv_buffer_ ) at which to place the incoming data from process i
   std::vector< int > displacements( np, 0 );
   for ( size_t i = 1; i < np; ++i )
   {
@@ -988,7 +988,7 @@ nest::MPIManager::time_communicate_alltoallv( int num_bytes, int samples )
 // communicate (on-grid) if compiled without MPI
 void
 nest::MPIManager::communicate( std::vector< unsigned int >& send_buffer,
-  std::vector< unsigned int >& recv_buffer,
+  std::vector< unsigned int >& recv_buffer_,
   std::vector< int >& displacements )
 {
   displacements.resize( num_processes_, 0 );
@@ -996,15 +996,15 @@ nest::MPIManager::communicate( std::vector< unsigned int >& send_buffer,
   if ( static_cast< size_t >( recv_buffer_size_ ) < send_buffer.size() )
   {
     recv_buffer_size_ = send_buffer_size_ = send_buffer.size();
-    recv_buffer.resize( recv_buffer_size_ );
+    recv_buffer_.resize( recv_buffer_size_ );
   }
-  recv_buffer.swap( send_buffer );
+  recv_buffer_.swap( send_buffer );
 }
 
 // communicate (off-grid) if compiled without MPI
 void
 nest::MPIManager::communicate( std::vector< OffGridSpike >& send_buffer,
-  std::vector< OffGridSpike >& recv_buffer,
+  std::vector< OffGridSpike >& recv_buffer_,
   std::vector< int >& displacements )
 {
   displacements.resize( num_processes_, 0 );
@@ -1012,46 +1012,46 @@ nest::MPIManager::communicate( std::vector< OffGridSpike >& send_buffer,
   if ( static_cast< size_t >( recv_buffer_size_ ) < send_buffer.size() )
   {
     recv_buffer_size_ = send_buffer_size_ = send_buffer.size();
-    recv_buffer.resize( recv_buffer_size_ );
+    recv_buffer_.resize( recv_buffer_size_ );
   }
-  recv_buffer.swap( send_buffer );
+  recv_buffer_.swap( send_buffer );
 }
 
 void
 nest::MPIManager::communicate( std::vector< double >& send_buffer,
-  std::vector< double >& recv_buffer,
+  std::vector< double >& recv_buffer_,
   std::vector< int >& displacements )
 {
   displacements.resize( num_processes_, 0 );
   displacements[ 0 ] = 0;
-  recv_buffer.swap( send_buffer );
+  recv_buffer_.swap( send_buffer );
 }
 
 void
 nest::MPIManager::communicate( std::vector< unsigned long >& send_buffer,
-  std::vector< unsigned long >& recv_buffer,
+  std::vector< unsigned long >& recv_buffer_,
   std::vector< int >& displacements )
 {
   displacements.resize( num_processes_, 0 );
   displacements[ 0 ] = 0;
-  recv_buffer.swap( send_buffer );
+  recv_buffer_.swap( send_buffer );
 }
 
 void
 nest::MPIManager::communicate( std::vector< int >& send_buffer,
-  std::vector< int >& recv_buffer,
+  std::vector< int >& recv_buffer_,
   std::vector< int >& displacements )
 {
   displacements.resize( num_processes_, 0 );
   displacements[ 0 ] = 0;
-  recv_buffer.swap( send_buffer );
+  recv_buffer_.swap( send_buffer );
 }
 
 void
-nest::MPIManager::communicate( double send_val, std::vector< double >& recv_buffer )
+nest::MPIManager::communicate( double send_val, std::vector< double >& recv_buffer_ )
 {
-  recv_buffer.resize( 1 );
-  recv_buffer[ 0 ] = send_val;
+  recv_buffer_.resize( 1 );
+  recv_buffer_[ 0 ] = send_val;
 }
 
 void
@@ -1075,9 +1075,9 @@ nest::MPIManager::communicate_Allreduce_sum_in_place( std::vector< int >& )
 }
 
 void
-nest::MPIManager::communicate_Allreduce_sum( std::vector< double >& send_buffer, std::vector< double >& recv_buffer )
+nest::MPIManager::communicate_Allreduce_sum( std::vector< double >& send_buffer, std::vector< double >& recv_buffer_ )
 {
-  recv_buffer.swap( send_buffer );
+  recv_buffer_.swap( send_buffer );
 }
 
 bool

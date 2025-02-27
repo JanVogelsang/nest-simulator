@@ -203,7 +203,7 @@ public:
   using Node::handles_test_event;
   using Node::sends_secondary_event;
 
-  size_t send_test_event( Node& target, size_t receptor_type, synindex, bool ) override;
+  size_t send_test_event( NodeBase& target, size_t receptor_type, synindex, bool ) override;
 
   void handle( SpikeEvent& ) override;
   void handle( CurrentEvent& ) override;
@@ -428,7 +428,7 @@ hh_cond_beta_gap_traub::wfr_update( Time const& origin, const long from, const l
 }
 
 inline size_t
-hh_cond_beta_gap_traub::send_test_event( Node& target, size_t receptor_type, synindex, bool )
+hh_cond_beta_gap_traub::send_test_event( NodeBase& target, size_t receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

@@ -141,15 +141,13 @@ nest::correlospinmatrix_detector::State_::get( DictionaryDatum& d ) const
 }
 
 bool
-nest::correlospinmatrix_detector::Parameters_::set( const DictionaryDatum& d,
-  const correlospinmatrix_detector& n,
-  Node* node )
+nest::correlospinmatrix_detector::Parameters_::set( const DictionaryDatum& d, const correlospinmatrix_detector& n )
 {
   bool reset = false;
   double t;
   long N;
 
-  if ( updateValueParam< long >( d, names::N_channels, N, node ) )
+  if ( updateValueParam< long >( d, names::N_channels, N, &n ) )
   {
     if ( N < 1 )
     {
@@ -162,7 +160,7 @@ nest::correlospinmatrix_detector::Parameters_::set( const DictionaryDatum& d,
     }
   }
 
-  if ( updateValueParam< double >( d, names::delta_tau, t, node ) )
+  if ( updateValueParam< double >( d, names::delta_tau, t, &n ) )
   {
     delta_tau_ = Time::ms( t );
     reset = true;
@@ -172,7 +170,7 @@ nest::correlospinmatrix_detector::Parameters_::set( const DictionaryDatum& d,
     }
   }
 
-  if ( updateValueParam< double >( d, names::tau_max, t, node ) )
+  if ( updateValueParam< double >( d, names::tau_max, t, &n ) )
   {
     tau_max_ = Time::ms( t );
     reset = true;
@@ -182,7 +180,7 @@ nest::correlospinmatrix_detector::Parameters_::set( const DictionaryDatum& d,
     }
   }
 
-  if ( updateValueParam< double >( d, names::Tstart, t, node ) )
+  if ( updateValueParam< double >( d, names::Tstart, t, &n ) )
   {
     Tstart_ = Time::ms( t );
     reset = true;
@@ -192,7 +190,7 @@ nest::correlospinmatrix_detector::Parameters_::set( const DictionaryDatum& d,
     }
   }
 
-  if ( updateValueParam< double >( d, names::Tstop, t, node ) )
+  if ( updateValueParam< double >( d, names::Tstop, t, &n ) )
   {
     Tstop_ = Time::ms( t );
     reset = true;

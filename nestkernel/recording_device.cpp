@@ -27,16 +27,14 @@
 #include "recording_device.h"
 
 nest::RecordingDevice::RecordingDevice()
-  : DeviceNode()
-  , Device()
+  : Device()
   , P_()
   , backend_params_( new Dictionary )
 {
 }
 
 nest::RecordingDevice::RecordingDevice( const RecordingDevice& rd )
-  : DeviceNode( rd )
-  , Device( rd )
+  : Device( rd )
   , P_( rd.P_ )
   , backend_params_( new Dictionary( *rd.backend_params_ ) )
 {
@@ -137,7 +135,7 @@ nest::RecordingDevice::set_status( const DictionaryDatum& d )
 
   Device::set_status( d );
 
-  if ( get_node_id() == 0 ) // this is a model prototype, not an actual instance
+  if ( get_thread_lid() == invalid_index ) // this is a model prototype, not an actual instance
   {
     DictionaryDatum backend_params = DictionaryDatum( new Dictionary );
 
@@ -183,7 +181,7 @@ nest::RecordingDevice::get_status( DictionaryDatum& d ) const
 
   ( *d )[ names::element_type ] = LiteralDatum( names::recorder );
 
-  if ( get_node_id() == 0 ) // this is a model prototype, not an actual instance
+  if ( get_thread_lid() == invalid_index ) // this is a model prototype, not an actual instance
   {
     // first get the defaults from the backend
     kernel().io_manager.get_recording_backend_device_defaults( P_.record_to_, d );

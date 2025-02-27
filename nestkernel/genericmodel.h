@@ -69,7 +69,7 @@ public:
    * Since proxies know the model they represent, they can now answer a call to check
    * connection by referring back to the model.
    */
-  size_t send_test_event( Node&, size_t, synindex, bool ) override;
+  size_t send_test_event( NodeBase&, size_t, synindex, bool ) override;
 
   void sends_secondary_event( GapJunctionEvent& ge ) override;
 
@@ -83,7 +83,7 @@ public:
 
   void sends_secondary_event( SICEvent& sic ) override;
 
-  Node const& get_prototype() const override;
+  NodeBase const& get_prototype() const override;
 
   void set_model_id( int ) override;
 
@@ -100,7 +100,7 @@ private:
   /**
    * Call placement new on the supplied memory position.
    */
-  Node* create_() override;
+  NodeBase* create_() override;
 
   /**
    * Prototype node from which all instances are constructed.
@@ -145,10 +145,10 @@ GenericModel< ElementT >::clone( const std::string& newname ) const
 }
 
 template < typename ElementT >
-Node*
+NodeBase*
 GenericModel< ElementT >::create_()
 {
-  Node* n = new ElementT( proto_ );
+  NodeBase* n = new ElementT( proto_ );
   return n;
 }
 
@@ -182,7 +182,7 @@ GenericModel< ElementT >::calibrate_time( const TimeConverter& tc )
 
 template < typename ElementT >
 inline size_t
-GenericModel< ElementT >::send_test_event( Node& target, size_t receptor, synindex syn_id, bool dummy_target )
+GenericModel< ElementT >::send_test_event( NodeBase& target, size_t receptor, synindex syn_id, bool dummy_target )
 {
   return proto_.send_test_event( target, receptor, syn_id, dummy_target );
 }
@@ -240,7 +240,8 @@ template < typename ElementT >
 DictionaryDatum
 GenericModel< ElementT >::get_status_()
 {
-  DictionaryDatum d = proto_.get_status_base();
+  DictionaryDatum d = DictionaryDatum( new Dictionary );
+  proto_.get_status( d );
   ( *d )[ names::elementsize ] = sizeof( ElementT );
   return d;
 }
@@ -253,7 +254,7 @@ GenericModel< ElementT >::get_element_size() const
 }
 
 template < typename ElementT >
-Node const&
+NodeBase const&
 GenericModel< ElementT >::get_prototype() const
 {
   return proto_;

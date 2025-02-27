@@ -104,7 +104,7 @@ precise_weighted_spike_generator::Parameters_::set( const DictionaryDatum& d,
   State_& s,
   const Time& origin,
   const Time& now,
-  Node* )
+  const NodeBase* )
 {
   const bool updated_spike_times = d->known( names::spike_times );
 
@@ -186,16 +186,14 @@ precise_weighted_spike_generator::State_::State_()
  * ---------------------------------------------------------------- */
 
 precise_weighted_spike_generator::precise_weighted_spike_generator()
-  : Node()
-  , StimulationDevice()
+  : StimulationDevice()
   , P_()
   , S_()
 {
 }
 
 precise_weighted_spike_generator::precise_weighted_spike_generator( const precise_weighted_spike_generator& n )
-  : Node( n )
-  , StimulationDevice( n )
+  : StimulationDevice( n )
   , P_( n.P_ )
   , S_( n.S_ )
 {

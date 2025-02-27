@@ -185,6 +185,19 @@ sort( BlockVector< T1 >& vec_sort, BlockVector< T2 >& vec_perm )
 #endif
 }
 
+template < typename T1, typename T2 >
+void
+sort( BlockVector< T1 >& vec_sort, std::vector< T2 >& vec_perm )
+{
+#ifdef HAVE_BOOST
+  boost::sort::spreadsort::integer_sort( make_iterator_pair( vec_sort.begin(), vec_perm.begin() ),
+    make_iterator_pair( vec_sort.end(), vec_perm.end() ),
+    rightshift_iterator_pair() );
+#else
+  quicksort3way( vec_sort, vec_perm, 0, vec_sort.size() - 1 );
+#endif
+}
+
 } // namespace sort
 
 #endif /* #ifndef SORT_H */

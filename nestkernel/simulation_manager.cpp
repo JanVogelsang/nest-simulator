@@ -810,6 +810,8 @@ nest::SimulationManager::update_()
           gettimeofday( &t_slice_begin_, nullptr );
         }
 
+        kernel().io_manager.pre_step_hook();
+
         // Do not deliver events at beginning of first slice, nothing can be there yet
         // and invalid markers have not been properly set in send buffers.
         if ( slice_ > 0 and from_step_ == 0 )
@@ -837,7 +839,6 @@ nest::SimulationManager::update_()
           {
             kernel().event_delivery_manager.deliver_secondary_events( tid, false );
           }
-
 
 #ifdef HAVE_MUSIC
 // advance the time of music by one step (min_delay * h) must
@@ -868,7 +869,7 @@ nest::SimulationManager::update_()
 #endif
         } // if from_step == 0
 
-        // preliminary update of nodes that use waveform relaxtion, only
+        // preliminary update of nodes that use waveform relaxation, only
         // necessary if secondary connections exist and any node uses
         // wfr
         if ( kernel().connection_manager.secondary_connections_exist() and kernel().node_manager.wfr_is_used() )
@@ -997,14 +998,23 @@ nest::SimulationManager::update_()
           sw_update_.start();
         }
 #endif
-        const SparseNodeArray& thread_local_nodes = kernel().node_manager.get_local_nodes( tid );
+        // Update devices
+        for ( Device* device : kernel().node_manager.get_local_devices( tid ) )
+        {
+          if ( not device->is_frozen() )
+          {
+            device->update( clock_, from_step_, to_step_ );
+          }
+        }
 
+        // Update nodes
+        const SparseNodeArray& thread_local_nodes = kernel().node_manager.get_local_nodes( tid );
         for ( SparseNodeArray::const_iterator n = thread_local_nodes.begin(); n != thread_local_nodes.end(); ++n )
         {
           Node* node = n->get_node();
-          if ( not( node )->is_frozen() )
+          if ( not node->is_frozen() )
           {
-            ( node )->update( clock_, from_step_, to_step_ );
+            node->update( clock_, from_step_, to_step_ );
           }
         }
 
@@ -1041,7 +1051,6 @@ nest::SimulationManager::update_()
               kernel().event_delivery_manager.gather_secondary_events( true );
             }
           }
-
 
           advance_time_();
 

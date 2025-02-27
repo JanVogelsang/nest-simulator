@@ -214,13 +214,26 @@ public:
   virtual void post_run_hook() = 0;
 
   /**
+   * Do work required at the beginning of each simulation step.
+   *
+   * This is called at the very beginning of each simulation step. It can for example
+   * be used to carry out writing to files in a synchronized way, all threads
+   * on all MPI processes performing it at the same time.
+   *
+   * @see pre_run_hook()
+   *
+   * @ingroup NESTio
+   */
+  virtual void pre_step_hook() = 0;
+
+  /**
    * Do work required at the end of each simulation step.
    *
    * This is called at the very end of each simulation step. It can for example
    * be used to carry out writing to files in a synchronized way, all threads
    * on all MPI processes performing it at the same time.
    *
-   * @see pre_run_hook()
+   * @see post_run_hook()
    *
    * @ingroup NESTio
    */

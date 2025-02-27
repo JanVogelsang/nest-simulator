@@ -104,7 +104,6 @@ def get_models_from_file(model_file):
         "public StructuralPlasticityNode": "neuron",
         "public StimulationDevice": "stimulator",
         "public RecordingDevice": "recorder",
-        "public DeviceNode": "devicelike",
         "public Connection": "connection",
         "public Node": "node",
         "public ClopathArchivingNode": "clopath",

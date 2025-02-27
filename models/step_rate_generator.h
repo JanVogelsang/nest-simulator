@@ -29,7 +29,6 @@
 
 // Includes from nestkernel:
 #include "connection.h"
-#include "device_node.h"
 #include "event.h"
 #include "nest_types.h"
 #include "ring_buffer.h"
@@ -108,34 +107,29 @@ EndUserDocs */
 
 void register_step_rate_generator( const std::string& name );
 
-class step_rate_generator : public DeviceNode, public StimulationDevice
+class step_rate_generator : public StimulationDevice
 {
 
 public:
   step_rate_generator();
   step_rate_generator( const step_rate_generator& );
 
-  // port send_test_event( Node&, rport, synindex, bool );
+  // port send_test_event( NodeBase&, rport, synindex, bool );
   void sends_secondary_event( DelayedRateConnectionEvent& ) override {};
-
-  using Node::handle;
-  using Node::handles_test_event;
-  using Node::sends_secondary_event;
 
   void handle( DataLoggingRequest& ) override;
 
-  size_t send_test_event( Node&, size_t, synindex, bool ) override;
+  size_t send_test_event( NodeBase&, size_t, synindex, bool ) override;
 
   size_t handles_test_event( DataLoggingRequest&, size_t ) override;
 
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
 
-  //! Allow multimeter to connect to local instances
-  bool local_receiver() const override;
-
   StimulationDevice::Type get_type() const override;
   void set_data_from_stimulation_backend( std::vector< double >& input_param ) override;
+
+  using NodeBase::sends_secondary_event;
 
 private:
   void init_state_() override;
@@ -144,11 +138,6 @@ private:
 
   void update( Time const&, const long, const long ) override;
 
-  void
-  set_initialized_() final
-  {
-    StimulationDevice::set_initialized_( this );
-  }
   Name
   get_element_type() const override
   {
@@ -172,13 +161,12 @@ private:
     bool allow_offgrid_amp_times_;
 
     Parameters_(); //!< Sets default parameter values
-    Parameters_( const Parameters_&, Buffers_& );
     Parameters_( const Parameters_& );
     Parameters_& operator=( const Parameters_& p );
 
     void get( DictionaryDatum& ) const; //!< Store current values in dictionary
     //! Set values from dictionary
-    void set( const DictionaryDatum&, Buffers_&, Node* );
+    void set( const DictionaryDatum&, Buffers_&, const NodeBase* );
 
     /**
      * Return time as Time object if valid, otherwise throw BadProperty
@@ -233,7 +221,7 @@ private:
 };
 
 inline size_t
-step_rate_generator::send_test_event( Node& target, size_t receptor_type, synindex syn_id, bool )
+step_rate_generator::send_test_event( NodeBase& target, size_t receptor_type, synindex syn_id, bool )
 {
   StimulationDevice::enforce_single_syn_type( syn_id );
 
@@ -257,7 +245,7 @@ inline void
 step_rate_generator::get_status( DictionaryDatum& d ) const
 {
   P_.get( d );
-  StimulationDevice::get_status( this, d );
+  StimulationDevice::get_status( d );
 
   ( *d )[ names::recordables ] = recordablesMap_.get_list();
 }
@@ -271,17 +259,10 @@ step_rate_generator::set_status( const DictionaryDatum& d )
   // We now know that ptmp is consistent. We do not write it back
   // to P_ before we are also sure that the properties to be set
   // in the parent class are internally consistent.
-  StimulationDevice::set_status( this, d );
+  StimulationDevice::set_status( d );
 
   // if we get here, temporaries contain consistent set of properties
   P_ = ptmp;
-}
-
-//! Allow step rate generator to connect to local instances
-inline bool
-step_rate_generator::local_receiver() const
-{
-  return true;
 }
 
 inline StimulationDevice::Type

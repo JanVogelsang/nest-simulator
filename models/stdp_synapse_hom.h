@@ -301,7 +301,7 @@ stdp_synapse_hom< targetidentifierT >::send( Event& e, size_t t, const STDPHomCo
 
   // t_lastspike_ = 0 initially
 
-  Node* target = get_target( t );
+  Node* target = static_cast< Node* >( get_target( t ) );
   double dendritic_delay = get_delay();
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron

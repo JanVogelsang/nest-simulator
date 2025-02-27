@@ -175,7 +175,7 @@ public:
   using Node::handle;
   using Node::handles_test_event;
 
-  size_t send_test_event( Node&, size_t, synindex, bool ) override;
+  size_t send_test_event( NodeBase&, size_t, synindex, bool ) override;
 
   size_t handles_test_event( SpikeEvent&, size_t ) override;
   size_t handles_test_event( CurrentEvent&, size_t ) override;
@@ -207,8 +207,7 @@ public:
 
 private:
   /** @name Interface functions
-   * @note These functions are private, so that they can be accessed
-   * only through a Node*.
+   * @note These functions are private, so that they can be accessed only through a Node*.
    */
   //@{
   void init_buffers_() override;
@@ -422,7 +421,7 @@ private:
 };
 
 inline size_t
-nest::iaf_psc_exp_ps::send_test_event( Node& target, size_t receptor_type, synindex, bool )
+nest::iaf_psc_exp_ps::send_test_event( NodeBase& target, size_t receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

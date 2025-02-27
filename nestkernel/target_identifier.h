@@ -66,11 +66,12 @@ public:
     if ( target_ )
     {
       def< long >( d, names::rport, rport_ );
-      def< long >( d, names::target, target_->get_node_id() );
+      def< long >( d, names::target_thread, target_->get_thread_lid() );
+      def< long >( d, names::target, target_->get_thread() );
     }
   }
 
-  Node*
+  NodeBase*
   get_target_ptr( const size_t ) const
   {
     return target_;
@@ -83,7 +84,7 @@ public:
   }
 
   void
-  set_target( Node* target )
+  set_target( NodeBase* target )
   {
     target_ = target;
   }
@@ -95,8 +96,8 @@ public:
   }
 
 private:
-  Node* target_; //!< Target node
-  size_t rport_; //!< Receiver port at the target node
+  NodeBase* target_; //!< Target node
+  size_t rport_;     //!< Receiver port at the target node
 };
 
 
@@ -134,7 +135,7 @@ public:
     }
   }
 
-  Node*
+  NodeBase*
   get_target_ptr( const size_t tid ) const
   {
     assert( target_ != invalid_targetindex );
@@ -147,7 +148,7 @@ public:
     return 0;
   }
 
-  void set_target( Node* target );
+  void set_target( NodeBase* target );
 
   void
   set_rport( size_t rprt )
@@ -166,7 +167,7 @@ private:
 };
 
 inline void
-TargetIdentifierIndex::set_target( Node* target )
+TargetIdentifierIndex::set_target( NodeBase* target )
 {
   kernel().node_manager.ensure_valid_thread_local_ids();
 

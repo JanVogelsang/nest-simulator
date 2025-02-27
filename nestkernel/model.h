@@ -86,11 +86,9 @@ public:
   /**
    * Allocate new Node and return its pointer.
    *
-   * create() is not const, because it
-   * is allowed to modify the Model object for
-   * 'administrative' purposes.
+   * create() is not const, because it is allowed to modify the Model object for 'administrative' purposes.
    */
-  Node* create( size_t t );
+  NodeBase* create( size_t t );
 
   /**
    * Deletes all nodes which belong to this model.
@@ -153,7 +151,7 @@ public:
    */
   DictionaryDatum get_status();
 
-  virtual size_t send_test_event( Node&, size_t, synindex, bool ) = 0;
+  virtual size_t send_test_event( NodeBase&, size_t, synindex, bool ) = 0;
 
   virtual void sends_secondary_event( GapJunctionEvent& ge ) = 0;
   virtual void sends_secondary_event( InstantaneousRateConnectionEvent& re ) = 0;
@@ -178,7 +176,7 @@ public:
   /**
    * Return const reference to the prototype.
    */
-  virtual Node const& get_prototype() const = 0;
+  virtual NodeBase const& get_prototype() const = 0;
 
   /**
    * Set the model id on the prototype.
@@ -227,7 +225,7 @@ private:
   /**
    * Create a new object.
    */
-  virtual Node* create_() = 0;
+  virtual NodeBase* create_() = 0;
 
   /**
    * Name of the Model.
@@ -249,15 +247,15 @@ private:
   /**
    * Memory for all nodes sorted by threads.
    */
-  std::vector< std::vector< Node* > > memory_;
+  std::vector< std::vector< NodeBase* > > memory_;
 };
 
 
-inline Node*
+inline NodeBase*
 Model::create( size_t t )
 {
   assert( t < memory_.size() );
-  Node* n = create_();
+  NodeBase* n = create_();
   memory_[ t ].emplace_back( n );
   return n;
 }

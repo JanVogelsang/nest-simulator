@@ -98,7 +98,7 @@ public:
   using Node::receives_signal;
   using Node::sends_signal;
 
-  size_t send_test_event( Node&, size_t, synindex, bool ) override;
+  size_t send_test_event( NodeBase&, size_t, synindex, bool ) override;
   SignalType sends_signal() const override;
   SignalType receives_signal() const override;
 
@@ -130,7 +130,7 @@ private:
 };
 
 inline size_t
-parrot_neuron::send_test_event( Node& target, size_t receptor_type, synindex, bool )
+parrot_neuron::send_test_event( NodeBase& target, size_t receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

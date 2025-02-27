@@ -111,6 +111,8 @@ public:
 
   void post_run_hook() override;
 
+  void pre_step_hook() override;
+
   void post_step_hook() override;
 
   void set_status( const DictionaryDatum& ) override;

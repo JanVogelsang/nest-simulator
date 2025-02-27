@@ -96,14 +96,14 @@ nest::music_event_in_proxy::State_::set( const DictionaryDatum&, const Parameter
  * ---------------------------------------------------------------- */
 
 nest::music_event_in_proxy::music_event_in_proxy()
-  : DeviceNode()
+  : Device()
   , P_()
   , S_()
 {
 }
 
 nest::music_event_in_proxy::music_event_in_proxy( const music_event_in_proxy& n )
-  : DeviceNode( n )
+  : Device( n )
   , P_( n.P_ )
   , S_( n.S_ )
 {
@@ -162,7 +162,7 @@ nest::music_event_in_proxy::handle( SpikeEvent& e )
 
   for ( size_t t = 0; t < kernel().vp_manager.get_num_threads(); ++t )
   {
-    kernel().connection_manager.send_from_device( t, local_device_id_, e );
+    kernel().connection_manager.send_from_device( t, get_thread_lid(), e );
   }
 }
 

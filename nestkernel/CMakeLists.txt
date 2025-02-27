@@ -33,7 +33,6 @@ set ( nestkernel_sources
       connection_id.h connection_id.cpp
       deprecation_warning.h deprecation_warning.cpp
       device.h device.cpp
-      device_node.h
       dynamicloader.h dynamicloader.cpp
       event.h event.cpp
       exceptions.h exceptions.cpp
@@ -141,7 +140,7 @@ if ( HAVE_MPI )
 endif ()
 
 
-# Prevent problems with Conda path substitution (see #2348) 
+# Prevent problems with Conda path substitution (see #2348)
 set_source_files_properties( dynamicloader.cpp PROPERTIES COMPILE_OPTIONS "-O0" )
 
 

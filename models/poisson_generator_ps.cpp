@@ -69,7 +69,7 @@ nest::poisson_generator_ps::Parameters_::get( DictionaryDatum& d ) const
 }
 
 void
-nest::poisson_generator_ps::Parameters_::set( const DictionaryDatum& d, Node* node )
+nest::poisson_generator_ps::Parameters_::set( const DictionaryDatum& d, const NodeBase* node )
 {
   updateValueParam< double >( d, names::dead_time, dead_time_, node );
   if ( dead_time_ < 0 )

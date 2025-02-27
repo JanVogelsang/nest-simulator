@@ -75,6 +75,8 @@ nest::StructuralPlasticityNode::get_status( DictionaryDatum& d ) const
 void
 nest::StructuralPlasticityNode::set_status( const DictionaryDatum& d )
 {
+  Node::set_status( d );
+
   // We need to preserve values in case invalid values are set
   double new_Ca_ = Ca_minus_;
   double new_tau_Ca = tau_Ca_;

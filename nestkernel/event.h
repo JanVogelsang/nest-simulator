@@ -42,7 +42,7 @@
 namespace nest
 {
 
-class Node;
+class NodeBase;
 
 /**
  * Encapsulate information sent between nodes.
@@ -123,29 +123,24 @@ public:
   /**
    * Change pointer to receiving Node.
    */
-  void set_receiver( Node& );
+  void set_receiver( NodeBase& );
 
   /**
    * Return reference to receiving Node.
    */
-  Node& get_receiver() const;
-
-  /**
-   * Return node ID of receiving Node.
-   */
-  size_t get_receiver_node_id() const;
+  NodeBase& get_receiver() const;
 
   /**
    * Return reference to sending Node.
    *
    * @note This will cause a segmentation fault if sender has not been set via set_sender().
    */
-  Node& get_sender() const;
+  NodeBase& get_sender() const;
 
   /**
    * Change pointer to sending Node.
    */
-  void set_sender( Node& );
+  void set_sender( NodeBase& );
 
   /**
    * Sender is local. Return node ID of sending Node.
@@ -329,9 +324,8 @@ protected:
   // problem, we store sender and receiver as pointers and use
   // references in the interface.
   // Thus, we can still ensure that the pointers are never nullptr.
-  Node* sender_;   //!< Pointer to sender or nullptr.
-  Node* receiver_; //!< Pointer to receiver or nullptr.
-
+  NodeBase* sender_;   //!< Pointer to sender or nullptr.
+  NodeBase* receiver_; //!< Pointer to receiver or nullptr.
 
   /**
    * Sender port number.
@@ -489,7 +483,6 @@ WeightRecorderEvent::get_receiver_node_id() const
 {
   return receiver_node_id_;
 }
-
 
 /**
  * "Callback request event" for use in Device.
@@ -901,13 +894,13 @@ Event::is_valid() const
 }
 
 inline void
-Event::set_receiver( Node& r )
+Event::set_receiver( NodeBase& r )
 {
   receiver_ = &r;
 }
 
 inline void
-Event::set_sender( Node& s )
+Event::set_sender( NodeBase& s )
 {
   sender_ = &s;
 }
@@ -925,13 +918,13 @@ Event::set_sender_node_id_info( const size_t tid, const synindex syn_id, const s
   sender_spike_data_.set( tid, syn_id, lcid, 0, 0.0 );
 }
 
-inline Node&
+inline NodeBase&
 Event::get_receiver() const
 {
   return *receiver_;
 }
 
-inline Node&
+inline NodeBase&
 Event::get_sender() const
 {
   return *sender_;

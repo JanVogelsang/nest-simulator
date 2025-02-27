@@ -79,7 +79,9 @@ nest::pulsepacket_generator::Parameters_::get( DictionaryDatum& d ) const
 }
 
 void
-nest::pulsepacket_generator::Parameters_::set( const DictionaryDatum& d, pulsepacket_generator& ppg, Node* node )
+nest::pulsepacket_generator::Parameters_::set( const DictionaryDatum& d,
+  pulsepacket_generator& ppg,
+  const NodeBase* node )
 {
   // We cannot use a single line here since short-circuiting may stop evaluation
   // prematurely. Therefore, neednewpulse must be second arg on second line.

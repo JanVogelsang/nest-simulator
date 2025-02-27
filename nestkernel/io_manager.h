@@ -87,15 +87,24 @@ public:
   bool overwrite_files() const;
 
   /**
-   * Clean up in all registered recording backends after a single call to run by
-   * calling the backends' post_run_hook() functions
+   * Prepare all registered recording backends before a single call to run by calling the backends' pre_run_hook()
+   * functions
+   */
+  void pre_run_hook();
+  /**
+   * Clean up in all registered recording backends after a single call to run by calling the backends' post_run_hook()
+   * functions
    */
   void post_run_hook();
-  void pre_run_hook();
 
   /**
-   * Clean up in all registered recording backends after a single simulation
-   * step by calling the backends' post_step_hook() functions
+   * Prepare all registered recording backends before a single simulation step by calling the backends'
+   * pre_step_hook() functions
+   */
+  void pre_step_hook();
+  /**
+   * Clean up in all registered recording backends after a single simulation step by calling the backends'
+   * post_step_hook() functions
    */
   void post_step_hook();
 
@@ -139,8 +148,8 @@ public:
     const std::vector< double >& double_values,
     const std::vector< long >& long_values );
 
-  void enroll_recorder( const Name, const RecordingDevice&, const DictionaryDatum& );
-  void enroll_stimulator( const Name, const Node* node, StimulationDevice&, const DictionaryDatum& );
+  void enroll_recorder( const Name, RecordingDevice&, const DictionaryDatum& );
+  void enroll_stimulator( const Name, StimulationDevice&, const DictionaryDatum& );
 
   void set_recording_value_names( const Name backend_name,
     const RecordingDevice& device,

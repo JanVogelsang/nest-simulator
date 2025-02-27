@@ -166,7 +166,7 @@ nest::TargetTableDevices::get_connections_from_devices_( const size_t requested_
     if ( source_node_id > 0 and ( requested_source_node_id == source_node_id or requested_source_node_id == 0 ) )
     {
       const Node* source = kernel().node_manager.get_node_or_proxy( source_node_id, tid );
-      const size_t ldid = source->get_local_device_id();
+      const size_t ldid = source->get_thread_lid();
 
       if ( target_from_devices_[ tid ][ ldid ].size() > 0 )
       {

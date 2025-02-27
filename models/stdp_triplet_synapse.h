@@ -265,7 +265,7 @@ stdp_triplet_synapse< targetidentifierT >::send( Event& e, size_t t, const Commo
 {
   double t_spike = e.get_stamp().get_ms();
   double dendritic_delay = get_delay();
-  Node* target = get_target( t );
+  Node* target = static_cast< Node* >( get_target( t ) );
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron
   std::deque< histentry >::iterator start;

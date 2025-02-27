@@ -42,7 +42,7 @@ namespace nest
  */
 template < typename FT, typename VT >
 bool
-updateValueParam( DictionaryDatum const& d, Name const n, VT& value, nest::Node* node )
+updateValueParam( DictionaryDatum const& d, Name const n, VT& value, const nest::NodeBase* node )
 {
   const Token& t = d->lookup( n );
 
@@ -53,9 +53,7 @@ updateValueParam( DictionaryDatum const& d, Name const n, VT& value, nest::Node*
     {
       throw BadParameter( "Cannot use Parameter with this model." );
     }
-    auto vp = kernel().vp_manager.node_id_to_vp( node->get_node_id() );
-    auto tid = kernel().vp_manager.vp_to_thread( vp );
-    auto rng = get_vp_specific_rng( tid );
+    auto rng = get_vp_specific_rng( node->get_thread() );
     value = pd->get()->value( rng, node );
     return true;
   }

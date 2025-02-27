@@ -29,7 +29,6 @@
 
 // Includes from nestkernel:
 #include "device.h"
-#include "device_node.h"
 #include "kernel_manager.h"
 #include "nest_types.h"
 #include "node.h"
@@ -126,14 +125,13 @@ EndUserDocs */
  * @author HEP 2002-07-22, 2008-03-21, 2011-02-11
  */
 
-class RecordingDevice : public DeviceNode, public Device
+class RecordingDevice : public Device
 {
 public:
   RecordingDevice();
   RecordingDevice( const RecordingDevice& );
 
   using Device::pre_run_hook;
-  using Node::pre_run_hook;
   void pre_run_hook( const std::vector< Name >&, const std::vector< Name >& );
 
   bool is_active( Time const& T ) const override;

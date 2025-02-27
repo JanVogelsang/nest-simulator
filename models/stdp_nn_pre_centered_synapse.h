@@ -257,7 +257,7 @@ stdp_nn_pre_centered_synapse< targetidentifierT >::send( Event& e, size_t t, con
 
   // use accessor functions (inherited from Connection< >) to obtain delay and
   // target
-  Node* target = get_target( t );
+  Node* target = static_cast< Node* >( get_target( t ) );
   double dendritic_delay = get_delay();
 
   // get spike history in relevant range (t1, t2] from postsynaptic neuron

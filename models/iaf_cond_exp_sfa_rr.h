@@ -168,7 +168,7 @@ public:
   using Node::handle;
   using Node::handles_test_event;
 
-  size_t send_test_event( Node&, size_t, synindex, bool ) override;
+  size_t send_test_event( NodeBase&, size_t, synindex, bool ) override;
 
   void handle( SpikeEvent& ) override;
   void handle( CurrentEvent& ) override;
@@ -338,7 +338,7 @@ private:
 
 
 inline size_t
-nest::iaf_cond_exp_sfa_rr::send_test_event( Node& target, size_t receptor_type, synindex, bool )
+nest::iaf_cond_exp_sfa_rr::send_test_event( NodeBase& target, size_t receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

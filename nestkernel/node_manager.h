@@ -43,8 +43,9 @@
 namespace nest
 {
 
-class Node;
 class Model;
+class Node;
+class Device;
 
 class NodeManager : public ManagerInterface
 {
@@ -118,7 +119,7 @@ public:
   /**
    * Returns the number of devices per thread.
    */
-  size_t get_num_thread_local_devices( size_t t ) const;
+  size_t get_num_thread_local_devices( size_t tid ) const;
 
   /**
    * Print network information.
@@ -128,7 +129,7 @@ public:
   /**
    * Return true, if the given Node is on the local machine
    */
-  bool is_local_node( Node* ) const;
+  bool is_local_node( const Node* ) const;
 
   /**
    * Return true, if the given node ID is on the local machine
@@ -164,7 +165,7 @@ public:
    *
    * @params node_id Index of the Node.
    */
-  Node* get_mpi_local_node_or_device_head( size_t );
+  NodeBase* get_mpi_local_node_or_device_head( size_t );
 
   /**
    * Return a vector that contains the thread siblings.
@@ -175,7 +176,7 @@ public:
    *
    * @ingroup net_access
    */
-  std::vector< Node* > get_thread_siblings( size_t n ) const;
+  std::vector< NodeBase* > get_thread_siblings( const size_t node_lid ) const;
 
   /**
    * Ensure that all nodes in the network have valid thread-local IDs.
@@ -185,7 +186,7 @@ public:
    */
   void ensure_valid_thread_local_ids();
 
-  Node* thread_lid_to_node( size_t t, targetindex thread_local_id ) const;
+  NodeBase* thread_lid_to_node( size_t tid, targetindex thread_local_id ) const;
 
   /**
    * Get list of nodes on given thread.
@@ -237,7 +238,12 @@ public:
   /**
    * Return a reference to the thread-local nodes of thread t.
    */
-  const SparseNodeArray& get_local_nodes( size_t ) const;
+  const SparseNodeArray& get_local_nodes( size_t tid ) const;
+
+  /**
+   * Return a reference to the thread-local devices of thread t.
+   */
+  const std::vector< Device* >& get_local_devices( size_t tid ) const;
 
   bool have_nodes_changed() const;
   void set_have_nodes_changed( const bool changed );
@@ -254,16 +260,9 @@ public:
    * @param node  Node instance
    * @return The primitive NodeCollection object containing the node with node ID  falls in [first, last)
    */
-  NodeCollectionPTR node_id_to_node_collection( Node* node ) const;
+  NodeCollectionPTR node_id_to_node_collection( const Node* node ) const;
 
 private:
-  /**
-   * Initialize the network data structures.
-   *
-   * init_() is used by the constructor and by reset().
-   * @see reset()
-   */
-  void init_();
   void destruct_nodes_();
 
   /**
@@ -282,7 +281,7 @@ private:
    *
    * @see prepare_nodes_()
    */
-  void prepare_node_( Node* );
+  void prepare_node_( NodeBase* );
 
   /**
    * Add normal neurons.
@@ -350,7 +349,7 @@ private:
   size_t wfr_network_size_;
   size_t num_active_nodes_; //!< number of nodes created by prepare_nodes
 
-  std::vector< size_t > num_thread_local_devices_; //!< stores number of thread local devices
+  std::vector< std::vector< Device* > > thread_local_devices_; //!< stores number of thread local devices
 
   bool have_nodes_changed_; //!< true if new nodes have been created
                             //!< since startup or last call to simulate
@@ -368,16 +367,16 @@ NodeManager::size() const
   return local_nodes_[ 0 ].get_max_node_id();
 }
 
-inline Node*
-NodeManager::thread_lid_to_node( size_t t, targetindex thread_local_id ) const
+inline NodeBase*
+NodeManager::thread_lid_to_node( size_t tid, targetindex thread_local_id ) const
 {
-  return local_nodes_[ t ].get_node_by_index( thread_local_id );
+  return local_nodes_[ tid ].get_node_by_index( thread_local_id );
 }
 
 inline const std::vector< Node* >&
-NodeManager::get_wfr_nodes_on_thread( size_t t ) const
+NodeManager::get_wfr_nodes_on_thread( size_t tid ) const
 {
-  return wfr_nodes_vec_.at( t );
+  return wfr_nodes_vec_.at( tid );
 }
 
 inline bool
@@ -387,9 +386,15 @@ NodeManager::wfr_is_used() const
 }
 
 inline const SparseNodeArray&
-NodeManager::get_local_nodes( size_t t ) const
+NodeManager::get_local_nodes( size_t tid ) const
 {
-  return local_nodes_[ t ];
+  return local_nodes_[ tid ];
+}
+
+inline const std::vector< Device* >&
+NodeManager::get_local_devices( size_t tid ) const
+{
+  return thread_local_devices_[ tid ];
 }
 
 inline bool

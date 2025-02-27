@@ -206,7 +206,7 @@ public:
    * \returns The type of connection as ConnectionType if the connection should
    * be made, ConnectionType::NO_CONNECTION otherwise.
    */
-  ConnectionType connection_required( Node*& source, Node*& target, size_t tid );
+  ConnectionType connection_required( Node* source, Node* target, size_t tid );
 
   // aka conndatum GetStatus
   DictionaryDatum get_synapse_status( const size_t source_node_id,
@@ -309,11 +309,6 @@ public:
    * Send event e to all targets of source device ldid (local device id)
    */
   void send_from_device( const size_t tid, const size_t ldid, Event& e );
-
-  /**
-   * Send event e to all targets of node source on thread t
-   */
-  void send_local( size_t t, Node& source, Event& e );
 
   /**
    * Resize the structures for the Connector objects if necessary.

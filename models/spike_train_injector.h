@@ -242,14 +242,14 @@ EndUserDocs */
  */
 void register_spike_train_injector( const std::string& name );
 
-class spike_train_injector : public Node, public StimulationDevice
+class spike_train_injector : public StimulationDevice
 {
 
 public:
   spike_train_injector();
   spike_train_injector( const spike_train_injector& );
 
-  size_t send_test_event( Node&, size_t, synindex, bool ) override;
+  size_t send_test_event( NodeBase&, size_t, synindex, bool ) override;
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
   bool is_active( const Time& ) const override;
@@ -263,7 +263,6 @@ public:
   void set_data_from_stimulation_backend( std::vector< double >& input_spikes ) override {};
 
 private:
-  void init_state_() override;
   void init_buffers_() override;
   void pre_run_hook() override;
 
@@ -313,7 +312,7 @@ private:
      *       spike_times_ vector has been filled with new data, or if
      *       the origin was reset.
      */
-    void set( const DictionaryDatum&, State_&, const Time&, const Time&, Node* node );
+    void set( const DictionaryDatum&, State_&, const Time&, const Time&, const NodeBase* node );
 
     /**
      * Insert spike time to arrays, throw BadProperty for invalid spike times.
@@ -331,7 +330,7 @@ private:
 
 
 inline size_t
-spike_train_injector::send_test_event( Node& target, size_t receptor_type, synindex, bool )
+spike_train_injector::send_test_event( NodeBase& target, size_t receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );
@@ -343,7 +342,7 @@ inline void
 spike_train_injector::get_status( DictionaryDatum& d ) const
 {
   P_.get( d );
-  StimulationDevice::get_status( this, d );
+  StimulationDevice::get_status( d );
 }
 
 
@@ -371,7 +370,7 @@ spike_train_injector::set_status( const DictionaryDatum& d )
   // We now know that ptmp is consistent. We do not write it back
   // to P_ before we are also sure that the properties to be set
   // in the parent class are internally consistent.
-  StimulationDevice::set_status( this, d );
+  StimulationDevice::set_status( d );
 
   // if we get here, temporary contains consistent set of properties
   P_ = ptmp;

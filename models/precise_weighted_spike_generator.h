@@ -29,7 +29,6 @@
 
 // Includes from nestkernel:
 #include "connection.h"
-#include "device_node.h"
 #include "event.h"
 #include "nest_time.h"
 #include "nest_types.h"
@@ -94,14 +93,14 @@ EndUserDocs
 void register_precise_weighted_spike_generator( const std::string& name );
 
 
-class precise_weighted_spike_generator : public Node, public StimulationDevice
+class precise_weighted_spike_generator : public StimulationDevice
 {
 
 public:
   precise_weighted_spike_generator();
   precise_weighted_spike_generator( const precise_weighted_spike_generator& );
 
-  size_t send_test_event( Node&, size_t, synindex, bool ) override;
+  size_t send_test_event( NodeBase&, size_t, synindex, bool ) override;
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
   bool
@@ -125,11 +124,6 @@ private:
 
   void update( Time const&, const long, const long ) override;
 
-  void
-  set_initialized_() final
-  {
-    StimulationDevice::set_initialized_( this );
-  }
   Name
   get_element_type() const override
   {
@@ -168,7 +162,7 @@ private:
      *       spike_times_ or spike_weights_ vector has been filled with
      *       new data, or if the origin was reset.
      */
-    void set( const DictionaryDatum&, State_&, const Time&, const Time&, Node* node );
+    void set( const DictionaryDatum&, State_&, const Time&, const Time&, const NodeBase* node );
 
     /**
      * Insert spike time to arrays, throw BadProperty for invalid spike times.
@@ -187,7 +181,7 @@ private:
 };
 
 inline size_t
-precise_weighted_spike_generator::send_test_event( Node& target, size_t receptor_type, synindex, bool )
+precise_weighted_spike_generator::send_test_event( NodeBase& target, size_t receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );
@@ -198,7 +192,7 @@ inline void
 precise_weighted_spike_generator::get_status( DictionaryDatum& d ) const
 {
   P_.get( d );
-  StimulationDevice::get_status( this, d );
+  StimulationDevice::get_status( d );
 }
 
 inline void
@@ -222,10 +216,9 @@ nest::precise_weighted_spike_generator::set_status( const DictionaryDatum& d )
   // throws if BadProperty
   ptmp.set( d, S_, origin, kernel().simulation_manager.get_time(), this );
 
-  // We now know that ptmp is consistent. We do not write it back
-  // to P_ before we are also sure that the properties to be set
-  // in the parent class are internally consistent.
-  StimulationDevice::set_status( this, d );
+  // We now know that ptmp is consistent. We do not write it back to P_ before we are also sure that the properties to
+  // be set in the parent class are internally consistent.
+  StimulationDevice::set_status( d );
 
   // if we get here, temporary contains consistent set of properties
   P_ = ptmp;

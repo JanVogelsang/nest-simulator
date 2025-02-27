@@ -59,7 +59,7 @@ nest::TargetTableDevices::add_connection_from_device( Node& source,
   const double d,
   const double w )
 {
-  const size_t ldid = source.get_local_device_id();
+  const size_t ldid = source.get_thread_lid();
   assert( ldid != invalid_index );
   assert( ldid < target_from_devices_[ tid ].size() );
   assert( syn_id < target_from_devices_[ tid ][ ldid ].size() );

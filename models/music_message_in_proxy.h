@@ -42,7 +42,6 @@
 #include <music.hh>
 
 // Includes from nestkernel:
-#include "device_node.h"
 #include "nest_types.h"
 
 // Includes from sli:
@@ -139,7 +138,7 @@ public:
  * MUSIC port. The timestamps of the events also contain offsets,
  * which makes it also useful for precise spikes.
  */
-class music_message_in_proxy : public DeviceNode
+class music_message_in_proxy : public Device
 {
 
 public:
@@ -147,7 +146,7 @@ public:
   music_message_in_proxy( const music_message_in_proxy& );
 
   bool
-  has_proxies() const
+  has_proxies() const override
   {
     return false;
   }

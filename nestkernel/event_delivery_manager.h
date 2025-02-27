@@ -79,17 +79,12 @@ public:
    * \see send_local()
    */
   template < class EventT >
-  void send( Node& source, EventT& e, const long lag = 0 );
+  void send( NodeBase& source, EventT& e, const long lag = 0 );
 
   /**
    * Send a secondary event remote.
    */
-  void send_secondary( Node& source, SecondaryEvent& e );
-
-  /**
-   * Send event e to all targets of node source on thread t
-   */
-  void send_local( size_t t, Node& source, Event& e );
+  void send_secondary( NodeBase& source, SecondaryEvent& e );
 
   /**
    * Add node ID of event sender to the spike_register.
@@ -109,7 +104,7 @@ public:
    * in a synchronised (single threaded) state.
    * @see send_to_targets()
    */
-  void send_remote( size_t tid, SpikeEvent&, const long lag = 0 );
+  void send_remote( const size_t tid, const size_t sender_lid, SpikeEvent&, const long lag = 0 );
 
   /**
    * Add node ID of event sender to the spike_register.
@@ -130,7 +125,7 @@ public:
    * in a synchronised (single threaded) state.
    * @see send_to_targets()
    */
-  void send_off_grid_remote( size_t tid, SpikeEvent& e, const long lag = 0 );
+  void send_off_grid_remote( const size_t tid, const size_t sender_lid, SpikeEvent& e, const long lag = 0 );
 
   /**
    * Send event e directly to its target node.
@@ -366,8 +361,8 @@ private:
    * devices directly to targets.
    */
   template < class EventT >
-  void send_local_( Node& source, EventT& e, const long lag );
-  void send_local_( Node& source, SecondaryEvent& e, const long lag );
+  void send_local_( NodeBase& source, EventT& e, const long lag );
+  void send_local_( NodeBase& source, SecondaryEvent& e, const long lag );
 
   //--------------------------------------------------//
 

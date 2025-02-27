@@ -243,7 +243,6 @@ nitpick_ignore = [
     ("cpp:identifier", "CommonSynapseProperties"),
     ("cpp:identifier", "Connection<targetidentifierT>"),
     ("cpp:identifier", "ArchivingNode"),
-    ("cpp:identifier", "DeviceNode"),
     ("cpp:identifier", "Node"),
     ("cpp:identifier", "ClopathArchivingNode"),
     ("cpp:identifier", "MessageHandler"),

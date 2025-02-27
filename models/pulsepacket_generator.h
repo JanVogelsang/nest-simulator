@@ -102,7 +102,7 @@ EndUserDocs */
 
 void register_pulsepacket_generator( const std::string& name );
 
-class pulsepacket_generator : public DeviceNode, public StimulationDevice
+class pulsepacket_generator : public StimulationDevice
 {
 
 public:
@@ -112,7 +112,7 @@ public:
   // behaves like normal node, since it must provide identical
   // output to all targets
 
-  size_t send_test_event( Node&, size_t, synindex, bool ) override;
+  size_t send_test_event( NodeBase&, size_t, synindex, bool ) override;
 
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
@@ -127,11 +127,6 @@ private:
 
   void update( Time const&, const long, const long ) override;
 
-  void
-  set_initialized_() final
-  {
-    StimulationDevice::set_initialized_( this );
-  }
   Name
   get_element_type() const override
   {
@@ -159,7 +154,7 @@ private:
      * @note Buffer is passed so that the position etc can be reset
      *       parameters have been changed.
      */
-    void set( const DictionaryDatum&, pulsepacket_generator&, Node* );
+    void set( const DictionaryDatum&, pulsepacket_generator&, const NodeBase* node );
   };
 
   // ------------------------------------------------------------
@@ -198,7 +193,7 @@ private:
 };
 
 inline size_t
-pulsepacket_generator::send_test_event( Node& target, size_t receptor_type, synindex syn_id, bool )
+pulsepacket_generator::send_test_event( NodeBase& target, size_t receptor_type, synindex syn_id, bool )
 {
   StimulationDevice::enforce_single_syn_type( syn_id );
 
@@ -212,7 +207,7 @@ inline void
 pulsepacket_generator::get_status( DictionaryDatum& d ) const
 {
   P_.get( d );
-  StimulationDevice::get_status( this, d );
+  StimulationDevice::get_status( d );
 }
 
 inline void
@@ -224,7 +219,7 @@ pulsepacket_generator::set_status( const DictionaryDatum& d )
   // We now know that ptmp is consistent. We do not write it back
   // to P_ before we are also sure that the properties to be set
   // in the parent class are internally consistent.
-  StimulationDevice::set_status( this, d );
+  StimulationDevice::set_status( d );
 
   // if we get here, temporaries contain consistent set of properties
   P_ = ptmp;

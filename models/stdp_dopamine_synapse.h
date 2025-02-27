@@ -526,7 +526,7 @@ template < typename targetidentifierT >
 inline void
 stdp_dopamine_synapse< targetidentifierT >::send( Event& e, size_t t, const STDPDopaCommonProperties& cp )
 {
-  Node* target = get_target( t );
+  Node* target = static_cast< Node* >( get_target( t ) );
 
   // purely dendritic delay
   double dendritic_delay = get_delay();
@@ -588,11 +588,13 @@ stdp_dopamine_synapse< targetidentifierT >::trigger_update_weight( size_t t,
   // purely dendritic delay
   double dendritic_delay = get_delay();
 
+  Node* target = static_cast< Node* >( get_target( t ) );
+
   // get spike history in relevant range (t_last_update, t_trig] from postsyn.
   // neuron
   std::deque< histentry >::iterator start;
   std::deque< histentry >::iterator finish;
-  get_target( t )->get_history( t_last_update_ - dendritic_delay, t_trig - dendritic_delay, &start, &finish );
+  target->get_history( t_last_update_ - dendritic_delay, t_trig - dendritic_delay, &start, &finish );
 
   // facilitation due to postsyn. spikes since last update
   double t0 = t_last_update_;

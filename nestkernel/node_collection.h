@@ -40,6 +40,7 @@
 // Includes from sli:
 #include "arraydatum.h"
 #include "dictdatum.h"
+#include "node.h"
 
 namespace nest
 {
@@ -236,7 +237,7 @@ public:
    * @param node Node pointer from which to create the NodeCollection
    * @return a NodeCollection pointer to the created NodeCollection
    */
-  static NodeCollectionPTR create( const Node* node );
+  static NodeCollectionPTR create( const NodeBase* node );
 
   /**
    * Create a NodeCollection from an array of node IDs.
@@ -431,8 +432,8 @@ class NodeCollectionPrimitive : public NodeCollection
   friend class nc_const_iterator;
 
 private:
-  size_t first_;                       //!< The first node ID in the primitive
-  size_t last_;                        //!< The last node ID in the primitive
+  size_t first_;                       //!< The first global node ID or local device id in the primitive
+  size_t last_;                        //!< The last global node ID or local device id in the primitive
   size_t model_id_;                    //!< Model ID of the node IDs
   NodeCollectionMetadataPTR metadata_; //!< Pointer to the metadata of the node IDs
   bool nodes_have_no_proxies_;         //!< Whether the primitive contains devices or not

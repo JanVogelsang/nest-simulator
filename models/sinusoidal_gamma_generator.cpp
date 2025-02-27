@@ -149,7 +149,7 @@ nest::sinusoidal_gamma_generator::Parameters_::get( DictionaryDatum& d ) const
 void
 nest::sinusoidal_gamma_generator::Parameters_::set( const DictionaryDatum& d,
   const sinusoidal_gamma_generator& n,
-  Node* node )
+  const NodeBase* node )
 {
   if ( not n.is_model_prototype() and d->known( names::individual_spike_trains ) )
   {

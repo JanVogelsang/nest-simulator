@@ -174,7 +174,7 @@ public:
   using Node::handle;
   using Node::handles_test_event;
 
-  size_t send_test_event( Node& tagret, size_t receptor_type, synindex, bool ) override;
+  size_t send_test_event( NodeBase& tagret, size_t receptor_type, synindex, bool ) override;
 
   size_t handles_test_event( SpikeEvent&, size_t ) override;
   size_t handles_test_event( CurrentEvent&, size_t ) override;
@@ -376,7 +376,7 @@ private:
 // Boilerplate inline function definitions ----------------------------------
 
 inline size_t
-iaf_cond_beta::send_test_event( Node& target, size_t receptor_type, synindex, bool )
+iaf_cond_beta::send_test_event( NodeBase& target, size_t receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

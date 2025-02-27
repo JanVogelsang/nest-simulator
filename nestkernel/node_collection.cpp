@@ -264,11 +264,12 @@ NodeCollection::create( const size_t node_id )
 }
 
 NodeCollectionPTR
-NodeCollection::create( const Node* node )
+NodeCollection::create( const NodeBase* node )
 {
   if ( node )
   {
-    return NodeCollection::create( node->get_node_id() );
+    return NodeCollection::create(
+      node->has_proxies() ? static_cast< const Node* >( node )->get_node_id() : node->get_thread_lid() );
   }
   return NodeCollection::create_();
 }

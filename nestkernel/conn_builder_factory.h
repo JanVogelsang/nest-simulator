@@ -87,6 +87,7 @@ public:
     const std::vector< DictionaryDatum >& syn_specs ) const override
   {
     assert( false ); // only specialisations should be called
+    return nullptr;
   }
 
   //! create tripartite builder
@@ -98,6 +99,7 @@ public:
     const std::map< Name, std::vector< DictionaryDatum > >& syn_specs ) const override
   {
     assert( false ); // only specialisations should be called
+    return nullptr;
   }
 };
 

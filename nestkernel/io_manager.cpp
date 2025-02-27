@@ -28,7 +28,6 @@
 // C includes:
 #include <dirent.h>
 #include <errno.h>
-#include <sys/types.h>
 
 // C++ includes:
 #include <cstdlib>
@@ -281,6 +280,19 @@ IOManager::post_run_hook()
 }
 
 void
+IOManager::pre_step_hook()
+{
+  for ( auto& it : recording_backends_ )
+  {
+    it.second->pre_step_hook();
+  }
+  for ( auto& it : stimulation_backends_ )
+  {
+    it.second->pre_step_hook();
+  }
+}
+
+void
 IOManager::post_step_hook()
 {
   for ( auto& it : recording_backends_ )
@@ -344,7 +356,7 @@ IOManager::write( const Name backend_name,
 }
 
 void
-IOManager::enroll_recorder( const Name backend_name, const RecordingDevice& device, const DictionaryDatum& params )
+IOManager::enroll_recorder( const Name backend_name, RecordingDevice& device, const DictionaryDatum& params )
 {
   for ( auto& it : recording_backends_ )
   {
@@ -360,10 +372,7 @@ IOManager::enroll_recorder( const Name backend_name, const RecordingDevice& devi
 }
 
 void
-nest::IOManager::enroll_stimulator( const Name backend_name,
-  const Node* node,
-  StimulationDevice& device,
-  const DictionaryDatum& params )
+nest::IOManager::enroll_stimulator( const Name backend_name, StimulationDevice& device, const DictionaryDatum& params )
 {
 
   if ( not is_valid_stimulation_backend( backend_name ) and not backend_name.toString().empty() )
@@ -374,7 +383,7 @@ nest::IOManager::enroll_stimulator( const Name backend_name,
   {
     for ( auto& it : stimulation_backends_ )
     {
-      it.second->disenroll( node, device );
+      it.second->disenroll( device );
     }
   }
   else
@@ -383,11 +392,11 @@ nest::IOManager::enroll_stimulator( const Name backend_name,
     {
       if ( it.first == backend_name )
       {
-        it.second->enroll( node, device, params );
+        it.second->enroll( device, params );
       }
       else
       {
-        it.second->disenroll( node, device );
+        it.second->disenroll( device );
       }
     }
   }

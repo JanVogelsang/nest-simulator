@@ -246,7 +246,8 @@ nest::UniversalDataLogger< HostNode >::connect_logging_device( const DataLogging
   }
 
   // ensure that we have not connected this multimeter before
-  const size_t mm_node_id = req.get_sender().get_node_id();
+  // TODO JV
+  const size_t mm_node_id = 0; // req.get_sender().get_node_id();
 
   const auto item = std::find_if( data_loggers_.begin(),
     data_loggers_.end(),
@@ -268,7 +269,8 @@ nest::UniversalDataLogger< HostNode >::connect_logging_device( const DataLogging
 template < typename HostNode >
 nest::UniversalDataLogger< HostNode >::DataLogger_::DataLogger_( const DataLoggingRequest& req,
   const RecordablesMap< HostNode >& rmap )
-  : multimeter_( req.get_sender().get_node_id() )
+  // TODO JV
+  : multimeter_( 0 ) // req.get_sender().get_node_id() )
   , num_vars_( 0 )
   , recording_interval_( Time::neg_inf() )
   , recording_offset_( Time::ms( 0. ) )
@@ -508,7 +510,8 @@ nest::DynamicUniversalDataLogger< HostNode >::connect_logging_device( const Data
   }
 
   // ensure that we have not connected this multimeter before
-  const size_t mm_node_id = req.get_sender().get_node_id();
+  // TODO JV
+  const size_t mm_node_id = 0; // req.get_sender().get_node_id();
   const size_t n_loggers = data_loggers_.size();
   size_t j = 0;
   while ( j < n_loggers and data_loggers_[ j ].get_mm_node_id() != mm_node_id )
@@ -531,7 +534,8 @@ nest::DynamicUniversalDataLogger< HostNode >::connect_logging_device( const Data
 template < typename HostNode >
 nest::DynamicUniversalDataLogger< HostNode >::DataLogger_::DataLogger_( const DataLoggingRequest& req,
   const DynamicRecordablesMap< HostNode >& rmap )
-  : multimeter_( req.get_sender().get_node_id() )
+  // TODO JV
+  : multimeter_( 0 ) // req.get_sender().get_node_id() )
   , num_vars_( 0 )
   , recording_interval_( Time::neg_inf() )
   , recording_offset_( Time::ms( 0. ) )

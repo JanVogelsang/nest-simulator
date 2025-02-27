@@ -217,6 +217,11 @@ nest::RecordingBackendMPI::pre_run_hook()
 #pragma omp barrier
 }
 
+void
+nest::RecordingBackendMPI::pre_step_hook()
+{
+  // nothing to do
+}
 
 void
 nest::RecordingBackendMPI::post_step_hook()

@@ -144,9 +144,9 @@ public:
 
   void finalize() override;
 
-  void enroll( const Node* node, StimulationDevice& device, const DictionaryDatum& params ) override;
+  void enroll( const NodeBase* node, StimulationDevice& device, const DictionaryDatum& params ) override;
 
-  void disenroll( const Node* node, StimulationDevice& device ) override;
+  void disenroll( const NodeBase* node, StimulationDevice& device ) override;
 
   void cleanup() override;
 
@@ -155,6 +155,11 @@ public:
   void pre_run_hook() override;
 
   void post_run_hook() override;
+
+  void
+  pre_step_hook() override
+  {
+  }
 
   void post_step_hook() override;
 

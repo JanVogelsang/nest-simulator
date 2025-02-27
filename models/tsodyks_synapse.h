@@ -248,7 +248,7 @@ tsodyks_synapse< targetidentifierT >::send( Event& e, size_t t, const CommonSyna
   const double t_spike = e.get_stamp().get_ms();
   const double h = t_spike - t_lastspike_;
 
-  Node* target = get_target( t );
+  Node* target = static_cast< Node* >( get_target( t ) );
 
 
   // t_lastspike_ = 0 initially

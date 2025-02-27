@@ -28,7 +28,6 @@
 
 // Includes from nestkernel:
 #include "connection.h"
-#include "device_node.h"
 #include "event.h"
 #include "nest_timeconverter.h"
 #include "nest_types.h"
@@ -148,28 +147,14 @@ EndUserDocs */
 
 void register_noise_generator( const std::string& name );
 
-class noise_generator : public DeviceNode, public StimulationDevice
+class noise_generator : public StimulationDevice
 {
 
 public:
   noise_generator();
   noise_generator( const noise_generator& );
 
-
-  //! Allow multimeter to connect to local instances
-  bool local_receiver() const override;
-
-  /**
-   * Import sets of overloaded virtual functions.
-   * @see Technical Issues / Virtual Functions: Overriding, Overloading, and
-   * Hiding
-   */
-  using Node::event_hook;
-  using Node::handle;
-  using Node::handles_test_event;
-  using Node::sends_signal;
-
-  size_t send_test_event( Node&, size_t, synindex, bool ) override;
+  size_t send_test_event( NodeBase&, size_t, synindex, bool ) override;
 
   SignalType sends_signal() const override;
 
@@ -198,11 +183,7 @@ private:
   void update( Time const&, const long, const long ) override;
   void event_hook( DSCurrentEvent& ) override;
 
-  void
-  set_initialized_() final
-  {
-    StimulationDevice::set_initialized_( this );
-  }
+
   Name
   get_element_type() const override
   {
@@ -239,7 +220,7 @@ private:
 
     void get( DictionaryDatum& ) const; //!< Store current values in dictionary
     //! Set values from dictionary
-    void set( const DictionaryDatum&, const noise_generator&, Node* node );
+    void set( const DictionaryDatum&, const noise_generator&, const NodeBase* node );
 
     Time get_default_dt();
   };
@@ -328,7 +309,7 @@ noise_generator::get_status( DictionaryDatum& d ) const
 {
   P_.get( d );
   S_.get( d );
-  StimulationDevice::get_status( this, d );
+  StimulationDevice::get_status( d );
 
   ( *d )[ names::recordables ] = recordablesMap_.get_list();
 }
@@ -343,7 +324,7 @@ noise_generator::set_status( const DictionaryDatum& d )
   // We now know that ptmp is consistent. We do not write it back
   // to P_ before we are also sure that the properties to be set
   // in the parent class are internally consistent.
-  StimulationDevice::set_status( this, d );
+  StimulationDevice::set_status( d );
 
   // if we get here, temporaries contain consistent set of properties
   P_ = ptmp;
@@ -354,12 +335,6 @@ inline SignalType
 noise_generator::sends_signal() const
 {
   return ALL;
-}
-
-inline bool
-noise_generator::local_receiver() const
-{
-  return true;
 }
 
 inline StimulationDevice::Type

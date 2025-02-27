@@ -73,7 +73,9 @@ nest::StimulationBackendMPI::finalize()
 }
 
 void
-nest::StimulationBackendMPI::enroll( const Node* node, nest::StimulationDevice& device, const DictionaryDatum& params )
+nest::StimulationBackendMPI::enroll( const NodeBase* node,
+  nest::StimulationDevice& device,
+  const DictionaryDatum& params )
 {
   size_t tid = node->get_thread();
   size_t node_id = node->get_node_id();
@@ -91,7 +93,7 @@ nest::StimulationBackendMPI::enroll( const Node* node, nest::StimulationDevice& 
 
 
 void
-nest::StimulationBackendMPI::disenroll( const Node* node, nest::StimulationDevice& device )
+nest::StimulationBackendMPI::disenroll( const NodeBase* node, nest::StimulationDevice& device )
 {
   size_t tid = node->get_thread();
   size_t node_id = node->get_node_id();
@@ -133,9 +135,9 @@ nest::StimulationBackendMPI::prepare()
       // it's not a new communicator
       comm = std::get< 0 >( comm_it->second );
       // add the id of the device if there is a connection with the device.
-      // TOOD JV: get_local_device_id no longer present, as non-device stimulators can be used as well
+      // TOOD JV: get_thread_lid no longer present, as non-device stimulators can be used as well
       // if ( kernel().connection_manager.get_device_connected(
-      //        thread_id_master, it_device.second.second->get_local_device_id() ) )
+      //        thread_id_master, it_device.second.second->get_thread_lid() ) )
       // {
       std::get< 1 >( comm_it->second )->push_back( it_device.first );
       std::get< 2 >( comm_it->second )[ thread_id_master ] += 1;
@@ -151,9 +153,9 @@ nest::StimulationBackendMPI::prepare()
       int* vector_nb_device_th { new int[ kernel().vp_manager.get_num_threads() ] {} }; // number of device by thread
       std::fill_n( vector_nb_device_th, kernel().vp_manager.get_num_threads(), 0 );
       // add the id of the device if there is a connection with the device.
-      // TOOD JV: get_local_device_id no longer present, as non-device stimulators can be used as well
+      // TOOD JV: get_thread_lid no longer present, as non-device stimulators can be used as well
       // if ( kernel().connection_manager.get_device_connected(
-      //        thread_id_master, it_device.second.second->get_local_device_id() ) )
+      //        thread_id_master, it_device.second.second->get_thread_lid() ) )
       // {
       vector_id_device->push_back( it_device.first );
       vector_nb_device_th[ thread_id_master ] += 1;
@@ -174,9 +176,9 @@ nest::StimulationBackendMPI::prepare()
       for ( auto& it_device : devices_[ id_thread ] )
       {
         // add the id of the device if there is a connection with the device.
-        // TOOD JV: get_local_device_id no longer present, as non-device stimulators can be used as well
+        // TOOD JV: get_thread_lid no longer present, as non-device stimulators can be used as well
         // if ( kernel().connection_manager.get_device_connected(
-        //        id_thread, it_device.second.second->get_local_device_id() ) )
+        //        id_thread, it_device.second.second->get_thread_lid() ) )
         // {
         std::string port_name;
         get_port( it_device.first, it_device.second.second->get_label(), &port_name );

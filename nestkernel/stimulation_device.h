@@ -25,7 +25,6 @@
 
 // Includes from nestkernel:
 #include "device.h"
-#include "device_node.h"
 #include "nest_types.h"
 
 // Includes from sli:
@@ -159,12 +158,8 @@ public:
    * @see class comment for details.
    */
   bool is_active( const Time& ) const override;
-  // TODO JV: We need node here, how can we get it without breaking the get/set_status signature?
-  //  The best solution would be a rework of the node inheritance structure. There should be a Node base class
-  using Device::get_status;
-  using Device::set_status;
-  void get_status( const Node* node, DictionaryDatum& d ) const;
-  void set_status( const Node* node, const DictionaryDatum& );
+  void get_status( DictionaryDatum& d ) const;
+  void set_status( const DictionaryDatum& ) override;
 
   using Device::init_buffers;
   using Device::init_state;
@@ -195,7 +190,7 @@ public:
   virtual void set_data_from_stimulation_backend( std::vector< double >& ) {};
 
 protected:
-  void set_initialized_( const Node* node );
+  void set_initialized_() override;
 
   struct Parameters_
   {
@@ -221,7 +216,6 @@ private:
 
   DictionaryDatum backend_params_;
 };
-
 
 } // namespace nest
 

@@ -35,7 +35,6 @@
 #include <music.hh>
 
 // Includes from nestkernel:
-#include "device_node.h"
 #include "nest_types.h"
 #include "node.h"
 
@@ -101,7 +100,7 @@ namespace nest
  * Emit rate at times received from another application via a
  * MUSIC port.
  */
-class music_rate_in_proxy : public DeviceNode
+class music_rate_in_proxy : public Device
 {
 
 public:
@@ -109,7 +108,7 @@ public:
   music_rate_in_proxy( const music_rate_in_proxy& );
 
   bool
-  has_proxies() const
+  has_proxies() const override
   {
     return false;
   }

@@ -189,7 +189,7 @@ nest::music_cont_out_proxy::State_::get( DictionaryDatum& d ) const
  * ---------------------------------------------------------------- */
 
 nest::music_cont_out_proxy::music_cont_out_proxy()
-  : DeviceNode()
+  : Device()
   , P_()
   , S_()
   , B_()
@@ -197,7 +197,7 @@ nest::music_cont_out_proxy::music_cont_out_proxy()
 }
 
 nest::music_cont_out_proxy::music_cont_out_proxy( const music_cont_out_proxy& n )
-  : DeviceNode( n )
+  : Device( n )
   , P_( n.P_ )
   , S_( n.S_ )
   , B_( n.B_ )
@@ -216,7 +216,7 @@ nest::music_cont_out_proxy::finalize()
 }
 
 size_t
-nest::music_cont_out_proxy::send_test_event( Node& target, size_t receptor_type, synindex, bool )
+nest::music_cont_out_proxy::send_test_event( NodeBase& target, size_t receptor_type, synindex, bool )
 {
   DataLoggingRequest e( P_.interval_, P_.record_from_ );
   e.set_sender( *this );
@@ -316,8 +316,8 @@ nest::music_cont_out_proxy::get_status( DictionaryDatum& d ) const
   // siblings on other threads
   if ( get_thread() == 0 )
   {
-    const std::vector< Node* > siblings = kernel().node_manager.get_thread_siblings( get_node_id() );
-    std::vector< Node* >::const_iterator s;
+    const std::vector< NodeBase* > siblings = kernel().node_manager.get_thread_siblings( get_thread_lid() );
+    std::vector< NodeBase* >::const_iterator s;
     for ( s = siblings.begin() + 1; s != siblings.end(); ++s )
     {
       ( *s )->get_status( d );

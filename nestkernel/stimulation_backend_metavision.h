@@ -26,14 +26,19 @@
 #ifdef HAVE_METAVISION
 
 #include "metavision/sdk/base/events/event_cd.h"
-#include "metavision/sdk/driver/camera.h"
-#include "nest_types.h"
-#include "static_assert.h"
-#include "stimulation_backend.h"
+#include "metavision/sdk/stream/camera.h"
+
+// C++ includes
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
 #include <syncstream>
+
+// Includes from nestkernel:
+#include "nest_types.h"
+#include "static_assert.h"
+#include "stimulation_backend.h"
+
 
 /* BeginUserDocs: stimulation backend
 
@@ -122,9 +127,9 @@ public:
 
   void finalize() override;
 
-  void enroll( const Node* node, StimulationDevice& device, const DictionaryDatum& params ) override;
+  void enroll( StimulationDevice& device, const DictionaryDatum& params ) override;
 
-  void disenroll( const Node* node, StimulationDevice& device ) override;
+  void disenroll( StimulationDevice& device ) override;
 
   void cleanup() override;
 
@@ -134,13 +139,19 @@ public:
 
   void post_run_hook() override;
 
-  void post_step_hook() override;
+  void pre_step_hook() override;
+
+  void
+  post_step_hook() override
+  {
+  }
 
 private:
+  bool initialized_;
   /**
    * Maps (x, y) camera coordinates to stimulation devices.
    */
-  std::vector< StimulationDevice* > devices_;
+  std::vector< std::vector< StimulationDevice* > > devices_;
   /**
    * Precalculated start indices inside devices_ array for each camera index.
    */
@@ -150,9 +161,10 @@ private:
    */
   std::vector< std::pair< size_t, size_t > > camera_resolutions_;
   /**
-   * Index of the devices_ array with the position of the next pixel for which a stimulation device will be registered.
+   * Index of the devices_ array with the position of the next pixel for which a stimulation device will be registered
+   * on a per-thread basis.
    */
-  size_t next_index_;
+  std::vector< size_t > next_index_;
   /**
    * List of cameras_ for which incoming spikes are received.
    */
@@ -180,7 +192,7 @@ private:
   std::vector< size_t > camera_num_pixels_;
   std::vector< size_t > camera_ranks_;
   std::vector< size_t > process_devices_start_indices_;
-  std::vector< size_t > process_devices_end_indices_;
+  std::vector< size_t > thread_starting_indices_;
 
   /**
    * Camera properties must not be accessed while the camera is busy (i.e., currently sending events).
@@ -215,6 +227,9 @@ private:
    * List of camera serial numbers to use as input sources.
    */
   std::vector< std::string > input_serials_;
+
+
+  std::vector< CameraSpikeEvent > recv_buffer_;
 
   /**
    *

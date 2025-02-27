@@ -425,7 +425,7 @@ nest::UniversalDataLogger< HostNode >::DataLogger_::handle( HostNode& host, cons
   next_rec_[ rt ] = 0;
 
   reply.set_sender( host );
-  reply.set_sender_node_id( host.get_node_id() );
+  // reply.set_sender_node_id( host.get_node_id() );  // TODO JV
   reply.set_receiver( request.get_sender() );
   reply.set_port( request.get_port() );
 

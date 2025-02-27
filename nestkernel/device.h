@@ -58,12 +58,12 @@ namespace nest
  *
  * @author HEP 2002-07-22, 2008-03-21, 2008-06-20
  */
-class Device
+class Device : public NodeBase
 {
 public:
   Device();
   Device( const Device& n );
-  virtual ~Device()
+  ~Device() override
   {
   }
 
@@ -80,37 +80,61 @@ public:
   }
 
   /** Set internal variables before calls to SimulationManager::run() */
-  virtual void pre_run_hook();
+  void pre_run_hook() override;
 
-  virtual void get_status( DictionaryDatum& ) const;
-  virtual void set_status( const DictionaryDatum& );
+  void get_status( DictionaryDatum& ) const override;
+  void set_status( const DictionaryDatum& ) override;
+
+  Name get_element_type() const override;
+
+  bool has_proxies() const override;
+
+  bool is_proxy() const override;
 
   /**
    *  Returns true if the device is active at the given time stamp.
    *  Semantics are implemented by subclasses.
    */
-  virtual bool is_active( Time const& T ) const = 0;
-
-  /**
-   * Return lower limit in steps.
-   * @todo Should be protected, but is temporarily public
-   *       to solve inheritance problems in AnalogSamplingDevice.
-   */
-  long get_t_min_() const;
-
-  /**
-   * Return upper limit in steps.
-   * @todo Should be protected, but is temporarily public
-   *       to solve inheritance problems in AnalogSamplingDevice.
-   */
-  long get_t_max_() const;
+  virtual bool
+  is_active( Time const& T ) const
+  {
+    return true;
+  };
 
   Time const& get_origin() const;
   Time const& get_start() const;
   Time const& get_stop() const;
 
-private:
-  // ----------------------------------------------------------------
+  /**
+   * Modify Event object parameters during event delivery.
+   *
+   * Some Nodes want to perform a function on an event for each
+   * of their targets. An example is the poisson_generator which
+   * needs to draw a random number for each target. The DSSpikeEvent,
+   * DirectSendingSpikeEvent, calls sender->event_hook(thread, *this)
+   * in its operator() function instead of calling target->handle().
+   * The default implementation of Node::event_hook() just calls
+   * target->handle(DSSpikeEvent&). Any reimplementation must also
+   * execute this call. Otherwise the event will not be delivered.
+   * If needed, target->handle(DSSpikeEvent) may be called more than
+   * once.
+   */
+  virtual void event_hook( DSSpikeEvent& );
+
+  virtual void event_hook( DSCurrentEvent& );
+
+  bool one_node_per_process() const override;
+
+protected:
+  /**
+   * Return lower limit in steps.
+   */
+  long get_t_min_() const;
+
+  /**
+   * Return upper limit in steps.
+   */
+  long get_t_max_() const;
 
   /**
    * Independent parameters of the model.
@@ -177,17 +201,19 @@ private:
   Variables_ V_;
 };
 
-} // namespace
-
 inline void
-nest::Device::get_status( DictionaryDatum& d ) const
+Device::get_status( DictionaryDatum& d ) const
 {
+  NodeBase::get_status( d );
+
   P_.get( d );
 }
 
 inline void
-nest::Device::set_status( const DictionaryDatum& d )
+Device::set_status( const DictionaryDatum& d )
 {
+  NodeBase::set_status( d );
+
   Parameters_ ptmp = P_; // temporary copy in case of errors
   ptmp.set( d );         // throws if BadProperty
 
@@ -195,34 +221,60 @@ nest::Device::set_status( const DictionaryDatum& d )
   P_ = ptmp;
 }
 
-inline nest::Time const&
-nest::Device::get_origin() const
+inline Time const&
+Device::get_origin() const
 {
   return P_.origin_;
 }
 
-inline nest::Time const&
-nest::Device::get_start() const
+inline Time const&
+Device::get_start() const
 {
   return P_.start_;
 }
 
-inline nest::Time const&
-nest::Device::get_stop() const
+inline Time const&
+Device::get_stop() const
 {
   return P_.stop_;
 }
 
 inline long
-nest::Device::get_t_min_() const
+Device::get_t_min_() const
 {
   return V_.t_min_;
 }
 
 inline long
-nest::Device::get_t_max_() const
+Device::get_t_max_() const
 {
   return V_.t_max_;
+}
+
+inline Name
+Device::get_element_type() const
+{
+  return names::device;
+}
+
+inline bool
+Device::one_node_per_process() const
+{
+  return true;
+}
+
+inline bool
+Device::has_proxies() const
+{
+  return false;
+}
+
+inline bool
+Device::is_proxy() const
+{
+  return false;
+}
+
 }
 
 #endif /* DEVICE_H */

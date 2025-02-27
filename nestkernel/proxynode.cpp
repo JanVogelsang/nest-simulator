@@ -43,7 +43,7 @@ proxynode::proxynode( size_t node_id, size_t model_id, size_t vp )
 }
 
 size_t
-proxynode::send_test_event( Node& target, size_t receptor_type, synindex syn_id, bool dummy_target )
+proxynode::send_test_event( NodeBase& target, size_t receptor_type, synindex syn_id, bool dummy_target )
 {
   Model* model = kernel().model_manager.get_node_model( get_model_id() );
   return model->send_test_event( target, receptor_type, syn_id, dummy_target );

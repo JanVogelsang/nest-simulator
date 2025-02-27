@@ -148,7 +148,7 @@ nest::gamma_sup_generator::Parameters_::get( DictionaryDatum& d ) const
 }
 
 void
-nest::gamma_sup_generator::Parameters_::set( const DictionaryDatum& d, Node* node )
+nest::gamma_sup_generator::Parameters_::set( const DictionaryDatum& d, const NodeBase* node )
 {
   updateValueParam< long >( d, names::gamma_shape, gamma_shape_, node );
   if ( gamma_shape_ < 1 )

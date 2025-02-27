@@ -221,7 +221,7 @@ public:
   using nest::Node::handle;
   using nest::Node::handles_test_event;
 
-  size_t send_test_event( nest::Node&, size_t, nest::synindex, bool ) override;
+  size_t send_test_event( nest::NodeBase&, size_t, nest::synindex, bool ) override;
 
   void handle( nest::SpikeEvent& ) override;
   void handle( nest::CurrentEvent& ) override;
@@ -451,7 +451,7 @@ nest::glif_cond::Parameters_::n_receptors_() const
 
 
 inline size_t
-nest::glif_cond::send_test_event( nest::Node& target, size_t receptor_type, nest::synindex, bool )
+nest::glif_cond::send_test_event( nest::NodeBase& target, size_t receptor_type, nest::synindex, bool )
 {
   nest::SpikeEvent e;
   e.set_sender( *this );

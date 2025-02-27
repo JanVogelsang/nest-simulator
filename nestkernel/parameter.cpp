@@ -23,7 +23,6 @@
 #include <cmath>
 
 #include "node.h"
-#include "node_collection.h"
 #include "spatial.h"
 #include "vp_manager_impl.h"
 
@@ -96,10 +95,9 @@ NormalParameter::NormalParameter( const DictionaryDatum& d )
 }
 
 double
-NormalParameter::value( RngPtr rng, Node* node )
+NormalParameter::value( RngPtr rng, const NodeBase* node )
 {
-  const auto tid = node ? kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( node->get_node_id() ) )
-                        : kernel().vp_manager.get_thread_id();
+  const auto tid = node ? node->get_thread() : kernel().vp_manager.get_thread_id();
   return normal_dists_[ tid ]( rng );
 }
 
@@ -122,22 +120,22 @@ LognormalParameter::LognormalParameter( const DictionaryDatum& d )
 }
 
 double
-LognormalParameter::value( RngPtr rng, Node* node )
+LognormalParameter::value( RngPtr rng, const NodeBase* node )
 {
-  const auto tid = node ? kernel().vp_manager.vp_to_thread( kernel().vp_manager.node_id_to_vp( node->get_node_id() ) )
-                        : kernel().vp_manager.get_thread_id();
+  const auto tid = node ? node->get_thread() : kernel().vp_manager.get_thread_id();
   return lognormal_dists_[ tid ]( rng );
 }
 
 
 double
-NodePosParameter::get_node_pos_( Node* node ) const
+NodePosParameter::get_node_pos_( const NodeBase* node ) const
 {
   if ( not node )
   {
     throw KernelException( "NodePosParameter: not node" );
   }
-  NodeCollectionPTR nc = kernel().node_manager.node_id_to_node_collection( node );
+  NodeCollectionPTR nc =
+    kernel().node_manager.node_id_to_node_collection( static_cast< const Node* >( node ) ); // TODO JV
   if ( not nc.get() )
   {
     throw KernelException( "NodePosParameter: not nc" );
@@ -157,7 +155,7 @@ NodePosParameter::get_node_pos_( Node* node ) const
   {
     throw KernelException( "NodePosParameter: not valid layer" );
   }
-  size_t lid = node->get_node_id() - meta->get_first_node_id();
+  size_t lid = dynamic_cast< const Node* >( node )->get_node_id() - meta->get_first_node_id();
   std::vector< double > pos = layer->get_position_vector( lid );
   if ( ( unsigned int ) dimension_ >= pos.size() )
   {
@@ -173,7 +171,7 @@ SpatialDistanceParameter::value( RngPtr,
   const std::vector< double >& source_pos,
   const std::vector< double >& target_pos,
   const AbstractLayer& layer,
-  Node* )
+  const NodeBase* )
 {
   switch ( dimension_ )
   {
@@ -218,7 +216,7 @@ RedrawParameter::RedrawParameter( const std::shared_ptr< Parameter > p, const do
 }
 
 double
-RedrawParameter::value( RngPtr rng, Node* node )
+RedrawParameter::value( RngPtr rng, const NodeBase* node )
 {
   double value;
   size_t num_redraws = 0;
@@ -238,7 +236,7 @@ RedrawParameter::value( RngPtr rng,
   const std::vector< double >& source_pos,
   const std::vector< double >& target_pos,
   const AbstractLayer& layer,
-  Node* node )
+  const NodeBase* node )
 {
   double value;
   size_t num_redraws = 0;
@@ -272,7 +270,7 @@ ExpDistParameter::value( RngPtr rng,
   const std::vector< double >& source_pos,
   const std::vector< double >& target_pos,
   const AbstractLayer& layer,
-  Node* node )
+  const NodeBase* node )
 {
   return std::exp( -p_->value( rng, source_pos, target_pos, layer, node ) * inv_beta_ );
 }
@@ -295,7 +293,7 @@ GaussianParameter::value( RngPtr rng,
   const std::vector< double >& source_pos,
   const std::vector< double >& target_pos,
   const AbstractLayer& layer,
-  Node* node )
+  const NodeBase* node )
 {
   const auto dx = p_->value( rng, source_pos, target_pos, layer, node ) - mean_;
   return std::exp( -dx * dx * inv_two_std2_ );
@@ -343,7 +341,7 @@ Gaussian2DParameter::value( RngPtr rng,
   const std::vector< double >& source_pos,
   const std::vector< double >& target_pos,
   const AbstractLayer& layer,
-  Node* node )
+  const NodeBase* node )
 {
   const auto dx = px_->value( rng, source_pos, target_pos, layer, node ) - mean_x_;
   const auto dy = py_->value( rng, source_pos, target_pos, layer, node ) - mean_y_;
@@ -379,7 +377,7 @@ GaborParameter::value( RngPtr rng,
   const std::vector< double >& source_pos,
   const std::vector< double >& target_pos,
   const AbstractLayer& layer,
-  Node* node )
+  const NodeBase* node )
 {
   const auto dx = px_->value( rng, source_pos, target_pos, layer, node );
   const auto dy = py_->value( rng, source_pos, target_pos, layer, node );
@@ -418,7 +416,7 @@ GammaParameter::value( RngPtr rng,
   const std::vector< double >& source_pos,
   const std::vector< double >& target_pos,
   const AbstractLayer& layer,
-  Node* node )
+  const NodeBase* node )
 {
   const auto x = p_->value( rng, source_pos, target_pos, layer, node );
   return std::pow( x, kappa_ - 1. ) * std::exp( -1. * inv_theta_ * x ) * delta_;

@@ -39,7 +39,6 @@
 #include <music.hh>
 
 // Includes from nestkernel:
-#include "device_node.h"
 #include "nest_timeconverter.h"
 #include "nest_types.h"
 #include "node_collection.h"
@@ -113,7 +112,7 @@ Examples using this model
 
 EndUserDocs */
 
-class music_cont_out_proxy : public DeviceNode
+class music_cont_out_proxy : public Device
 {
 
 public:
@@ -121,15 +120,11 @@ public:
   music_cont_out_proxy( const music_cont_out_proxy& );
 
   bool
-  has_proxies() const
+  has_proxies() const override
   {
     return false;
   }
-  bool
-  local_receiver() const
-  {
-    return true;
-  }
+
   bool
   one_node_per_process() const
   {
@@ -144,7 +139,7 @@ public:
   using Node::handle;
   using Node::handles_test_event;
   using Node::sends_signal;
-  size_t send_test_event( Node&, size_t, synindex, bool );
+  size_t send_test_event( NodeBase&, size_t, synindex, bool );
 
   void handle( DataLoggingReply& );
 

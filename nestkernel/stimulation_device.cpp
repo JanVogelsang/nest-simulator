@@ -74,9 +74,9 @@ nest::StimulationDevice::pre_run_hook()
 }
 
 void
-nest::StimulationDevice::set_initialized_( const Node* node )
+nest::StimulationDevice::set_initialized_()
 {
-  kernel().io_manager.enroll_stimulator( P_.stimulus_source_, node, *this, backend_params_ );
+  kernel().io_manager.enroll_stimulator( P_.stimulus_source_, *this, backend_params_ );
 }
 
 const std::string&
@@ -118,14 +118,14 @@ nest::StimulationDevice::Parameters_::set( const DictionaryDatum& d )
 }
 
 void
-nest::StimulationDevice::set_status( const Node* node, const DictionaryDatum& d )
+nest::StimulationDevice::set_status( const DictionaryDatum& d )
 {
   Parameters_ ptmp = P_; // temporary copy in case of errors
   ptmp.set( d );         // throws if BadProperty
 
   Device::set_status( d );
 
-  if ( node->get_node_id() == 0 ) // this is a model prototype, not an actual instance
+  if ( get_thread_lid() == invalid_index ) // this is a model prototype, not an actual instance
   {
     DictionaryDatum backend_params = DictionaryDatum( new Dictionary );
 
@@ -151,8 +151,8 @@ nest::StimulationDevice::set_status( const Node* node, const DictionaryDatum& d 
   }
   else
   {
-    kernel().io_manager.enroll_stimulator( Name(), node, *this, d ); // disenroll first
-    kernel().io_manager.enroll_stimulator( ptmp.stimulus_source_, node, *this, d );
+    kernel().io_manager.enroll_stimulator( Name(), *this, d ); // disenroll first
+    kernel().io_manager.enroll_stimulator( ptmp.stimulus_source_, *this, d );
   }
 
   // if we get here, temporaries contain consistent set of properties
@@ -161,7 +161,7 @@ nest::StimulationDevice::set_status( const Node* node, const DictionaryDatum& d 
 
 
 void
-nest::StimulationDevice::get_status( const Node* node, DictionaryDatum& d ) const
+nest::StimulationDevice::get_status( DictionaryDatum& d ) const
 {
   P_.get( d );
 
@@ -169,7 +169,7 @@ nest::StimulationDevice::get_status( const Node* node, DictionaryDatum& d ) cons
 
   ( *d )[ names::element_type ] = LiteralDatum( names::stimulator );
 
-  if ( node->get_node_id() == 0 ) // this is a model prototype, not an actual instance
+  if ( get_thread_lid() == invalid_index ) // this is a model prototype, not an actual instance
   {
     // overwrite with cached parameters
     for ( auto& kv_pair : *backend_params_ )

@@ -28,7 +28,6 @@
 
 // Includes from nestkernel:
 #include "connection.h"
-#include "device_node.h"
 #include "event.h"
 #include "nest.h"
 #include "random_generators.h"
@@ -104,21 +103,14 @@ EndUserDocs */
 
 void register_inhomogeneous_poisson_generator( const std::string& name );
 
-class inhomogeneous_poisson_generator : public DeviceNode, public StimulationDevice
+class inhomogeneous_poisson_generator : public StimulationDevice
 {
 
 public:
   inhomogeneous_poisson_generator();
   inhomogeneous_poisson_generator( const inhomogeneous_poisson_generator& );
 
-  /**
-   * Import sets of overloaded virtual functions.
-   * @see Technical Issues / Virtual Functions: Overriding, Overloading, and
-   * Hiding
-   */
-  using Node::event_hook;
-
-  size_t send_test_event( Node&, size_t, synindex, bool ) override;
+  size_t send_test_event( NodeBase&, size_t, synindex, bool ) override;
 
   void get_status( DictionaryDatum& ) const override;
   void set_status( const DictionaryDatum& ) override;
@@ -135,11 +127,6 @@ private:
   void update( Time const&, const long, const long ) override;
   void event_hook( DSSpikeEvent& ) override;
 
-  void
-  set_initialized_() final
-  {
-    StimulationDevice::set_initialized_( this );
-  }
   Name
   get_element_type() const override
   {
@@ -160,12 +147,11 @@ private:
     bool allow_offgrid_times_;
 
     Parameters_(); //!< Sets default parameter values
-    Parameters_( const Parameters_&, Buffers_& );
 
     //!< Store current values in dictionary
     void get( DictionaryDatum& ) const;
     //!< Set values from dictionary
-    void set( const DictionaryDatum&, Buffers_&, Node* );
+    void set( const DictionaryDatum&, Buffers_&, const NodeBase* );
     //!< Align rate time to grid if necessary and insert it into rate_times_
     void assert_valid_rate_time_and_insert( const double t );
   };
@@ -194,7 +180,7 @@ private:
 };
 
 inline size_t
-inhomogeneous_poisson_generator::send_test_event( Node& target,
+inhomogeneous_poisson_generator::send_test_event( NodeBase& target,
   size_t receptor_type,
   synindex syn_id,
   bool dummy_target )
@@ -222,7 +208,7 @@ inline void
 inhomogeneous_poisson_generator::get_status( DictionaryDatum& d ) const
 {
   P_.get( d );
-  StimulationDevice::get_status( this, d );
+  StimulationDevice::get_status( d );
 }
 
 inline void
@@ -234,7 +220,7 @@ inhomogeneous_poisson_generator::set_status( const DictionaryDatum& d )
   // We now know that ptmp is consistent. We do not write it back
   // to P_ before we are also sure that the properties to be set
   // in the parent class are internally consistent.
-  StimulationDevice::set_status( this, d );
+  StimulationDevice::set_status( d );
 
   // if we get here, temporaries contain consistent set of properties
   P_ = ptmp;

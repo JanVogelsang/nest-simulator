@@ -107,14 +107,14 @@ nest::music_rate_out_proxy::State_::set( const DictionaryDatum&, const Parameter
  * ---------------------------------------------------------------- */
 
 nest::music_rate_out_proxy::music_rate_out_proxy()
-  : DeviceNode()
+  : Device()
   , P_()
   , S_()
 {
 }
 
 nest::music_rate_out_proxy::music_rate_out_proxy( const music_rate_out_proxy& n )
-  : DeviceNode( n )
+  : Device( n )
   , P_( n.P_ )
   , S_( n.S_ )
 {
