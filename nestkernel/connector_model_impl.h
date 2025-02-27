@@ -38,6 +38,7 @@
 #include "kernel_manager.h"
 #include "nest_time.h"
 #include "nest_timeconverter.h"
+#include "secondary_event_impl.h"
 
 // Includes from sli:
 #include "dictutils.h"
@@ -203,6 +204,13 @@ GenericConnectorModel< ConnectionT >::used_default_delay()
 }
 
 template < typename ConnectionT >
+size_t
+GenericConnectorModel< ConnectionT >::get_syn_id() const
+{
+  return default_connection_.get_syn_id();
+}
+
+template < typename ConnectionT >
 void
 GenericConnectorModel< ConnectionT >::set_syn_id( synindex syn_id )
 {
@@ -326,10 +334,9 @@ GenericConnectorModel< ConnectionT >::add_connection_( Node& src,
 
     assert( connector );
 
-    Connector< ConnectionT, std::vector >* vc = static_cast< Connector< ConnectionT, std::vector >* >( connector );
-    vc->push_back( connection );
+    Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connector );
+    vc->push_back( std::move( connection ) );
   }
-}
 
 } // namespace nest
 

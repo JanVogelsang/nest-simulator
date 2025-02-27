@@ -402,7 +402,7 @@ template < typename targetidentifierT >
 SecondaryEvent*
 Connection< targetidentifierT >::get_secondary_event()
 {
-  assert( false );
+  assert( false and "Non-primary connections have to provide get_secondary_event()" );
   return nullptr;
 }
 

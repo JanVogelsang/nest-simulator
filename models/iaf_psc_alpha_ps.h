@@ -406,6 +406,10 @@ private:
     double dI_ex_before_;   //!< at beginning of mini-step
     double dI_in_before_;   //!< at beginning of mini-step
     double V_m_before_;     //!< at beginning of mini-step
+    double inv_tau_m_;      //!< 1 / tau_m
+    double inv_tau_syn_ex_; //!< 1 / tau_syn_ex
+    double inv_tau_syn_in_; //!< 1 / tau_syn_in
+    double inv_c_m_;        //!< 1 / c_m
   };
 
   // Access functions for UniversalDataLogger -------------------------------
@@ -448,7 +452,6 @@ private:
   // ----------------------------------------------------------------
 
   /**
-   * @defgroup iaf_psc_alpha_data
    * Instances of private data structures for the different types
    * of data pertaining to the model.
    * @note The order of definitions is important for speed.

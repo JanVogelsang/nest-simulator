@@ -42,6 +42,7 @@
 
 // Includes from libnestutil:
 #include "manager_interface.h"
+#include "stopwatch.h"
 
 // Includes from nestkernel:
 #include "nest_types.h"
@@ -82,8 +83,8 @@ public:
   {
   }
 
-  void initialize() override;
-  void finalize() override;
+  void initialize( const bool ) override;
+  void finalize( const bool ) override;
   void set_status( const DictionaryDatum& ) override;
   void get_status( DictionaryDatum& ) override;
 
@@ -106,12 +107,6 @@ public:
    * of threads is given by get_num_threads()*get_num_processes().
    */
   size_t get_num_processes() const;
-
-  /**
-   * Set the number of processes state variable.
-   * This is used by dryrun_mode.
-   */
-  void set_num_processes( size_t n_procs );
 
   /**
    * Get rank of MPI process
@@ -516,12 +511,6 @@ inline size_t
 MPIManager::get_num_processes() const
 {
   return num_processes_;
-}
-
-inline void
-MPIManager::set_num_processes( size_t n_procs )
-{
-  num_processes_ = n_procs;
 }
 
 inline size_t

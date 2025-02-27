@@ -41,6 +41,7 @@
 
 namespace nest
 {
+void register_music_event_out_proxy( const std::string& name );
 
 /* BeginUserDocs: device, MUSIC, spike
 

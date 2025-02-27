@@ -300,7 +300,17 @@ public:
   virtual void sends_secondary_event( DelayedRateConnectionEvent& re );
 
   /**
-   * Required to check, if source node may send a SICEvent.
+   * Required to check if source node may send a LearningSignalConnectionEvent.
+   *
+   * This base class implementation throws IllegalConnection
+   * and needs to be overwritten in the derived class.
+   * @ingroup event_interface
+   * @throws IllegalConnection
+   */
+  virtual void sends_secondary_event( LearningSignalConnectionEvent& re );
+
+  /**
+   * Required to check if source node may send a SICEvent.
    *
    * This base class implementation throws IllegalConnection
    * and needs to be overwritten in the derived class.
@@ -358,6 +368,7 @@ public:
   virtual size_t handles_test_event( InstantaneousRateConnectionEvent&, size_t receptor_type );
   virtual size_t handles_test_event( DiffusionConnectionEvent&, size_t receptor_type );
   virtual size_t handles_test_event( DelayedRateConnectionEvent&, size_t receptor_type );
+  virtual size_t handles_test_event( LearningSignalConnectionEvent&, size_t receptor_type );
   virtual size_t handles_test_event( SICEvent&, size_t receptor_type );
 
   /**
@@ -477,12 +488,39 @@ public:
   virtual void handle( DelayedRateConnectionEvent& e );
 
   /**
+   * Handler for learning signal connection events.
+   *
+   * @see handle(thread, LearningSignalConnectionEvent&)
+   * @ingroup event_interface
+   * @throws UnexpectedEvent
+   */
+  virtual void handle( LearningSignalConnectionEvent& e );
+
+  /**
    * Handler for slow inward current events (SICEvents).
+   *
    * @see handle(thread,SICEvent&)
    * @ingroup event_interface
    * @throws UnexpectedEvent
    */
   virtual void handle( SICEvent& e );
+  /**
+   * Modify Event object parameters during event delivery.
+   *
+   * Some Nodes want to perform a function on an event for each
+   * of their targets. An example is the poisson_generator which
+   * needs to draw a random number for each target. The DSSpikeEvent,
+   * DirectSendingSpikeEvent, calls sender->event_hook(thread, *this)
+   * in its operator() function instead of calling target->handle().
+   * The default implementation of Node::event_hook() just calls
+   * target->handle(DSSpikeEvent&). Any reimplementation must also
+   * execute this call. Otherwise the event will not be delivered.
+   * If needed, target->handle(DSSpikeEvent) may be called more than
+   * once.
+   */
+  virtual void event_hook( DSSpikeEvent& );
+
+  virtual void event_hook( DSCurrentEvent& );
 
   /**
    * @defgroup SP_functions Structural Plasticity in NEST.
@@ -827,6 +865,44 @@ public:
   virtual void register_stdp_connection( double, double );
 
   /**
+   * Initialize the update history and register the eprop synapse.
+   *
+   * @throws IllegalConnection
+   */
+  virtual void register_eprop_connection();
+
+  /**
+   * Get the number of steps the time-point of the signal has to be shifted to
+   * place it at the correct location in the e-prop-related histories.
+   *
+   * @note Unlike the original e-prop, where signals arise instantaneously, NEST
+   * considers connection delays. Thus, to reproduce the original results, we
+   * compensate for the delays and synchronize the signals by shifting the
+   * history.
+   *
+   * @throws IllegalConnection
+   */
+  virtual long get_shift() const;
+
+  /**
+   * Register current update in the update history and deregister previous update.
+   *
+   * @throws IllegalConnection
+   */
+  virtual void write_update_to_history( const long t_previous_update, const long t_current_update );
+
+  /**
+   * Return if the node is part of the recurrent network (and thus not a readout neuron).
+   *
+   * @note The e-prop synapse calls this function of the target node. If true,
+   * it skips weight updates within the first interval step of the update
+   * interval.
+   *
+   * @throws IllegalConnection
+   */
+  virtual bool is_eprop_recurrent_node() const;
+
+  /**
    * @defgroup SP_functions Structural Plasticity in NEST.
    *
    * Functions related to accessibility and setup of variables required for
@@ -972,6 +1048,19 @@ public:
   virtual double get_tau_syn_in( int comp );
 
   /**
+   * Compute gradient change for eprop synapses.
+   *
+   * This method is called from an eprop synapse on the eprop target neuron and returns the change in gradient.
+   *
+   * @params presyn_isis  is cleared during call
+   */
+  virtual double compute_gradient( std::vector< long >& presyn_isis,
+    const long t_previous_update,
+    const long t_previous_trigger_spike,
+    const double kappa,
+    const bool average_gradient );
+
+  /**
    * @returns type of signal this node produces
    * used in check_connection to only connect neurons which send / receive
    * compatible information
@@ -999,6 +1088,19 @@ public:
    */
   DeprecationWarning deprecation_warning;
 
+  /**
+   * Set index in node collection; required by ThirdOutBuilder.
+   */
+  void set_tmp_nc_index( size_t index );
+
+  /**
+   * Return and invalidate index in node collection; required by ThirdOutBuilder.
+   *
+   * @note Not const since it invalidates index in node object.
+   */
+  size_t get_tmp_nc_index();
+
+
 private:
   void set_node_id_( size_t ); //!< Set global node id
 
@@ -1010,6 +1112,17 @@ private:
    */
   size_t node_id_;
   bool node_uses_wfr_; //!< node uses waveform relaxation method
+
+  /**
+   * Store index in NodeCollection.
+   *
+   * @note This is only here so that the primary connection builder can inform the ThirdOutBuilder
+   * about the index of the target neuron in the targets node collection. This is required for block-based
+   * builders.
+   *
+   * @note Set by set_tmp_nc_index() and invalidated by get_tmp_nc_index().
+   */
+  size_t tmp_nc_index_;
 };
 
 inline bool
@@ -1140,6 +1253,24 @@ Node::has_proxies() const
 {
   return true;
 }
+
+inline void
+Node::set_tmp_nc_index( size_t index )
+{
+  tmp_nc_index_ = index;
+}
+
+inline size_t
+Node::get_tmp_nc_index()
+{
+  assert( tmp_nc_index_ != invalid_index );
+
+  const auto index = tmp_nc_index_;
+  tmp_nc_index_ = invalid_index;
+
+  return index;
+}
+
 
 } // namespace
 

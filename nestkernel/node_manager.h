@@ -53,9 +53,8 @@ public:
   NodeManager();
   ~NodeManager() override;
 
-  void initialize() override;
-  void finalize() override;
-  void change_number_of_threads() override;
+  void initialize( const bool ) override;
+  void finalize( const bool ) override;
   void set_status( const DictionaryDatum& ) override;
   void get_status( DictionaryDatum& ) override;
 
@@ -141,13 +140,12 @@ public:
    *
    * The function expects that
    * the given node ID and thread are valid. If they are not, an assertion
-   * will fail. In case the given Node does not exist on the fiven
+   * will fail. In case the given Node does not exist on the given
    * thread, a proxy is returned instead.
    *
    * @param node_id index of the Node
    * @param tid local thread index of the Node
    *
-   * @ingroup net_access
    */
   Node* get_node_or_proxy( size_t node_id, size_t tid );
 
@@ -174,7 +172,6 @@ public:
    *
    * @throws nest::NoThreadSiblingsAvailable Node does not have thread siblings.
    *
-   * @ingroup net_access
    */
   std::vector< NodeBase* > get_thread_siblings( const size_t node_lid ) const;
 
@@ -358,7 +355,7 @@ private:
   std::vector< std::shared_ptr< WrappedThreadException > > exceptions_raised_;
 
   // private stop watch for benchmarking purposes
-  Stopwatch sw_construction_create_;
+  Stopwatch< StopwatchGranularity::Normal, StopwatchParallelism::MasterOnly > sw_construction_create_;
 };
 
 inline size_t

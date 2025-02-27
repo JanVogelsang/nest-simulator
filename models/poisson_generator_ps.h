@@ -152,7 +152,7 @@ private:
    */
   struct Parameters_
   {
-    double rate_;      //!< process rate [Hz]
+    double rate_;      //!< process rate [spks/s]
     double dead_time_; //!< dead time [ms]
 
     /**
