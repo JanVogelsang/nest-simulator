@@ -159,7 +159,6 @@ GenericConnectorModel< ConnectionT >::check_synapse_params( const DictionaryDatu
   default_connection_.check_synapse_params( syn_spec );
 }
 
-
 template < typename ConnectionT >
 void
 GenericConnectorModel< ConnectionT >::used_default_delay()
@@ -334,9 +333,10 @@ GenericConnectorModel< ConnectionT >::add_connection_( Node& src,
 
     assert( connector );
 
-    Connector< ConnectionT >* vc = static_cast< Connector< ConnectionT >* >( connector );
+    Connector< ConnectionT, std::vector >* vc = static_cast< Connector< ConnectionT, std::vector >* >( connector );
     vc->push_back( std::move( connection ) );
   }
+}
 
 } // namespace nest
 

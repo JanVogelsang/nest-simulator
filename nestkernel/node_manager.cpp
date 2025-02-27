@@ -53,7 +53,6 @@ NodeManager::NodeManager()
   , wfr_is_used_( false )
   , wfr_network_size_( 0 ) // zero to force update
   , num_active_nodes_( 0 )
-  , thread_local_devices_( kernel().vp_manager.get_num_threads() )
   , have_nodes_changed_( true )
   , exceptions_raised_() // cannot call kernel(), not complete yet
 {

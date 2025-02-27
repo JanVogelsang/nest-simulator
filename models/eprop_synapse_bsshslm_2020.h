@@ -348,16 +348,18 @@ constexpr ConnectionModelProperties eprop_synapse_bsshslm_2020< targetidentifier
 
 // Explicitly declare specializations of Connector methods that need to do special things for eprop_synapse_bsshslm_2020
 template <>
-void Connector< eprop_synapse_bsshslm_2020< TargetIdentifierPtrRport > >::disable_connection( const size_t lcid );
+void Connector< eprop_synapse_bsshslm_2020< TargetIdentifierPtrRport >, BlockVector >::disable_connection(
+  const size_t lcid );
 
 template <>
-void Connector< eprop_synapse_bsshslm_2020< TargetIdentifierIndex > >::disable_connection( const size_t lcid );
+void Connector< eprop_synapse_bsshslm_2020< TargetIdentifierIndex >, BlockVector >::disable_connection(
+  const size_t lcid );
 
 template <>
-Connector< eprop_synapse_bsshslm_2020< TargetIdentifierPtrRport > >::~Connector();
+Connector< eprop_synapse_bsshslm_2020< TargetIdentifierPtrRport >, BlockVector >::~Connector();
 
 template <>
-Connector< eprop_synapse_bsshslm_2020< TargetIdentifierIndex > >::~Connector();
+Connector< eprop_synapse_bsshslm_2020< TargetIdentifierIndex >, BlockVector >::~Connector();
 
 
 template < typename targetidentifierT >
@@ -500,7 +502,7 @@ eprop_synapse_bsshslm_2020< targetidentifierT >::send( Event& e,
   size_t thread,
   const EpropSynapseBSSHSLM2020CommonProperties& cp )
 {
-  Node* target = get_target( thread );
+  Node* target = static_cast< Node* >( get_target( thread ) );
   assert( target );
 
   const long t_spike = e.get_stamp().get_steps();

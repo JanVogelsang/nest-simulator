@@ -46,7 +46,6 @@ NodeBase::NodeBase()
   , initialized_( false )
   , thread_( invalid_thread )
   , vp_( invalid_thread )
-  , tmp_nc_index_( invalid_index )
 {
 }
 
@@ -59,13 +58,13 @@ NodeBase::NodeBase( const NodeBase& n )
   , thread_( n.thread_ )
   // copy must always initialized its own buffers
   , vp_( n.vp_ )
-  , tmp_nc_index_( invalid_index )
 {
 }
 
 Node::Node()
   : node_id_( 0 )
   , node_uses_wfr_( false )
+  , tmp_nc_index_( invalid_index )
 {
 }
 
@@ -405,7 +404,7 @@ NodeBase::sends_secondary_event( DelayedRateConnectionEvent& )
 }
 
 void
-Node::handle( LearningSignalConnectionEvent& )
+NodeBase::handle( LearningSignalConnectionEvent& )
 {
   throw UnexpectedEvent();
 }
@@ -417,7 +416,7 @@ NodeBase::handle( SICEvent& )
 }
 
 size_t
-Node::handles_test_event( LearningSignalConnectionEvent&, size_t )
+NodeBase::handles_test_event( LearningSignalConnectionEvent&, size_t )
 {
   throw IllegalConnection(
     "The target node cannot handle learning signal events or"
@@ -426,7 +425,7 @@ Node::handles_test_event( LearningSignalConnectionEvent&, size_t )
 }
 
 void
-Node::sends_secondary_event( LearningSignalConnectionEvent& )
+NodeBase::sends_secondary_event( LearningSignalConnectionEvent& )
 {
   throw IllegalConnection();
 }
@@ -441,6 +440,18 @@ void
 NodeBase::sends_secondary_event( SICEvent& )
 {
   throw IllegalConnection();
+}
+
+void
+NodeBase::event_hook( DSSpikeEvent& e )
+{
+  e.get_receiver().handle( e );
+}
+
+void
+NodeBase::event_hook( DSCurrentEvent& e )
+{
+  e.get_receiver().handle( e );
 }
 
 double

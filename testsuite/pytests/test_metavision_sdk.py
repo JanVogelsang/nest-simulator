@@ -40,12 +40,12 @@ class MetavisionSDKTestCase(unittest.TestCase):
         nest.resolution = 1.0
         nest.local_num_threads = 2
 
-        nest.SetDefaults(
-            "metavision", {"file_paths": [(Path(__file__).parent / "data/metavision_test.hdf5").resolve()]}
-        )
+        path_to_test_data = Path(__file__).parent / "data/metavision_test.hdf5"
+        path_to_test_data.resolve()
+        nest.SetDefaults("metavision", {"file_paths": [str(path_to_test_data)]})
         # nest.SetDefaults("metavision", {"serial_numbers": ["ABC123"]})
 
-        cam = nest.Create("precise_weighted_spike_generator", 1280 * 720, params={"stimulus_source": "metavision"})
+        cam = nest.Create("precise_weighted_spike_generator", 640 * 480, params={"stimulus_source": "metavision"})
         sr = nest.Create("spike_recorder")
 
         nest.Connect(cam, sr, syn_spec={"delay": 1.0})

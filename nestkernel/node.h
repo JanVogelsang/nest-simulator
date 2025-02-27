@@ -53,6 +53,8 @@ class Model;
 class ArchivingNode;
 class TimeConverter;
 
+// TODO JV: Documentation
+// TODO JV: Check which functions should be declared in NodeBase and which ones only in Node
 class NodeBase
 {
   friend class NodeManager;
@@ -120,8 +122,7 @@ public:
   virtual Name get_element_type() const = 0;
 
   /**
-   * Returns true if the node exists only once per process, but does
-   * not have proxies on remote threads.
+   * Returns true if the node exists only once per process, but does not have proxies on remote threads.
    *
    * This is used to discriminate between different types of nodes, when adding new
    * nodes to the network. As of now, this function is only true for MUSIC related proxies?
@@ -318,7 +319,6 @@ public:
    * @throws IllegalConnection
    */
   virtual void sends_secondary_event( SICEvent& sic );
-
 
   /**
    * Send an event to the receiving_node passed as an argument.

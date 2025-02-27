@@ -205,7 +205,7 @@ public:
   /**
    * Used to validate that we can send SpikeEvent to desired target:port.
    **/
-  size_t send_test_event( Node& target, size_t receptor_type, synindex, bool ) override;
+  size_t send_test_event( NodeBase& target, size_t receptor_type, synindex, bool ) override;
 
   void handle( SpikeEvent& ) override;         //!< accept spikes
   void handle( CurrentEvent& e ) override;     //!< accept current
@@ -437,7 +437,7 @@ private:
 }; /* neuron iaf_bw_2001_exact */
 
 inline size_t
-iaf_bw_2001_exact::send_test_event( Node& target, size_t receptor_type, synindex, bool )
+iaf_bw_2001_exact::send_test_event( NodeBase& target, size_t receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );

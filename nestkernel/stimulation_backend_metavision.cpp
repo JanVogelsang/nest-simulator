@@ -109,6 +109,7 @@ StimulationBackendMetavision::initialize()
     next_index_.resize( num_threads, 0 );
     thread_starting_indices_.resize( num_threads + 1 );
 
+    // TODO JV: Should we instead let every process read the file?
     for ( const std::string& path : input_file_paths_ )
     {
       if ( kernel().mpi_manager.get_rank() == 0 )

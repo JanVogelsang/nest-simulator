@@ -215,7 +215,7 @@ public:
   using Node::handles_test_event;
 
   //! Used to validate that we can send SpikeEvent to desired target:port.
-  size_t send_test_event( Node&, size_t, synindex, bool ) override;
+  size_t send_test_event( NodeBase&, size_t, synindex, bool ) override;
 
   void handle( SpikeEvent& ) override;         //!< accept spikes
   void handle( CurrentEvent& ) override;       //!< accept current
@@ -436,7 +436,7 @@ private:
 }; /* neuron iaf_bw_2001 */
 
 inline size_t
-iaf_bw_2001::send_test_event( Node& target, size_t receptor_type, synindex, bool )
+iaf_bw_2001::send_test_event( NodeBase& target, size_t receptor_type, synindex, bool )
 {
   SpikeEvent e;
   e.set_sender( *this );
@@ -451,7 +451,7 @@ iaf_bw_2001::handles_test_event( SpikeEvent& e, size_t receptor_type )
     throw UnknownReceptorType( receptor_type, get_name() );
   }
 
-  const Node& sender = e.get_sender();
+  const NodeBase& sender = e.get_sender();
   if ( receptor_type == NMDA and typeid( sender ) != typeid( *this ) )
   {
     throw IllegalConnection( "For NMDA synapses in iaf_bw_2001, pre-synaptic neuron must also be of type iaf_bw_2001" );

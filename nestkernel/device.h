@@ -260,7 +260,7 @@ Device::get_element_type() const
 inline bool
 Device::one_node_per_process() const
 {
-  return true;
+  return false;
 }
 
 inline bool
