@@ -52,8 +52,8 @@ VTUNE_LIBRARIES
 if ( VTUNE_FOUND )
     set( HAVE_VTUNE ON CACHE INTERNAL "vtune" )
     include_directories( ${VTUNE_INCLUDE} )
+    mark_as_advanced( VTUNE_INCLUDE VTUNE_LIBRARIES )
 else ()
     set( HAVE_VTUNE OFF CACHE INTERNAL "vtune" )
+    unset( VTUNE_INCLUDE VTUNE_LIBRARIES )
 endif ()
-
-mark_as_advanced( VTUNE_INCLUDE VTUNE_LIBRARIES )
