@@ -157,6 +157,14 @@ nest_process_devdoc()
 nest_process_full_logging()
 
 find_package( VTune )
+if ( VTUNE_FOUND )
+    set( HAVE_VTUNE ON )
+    include_directories( ${VTUNE_INCLUDE} )
+else ()
+    set( HAVE_VTUNE OFF )
+    unset( VTUNE_INCLUDE CACHE )
+    unset( VTUNE_LIBRARIES CACHE )
+endif ()
 
 nest_process_models()
 

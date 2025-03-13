@@ -866,10 +866,12 @@ nest::SimulationManager::update_()
     // exceptions here and then handle them after the parallel region.
     try
     {
+#ifdef HAVE_VTUNE
       __itt_domain* domain = __itt_domain_create( "NEST.Simulate" );
       __itt_string_handle* handle_work = __itt_string_handle_create( "simulate" );
       __itt_thread_set_name( ( "thread #" + std::to_string( tid ) ).data() );
       __itt_task_begin( domain, __itt_null, __itt_null, handle_work );
+#endif
 
       do
       {
@@ -1158,7 +1160,9 @@ nest::SimulationManager::update_()
         node->update_synaptic_elements( Time( Time::step( clock_.get_steps() + to_step_ ) ).get_ms() );
       }
 
+#ifdef HAVE_VTUNE
       __itt_task_end( domain );
+#endif
     }
     catch ( std::exception& e )
     {
