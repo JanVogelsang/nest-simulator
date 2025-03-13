@@ -470,6 +470,7 @@ template < typename targetidentifierT >
 inline void
 eprop_synapse_bsshslm_2020< targetidentifierT >::check_connection( Node& s,
   Node& t,
+  const synindex syn_id,
   size_t receptor_type,
   const CommonPropertiesType& cp )
 {

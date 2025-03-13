@@ -53,7 +53,7 @@ namespace nest
 typedef MPIManager::OffGridSpike OffGridSpike;
 
 class TargetData;
-struct SendBufferPosition;
+class SendBufferPosition;
 class TargetSendBufferPosition;
 
 
