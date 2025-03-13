@@ -26,7 +26,7 @@
 #
 # As a hint allows VTUNE_ROOT_DIR.
 
-set( VTUNE_ROOT_DIR "/opt/intel/oneapi/vtune/2025.0/" )
+# set( VTUNE_ROOT_DIR "/opt/intel/oneapi/vtune/2025.0/" )
 
 # find include dir
 find_path(VTUNE_INCLUDE

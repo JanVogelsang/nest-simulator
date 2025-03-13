@@ -27,9 +27,9 @@
 
 // C++ includes:
 // #include <clang/18/include/omp.h>
-// #ifdef HAVE_VTUNE
+#ifdef HAVE_VTUNE
 #include <ittnotify.h> // VTune
-// #endif
+#endif
 #include <limits>
 #include <vector>
 
