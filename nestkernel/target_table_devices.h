@@ -52,7 +52,7 @@ class ConnectorModel;
  */
 class TargetTableDevices
 {
-private:
+public:
   //! 3d structure storing connections from neurons to devices
   std::vector< std::vector< std::vector< ConnectorBase* > > > target_to_devices_;
 

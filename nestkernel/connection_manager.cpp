@@ -2179,3 +2179,39 @@ nest::ConnectionManager::initialize_iteration_state()
     iteration_state_.push_back( std::pair< size_t, std::map< size_t, CSDMapEntry >::const_iterator >( 0, begin ) );
   }
 }
+
+void
+nest::ConnectionManager::prepare_connections()
+{
+#pragma omp parallel
+  {
+    const size_t tid = kernel().vp_manager.get_thread_id();
+    for ( size_t syn_id = 0; syn_id != connections_[ tid ].size(); ++syn_id )
+    {
+      if ( connections_[ tid ][ syn_id ] )
+      {
+        connections_[ tid ][ syn_id ]->prepare( tid );
+      }
+    }
+    for ( size_t ldid = 0; ldid != target_table_devices_.target_from_devices_[ tid ].size(); ++ldid )
+    {
+      for ( size_t syn_id = 0; syn_id != target_table_devices_.target_from_devices_[ tid ][ ldid ].size(); ++syn_id )
+      {
+        if ( target_table_devices_.target_from_devices_[ tid ][ ldid ][ syn_id ] )
+        {
+          target_table_devices_.target_from_devices_[ tid ][ ldid ][ syn_id ]->prepare( tid );
+        }
+      }
+    }
+    for ( size_t ldid = 0; ldid != target_table_devices_.target_to_devices_[ tid ].size(); ++ldid )
+    {
+      for ( size_t syn_id = 0; syn_id != target_table_devices_.target_to_devices_[ tid ][ ldid ].size(); ++syn_id )
+      {
+        if ( target_table_devices_.target_to_devices_[ tid ][ ldid ][ syn_id ] )
+        {
+          target_table_devices_.target_to_devices_[ tid ][ ldid ][ syn_id ]->prepare( tid );
+        }
+      }
+    }
+  }
+}
