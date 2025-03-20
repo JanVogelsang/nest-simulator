@@ -172,6 +172,12 @@ public:
 
   void set_status( const DictionaryDatum& d, ConnectorModel& cm );
 
+  double
+  get_weight()
+  {
+    return weight_;
+  }
+
   void
   set_weight( double w )
   {

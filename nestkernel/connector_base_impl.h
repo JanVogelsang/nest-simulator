@@ -120,6 +120,9 @@ Connector< ConnectionT >::dump_connections( std::ostream& connections_out, const
     const unsigned int thread_lid = target->get_thread_lid();
     connections_out.write( reinterpret_cast< const char* >( &thread_id ), sizeof( thread_id ) );
     connections_out.write( reinterpret_cast< const char* >( &thread_lid ), sizeof( thread_lid ) );
+
+    double weight = conn.get_weight();
+    double delay = conn.get_delay_ms();
   }
 }
 #endif

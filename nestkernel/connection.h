@@ -167,6 +167,16 @@ public:
    */
   void calibrate( const TimeConverter& );
 
+  double
+  get_weight()
+  {
+    return numerics::nan;
+  }
+  void
+  set_weight( const double weight )
+  {
+  }
+
   void
   prepare( const size_t tid )
   {
