@@ -576,7 +576,7 @@ function( NEST_PROCESS_WITH_METAVISIONSDK )
       list( APPEND CMAKE_PREFIX_PATH ${METAVISIONSDK_ROOT_DIR} )
     endif()
 
-    find_package( MetavisionSDK COMPONENTS core driver ui )
+    find_package( MetavisionSDK COMPONENTS core stream )
 
     # is linked in nestkernel/CMakeLists.txt
     if ( MetavisionSDK_FOUND )

@@ -90,7 +90,7 @@ StimulationBackendMetavision::get_status( DictionaryDatum& d ) const
   }
   ( *d )[ names::file_paths ] = ad;
   ad.clear();
-    for ( const std::string& serial : input_serials_ )
+  for ( const std::string& serial : input_serials_ )
   {
     ad.push_back( LiteralDatum( serial ) );
   }
@@ -163,7 +163,7 @@ StimulationBackendMetavision::initialize()
     for ( size_t cam_idx = 0; cam_idx != cameras_.size(); ++cam_idx )
     {
       camera_resolutions_[ cam_idx ] =
-        std::make_pair( cameras_[ cam_idx ].geometry().width(), cameras_[ cam_idx ].geometry().height() );
+        std::make_pair( cameras_[ cam_idx ].geometry().get_width(), cameras_[ cam_idx ].geometry().get_height() );
       camera_num_pixels_[ local_start_index + cam_idx ] =
         camera_resolutions_[ cam_idx ].first * camera_resolutions_[ cam_idx ].second;
     }

@@ -26,7 +26,7 @@
 #ifdef HAVE_METAVISION
 
 #include "metavision/sdk/base/events/event_cd.h"
-#include "metavision/sdk/driver/camera.h"
+#include "metavision/sdk/stream/camera.h"
 #include "nest_types.h"
 #include "static_assert.h"
 #include "stimulation_backend.h"
