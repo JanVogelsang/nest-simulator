@@ -274,14 +274,12 @@ KernelManager::get_fingerprint() const
 namespace kernel
 {
 
-template < class T >
-inline T g_manager_instance; // one per type across all TUs
-
-template < class T >
-T&
-manager() noexcept
+template < typename ManagerT, std::enable_if_t< std::is_base_of_v< ManagerInterface, ManagerT > >* = nullptr >
+ManagerT&
+manager()
 {
-  return g_manager_instance< T >;
+  static ManagerT static_manager;
+  return static_manager;
 }
 
 }
