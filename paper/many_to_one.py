@@ -1,10 +1,10 @@
 import os.path
 import random
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from plotting_utils import *
 from scipy.spatial.distance import jensenshannon
 
 tau_syn = 0.32582722403722841
@@ -33,9 +33,6 @@ stdp_params = {
 T = 10000.0
 NE = 9000
 eta = 4.92
-
-single_column_in = 3.348
-two_column_in = 7.09
 
 
 def rate_cv(sr):
@@ -113,26 +110,6 @@ def find_equilibrium_stdp():
             stdp_params["alpha"] *= 1.0 - 0.03 * abs(syn_weight - 45.0) * max(0.7, random.random())
         else:
             stdp_params["alpha"] *= 1.0 + 0.02 * abs(syn_weight - 45.0) * max(0.7, random.random())
-
-
-def set_font_sizes(small=8, medium=10, large=12, family="Arial"):
-    # plt.rc('text', usetex=True)
-    plt.rc("font", size=small)  # controls default text sizes
-    plt.rc("axes", titlesize=small)  # fontsize of the axes title
-    plt.rc("axes", labelsize=medium)  # fontsize of the x and y labels
-    plt.rc("xtick", labelsize=small)  # fontsize of the tick labels
-    plt.rc("ytick", labelsize=small)  # fontsize of the tick labels
-    plt.rc("legend", fontsize=small)  # legend fontsize
-    plt.rc("figure", titlesize=large)  # fontsize of the figure title
-    plt.rc("font", family=family)
-
-
-def save_grayscale(filename):
-    from PIL import Image
-
-    img = Image.open(filename).convert("L")
-    name, ending = filename.split(".")
-    img.save(name + "_g." + ending)
 
 
 def plot_corrections():
