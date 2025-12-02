@@ -250,6 +250,9 @@ class Plot:
 
 
 x_axis = "num_nodes"
+# y_axis = "time_communicate_spike_data"
+# y_axis = "time_deliver_spike_data"
+# y_axis = "time_update_spike_data"
 y_axis = "sim_factor"
 save_path = "MAM_Jureca_ax-delay.png"
 
@@ -284,14 +287,16 @@ def plot_correction_vs_no_crrection():
     # ax.set_yscale("log")
     ax.minorticks_off()
     ax.tick_params(width=2)
-    fig.tight_layout()
-    fig.savefig("benchmark_axonal_vs_dendritic.pgf")
-    fig.savefig("benchmark_axonal_vs_dendritic.jpg", dpi=300)
     ax.xaxis.set_major_formatter(ScalarFormatter())
     ax.set_xticks(B.df[x_axis].iloc[:, 0])
     ax.set_xticklabels(B.df[x_axis].iloc[:, 0])
     plt.title("MAM, Jureca, axonal vs dendritic (inter-area)")
     plt.legend()
+
+    fig.tight_layout()
+    fig.savefig("benchmark_axonal_vs_dendritic.pgf")
+    fig.savefig("benchmark_axonal_vs_dendritic.jpg", dpi=300)
+
     plt.show()
     plt.close()
 
@@ -315,14 +320,16 @@ def plot_ax_vs_master():
     # ax.set_yscale("log")
     ax.minorticks_off()
     ax.tick_params(width=2)
-    fig.tight_layout()
-    fig.savefig("benchmark_correction_vs_master.pgf")
-    fig.savefig("benchmark_correction_vs_master.jpg", dpi=300)
     ax.xaxis.set_major_formatter(ScalarFormatter())
     ax.set_xticks(df_corr[x_axis].iloc[:, 0])
     ax.set_xticklabels(df_corr[x_axis].iloc[:, 0])
     plt.title("MAM, Jureca, fully dendritic, Correction vs Master")
     plt.legend()
+
+    fig.tight_layout()
+    fig.savefig("benchmark_correction_vs_master.pgf")
+    fig.savefig("benchmark_correction_vs_master.jpg", dpi=300)
+
     plt.show()
     plt.close()
 
