@@ -227,7 +227,9 @@ class Plot:
         """
         self.df["num_nvp"] = self.df["threads_per_task"] * self.df["tasks_per_node"]
         self.df["model_time_sim"] /= self.time_scaling
-        self.df["sim_factor"] = self.df["time_simulate"].iloc[:, 0] / self.df["model_time_sim"].iloc[:, 0]
+
+        self.df[("sim_factor", "mean")] = self.df["time_simulate"].iloc[:, 0] / self.df["model_time_sim"].iloc[:, 0]
+        self.df[("sim_factor", "std")] = self.df["time_simulate"].iloc[:, 1] / self.df["model_time_sim"].iloc[:, 0]
 
         self.df["time_phase_total"] = (
             self.df["time_update_spike_data"].iloc[:, 0]
@@ -279,7 +281,9 @@ def plot_correction_vs_no_crrection():
         df = B.df.loc[B.df["use_inter_area_axonal_delay"].iloc[:, 0] == (i == 0)]
         x_data = df[x_axis].iloc[:, 0]
         y_data = df[y_axis]
-        ax.plot(x_data, y_data, label=label, color=colors(2), marker=("x" if i == 0 else "o"))
+        ax.errorbar(
+            x_data, y_data.iloc[:, 0], y_data.iloc[:, 1], label=label, color=colors(2), marker=("*" if i == 0 else "o")
+        )
 
     ax.set_xlabel("Number of nodes")
     ax.set_ylabel("Simulation time [s]")
@@ -312,7 +316,9 @@ def plot_ax_vs_master():
         colors = cm.get_cmap("Reds", 5) if i == 0 else cm.get_cmap("Oranges", 5)
         x_data = df[x_axis].iloc[:, 0]
         y_data = df[y_axis]
-        ax.plot(x_data, y_data, label=label, color=colors(2), marker=("x" if i == 0 else "o"))
+        ax.errorbar(
+            x_data, y_data.iloc[:, 0], y_data.iloc[:, 1], label=label, color=colors(2), marker=("*" if i == 0 else "o")
+        )
 
     ax.set_xlabel("Number of nodes")
     ax.set_ylabel("Real-time factor")
