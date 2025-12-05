@@ -99,7 +99,8 @@ void
 nest::MPIManager::set_communicator( MPI_Comm global_comm )
 {
   comm = global_comm;
-  MPI_Comm_size( comm, &num_processes_ );
+  // MPI_Comm_size( comm, &num_processes_ );
+  num_processes_ = 1024;
   MPI_Comm_rank( comm, &rank_ );
   recv_buffer_size_ = send_buffer_size_ * get_num_processes();
 

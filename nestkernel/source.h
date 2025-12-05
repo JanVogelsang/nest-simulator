@@ -23,37 +23,56 @@
 #ifndef SOURCE_H
 #define SOURCE_H
 
-// C++ include
-#include <cassert>
-
 // Includes from nestkernel:
 #include "nest_types.h"
+
+#include <static_assert.h>
 
 namespace nest
 {
 
 /**
- * Stores the node ID of a presynaptic neuron
- * and the number of local targets, along with a flag, whether this
- * entry has been processed yet. Used in SourceTable.
+ * Stores the node ID of a presynaptic neuron. Used in SourceTable.
  */
 class Source
 {
+  static constexpr uint8_t NUM_BITS_LID = 16U;
+  static constexpr uint8_t NUM_BITS_THREADS = 1;
+  static constexpr uint8_t NUM_BITS_PROCESSES = 10;
+
 private:
-  uint64_t node_id_ : NUM_BITS_NODE_ID; //!< node ID of source
-  bool processed_ : 1;                  //!< whether this target has already been moved
-                                        //!< to the MPI buffer
-  bool primary_ : 1;                    //!< source of primary connection
-  bool disabled_ : 1;                   //!< connection has been disabled
+  static constexpr size_t PRIMARY_MASK = 1ULL;
+  static constexpr size_t DISABLED_MASK = 1ULL << 1;
+  static constexpr size_t PROCESSED_MASK = 1ULL << 2;
+  static constexpr size_t LID_MASK = ( ( 1ULL << NUM_BITS_LID ) - 1 ) << 3;
+  static constexpr size_t TID_MASK = ( ( 1ULL << NUM_BITS_THREADS ) - 1 ) << ( NUM_BITS_LID + 3 );
+  static constexpr size_t RANK_MASK = ( ( 1ULL << NUM_BITS_PROCESSES ) - 1 ) << ( NUM_BITS_LID + NUM_BITS_THREADS + 3 );
+
+  size_t node_id_ = 0;
 
 public:
   Source();
-  explicit Source( const uint64_t node_id, const bool primary );
+  explicit Source( const size_t snode_id, const bool primary = true );
+  Source( const Source source, const bool primary );
+  Source( const size_t lid, const size_t tid, const size_t rank, const bool primary );
+
+  void set_lid( const size_t lid );
+  void set_tid( const size_t tid );
+  void set_rank( const size_t rank );
+  size_t get_lid() const;
+  size_t get_tid() const;
+  size_t get_rank() const;
+
+
+  Source( const Source& ) = default;
+  Source& operator=( const Source& ) = default;
+  Source( Source&& ) = default;
+  Source& operator=( Source&& ) = default;
 
   /**
    * Returns this Source's node ID.
    */
-  uint64_t get_node_id() const;
+  size_t get_node_id() const;
 
   void set_processed( const bool processed );
   bool is_processed() const;
@@ -78,74 +97,121 @@ public:
    */
   bool is_disabled() const;
 
+  // size_t operator>>( const unsigned offset ) const { return node_id_ >> offset; }
+
   friend bool operator<( const Source& lhs, const Source& rhs );
   friend bool operator>( const Source& lhs, const Source& rhs );
   friend bool operator==( const Source& lhs, const Source& rhs );
 };
 
+//! check legal size
+using success_source_size = StaticAssert< sizeof( Source ) == 8 >::success;
+
 inline Source::Source()
   : node_id_( 0 )
-  , processed_( false )
-  , primary_( true )
-  , disabled_( false )
 {
+  set_primary( true );
+  set_processed( false );
 }
 
-inline Source::Source( const uint64_t node_id, const bool is_primary )
-  : node_id_( node_id )
-  , processed_( false )
-  , primary_( is_primary )
-  , disabled_( false )
+inline Source::Source( const Source source, const bool primary )
+  : node_id_( source.node_id_ )
 {
-  assert( node_id <= MAX_NODE_ID );
+  set_primary( primary );
 }
 
-inline uint64_t
-Source::get_node_id() const
+inline Source::Source( const size_t lid, const size_t tid, const size_t rank, const bool primary )
 {
-  return node_id_;
+  set_lid( lid );
+  set_tid( tid );
+  set_rank( rank );
+  set_primary( primary );
+}
+
+inline void
+Source::set_lid( const size_t lid )
+{
+  node_id_ = ( node_id_ & ~LID_MASK ) | ( ( lid << 3 ) & LID_MASK );
+}
+
+inline void
+Source::set_tid( const size_t tid )
+{
+  node_id_ = ( node_id_ & ~TID_MASK ) | ( ( tid << ( NUM_BITS_LID + 3 ) ) & TID_MASK );
+}
+
+inline void
+Source::set_rank( const size_t rank )
+{
+  node_id_ = ( node_id_ & ~RANK_MASK ) | ( ( rank << ( NUM_BITS_LID + NUM_BITS_THREADS + 3 ) ) & RANK_MASK );
+}
+
+inline size_t
+Source::get_lid() const
+{
+  return ( node_id_ & LID_MASK ) >> 3;
+}
+
+inline size_t
+Source::get_tid() const
+{
+  return ( node_id_ & TID_MASK ) >> ( NUM_BITS_LID + 3 );
+}
+
+inline size_t
+Source::get_rank() const
+{
+  return ( node_id_ & RANK_MASK ) >> ( NUM_BITS_LID + NUM_BITS_THREADS + 3 );
 }
 
 inline void
 Source::set_processed( const bool processed )
 {
-  processed_ = processed;
+  if ( processed )
+  {
+    node_id_ |= PROCESSED_MASK;
+  }
+  else
+  {
+    node_id_ &= ~PROCESSED_MASK;
+  }
 }
 
 inline bool
 Source::is_processed() const
 {
-  return processed_;
-}
-
-inline void
-Source::set_primary( const bool primary )
-{
-  primary_ = primary;
-}
-
-inline bool
-Source::is_primary() const
-{
-  return primary_;
+  return node_id_ & PROCESSED_MASK;
 }
 
 inline void
 Source::disable()
 {
-  disabled_ = true;
+  node_id_ |= PRIMARY_MASK;
 }
 
 inline bool
 Source::is_disabled() const
 {
-  return disabled_;
+  return node_id_ & DISABLED_MASK;
+}
+
+inline void
+Source::set_primary( const bool primary )
+{
+  if ( primary )
+  {
+    node_id_ |= PRIMARY_MASK;
+  }
+  else
+  {
+    node_id_ &= ~PRIMARY_MASK;
+  }
 }
 
 inline bool
-operator<( const Source& lhs, const Source& rhs )
+Source::is_primary() const
 {
-  return ( lhs.node_id_ < rhs.node_id_ );
+  return node_id_ & PRIMARY_MASK;
 }
 
 inline bool
@@ -157,7 +223,13 @@ operator>( const Source& lhs, const Source& rhs )
 inline bool
 operator==( const Source& lhs, const Source& rhs )
 {
-  return ( lhs.node_id_ == rhs.node_id_ );
+  return lhs.node_id_ == rhs.node_id_;
+}
+
+inline bool
+operator<( const Source& lhs, const Source& rhs )
+{
+  return lhs.node_id_ < rhs.node_id_;
 }
 
 } // namespace nest

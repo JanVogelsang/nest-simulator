@@ -110,12 +110,12 @@ M_ERROR = 30
 
 params = {
     "num_threads": 1,  # total number of threads per process
-    "scale": 1.0,  # scaling factor of the network size
+    "scale": 3.0,  # scaling factor of the network size
     # total network size = scale*11250 neurons
     "simtime": 250.0,  # total simulation time in ms
     "presimtime": 50.0,  # simulation time until reaching equilibrium
     "dt": 0.1,  # simulation step
-    "record_spikes": True,  # switch to record spikes of excitatory
+    "record_spikes": False,  # switch to record spikes of excitatory
     # neurons to file
     "path_name": ".",  # path where all files will have to be written
     "log_file": "log",  # naming scheme for the log files

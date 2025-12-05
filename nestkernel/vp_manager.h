@@ -104,6 +104,7 @@ public:
    * Returns the node ID of a given local index.
    */
   size_t lid_to_node_id( const size_t lid ) const;
+  size_t lid_to_node_id( const size_t lid, const size_t vp ) const;
 
   /**
    * Returns virtual process index.
@@ -130,6 +131,7 @@ public:
    * Convert a given thread ID to the corresponding VP ID
    */
   size_t thread_to_vp( const size_t tid ) const;
+  size_t thread_to_vp( const size_t tid, const size_t rank ) const;
 
   /**
    * Return true, if the given VP is on the local machine

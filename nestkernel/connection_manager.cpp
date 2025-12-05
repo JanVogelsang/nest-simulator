@@ -499,6 +499,9 @@ nest::ConnectionManager::update_delay_extrema_()
     return;
   }
 
+  min_delay_ = max_delay_ = Time::delay_ms_to_steps( 1.5f );
+  return;
+
   min_delay_ = get_min_delay_time_().get_steps();
   max_delay_ = get_max_delay_time_().get_steps();
 

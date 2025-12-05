@@ -69,6 +69,12 @@ VPManager::thread_to_vp( const size_t tid ) const
   return tid * kernel().mpi_manager.get_num_processes() + kernel().mpi_manager.get_rank();
 }
 
+inline size_t
+VPManager::thread_to_vp( const size_t tid, const size_t rank ) const
+{
+  return tid * kernel().mpi_manager.get_num_processes() + rank;
+}
+
 inline bool
 VPManager::is_node_id_vp_local( const size_t node_id ) const
 {
@@ -86,6 +92,12 @@ inline size_t
 VPManager::lid_to_node_id( const size_t lid ) const
 {
   const size_t vp = get_vp();
+  return ( lid + static_cast< size_t >( vp == 0 ) ) * get_num_virtual_processes() + vp;
+}
+
+inline size_t
+VPManager::lid_to_node_id( const size_t lid, const size_t vp ) const
+{
   return ( lid + static_cast< size_t >( vp == 0 ) ) * get_num_virtual_processes() + vp;
 }
 
