@@ -27,10 +27,10 @@
 // Includes from libnestutil:
 #include "dict_util.h"
 #include "dictdatum.h"
-#include "numerics.h"
 
 // Includes from nestkernel:
 #include "exceptions.h"
+#include "genericmodel_impl.h"
 #include "kernel_manager.h"
 #include "nest_impl.h"
 #include "universal_data_logger_impl.h"
