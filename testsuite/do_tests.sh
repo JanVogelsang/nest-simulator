@@ -468,12 +468,14 @@ if test "${MUSIC}"; then
             echo "#!/usr/bin/env sh"
             echo "set +e"
             echo "NEST_DATA_PATH=\"${TMPDIR_MUSIC}\""
-            echo "${test_command} > ${TEST_OUTFILE} 2>&1"
+            echo "timeout 5m ${test_command} > ${TEST_OUTFILE} 2>&1 < /dev/null"
+            echo "RET=\$?"
+            echo "if [ \$RET -eq 124 ]; then echo 'TIMEOUT_ERROR' >> ${TEST_OUTFILE}; fi"
             if test -n "${sh_file}"; then
                 chmod 755 "$(basename "${sh_file}")"
                 echo "./$(basename "${sh_file}")"
             fi
-            echo "echo \$? > exit_code ; exit 0"
+            echo "echo \$RET > exit_code"
         } >"runner.sh"
 
         # Run the script and measure execution time. Copy the output to the logfile.
