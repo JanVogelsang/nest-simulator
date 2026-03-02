@@ -179,7 +179,7 @@ echo "  Sysinfo: $(uname -s -r -m)"
 echo
 echo "  NEST version ....... $(get_build_info version)"
 echo "  PREFIX ............. $PREFIX"
-if test -n "${HAVE_MUSIC}" = "True"; then
+if test "${HAVE_MUSIC}" = "True"; then
     MUSIC_VERSION="$("${MUSIC}" --version | head -n1 | cut -d' ' -f2)"
     echo "  MUSIC executable ... ${MUSIC} (version ${MUSIC_VERSION})"
 fi
