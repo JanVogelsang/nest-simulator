@@ -330,15 +330,24 @@ stdp_pl_synapse_hom_ax_delay< targetidentifierT >::send( Event& e,
   e.set_rport( get_rport() );
   e();
 
-  // axonal_delay-dendritic_delay = total_delay-2*dendritic_delay
-  const long time_while_critical =
-    e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ) - 2 * get_dendritic_delay_steps() + 1;
-  // Only add correction entry if there could potentially be any post-synaptic spike that occurs before the
-  // pre-synaptic one arrives at the synapse.
-  if ( time_while_critical > 0 )
+  // A correction can only ever be needed if the spike reaches the synapse after a post-synaptic spike the synapse
+  // should have seen first, which requires the axonal delay to be at least the dendritic one. Testing that first --
+  // both values are already in hand -- keeps the arithmetic below off the hot path of every synapse that does not use
+  // predominantly axonal delays. That arithmetic is not free: get_rel_delivery_steps goes through Time::get_steps(),
+  // which costs two infinity tests and a pair of integer/double conversions, and it ran on every spike delivery even
+  // though its result cannot be positive unless the axonal delay reaches the dendritic one.
+  if ( axonal_delay_ms >= dendritic_delay_ms )
   {
-    static_cast< ArchivingNode* >( target )->add_correction_entry_stdp_ax_delay(
-      static_cast< SpikeEvent& >( e ), t_lastspike_, weight_revert, weight_, K_plus_revert, time_while_critical );
+    // axonal_delay-dendritic_delay = total_delay-2*dendritic_delay
+    const long time_while_critical =
+      e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ) - 2 * get_dendritic_delay_steps() + 1;
+    // Only add correction entry if there could potentially be any post-synaptic spike that occurs before the
+    // pre-synaptic one arrives at the synapse.
+    if ( time_while_critical > 0 )
+    {
+      static_cast< ArchivingNode* >( target )->add_correction_entry_stdp_ax_delay(
+        static_cast< SpikeEvent& >( e ), t_lastspike_, weight_revert, weight_, K_plus_revert, time_while_critical );
+    }
   }
 
   Kplus_ = Kplus_ * std::exp( ( t_lastspike_ - t_spike ) * cp.tau_plus_inv_ ) + 1.0;

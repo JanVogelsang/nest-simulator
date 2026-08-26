@@ -27,6 +27,7 @@
 #include <cassert>
 #include <iomanip>
 #include <limits>
+#include <numeric>
 #include <set>
 #include <vector>
 
@@ -78,7 +79,7 @@ ConnectionManager::ConnectionManager()
   , secondary_connections_exist_( false )
   , check_secondary_connections_()
   , stdp_eps_( 1.0e-6 )
-  , num_corrections_( 0 )
+  , num_corrections_()
 {
 }
 
@@ -125,6 +126,7 @@ ConnectionManager::initialize( const bool adjust_number_of_threads_or_rng_only )
   secondary_recv_buffer_pos_.resize( num_threads );
   compressed_spike_data_.resize( 0 );
   have_nonzero_axonal_delays_.resize( num_threads, false );
+  num_corrections_.assign( num_threads, 0 );
 
   has_primary_connections_ = false;
   check_primary_connections_.initialize( num_threads, false );
@@ -163,7 +165,7 @@ ConnectionManager::finalize( const bool adjust_number_of_threads_or_rng_only )
   std::vector< std::vector< ConnectorBase* > >().swap( connections_ );
   std::vector< std::vector< std::vector< size_t > > >().swap( secondary_recv_buffer_pos_ );
   compressed_spike_data_.clear();
-  num_corrections_ = 0;
+  num_corrections_.clear();
   have_nonzero_axonal_delays_.clear();
 
   if ( not adjust_number_of_threads_or_rng_only )
@@ -227,7 +229,8 @@ ConnectionManager::get_status( Dictionary& dict )
   dict[ names::keep_source_table ] = keep_source_table_;
   dict[ names::use_compressed_spikes ] = use_compressed_spikes_;
 
-  dict[ names::num_corrections ] = static_cast< long >( num_corrections_ );
+  dict[ names::num_corrections ] =
+    static_cast< long >( std::accumulate( num_corrections_.begin(), num_corrections_.end(), size_t( 0 ) ) );
 
   sw_construction_connect.get_status( dict, names::time_construction_connect, names::time_construction_connect_cpu );
 

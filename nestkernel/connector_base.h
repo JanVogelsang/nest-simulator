@@ -235,9 +235,32 @@ private:
   BlockVector< ConnectionT > C_;
   const synindex syn_id_;
 
+  /**
+   * Whether any connection held here can ever require a retrospective correction.
+   *
+   * Only a connection whose axonal delay is at least its dendritic delay can be reached by a correction, and only
+   * such a connection needs the receiving neuron to be able to find its way back to it. Keeping this as a flag on the
+   * Connector rather than testing each connection keeps the check out of the per-connection send loop.
+   */
+  bool needs_axonal_delay_feedback_;
+
+  /**
+   * Fold a newly added or modified connection into needs_axonal_delay_feedback_.
+   */
+  void
+  note_axonal_delay_feedback_( const ConnectionT& c )
+  {
+    if constexpr ( ConnectionT::requires_axonal_delay_feedback )
+    {
+      needs_axonal_delay_feedback_ =
+        needs_axonal_delay_feedback_ or ( c.get_axonal_delay_steps() >= c.get_dendritic_delay_steps() );
+    }
+  }
+
 public:
   explicit Connector( const synindex syn_id )
     : syn_id_( syn_id )
+    , needs_axonal_delay_feedback_( false )
   {
   }
 
@@ -276,17 +299,22 @@ public:
     assert( lcid < C_.size() );
 
     C_[ lcid ].set_status( dict, static_cast< GenericConnectorModel< ConnectionT >& >( cm ) );
+
+    // the delays may have changed
+    note_axonal_delay_feedback_( C_[ lcid ] );
   }
 
   void
   push_back( const ConnectionT& c )
   {
+    note_axonal_delay_feedback_( c );
     C_.push_back( c );
   }
 
   void
   push_back( ConnectionT&& c )
   {
+    note_axonal_delay_feedback_( c );
     C_.push_back( std::move( c ) );
   }
 
@@ -430,9 +458,12 @@ public:
       {
         if constexpr ( ConnectionT::requires_axonal_delay_feedback )
         {
-          // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
-          // only if needed, as this is computationally costly
-          e.set_sender_node_id_info( tid, syn_id_, lcid + lcid_offset );
+          if ( needs_axonal_delay_feedback_ )
+          {
+            // non-local sender -> receiver retrieves ID of sender Node from SourceTable based on tid, syn_id, lcid
+            // only if needed, as this is computationally costly
+            e.set_sender_node_id_info( tid, syn_id_, lcid + lcid_offset );
+          }
         }
         // Some synapses, e.g., bernoulli_synapse, may not send an event after all
         const bool event_sent = conn.send( e, tid, cp );

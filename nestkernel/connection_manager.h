@@ -746,8 +746,15 @@ private:
   //! buffers
   std::vector< std::pair< size_t, std::map< size_t, CSDMapEntry >::const_iterator > > iteration_state_;
 
-  //! Number of weight corrections required for STDP synapses with predominant axonal delays during the whole simulation
-  size_t num_corrections_;
+  /**
+   * Number of weight corrections required for STDP synapses with predominant axonal delays during the whole
+   * simulation, counted per thread.
+   *
+   * Corrections are triggered from inside the OpenMP parallel region, so a single shared counter would be a data
+   * race and would undercount by a nondeterministic amount. One entry per thread, summed on read, in the same way
+   * EventDeliveryManager keeps local_spike_counter_.
+   */
+  std::vector< size_t > num_corrections_;
 };
 
 inline bool
@@ -966,7 +973,7 @@ ConnectionManager::correct_synapse_stdp_ax_delay( const size_t tid,
   const double K_plus_revert,
   const double t_post_spike )
 {
-  ++num_corrections_;
+  ++num_corrections_[ tid ];
   connections_[ tid ][ syn_id ]->correct_synapse_stdp_ax_delay( tid,
     syn_id,
     lcid,
