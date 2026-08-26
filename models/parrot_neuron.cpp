@@ -112,7 +112,7 @@ parrot_neuron::handle( SpikeEvent& e )
 }
 
 void
-parrot_neuron::handle( CorrectionSpikeEvent& e )
+parrot_neuron::handle( CorrectionSpikeEvent& )
 {
 }
 
