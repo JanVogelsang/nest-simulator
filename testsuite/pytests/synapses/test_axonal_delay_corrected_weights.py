@@ -152,7 +152,9 @@ def _simulate(axonal_delay, dendritic_delay, pre_interval, num_threads):
         (1.5, 1.5, 0.7),  # axonal == dendritic: no correction can ever be required
     ],
 )
-@pytest.mark.parametrize("num_threads", [1, 4])
+# The 4-thread case needs a build with multithreading support; NEST raises on
+# local_num_threads > 1 without it.
+@pytest.mark.parametrize("num_threads", [1, pytest.param(4, marks=pytest.mark.skipif_missing_threads)])
 def test_corrected_weights_match_causal_reference(axonal_delay, dendritic_delay, pre_interval, num_threads):
     """Every synapse must end on the weight an implementation that never misses a spike computes."""
     connections, trains = _simulate(axonal_delay, dendritic_delay, pre_interval, num_threads)
