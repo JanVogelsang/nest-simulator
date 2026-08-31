@@ -418,7 +418,13 @@ stdp_pl_synapse_hom_ax_delay< targetidentifierT >::correct_synapse_stdp_ax_delay
   {
     weight_ = facilitate_( weight_revert, K_plus_revert * std::exp( minus_dt * cp.tau_plus_inv_ ), cp );
 
-    // update weight_revert in case further correction will be required later
+    // Hand this in-progress weight to the connection's other entries now, instead of waiting for this
+    // entry to expire. The same post-synaptic spike can also correct a later spike of this connection,
+    // and that correction happens in this same scan -- long before the hand-off in
+    // reset_correction_entries_stdp_ax_delay_(), which only runs once this entry leaves the buffer. The
+    // two are therefore not alternatives: dropping this call makes 10 of the 13 cases in
+    // test_axonal_delay_corrected_weights fail. Note that test_stdp_pl_synapse_hom still passes all 48 of
+    // its cases without it, because the weights it compares are the transmitted, pre-correction ones.
     static_cast< ArchivingNode* >( target )->update_weight_revert( lcid, weight_ );
   }
 
