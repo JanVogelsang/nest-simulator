@@ -13,9 +13,9 @@ supporting this feature. This is useful for STDP models and other models relying
 synapse.
 
 Currently, only ``stdp_pl_synapse_hom_ax_delay`` supports explicitly specifying axonal and dendritic delays with the
-``axonal_delay`` and ``dendtritic_delay`` parameters. For STDP with predominant axonal delays, neuron models must be
-adjusted to correctly handle these delays. At this point, only ``iaf_psc_alpha`` supports STDP with predominant axonal
-delays.
+``axonal_delay`` and ``dendritic_delay`` parameters. For STDP with predominant axonal delays, neuron models must be
+adjusted to correctly handle these delays. At this point, ``iaf_psc_alpha`` and ``iaf_psc_exp`` support STDP with
+predominant axonal delays.
 
 When using ``stdp_pl_synapse_hom_ax_delay``:
 
