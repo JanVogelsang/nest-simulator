@@ -29,7 +29,9 @@ only be few occurrences where causality becomes an issue. In order to still guar
 incorrect STDP weight changes are rolled back, re-calculated, and the weight of pre-synaptic spike, which already reached
 the target neuron's ring buffer, is corrected. Undoing the STDP weight changes and re-calculating them obviously comes
 with a cost, however as only few such occurrences are to be expected, this solution is more efficient than restructuring
-the kernel to make sure axonal delays are always handled correctly (see Alternative implementations).
+the kernel to make sure axonal delays are always handled correctly. The alternatives that were tried and rejected --
+among them buffering pre-synaptic spikes until they reach the synapse, and restructuring spike communication itself --
+are to be described in a forthcoming publication rather than here.
 
 Changes to the kernel and neuron models
 ---------------------------------------
