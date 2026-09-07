@@ -26,6 +26,9 @@
 // nestkernel
 #include "flush_event_mechanism.h"
 #include "histentry.h"
+#include "ignore_and_spike_mechanism.h"
+#include "nest_time.h"
+#include "nest_types.h"
 #include "node.h"
 
 namespace nest
@@ -46,30 +49,20 @@ namespace nest
  * @tparam HistEntryT The type of history entry.
  */
 template < typename HistEntryT >
-class EpropArchivingNode : public Node, public FlushEventMechanism
+class EpropArchivingNode : public Node, public FlushEventMechanism, public IgnoreAndSpikeMechanism
 {
 public:
   /**
    * Constructs a new EpropArchivingNode object.
    */
-  EpropArchivingNode()
-    : eprop_indegree_( 0 )
-    , eprop_isi_trace_cutoff_( std::numeric_limits< double >::infinity() )
-  {
-  }
+  EpropArchivingNode();
 
   /**
    * Constructs a new EpropArchivingNode object by copying another EpropArchivingNode object.
    *
    * @param n The other object to copy.
    */
-  EpropArchivingNode( const EpropArchivingNode& n )
-    : Node( n )
-    , FlushEventMechanism( n )
-    , eprop_indegree_( n.eprop_indegree_ )
-    , eprop_isi_trace_cutoff_( n.eprop_isi_trace_cutoff_ )
-  {
-  }
+  EpropArchivingNode( const EpropArchivingNode& n );
 
   void register_eprop_connection() override;
   void initialize_update_history() override;
@@ -129,6 +122,8 @@ public:
    * @brief Retrieves eprop history size.
    *
    * Retrieves the size of the eprop history buffer.
+   *
+   * @return The duration of the eprop history buffer (ms).
    */
   double get_eprop_history_duration() const;
 
@@ -137,6 +132,8 @@ public:
    *
    * Retrieves the time interval from the previous spike until the cutoff of
    * e-prop update computation between two spikes (ms).
+   *
+   * @return The eprop ISI trace cutoff (steps).
    */
   long
   get_eprop_isi_trace_cutoff() const
@@ -145,7 +142,11 @@ public:
   }
 
 protected:
-  //! Returns correct shift for history depending on whether it is a normal or a bsshslm_2020 model.
+  /**
+   * Returns the correct shift for history depending on whether it is a normal or a bsshslm_2020 model.
+   *
+   * @return The history shift (steps).
+   */
   virtual long model_dependent_history_shift_() const = 0;
 
   //! Number of incoming eprop synapses

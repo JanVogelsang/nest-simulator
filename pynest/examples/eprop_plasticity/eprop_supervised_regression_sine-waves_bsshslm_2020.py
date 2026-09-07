@@ -29,10 +29,10 @@ Description
 ~~~~~~~~~~~
 
 This script demonstrates supervised learning of a regression task with a recurrent spiking neural network that
-is equipped with the eligibility propagation (e-prop) plasticity mechanism by Bellec et al. [1]_.
+is equipped with the eligibility propagation (e-prop) plasticity mechanism by Bellec et al. :footcite:p:`Bellec2020`.
 
-This type of learning is demonstrated at the proof-of-concept task in [1]_. We based this script on their
-TensorFlow script given in [2]_.
+This type of learning is demonstrated at the proof-of-concept task in :footcite:p:`Bellec2020`. We based this script on their
+TensorFlow script given in the `original implementation <https://github.com/IGITUGraz/eligibility_propagation/blob/master/Figure_3_and_S7_e_prop_tutorials/tutorial_pattern_generation.py>`__.
 
 In this task, the network learns to generate an arbitrary N-dimensional temporal pattern. Here, the
 network learns to reproduce with its overall spiking activity a one-dimensional, one-second-long target signal
@@ -51,21 +51,12 @@ readout neuron. The readout neuron compares the network signal :math:`y` with th
 readout signal denoted as :math:`y_k` is compared with a corresponding target signal represented as
 :math:`y_k^*`. The network's training error is assessed by employing a mean-squared error loss.
 
-Details on the event-based NEST implementation of e-prop can be found in [3]_.
+Details on the event-based NEST implementation of e-prop can be found in :footcite:p:`KorcsakGorzo2025`.
 
 References
 ~~~~~~~~~~
 
-.. [1] Bellec G, Scherr F, Subramoney F, Hajek E, Salaj D, Legenstein R, Maass W (2020). A solution to the
-       learning dilemma for recurrent networks of spiking neurons. Nature Communications, 11:3625.
-       https://doi.org/10.1038/s41467-020-17236-y
-
-.. [2] https://github.com/IGITUGraz/eligibility_propagation/blob/master/Figure_3_and_S7_e_prop_tutorials/tutorial_pattern_generation.py
-
-.. [3] Korcsak-Gorzo A, Espinoza Valverde JA, Stapmanns J, Plesser HE, Dahmen D,
-       Bolten M, van Albada SJ, Diesmann M (2025). Event-driven eligibility
-       propagation in large sparse networks: efficiency shaped by biological
-       realism. arXiv:2511.21674. https://doi.org/10.48550/arXiv.2511.21674
+.. footbibliography::
 
 """  # pylint: disable=line-too-long # noqa: E501
 
@@ -112,8 +103,8 @@ np.random.seed(rng_seed)  # fix numpy random seed
 # The task's temporal structure is then defined, once as time steps and once as durations in milliseconds.
 # Increasing the number of iterations enhances learning performance.
 
-batch_size = 1  # batch size, 1 in reference [2]
-n_iter = 200  # number of iterations, 2000 in reference [2]
+batch_size = 1  # batch size, 1 in the original TensorFlow code
+n_iter = 200  # number of iterations, 2000 in the original TensorFlow code
 
 steps = {
     "sequence": 1000,  # time steps of one full sequence
@@ -184,7 +175,6 @@ params_nrn_out = {
 }
 
 params_nrn_rec = {
-    "beta": 1.0,  # width scaling of the pseudo-derivative
     "C_m": 1.0,
     "c_reg": 300.0,  # coefficient of firing rate regularization
     "E_L": 0.0,
@@ -192,10 +182,11 @@ params_nrn_rec = {
     "flush_event_send_interval": duration[
         "sequence"
     ],  # ms, inactivity period before flushing outgoing synapses to free memory
-    "gamma": 0.3,  # height scaling of the pseudo-derivative
     "I_e": 0.0,
     "regular_spike_arrival": False,
     "surrogate_gradient_function": "piecewise_linear",  # surrogate gradient / pseudo-derivative function
+    "surrogate_gradient_height": 0.3,  # height scaling of the pseudo-derivative
+    "surrogate_gradient_width": 1.0,  # width scaling of the pseudo-derivative
     "t_ref": 0.0,  # ms, duration of refractory period
     "tau_m": 30.0,
     "V_m": 0.0,
@@ -203,8 +194,10 @@ params_nrn_rec = {
 }
 
 # factors from the original pseudo-derivative definition are incorporated into the parameters
-params_nrn_rec["gamma"] /= params_nrn_rec["V_th"]
-params_nrn_rec["beta"] /= np.abs(params_nrn_rec["V_th"])  # prefactor is inside abs in the original definition
+params_nrn_rec["surrogate_gradient_height"] /= params_nrn_rec["V_th"]
+params_nrn_rec["surrogate_gradient_width"] *= np.abs(
+    params_nrn_rec["V_th"]
+)  # prefactor is inside abs in the original definition
 
 ####################
 
@@ -497,8 +490,8 @@ readout_signal = events_mm_out["readout_signal"]
 target_signal = events_mm_out["target_signal"]
 senders = events_mm_out["senders"]
 
-readout_signal = np.array([readout_signal[senders == i] for i in set(senders)])
-target_signal = np.array([target_signal[senders == i] for i in set(senders)])
+readout_signal = np.array([readout_signal[senders == i] for i in np.unique(senders)])
+target_signal = np.array([target_signal[senders == i] for i in np.unique(senders)])
 
 readout_signal = readout_signal.reshape((n_out, n_iter, batch_size, steps["sequence"]))
 target_signal = target_signal.reshape((n_out, n_iter, batch_size, steps["sequence"]))
@@ -554,7 +547,7 @@ fig.tight_layout()
 
 
 def plot_recordable(ax, events, recordable, ylabel, xlims):
-    for sender in set(events["senders"]):
+    for sender in np.unique(events["senders"]):
         idc_sender = events["senders"] == sender
         idc_times = (events["times"][idc_sender] > xlims[0]) & (events["times"][idc_sender] < xlims[1])
         ax.plot(events["times"][idc_sender][idc_times], events[recordable][idc_sender][idc_times], lw=0.5)
@@ -612,14 +605,15 @@ def plot_weight_time_course(ax, events, nrns, label, ylabel):
     nrns_senders = nrns[sender_label]
     nrns_targets = nrns[target_label]
 
-    for sender in set(events_wr["senders"]):
-        for target in set(events_wr["targets"]):
+    for sender in np.unique(events["senders"]):
+        for target in np.unique(events["targets"]):
             if sender in nrns_senders and target in nrns_targets:
                 idc_syn = (events["senders"] == sender) & (events["targets"] == target)
-                if np.any(idc_syn):
-                    idc_syn_pre = (weights_pre_train[label]["source"] == sender) & (
-                        weights_pre_train[label]["target"] == target
-                    )
+                idc_syn_pre = (weights_pre_train[label]["source"] == sender) & (
+                    weights_pre_train[label]["target"] == target
+                )
+
+                if np.any(idc_syn) and np.any(idc_syn_pre):
                     times = np.concatenate([[0.0], events["times"][idc_syn]])
 
                     weights = np.concatenate(

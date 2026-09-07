@@ -93,10 +93,19 @@ NormalParameter::NormalParameter( const Dictionary& d )
 {
   d.update_value( names::mean, mean_ );
   d.update_value( names::std, std_ );
-  if ( std_ <= 0 )
+  if ( std_ < 0 )
   {
-    throw BadProperty( "nest::NormalParameter: std > 0 required." );
+    throw BadProperty( "nest::NormalParameter: std ≥ 0 required." );
   }
+
+  if ( std_ == 0 )
+  {
+    // C++ standard does not allow stddev == 0 (§26.5.8.4.4), but we want to support it.
+    // Since gcc checks this requirement in the param_type constructor if __GLIBCXX_ASSERTS
+    // is set, we return here and handle this case specially in the value() method.
+    return;
+  }
+
   normal_distribution dist;
   normal_distribution::param_type param( mean_, std_ );
   dist.param( param );
@@ -107,6 +116,11 @@ NormalParameter::NormalParameter( const Dictionary& d )
 double
 NormalParameter::value( RngPtr rng, Node* node )
 {
+  if ( std_ == 0 )
+  {
+    return mean_;
+  }
+
   const auto tid = node
     ? kernel::manager< VPManager >.vp_to_thread( kernel::manager< VPManager >.node_id_to_vp( node->get_node_id() ) )
     : kernel::manager< VPManager >.get_thread_id();
@@ -120,10 +134,19 @@ LognormalParameter::LognormalParameter( const Dictionary& d )
 {
   d.update_value( names::mean, mean_ );
   d.update_value( names::std, std_ );
-  if ( std_ <= 0 )
+  if ( std_ < 0 )
   {
-    throw BadProperty( "nest::LognormalParameter: std > 0 required." );
+    throw BadProperty( "nest::LognormalParameter: std ≥ 0 required." );
   }
+
+  if ( std_ == 0 )
+  {
+    // C++ standard does not allow stddev == 0 (§26.5.8.4.4), but we want to support it.
+    // Since gcc checks this requirement in the param_type constructor if __GLIBCXX_ASSERTS
+    // is set, we return here and handle this case specially in the value() method.
+    return;
+  }
+
   lognormal_distribution dist;
   const lognormal_distribution::param_type param( mean_, std_ );
   dist.param( param );
@@ -134,6 +157,11 @@ LognormalParameter::LognormalParameter( const Dictionary& d )
 double
 LognormalParameter::value( RngPtr rng, Node* node )
 {
+  if ( std_ == 0 )
+  {
+    return std::exp( mean_ );
+  }
+
   const auto tid = node
     ? kernel::manager< VPManager >.vp_to_thread( kernel::manager< VPManager >.node_id_to_vp( node->get_node_id() ) )
     : kernel::manager< VPManager >.get_thread_id();
@@ -658,6 +686,10 @@ ExponentialParameter::ExponentialParameter( const Dictionary& d )
   : beta_( 1.0 )
 {
   d.update_value( names::beta, beta_ );
+  if ( beta_ < 0 )
+  {
+    throw BadProperty( "nest::ExponentialParameter: beta ≥ 0 required." );
+  }
 }
 
 double

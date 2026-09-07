@@ -71,6 +71,7 @@ def parse_result_file(fname):
             "Errors": 1,
             "Time": 0,
             "Failed tests": [f"ERROR: XML file {fname} not parsable with error {err}"],
+            "Skipped tests": [],
         }
 
     if isinstance(results, jp.junitparser.JUnitXml):
@@ -85,14 +86,22 @@ def parse_result_file(fname):
         for case in results
         if case.result and not isinstance(case.result[0], jp.junitparser.Skipped)
     ]
+    skipped_tests = [
+        ".".join((case.classname, case.name))
+        for case in results
+        if (
+            case.result and isinstance(case.result[0], jp.junitparser.Skipped) and case.result[0].type == "pytest.skip"
+        )  # Skipped can also contain xfail
+    ]
 
     return {
         "Tests": results.tests,
-        "Skipped": results.skipped,
+        "Skipped": len(skipped_tests),  # results.skipped also counts xfail
         "Failures": results.failures,
         "Errors": results.errors,
         "Time": results.time,
         "Failed tests": failed_tests,
+        "Skipped tests": skipped_tests,
     }
 
 
@@ -103,6 +112,7 @@ if __name__ == "__main__":
     parser.add_argument("--have-mpi", action="store_true")
     parser.add_argument("--have-openmp", action="store_true")
     parser.add_argument("--have-music", action="store_true")
+    parser.add_argument("--have-boost", action="store_true")
     args = parser.parse_args()
 
     test_outdir = args.test_outdir
@@ -110,6 +120,7 @@ if __name__ == "__main__":
     have_mpi = args.have_mpi
     have_openmp = args.have_openmp
     have_music = args.have_music
+    have_boost = args.have_boost
 
     if not have_mpi:
         # keep only phases that do not contain mpi in their name
@@ -119,9 +130,12 @@ if __name__ == "__main__":
         del expected_num_tests["07 pynesttests mpi indirect"]
     if not have_music:
         del expected_num_tests["06 musictests"]
+    if not have_boost:
+        # We use Boost's unit test framework for cpptests
+        del expected_num_tests["08 cpptests"]
 
     results = {}
-    totals = {"Tests": 0, "Skipped": 0, "Failures": 0, "Errors": 0, "Time": 0, "Failed tests": []}
+    totals = {"Tests": 0, "Skipped": 0, "Failures": 0, "Errors": 0, "Time": 0, "Failed tests": [], "Skipped tests": []}
     missing_tests = []
 
     for pfile in sorted(glob.glob(os.path.join(test_outdir, "*.xml"))):
@@ -144,12 +158,23 @@ if __name__ == "__main__":
     cols = ["Tests", "Skipped", "Failures", "Errors", "Time"]
 
     col_w = max(len(c) for c in cols) + 2
-    first_col_w = max(len(k) for k in results.keys())
+    first_col_w = max((len(k) for k in results.keys()), default=0)
 
     tline = "-" * (len(cols) * col_w + first_col_w)
 
     print()
     print()
+
+    if totals["Skipped tests"]:
+        print(tline)
+        print("Skipped tests")
+        print(tline)
+        for t in totals["Skipped tests"]:
+            print(f"    | {t}")  # | marks line for parsing
+        print(tline)
+        print()
+        print()
+
     print(tline)
     print("NEST Testsuite Results")
 

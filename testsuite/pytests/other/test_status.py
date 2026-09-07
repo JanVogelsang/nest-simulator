@@ -30,13 +30,21 @@ class StatusTestCase(unittest.TestCase):
     def test_kernel_attributes(self):
         """Test nest attribute access of kernel attributes"""
 
+        # Ensure we see the full kernel status diff if an assertion fails
+        self.maxDiff = None
+
         nest.ResetKernel()
 
-        # Remove entry containing numpy arrays from status dicts since they do not compare well
         gks_result = nest.GetKernelStatus()
         ks_result = nest.kernel_status
-        del gks_result["spike_buffer_resize_log"]
-        del ks_result["spike_buffer_resize_log"]
+
+        # Filter out keys that are difficult to test
+        # memory_size sometimes changes between the two calls above leading to spurious negatives
+        # spike_buffer_resize_log here contains empty numpy arrays, leading to "ambiguous truth value" issues
+        for entry_to_delete in ["memory_size", "spike_buffer_resize_log"]:
+            del gks_result[entry_to_delete]
+            del ks_result[entry_to_delete]
+
         self.assertEqual(gks_result, ks_result)
 
         self.assertEqual(nest.GetKernelStatus("resolution"), nest.resolution)

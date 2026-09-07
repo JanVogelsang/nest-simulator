@@ -806,7 +806,8 @@ ConnectionManager::connect_arrays( const long* sources,
 }
 
 void
-ConnectionManager::connect_sonata( const Dictionary& graph_specs, const long hyberslab_size )
+ConnectionManager::connect_sonata( [[maybe_unused]] const Dictionary& graph_specs,
+  [[maybe_unused]] const long hyberslab_size )
 {
 #ifdef HAVE_HDF5
   kernel::manager< ConnectionManager >.sw_construction_connect.start();

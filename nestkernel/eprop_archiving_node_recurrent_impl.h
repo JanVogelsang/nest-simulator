@@ -32,7 +32,8 @@ template < bool hist_shift_required >
 inline void
 EpropArchivingNodeRecurrent< hist_shift_required >::get_status( Dictionary& d ) const
 {
-  d[ names::flush_event_send_interval ] = flush_event_send_interval_;
+  FlushEventMechanism::get_status( d );
+  IgnoreAndSpikeMechanism::get_status( d );
 
   if constexpr ( not hist_shift_required )
   {
@@ -44,25 +45,21 @@ template < bool hist_shift_required >
 inline void
 EpropArchivingNodeRecurrent< hist_shift_required >::set_status( const Dictionary& d )
 {
-  FlushEventMechanism::set_status( d );
+  FlushEventMechanism::set_status( d, this, hist_shift_required );
+  IgnoreAndSpikeMechanism::set_status( d, this );
 
   if constexpr ( not hist_shift_required )
   {
-    d.update_value( names::eprop_isi_trace_cutoff, eprop_isi_trace_cutoff_ );
+    double eprop_isi_trace_cutoff_tmp = eprop_isi_trace_cutoff_;
 
-    if ( eprop_isi_trace_cutoff_ < 0.0 )
+    update_value_param( d, names::eprop_isi_trace_cutoff, eprop_isi_trace_cutoff_tmp, this );
+
+    if ( eprop_isi_trace_cutoff_tmp < 0.0 )
     {
-      throw BadProperty( "Computation cutoff of eprop trace eprop_isi_trace_cutoff ≥ 0 required." );
+      throw BadProperty( "eprop_isi_trace_cutoff ≥ 0 required." );
     }
-  }
-  else
-  {
-    if ( flush_event_send_interval_ < kernel::manager< SimulationManager >.get_eprop_update_interval().get_ms() )
-    {
-      throw BadProperty(
-        "Interval since previous event after which a flush event is sent flush_event_send_interval ≥ "
-        "eprop_update_interval required." );
-    }
+
+    eprop_isi_trace_cutoff_ = eprop_isi_trace_cutoff_tmp;
   }
 }
 
@@ -102,7 +99,8 @@ std::map< std::string, typename EpropArchivingNodeRecurrent< hist_shift_required
     { "exponential", &EpropArchivingNodeRecurrent< hist_shift_required >::compute_exponential_surrogate_gradient },
     { "fast_sigmoid_derivative",
       &EpropArchivingNodeRecurrent< hist_shift_required >::compute_fast_sigmoid_derivative_surrogate_gradient },
-    { "arctan", &EpropArchivingNodeRecurrent< hist_shift_required >::compute_arctan_surrogate_gradient }
+    { "arctan_derivative",
+      &EpropArchivingNodeRecurrent< hist_shift_required >::compute_arctan_derivative_surrogate_gradient }
   };
 
 template < bool hist_shift_required >
@@ -151,15 +149,15 @@ double
 EpropArchivingNodeRecurrent< hist_shift_required >::compute_piecewise_linear_surrogate_gradient( const double r,
   const double v_m,
   const double v_th,
-  const double beta,
-  const double gamma )
+  const double height,
+  const double width )
 {
-  if ( r > 0 )
+  if ( r > 0.0 )
   {
     return 0.0;
   }
 
-  return gamma * std::max( 0.0, 1.0 - beta * std::abs( v_m - v_th ) );
+  return height * std::max( 0.0, 1.0 - std::abs( v_m - v_th ) / width );
 }
 
 template < bool hist_shift_required >
@@ -167,15 +165,15 @@ double
 EpropArchivingNodeRecurrent< hist_shift_required >::compute_exponential_surrogate_gradient( const double r,
   const double v_m,
   const double v_th,
-  const double beta,
-  const double gamma )
+  const double height,
+  const double width )
 {
-  if ( r > 0 )
+  if ( r > 0.0 )
   {
     return 0.0;
   }
 
-  return gamma * std::exp( -beta * std::abs( v_m - v_th ) );
+  return height * std::exp( -std::abs( v_m - v_th ) / width );
 }
 
 template < bool hist_shift_required >
@@ -183,31 +181,31 @@ double
 EpropArchivingNodeRecurrent< hist_shift_required >::compute_fast_sigmoid_derivative_surrogate_gradient( const double r,
   const double v_m,
   const double v_th,
-  const double beta,
-  const double gamma )
+  const double height,
+  const double width )
 {
-  if ( r > 0 )
+  if ( r > 0.0 )
   {
     return 0.0;
   }
 
-  return gamma * std::pow( 1.0 + beta * std::abs( v_m - v_th ), -2 );
+  return height * std::pow( 1.0 + std::abs( v_m - v_th ) / width, -2.0 );
 }
 
 template < bool hist_shift_required >
 double
-EpropArchivingNodeRecurrent< hist_shift_required >::compute_arctan_surrogate_gradient( const double r,
+EpropArchivingNodeRecurrent< hist_shift_required >::compute_arctan_derivative_surrogate_gradient( const double r,
   const double v_m,
   const double v_th,
-  const double beta,
-  const double gamma )
+  const double height,
+  const double width )
 {
-  if ( r > 0 )
+  if ( r > 0.0 )
   {
     return 0.0;
   }
 
-  return gamma / M_PI * ( 1.0 / ( 1.0 + std::pow( beta * M_PI * ( v_m - v_th ), 2 ) ) );
+  return height / ( 1.0 + std::pow( ( v_m - v_th ) / width, 2.0 ) );
 }
 
 template < bool hist_shift_required >

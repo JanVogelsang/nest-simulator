@@ -95,7 +95,7 @@ if test "${PYTHON}"; then
     TIME_LIMIT=120  # seconds, for each of the Python tests
     PYTEST_VERSION="$(${PYTHON} -m pytest --version --timeout ${TIME_LIMIT} --numprocesses=1 2>&1)" || {
         echo "Error: PyNEST testing requested, but 'pytest' cannot be run."
-        echo "       Testing also requires the 'pytest-xdist' and 'pytest-timeout' extensions."
+        echo "       Testing also requires the 'pytest-cov', 'pytest-xdist' and 'pytest-timeout' extensions."
         exit 1
     }
     PYTEST_VERSION="$(echo "${PYTEST_VERSION}" | cut -d' ' -f2)"
@@ -131,6 +131,7 @@ get_build_info ()
   ${PYTHON} -c "import nest; print(nest.build_info['$1'])" --quiet
 }
 
+HAVE_BOOST="$(get_build_info have_boost)"
 HAVE_MPI="$(get_build_info have_mpi)"
 HAVE_OPENMP="$(get_build_info have_threads)"
 HAVE_MUSIC=${MUSIC:+True}
@@ -444,6 +445,9 @@ if test "${HAVE_OPENMP}" = "True"; then
 fi
 if test "${HAVE_MUSIC}" = "True"; then
    SUMMARY_OPTS+=("--have-music")
+fi
+if test "${HAVE_BOOST}" = "True"; then
+   SUMMARY_OPTS+=("--have-boost")
 fi
 python3 "$(dirname "$0")/summarize_tests.py" "${SUMMARY_OPTS[@]}" "${REPORTDIR}"
 TESTSUITE_RESULT="$?"

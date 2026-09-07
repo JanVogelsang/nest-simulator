@@ -21,6 +21,7 @@ set ( nestkernel_sources
       universal_data_logger.h
       recordables_map.h
       flush_event_mechanism.h flush_event_mechanism.cpp
+      ignore_and_spike_mechanism.h ignore_and_spike_mechanism.cpp
       archiving_node.h archiving_node.cpp
       buffer_resize_log.h buffer_resize_log.cpp
       clopath_archiving_node.h clopath_archiving_node.cpp
@@ -73,8 +74,6 @@ set ( nestkernel_sources
       conn_builder_factory.cpp
       conn_builder_conngen.h conn_builder_conngen.cpp
       sonata_connector.h sonata_connector.cpp
-      music_event_handler.h music_event_handler.cpp
-      music_rate_in_handler.h music_rate_in_handler.cpp
       music_manager.cpp music_manager.h
       nest.h nest.cpp nest_impl.h
       synaptic_element.h synaptic_element.cpp
@@ -124,6 +123,14 @@ set ( nestkernel_sources
       cycle_time_log.h cycle_time_log.cpp
       )
 
+if ( HAVE_MUSIC )
+  set( nestkernel_sources
+    ${nestkernel_sources}
+    music_event_handler.h music_event_handler.cpp
+    music_rate_in_handler.h music_rate_in_handler.cpp
+  )
+endif ()
+
 if ( HAVE_SIONLIB )
   set( nestkernel_sources
     ${nestkernel_sources}
@@ -151,7 +158,12 @@ endif ()
 set_target_properties( nestkernel PROPERTIES POSITION_INDEPENDENT_CODE ON )
 
 target_link_libraries( nestkernel
-  nestutil models ${LTDL_LIBRARIES} ${MPI_CXX_LIBRARIES} ${MUSIC_LIBRARIES} ${SIONLIB_LIBRARIES} ${LIBNEUROSIM_LIBRARIES} ${HDF5_LIBRARIES}
+  PUBLIC
+    nestutil models
+    MPI::MPI_CXX
+  PRIVATE
+    ${LTDL_LIBRARIES} ${MUSIC_LIBRARIES} ${SIONLIB_LIBRARIES} ${LIBNEUROSIM_LIBRARIES} ${HDF5_LIBRARIES}
+    OpenMP::OpenMP_CXX
 )
 
 target_include_directories( nestkernel PRIVATE
