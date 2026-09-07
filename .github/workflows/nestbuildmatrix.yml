@@ -359,6 +359,7 @@ jobs:
       - name: "Run isort..."
         uses: isort/isort-action@24d8a7a51d33ca7f36c3f23598dafa33f7071326  # 1.1.1
         with:
+          isort-version: 9.0.1
           configuration: --profile=black --thirdparty="nest" --check-only --diff
 
   black:
