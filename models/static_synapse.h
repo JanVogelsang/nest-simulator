@@ -40,7 +40,7 @@ namespace nest
 {
 class Node;
 
-/* BeginUserDocs: synapse, static
+/* BeginUserDocs: synapse, chemical, static
 
 Short description
 +++++++++++++++++

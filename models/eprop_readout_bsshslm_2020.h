@@ -54,7 +54,7 @@ class CurrentEvent;
 class DataLoggingRequest;
 class SpikeEvent;
 
-/* BeginUserDocs: neuron, e-prop plasticity, current-based
+/* BeginUserDocs: neuron, e-prop plasticity, current-based, Bellec
 
 Short description
 +++++++++++++++++

@@ -46,7 +46,7 @@
 #include "universal_data_logger.h"
 #include "universal_data_logger_impl.h"
 
-/* BeginUserDocs: neuron, integrate-and-fire, current-based, adaptation, hard thershold
+/* BeginUserDocs: neuron, integrate-and-fire, current-based, adaptation, hard threshold
 
 Short description
 +++++++++++++++++

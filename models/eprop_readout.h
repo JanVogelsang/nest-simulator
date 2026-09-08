@@ -58,7 +58,7 @@ class DataLoggingRequest;
 class SpikeEvent;
 class WeightOptimizer;
 
-/* BeginUserDocs: neuron, e-prop plasticity, current-based
+/* BeginUserDocs: neuron, e-prop plasticity, current-based, Bellec
 
 Short description
 +++++++++++++++++

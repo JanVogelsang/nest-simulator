@@ -44,7 +44,7 @@ namespace nest
 {
 class Node;
 
-/* BeginUserDocs: synapse, short-term plasticity
+/* BeginUserDocs: synapse, chemical, functional, stp
 
 Short description
 +++++++++++++++++

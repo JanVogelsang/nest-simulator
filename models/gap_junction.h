@@ -40,7 +40,7 @@
 namespace nest
 {
 
-/* BeginUserDocs: synapse, gap junction
+/* BeginUserDocs: synapse, electrical
 
 Short description
 +++++++++++++++++

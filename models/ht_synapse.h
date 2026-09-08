@@ -42,7 +42,7 @@ namespace nest
 {
 class Node;
 
-/* BeginUserDocs: synapse, Hill-Tononi plasticity
+/* BeginUserDocs: synapse, chemical, functional, stp, Hill-Tononi
 
 Short description
 +++++++++++++++++

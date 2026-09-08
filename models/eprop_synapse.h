@@ -49,7 +49,7 @@ namespace nest
 class TargetIdentifierIndex;
 class TargetIdentifierPtrRport;
 
-/* BeginUserDocs: synapse, e-prop plasticity
+/* BeginUserDocs: synapse, abstract, learning, Bellec, e-prop plasticity, 3-factor
 
 Short description
 +++++++++++++++++

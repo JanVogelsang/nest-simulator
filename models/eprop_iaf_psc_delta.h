@@ -53,7 +53,7 @@ class CommonSynapseProperties;
 class LearningSignalConnectionEvent;
 class WeightOptimizer;
 
-/* BeginUserDocs: neuron, e-prop plasticity, current-based, integrate-and-fire
+/* BeginUserDocs: neuron, e-prop plasticity, current-based, integrate-and-fire, Bellec
 
 Short description
 +++++++++++++++++
