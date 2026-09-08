@@ -23,11 +23,14 @@
 #include "kernel_manager.h"
 #include "stopwatch_impl.h"
 
-nest::KernelManager* nest::KernelManager::kernel_manager_instance_ = nullptr;
+
+namespace nest
+{
+KernelManager* KernelManager::kernel_manager_instance_ = nullptr;
 
 
 Dictionary
-nest::KernelManager::get_build_info_()
+KernelManager::get_build_info_()
 {
   // Exit codes
   constexpr unsigned int EXITCODE_UNKNOWN_ERROR = 10;
@@ -135,7 +138,7 @@ nest::KernelManager::get_build_info_()
 }
 
 void
-nest::KernelManager::create_kernel_manager()
+KernelManager::create_kernel_manager()
 {
 #pragma omp master
   {
@@ -148,7 +151,7 @@ nest::KernelManager::create_kernel_manager()
 #pragma omp barrier
 }
 
-nest::KernelManager::KernelManager()
+KernelManager::KernelManager()
   : fingerprint_( 0 )
   , logging_manager()
   , mpi_manager()
@@ -182,12 +185,12 @@ nest::KernelManager::KernelManager()
 {
 }
 
-nest::KernelManager::~KernelManager()
+KernelManager::~KernelManager()
 {
 }
 
 void
-nest::KernelManager::initialize()
+KernelManager::initialize()
 {
   for ( auto& manager : managers )
   {
@@ -205,7 +208,7 @@ nest::KernelManager::initialize()
 }
 
 void
-nest::KernelManager::prepare()
+KernelManager::prepare()
 {
   for ( auto& manager : managers )
   {
@@ -217,7 +220,7 @@ nest::KernelManager::prepare()
 }
 
 void
-nest::KernelManager::cleanup()
+KernelManager::cleanup()
 {
   for ( auto&& m_it = managers.rbegin(); m_it != managers.rend(); ++m_it )
   {
@@ -226,7 +229,7 @@ nest::KernelManager::cleanup()
 }
 
 void
-nest::KernelManager::finalize()
+KernelManager::finalize()
 {
   FULL_LOGGING_ONLY( dump_.close(); )
 
@@ -238,14 +241,14 @@ nest::KernelManager::finalize()
 }
 
 void
-nest::KernelManager::reset()
+KernelManager::reset()
 {
   finalize();
   initialize();
 }
 
 void
-nest::KernelManager::change_number_of_threads( size_t new_num_threads )
+KernelManager::change_number_of_threads( size_t new_num_threads )
 {
   // Inputs are checked in VPManager::set_status().
   // Just double check here that all values are legal.
@@ -285,7 +288,7 @@ nest::KernelManager::change_number_of_threads( size_t new_num_threads )
 }
 
 void
-nest::KernelManager::set_status( const Dictionary& dict )
+KernelManager::set_status( const Dictionary& dict )
 {
   assert( is_initialized() );
 
@@ -296,7 +299,7 @@ nest::KernelManager::set_status( const Dictionary& dict )
 }
 
 void
-nest::KernelManager::get_status( Dictionary& dict )
+KernelManager::get_status( Dictionary& dict )
 {
   assert( is_initialized() );
 
@@ -328,7 +331,7 @@ nest::KernelManager::get_status( Dictionary& dict )
 }
 
 void
-nest::KernelManager::write_to_dump( const std::string& msg )
+KernelManager::write_to_dump( const std::string& msg )
 {
 #pragma omp critical
   // In critical section to avoid any garbling of output.
@@ -342,7 +345,7 @@ nest::KernelManager::write_to_dump( const std::string& msg )
 #include <fstream>
 #include <sstream>
 size_t
-nest::KernelManager::get_memsize_linux_() const
+KernelManager::get_memsize_linux_() const
 {
   // code based on mistral.ai
   std::ifstream file( "/proc/self/status" );
@@ -377,7 +380,7 @@ nest::KernelManager::get_memsize_linux_() const
 #else
 
 size_t
-nest::KernelManager::get_memsize_linux_() const
+KernelManager::get_memsize_linux_() const
 {
   assert( false || "Only implemented on Linux systems." );
   return 0;
@@ -390,7 +393,7 @@ nest::KernelManager::get_memsize_linux_() const
 
 #include <mach/mach.h>
 size_t
-nest::KernelManager::get_memsize_darwin_() const
+KernelManager::get_memsize_darwin_() const
 {
   struct task_basic_info t_info;
   mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
@@ -406,10 +409,12 @@ nest::KernelManager::get_memsize_darwin_() const
 #else
 
 size_t
-nest::KernelManager::get_memsize_darwin_() const
+KernelManager::get_memsize_darwin_() const
 {
   assert( false || "Only implemented on macOS." );
   return 0;
 }
 
 #endif
+
+}  // namespace nest
