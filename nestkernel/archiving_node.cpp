@@ -64,6 +64,13 @@ nest::ArchivingNode::ArchivingNode( const ArchivingNode& n )
 }
 
 void
+ArchivingNode::pre_run_hook_()
+{
+  // Intentionally empty for now; gives subclasses a place to hook into
+  // per-run setup without overriding Node::pre_run_hook() themselves.
+}
+
+void
 ArchivingNode::register_stdp_connection( double t_first_read, double delay )
 {
   // Mark all entries in the deque, which we will not read in future as read by

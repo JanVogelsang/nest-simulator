@@ -97,6 +97,8 @@ public:
   void set_status( const Dictionary& d ) override;
 
 protected:
+  void pre_run_hook_();
+
   /**
    * Record spike history
    */
