@@ -162,6 +162,8 @@ ignore_and_fire::init_buffers_()
 void
 ignore_and_fire::pre_run_hook()
 {
+  ArchivingNode::pre_run_hook();
+
   // ensures initialization in case mm connected after Simulate
   B_.logger_.init();
 }

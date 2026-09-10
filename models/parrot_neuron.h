@@ -130,6 +130,7 @@ private:
   void
   pre_run_hook() override
   {
+    ArchivingNode::pre_run_hook();
     FlushEventMechanism::pre_run_hook();
   }
 
