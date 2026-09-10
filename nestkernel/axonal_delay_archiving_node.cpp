@@ -61,8 +61,7 @@ AxonalDelayArchivingNode::pre_run_hook_()
 }
 
 void
-AxonalDelayArchivingNode::register_axonal_delay_connection( const double dendritic_delay,
-  const double axonal_delay )
+AxonalDelayArchivingNode::register_axonal_delay_connection( const double dendritic_delay, const double axonal_delay )
 {
   if ( axonal_delay >= dendritic_delay )
   {
