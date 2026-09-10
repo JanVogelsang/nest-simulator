@@ -40,7 +40,8 @@ Introducing axonal delays changes the way the min- and max-delays must be calcul
 dendritic and axonal delays. The default value for the delay which is now referring to the dendritic delay remains 1,
 while the default value for axonal_delay is set to 0. In the default case, purely dendritic delay is assumed.
 
-The ``ArchivingNode`` was made axonal-delay-aware. Each pre-synaptic spike after which a correction could potentially follow,
+The ``AxonalDelayArchivingNode`` holds the machinery for axonal delays, kept separate from the ``ArchivingNode``
+and its post-synaptic spike history, which is an independent concern. Each pre-synaptic spike after which a correction could potentially follow,
 will be archived in the post-synaptic neuron in a dynamic ring-buffer-like structure. Post-synaptic spikes will then
 trigger a correction for all relevant pre-synaptic spikes in this buffer. The way spikes are received at a neuron is
 model-dependent, as the implementation of spike accumulation and buffering until being processed might vary between
@@ -55,10 +56,13 @@ is just smaller. In such a case, the spike would be accumulated in the wrong buf
 
 Instead of sending a regular ``SpikeEvent`` to signal a correction, a ``CorrectionSpikeEvent`` is sent. Overloading the handle
 function now allows handling the correction in the correct way, depending on the model implementation.
-Furthermore, neuron models must now call ``ArchivingNode::pre_run_hook_()`` in their derived pre_run_hook implementation
-and call ``reset_correction_entries_stdp_ax_delay_()`` at the end of each timestep in their update implementation.
-Currently, the ``iaf_psc_alpha`` and ``iaf_psc_exp`` neuron models support STDP with axonal delays.
-All other neurons will act as if the delay of incoming connections was purely dendritic.
+Furthermore, neuron models must now call ``AxonalDelayArchivingNode::pre_run_hook_()`` in their derived pre_run_hook
+implementation, call ``reset_correction_entries_stdp_ax_delay_()`` at the end of each timestep in their update
+implementation, and override ``supports_axonal_delay_corrections()`` to return true.
+Currently, the ``iaf_psc_alpha``, ``iaf_psc_exp`` and ``iaf_psc_delta`` neuron models support STDP with axonal
+delays. Connecting a
+synapse with a predominantly axonal delay to any other neuron model raises ``IllegalConnection``, rather than
+silently computing wrong weights.
 
 Synapse models only support dendritic delay by default. ``Connection`` is templated on the container that holds its
 delay, and a synapse opts in purely by that template argument: ``TotalDelay`` stores one delay and throws
@@ -93,10 +97,11 @@ Remaining work
 ---------------
 
 
-Currently, two neuron models and one synapse model support axonal delays. All neuron models that support STDP could
+Currently, three neuron models and one synapse model support axonal delays. All neuron models that support STDP could
 also support axonal delays, without sacrificing performance, changing their behavior, or requiring more memory, but need
-to be adapted slightly (i.e., implement handle for ``CorrectionSpikeEvent``, call ``ArchivingNode::pre_run_hook_`` and call
-``reset_correction_entries_stdp_ax_delay_``).
+to be adapted slightly (i.e., implement handle for ``CorrectionSpikeEvent``, call
+``AxonalDelayArchivingNode::pre_run_hook_``, call ``reset_correction_entries_stdp_ax_delay_``, and override
+``supports_axonal_delay_corrections``).
 
 The same applies to further STDP synapse models. Each one needs to select a delay container through its ``Connection``
 template argument, which resolves the branch at compile time and so costs nothing at run time; a model that keeps

@@ -379,8 +379,6 @@ nest::iaf_bw_2001::init_buffers_()
 void
 nest::iaf_bw_2001::pre_run_hook()
 {
-  ArchivingNode::pre_run_hook();
-
   // ensures initialization in case mm connected after Simulate
   B_.logger_.init();
 

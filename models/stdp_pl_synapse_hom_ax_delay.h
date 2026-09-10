@@ -27,7 +27,7 @@
 #include <cmath>
 
 // Includes from nestkernel:
-#include "archiving_node.h"
+#include "axonal_delay_archiving_node.h"
 #include "connection.h"
 
 namespace nest
@@ -234,15 +234,27 @@ public:
     {
       throw BadProperty( "Combination of axonal and dendritic delay has to be more than 0." );
     }
-    t.register_stdp_connection( t_lastspike_ - get_dendritic_delay_ms() + get_axonal_delay_ms(),
-      get_dendritic_delay_ms(),
-      get_axonal_delay_ms() );
 
     if ( get_axonal_delay_ms() >= get_dendritic_delay_ms() )
     {
+      // Predominantly axonal delays require the target to drive the correction mechanism from its
+      // update() and on spike emission, which only some models do.  Reject the rest here instead of
+      // silently computing wrong weights for them.
+      const AxonalDelayArchivingNode* const ax_delay_target = dynamic_cast< AxonalDelayArchivingNode* >( &t );
+      if ( not ax_delay_target or not ax_delay_target->supports_axonal_delay_corrections() )
+      {
+        throw IllegalConnection(
+          "Target model does not support synapses with predominantly axonal delay, i.e., with an axonal "
+          "delay of at least the dendritic delay." );
+      }
+
       CorrectionSpikeEvent e;
       t.handles_test_event( e, receptor_type );
     }
+
+    t.register_stdp_connection( t_lastspike_ - get_dendritic_delay_ms() + get_axonal_delay_ms(),
+      get_dendritic_delay_ms(),
+      get_axonal_delay_ms() );
 
     // The last spike reference value must resemble a spike that arrived at the synapse at t=0
     t_lastspike_ = -get_axonal_delay_ms();
@@ -345,7 +357,7 @@ stdp_pl_synapse_hom_ax_delay< targetidentifierT >::send( Event& e,
     // pre-synaptic one arrives at the synapse.
     if ( time_while_critical > 0 )
     {
-      static_cast< ArchivingNode* >( target )->add_correction_entry_stdp_ax_delay(
+      static_cast< AxonalDelayArchivingNode* >( target )->add_correction_entry_stdp_ax_delay(
         static_cast< SpikeEvent& >( e ), t_lastspike_, weight_revert, weight_, K_plus_revert, time_while_critical );
     }
   }
@@ -425,7 +437,7 @@ stdp_pl_synapse_hom_ax_delay< targetidentifierT >::correct_synapse_stdp_ax_delay
     // two are therefore not alternatives: dropping this call makes 10 of the 13 cases in
     // test_axonal_delay_corrected_weights fail. Note that test_stdp_pl_synapse_hom still passes all 48 of
     // its cases without it, because the weights it compares are the transmitted, pre-correction ones.
-    static_cast< ArchivingNode* >( target )->update_weight_revert( lcid, weight_ );
+    static_cast< AxonalDelayArchivingNode* >( target )->update_weight_revert( lcid, weight_ );
   }
 
   // depression taking into account new post-synaptic spike

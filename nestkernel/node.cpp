@@ -138,18 +138,6 @@ Node::get_local_device_id() const
   return invalid_index;
 }
 
-void
-Node::add_correction_entry_stdp_ax_delay( SpikeEvent&, const double, const double, const double, const double )
-{
-  throw UnexpectedEvent( "Node does not support framework for STDP synapses with predominantly axonal delays." );
-}
-
-void
-Node::update_weight_revert( const size_t, const double )
-{
-  throw UnexpectedEvent( "Node does not support framework for STDP synapses with predominantly axonal delays." );
-}
-
 Dictionary
 Node::get_status_base()
 {

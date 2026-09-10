@@ -243,7 +243,7 @@ nest::iaf_psc_exp::init_buffers_()
 void
 nest::iaf_psc_exp::pre_run_hook()
 {
-  ArchivingNode::pre_run_hook_();
+  AxonalDelayArchivingNode::pre_run_hook_();
 
   // ensures initialization in case mm connected after Simulate
   B_.logger_.init();

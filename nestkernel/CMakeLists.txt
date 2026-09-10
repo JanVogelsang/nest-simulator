@@ -22,6 +22,7 @@ set ( nestkernel_sources
       recordables_map.h
       flush_event_mechanism.h flush_event_mechanism.cpp
       ignore_and_spike_mechanism.h ignore_and_spike_mechanism.cpp
+      axonal_delay_archiving_node.h axonal_delay_archiving_node.cpp
       archiving_node.h archiving_node.cpp
       buffer_resize_log.h buffer_resize_log.cpp
       clopath_archiving_node.h clopath_archiving_node.cpp

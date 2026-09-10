@@ -117,7 +117,6 @@ private:
   void
   pre_run_hook() override
   {
-    ArchivingNode::pre_run_hook();
   }  // no variables
 
   void update( Time const&, const long, const long ) override;

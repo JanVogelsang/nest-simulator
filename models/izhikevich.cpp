@@ -184,8 +184,6 @@ nest::izhikevich::init_buffers_()
 void
 nest::izhikevich::pre_run_hook()
 {
-  ArchivingNode::pre_run_hook_();
-
   B_.logger_.init();
 }
 

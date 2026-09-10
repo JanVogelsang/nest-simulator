@@ -233,7 +233,7 @@ nest::iaf_psc_delta::init_buffers_()
 void
 nest::iaf_psc_delta::pre_run_hook()
 {
-  ArchivingNode::pre_run_hook_();
+  AxonalDelayArchivingNode::pre_run_hook_();
 
   B_.logger_.init();
 
@@ -327,6 +327,8 @@ nest::iaf_psc_delta::update( Time const& origin, const long from, const long to 
 
     // voltage logging
     B_.logger_.record_data( origin.get_steps() + lag );
+
+    reset_correction_entries_stdp_ax_delay_( lag );
   }
 }
 
