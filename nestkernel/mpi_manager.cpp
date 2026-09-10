@@ -248,7 +248,7 @@ MPIManager::set_status( const Dictionary& dict )
   {
     if ( mbstd < 0 )
     {
-      throw BadProperty( "max_buffer_size_target_data â‰¥ 0 required." );
+      throw BadProperty( "max_buffer_size_target_data ≥ 0 required." );
     }
     max_buffer_size_target_data_ = mbstd;
   }

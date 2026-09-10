@@ -23,6 +23,15 @@
 #include "kernel_manager.h"
 #include "stopwatch_impl.h"
 
+// C++ includes:
+#include <fstream>
+#include <sstream>
+
+#ifdef __APPLE__
+// C includes:
+#include <mach/mach.h>
+#endif
+
 
 namespace nest
 {
@@ -342,8 +351,6 @@ KernelManager::write_to_dump( const std::string& msg )
 
 #ifdef __linux__
 
-#include <fstream>
-#include <sstream>
 size_t
 KernelManager::get_memsize_linux_() const
 {
@@ -391,7 +398,6 @@ KernelManager::get_memsize_linux_() const
 
 #if defined __APPLE__
 
-#include <mach/mach.h>
 size_t
 KernelManager::get_memsize_darwin_() const
 {

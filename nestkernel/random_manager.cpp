@@ -36,11 +36,11 @@
 #include "Random123/conventional/Engine.hpp"
 #include "Random123/philox.h"
 #include "Random123/threefry.h"
+#endif
 
 
 namespace nest
 {
-#endif
 
 
 const std::string RandomManager::DEFAULT_RNG_TYPE_ = "mt19937_64";

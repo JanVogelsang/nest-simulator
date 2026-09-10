@@ -514,8 +514,7 @@ iaf_bw_2001::handle( CurrentEvent& e )
     e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_current() );
 }
 
-#endif  // HAVE_BOOST
-
 }  // namespace nest
 
+#endif  // HAVE_BOOST
 #endif  // HAVE_GSL

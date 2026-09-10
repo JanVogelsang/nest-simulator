@@ -563,7 +563,7 @@ SPManager::delete_synapses_from_post( std::vector< size_t >& post_deleted_id,
 }
 
 void
-nest::SPManager::get_synaptic_elements( std::string se_name,
+SPManager::get_synaptic_elements( std::string se_name,
   std::vector< size_t >& se_vacant_id,
   std::vector< int >& se_vacant_n,
   std::vector< size_t >& se_deleted_id,
@@ -625,7 +625,7 @@ nest::SPManager::get_synaptic_elements( std::string se_name,
 }
 
 void
-nest::SPManager::serialize_id( std::vector< size_t >& id, std::vector< int >& n, std::vector< size_t >& res )
+SPManager::serialize_id( std::vector< size_t >& id, std::vector< int >& n, std::vector< size_t >& res )
 {
   // populate res with indexes of nodes corresponding to the number of elements
   res.clear();
@@ -644,13 +644,13 @@ nest::SPManager::serialize_id( std::vector< size_t >& id, std::vector< int >& n,
 }
 
 void
-nest::SPManager::global_shuffle( std::vector< size_t >& v )
+SPManager::global_shuffle( std::vector< size_t >& v )
 {
   global_shuffle( v, v.size() );
 }
 
 void
-nest::SPManager::global_shuffle( std::vector< size_t >& v, size_t n )
+SPManager::global_shuffle( std::vector< size_t >& v, size_t n )
 {
   assert( n <= v.size() );
 
@@ -674,7 +674,7 @@ nest::SPManager::global_shuffle( std::vector< size_t >& v, size_t n )
 
 
 void
-nest::SPManager::enable_structural_plasticity()
+SPManager::enable_structural_plasticity()
 {
   if ( kernel().vp_manager.get_num_threads() > 1 )
   {
@@ -696,7 +696,7 @@ nest::SPManager::enable_structural_plasticity()
 }
 
 void
-nest::SPManager::disable_structural_plasticity()
+SPManager::disable_structural_plasticity()
 {
   structural_plasticity_enabled_ = false;
 }

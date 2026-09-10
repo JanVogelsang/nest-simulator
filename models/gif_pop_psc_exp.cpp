@@ -683,6 +683,6 @@ gif_pop_psc_exp::handle( DataLoggingRequest& e )
   B_.logger_.handle( e );
 }
 
-}  // namespace nest
-
 #endif /* HAVE_GSL */
+
+}  // namespace nest
