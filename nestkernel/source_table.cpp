@@ -311,9 +311,7 @@ SourceTable::resize_sources()
 }
 
 bool
-SourceTable::source_should_be_processed_( const size_t rank_start,
-  const size_t rank_end,
-  const Source& source ) const
+SourceTable::source_should_be_processed_( const size_t rank_start, const size_t rank_end, const Source& source ) const
 {
   const size_t source_rank = kernel().mpi_manager.get_process_id_of_node_id( source.get_node_id() );
 
@@ -545,8 +543,7 @@ SourceTable::dump_compressible_sources() const
 }
 
 void
-SourceTable::fill_compressed_spike_data(
-  std::vector< std::vector< std::vector< SpikeData > > >& compressed_spike_data )
+SourceTable::fill_compressed_spike_data( std::vector< std::vector< std::vector< SpikeData > > >& compressed_spike_data )
 {
   const size_t num_synapse_models = kernel().model_manager.get_num_connection_models();
   compressed_spike_data.clear();

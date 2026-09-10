@@ -105,8 +105,7 @@ weight_recorder::Parameters_::set( const Dictionary& d )
 void
 weight_recorder::pre_run_hook()
 {
-  RecordingDevice::pre_run_hook(
-    { names::weights }, { names::targets, names::receptors, names::ports } );
+  RecordingDevice::pre_run_hook( { names::weights }, { names::targets, names::receptors, names::ports } );
 }
 
 void

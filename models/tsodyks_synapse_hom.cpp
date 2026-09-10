@@ -36,7 +36,6 @@ register_tsodyks_synapse_hom( const std::string& name )
 }
 
 
-
 //
 // Implementation of class TsodyksHomCommonProperties.
 //

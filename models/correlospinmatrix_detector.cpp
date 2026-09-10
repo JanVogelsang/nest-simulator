@@ -128,9 +128,7 @@ correlospinmatrix_detector::State_::get( Dictionary& d ) const
 }
 
 bool
-correlospinmatrix_detector::Parameters_::set( const Dictionary& d,
-  const correlospinmatrix_detector& n,
-  Node* node )
+correlospinmatrix_detector::Parameters_::set( const Dictionary& d, const correlospinmatrix_detector& n, Node* node )
 {
   bool reset = false;
   double t;

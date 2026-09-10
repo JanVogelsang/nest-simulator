@@ -63,7 +63,8 @@ volume_transmitter::Parameters_::get( Dictionary& d ) const
   d[ names::deliver_interval ] = deliver_interval_;
 }
 
-void volume_transmitter::Parameters_::set( const Dictionary& d, Node* node )
+void
+volume_transmitter::Parameters_::set( const Dictionary& d, Node* node )
 {
   update_value_param( d, names::deliver_interval, deliver_interval_, node );
 }
