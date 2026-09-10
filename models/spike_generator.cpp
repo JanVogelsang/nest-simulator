@@ -149,11 +149,7 @@ spike_generator::Parameters_::assert_valid_spike_time_and_insert_( double t, con
 }
 
 void
-spike_generator::Parameters_::set( const Dictionary& d,
-  State_& s,
-  const Time& origin,
-  const Time& now,
-  Node* node )
+spike_generator::Parameters_::set( const Dictionary& d, State_& s, const Time& origin, const Time& now, Node* node )
 {
   bool precise_times_changed = update_value_param( d, names::precise_times, precise_times_, node );
   bool shift_now_spikes_changed = update_value_param( d, names::shift_now_spikes, shift_now_spikes_, node );

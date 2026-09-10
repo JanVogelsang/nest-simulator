@@ -104,8 +104,7 @@ aeif_cond_alpha_multisynapse_dynamics( double, const double y[], double f[], voi
 
   // get access to node so we can almost work as in a member function
   assert( pnode );
-  const aeif_cond_alpha_multisynapse& node =
-    *( reinterpret_cast< aeif_cond_alpha_multisynapse* >( pnode ) );
+  const aeif_cond_alpha_multisynapse& node = *( reinterpret_cast< aeif_cond_alpha_multisynapse* >( pnode ) );
 
   const bool is_refractory = node.S_.r_ > 0;
 

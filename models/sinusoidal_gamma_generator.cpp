@@ -141,9 +141,7 @@ sinusoidal_gamma_generator::Parameters_::get( Dictionary& d ) const
 }
 
 void
-sinusoidal_gamma_generator::Parameters_::set( const Dictionary& d,
-  const sinusoidal_gamma_generator& n,
-  Node* node )
+sinusoidal_gamma_generator::Parameters_::set( const Dictionary& d, const sinusoidal_gamma_generator& n, Node* node )
 {
   if ( not n.is_model_prototype() and d.known( names::individual_spike_trains ) )
   {

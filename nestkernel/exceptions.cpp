@@ -137,9 +137,7 @@ UnknownReceptorType::compose_msg_( const long receptor_type, const std::string n
 }
 
 std::string
-IncompatibleReceptorType::compose_msg( const long receptor_type,
-  const std::string name,
-  const std::string event_type )
+IncompatibleReceptorType::compose_msg( const long receptor_type, const std::string name, const std::string event_type )
 {
   std::string msg = String::compose( "Receptor type %1 in %2 does not accept %3.", receptor_type, name, event_type );
   return msg;

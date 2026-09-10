@@ -135,9 +135,7 @@ sinusoidal_poisson_generator::State_::get( Dictionary& d ) const
 }
 
 void
-sinusoidal_poisson_generator::Parameters_::set( const Dictionary& d,
-  const sinusoidal_poisson_generator& n,
-  Node* node )
+sinusoidal_poisson_generator::Parameters_::set( const Dictionary& d, const sinusoidal_poisson_generator& n, Node* node )
 {
   if ( not n.is_model_prototype() and d.known( names::individual_spike_trains ) )
   {

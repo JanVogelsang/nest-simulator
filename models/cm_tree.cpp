@@ -49,9 +49,7 @@ Compartment::Compartment( const long compartment_index, const long parent_index 
   compartment_currents = CompartmentCurrents( v_comp );
 }
 
-Compartment::Compartment( const long compartment_index,
-  const long parent_index,
-  const Dictionary& compartment_params )
+Compartment::Compartment( const long compartment_index, const long parent_index, const Dictionary& compartment_params )
   : xx_( 0.0 )
   , yy_( 0.0 )
   , comp_index( compartment_index )
