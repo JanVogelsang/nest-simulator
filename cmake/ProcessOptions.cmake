@@ -617,16 +617,13 @@ function( NEST_PROCESS_FULL_LOGGING )
 endfunction()
 
 function(NEST_PROCESS_LTO)
-    set(WITH_LTO OFF PARENT_SCOPE)
-    if (${with-lto} STREQUAL "ON")
+  if ( with-lto )
+    include(CheckIPOSupported)
+    check_ipo_supported()   # will terminate if unsupported
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE PARENT_SCOPE)
+  endif()
 
-        # enable link-time optimizations
-        include(CheckIPOSupported)
-        check_ipo_supported()   # will terminate if unsupported
-        set(WITH_LTO ON PARENT_SCOPE)
-
-        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE PARENT_SCOPE)
-    endif ()
+  set(WITH_LTO ${with-lto} PARENT_SCOPE)
 endfunction()
 
 function( NEST_PROCESS_PGO )
