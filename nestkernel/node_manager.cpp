@@ -539,14 +539,22 @@ NodeManager::update_thread_local_node_data()
 void
 NodeManager::destruct_nodes_()
 {
-#pragma omp parallel
+  if ( local_nodes_.empty() )
+  {
+    return;
+  }
+
+#pragma omp parallel num_threads( local_nodes_.size() )
   {
     const size_t tid = kernel::manager< VPManager >.get_thread_id();
-    for ( auto node : local_nodes_[ tid ] )
+    if ( tid < local_nodes_.size() )
     {
-      delete node.get_node();
+      for ( auto node : local_nodes_[ tid ] )
+      {
+        delete node.get_node();
+      }
+      local_nodes_[ tid ].clear();
     }
-    local_nodes_[ tid ].clear();
   }  // omp parallel
 }
 

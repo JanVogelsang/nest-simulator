@@ -42,7 +42,7 @@ namespace nest
 {
 class Node;
 
-/* BeginUserDocs: synapse, Hill-Tononi plasticity
+/* BeginUserDocs: synapse, chemical, functional, stp, Hill-Tononi
 
 Short description
 +++++++++++++++++
@@ -52,7 +52,7 @@ Synapse with depression after Hill & Tononi (2005)
 Description
 +++++++++++
 
-This synapse implements the depression model described in [1]_, p 1678.
+This synapse implements the depression model described in :footcite:p:`Hill2005`, p 1678.
 
 Synaptic dynamics are given by
 
@@ -94,9 +94,7 @@ The following parameters can be set in the status dictionary:
 References
 ++++++++++
 
-.. [1] Hill S, Tononi G (2005). Modeling sleep and wakefulness in the
-       thalamocortical system. Journal of Neurophysiology. 93:1671-1698.
-       DOI: https://doi.org/10.1152/jn.00915.2004
+.. footbibliography::
 
 Transmits
 +++++++++

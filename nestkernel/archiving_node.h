@@ -29,6 +29,7 @@
 // Includes from nestkernel:
 #include "dictionary.h"
 #include "histentry.h"
+#include "ignore_and_spike_mechanism.h"
 #include "nest_time.h"
 #include "structural_plasticity_node.h"
 
@@ -44,7 +45,7 @@ namespace nest
  * A node which archives spike history for the purposes of spike-timing
  * dependent plasticity (STDP)
  */
-class ArchivingNode : public StructuralPlasticityNode
+class ArchivingNode : public StructuralPlasticityNode, public IgnoreAndSpikeMechanism
 {
 public:
   ArchivingNode();

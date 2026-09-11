@@ -78,6 +78,7 @@ public:
 protected:
   long model_dependent_history_shift_() const override;
 };
+
 }
 
 #endif

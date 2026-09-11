@@ -40,7 +40,7 @@
 namespace nest
 {
 
-/* BeginUserDocs: synapse, rate, instantaneous
+/* BeginUserDocs: synapse, abstract, rate
 
 Short description
 +++++++++++++++++
@@ -57,7 +57,7 @@ The value of the parameter delay is ignored for connections of
 this type. To create rate connections with delay please use
 the synapse type ``rate_connection_delayed``.
 
-See also [1]_.
+See also :footcite:p:`Hahne2017`.
 
 Transmits
 +++++++++
@@ -67,10 +67,7 @@ InstantaneousRateConnectionEvent
 References
 ++++++++++
 
-.. [1] Hahne J, Dahmen D, Schuecker J, Frommer A, Bolten M, Helias M,
-       Diesmann M (2017). Integration of continuous-time dynamics in a
-       spiking neural network simulator. Frontiers in Neuroinformatics, 11:34.
-       DOI: https://doi.org/10.3389/fninf.2017.00034
+.. footbibliography::
 
 See also
 ++++++++

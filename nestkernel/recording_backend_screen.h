@@ -35,8 +35,10 @@ class Dictionary;
 
 /* BeginUserDocs: NOINDEX
 
+Short description
++++++++++++++++++
+
 Recording backend `screen` - Write data to the terminal
--------------------------------------------------------
 
 Description
 ~~~~~~~~~~~

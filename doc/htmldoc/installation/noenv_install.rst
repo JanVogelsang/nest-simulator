@@ -35,13 +35,23 @@ further adjust settings for your system.
     openmpi-bin \
     libopenmpi-dev \
     python3-mpi4py \
-    libmusic-dev \
-    music-bin \
     python3-pip \
     python3-pytest \
+    python3-pytest-cov \
     python3-pytest-timeout \
     python3-pytest-xdist \
-    python3-pandas
+    python3-pandas \
+    pandoc
+
+* Optional packages
+
+.. code-block:: bash
+
+     # for SONATA compatiblity
+     libhdf5-dev
+     # for MUSIC compatibility
+     libmusic-dev \
+     music-bin
 
 * Create an install directory
 
@@ -74,10 +84,6 @@ We will refer to the full path of this directory by <nest_install_dir>.
 .. note::
 
    ``<nest_install_dir>`` should be an absolute path
-
-.. note::
-
-   Python bindings are enabled by default. Add the configuration option ``-Dwith-python=OFF`` to disable them.
 
 * Compile and install NEST:
 

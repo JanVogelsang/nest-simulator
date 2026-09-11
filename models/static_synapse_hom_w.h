@@ -40,7 +40,7 @@ namespace nest
 {
 class Node;
 
-/* BeginUserDocs: synapse, static
+/* BeginUserDocs: synapse, chemical, static
 
 Short description
 +++++++++++++++++
@@ -72,7 +72,7 @@ static_synapse
 Examples using this model
 +++++++++++++++++++++++++
 
-.. listexamples:: static_synpase_hom_w
+.. listexamples:: static_synapse_hom_w
 
 EndUserDocs */
 

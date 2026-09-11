@@ -80,6 +80,10 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers",
+        "skipif_missing_boost: mark tests requiring Boost support in NEST",
+    )
+    config.addinivalue_line(
+        "markers",
         "skipif_missing_music: mark tests requiring MUSIC",
     )
     config.addinivalue_line(
@@ -168,11 +172,6 @@ def have_hdf5():
     return nest.build_info["have_hdf5"]
 
 
-@pytest.fixture(scope="session")
-def have_music():
-    return nest.build_info["have_music"]
-
-
 @pytest.fixture(autouse=True)
 def skipif_missing_hdf5(request, have_hdf5):
     """
@@ -181,6 +180,26 @@ def skipif_missing_hdf5(request, have_hdf5):
     """
     if not have_hdf5 and request.node.get_closest_marker("skipif_missing_hdf5"):
         pytest.skip("skipped because missing HDF5 support.")
+
+
+@pytest.fixture(scope="session")
+def have_boost():
+    return nest.build_info["have_boost"]
+
+
+@pytest.fixture(autouse=True)
+def skipif_missing_boost(request, have_boost):
+    """
+    Globally applied fixture that skips tests marked to be skipped when GSL is
+    missing.
+    """
+    if not have_boost and request.node.get_closest_marker("skipif_missing_boost"):
+        pytest.skip("skipped because missing Boost support.")
+
+
+@pytest.fixture(scope="session")
+def have_music():
+    return nest.build_info["have_music"]
 
 
 @pytest.fixture(autouse=True)
@@ -194,13 +213,15 @@ def skipif_missing_music(request, have_music):
 
 
 @pytest.fixture(scope="session")
-def subprocess_compatible_mpi():
+def subprocess_compatible_mpi() -> bool:
     """
     Until at least OpenMPI 4.1.6, the following fails due to a bug in OpenMPI,
     from 5.0.7 is definitely safe.
     """
     try:
-        res = subprocess.run(["mpirun", "-np", "1", "echo"])
+        # Note we want to return bool, so check=False is required to stop
+        # subprocess.run raising an exception.
+        res = subprocess.run(["mpirun", "-np", "1", "echo"], check=False)
         return 0 == res.returncode
     except FileNotFoundError:
         return False
