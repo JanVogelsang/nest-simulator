@@ -1,0 +1,25 @@
+
+              -- N E S T --
+  Copyright (C) 2004 The NEST Initiative
+
+ Version: ax-delay-rework-adjacency-stdp@94b7d9928
+ Built: Feb 24 2024 17:31:07
+
+ This program is provided AS IS and comes with
+ NO WARRANTY. See the file LICENSE for details.
+
+ Problems or suggestions?
+   Visit https://www.nest-simulator.org
+
+ Type 'nest.help()' to find out more about NEST.
+
+SEND (P) - 0
+SEND (P) - 0
+SEND (P) - 0
+SEND (P) - 0
+SEND (P) - 0
+SEND (P) - 0
+SEND (P) - 0
+SEND (P) - 0
+SEND (P) - 0
+9
