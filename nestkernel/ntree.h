@@ -23,6 +23,7 @@
 #ifndef NTREE_H
 #define NTREE_H
 
+#include <cstddef>
 // C++ includes:
 #include <bitset>
 #include <iterator>
@@ -35,7 +36,6 @@
 namespace nest
 {
 
-class AbstractMask;
 template < int D >
 class Mask;
 

@@ -23,20 +23,14 @@
 #ifndef SOURCE_TABLE_POSITION_H
 #define SOURCE_TABLE_POSITION_H
 
-#include <cassert>
-#include <iostream>
 #include <vector>
 
 // C++ includes:
 #include "block_vector.h"  // IWYU pragma: keep
 #include "source.h"        // IWYU pragma: keep
 
-template < typename value_type_ >
-class BlockVector;
-
 namespace nest
 {
-class Source;
 
 /**
  * Three-tuple to store position in 3d vector of sources.

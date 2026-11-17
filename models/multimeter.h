@@ -23,12 +23,11 @@
 #ifndef MULTIMETER_H
 #define MULTIMETER_H
 
+#include <cstddef>
 // C++ includes:
 #include <string>
 #include <vector>
 
-// Includes from nestkernel:
-#include "connection.h"
 #include "dictionary.h"
 #include "exceptions.h"
 #include "genericmodel_impl.h"
@@ -140,7 +139,6 @@ EndUserDocs */
 
 namespace nest
 {
-class DataLoggingReply;
 
 void register_multimeter( const std::string& name );
 void register_voltmeter( const std::string& name );

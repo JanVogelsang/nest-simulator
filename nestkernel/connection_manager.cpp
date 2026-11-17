@@ -20,8 +20,6 @@
  *
  */
 
-#include "connection_manager_impl.h"
-
 // C++ includes:
 #include <algorithm>
 #include <deque>
@@ -34,12 +32,11 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <cmath>
+#include <variant>
 
-
-// Includes from libnestutil:
-#include "compose.hpp"
+#include "connection_manager_impl.h"
 #include "logging.h"
-
 // Includes from nestkernel:
 #include "block_vector.h"
 #include "clopath_archiving_node.h"
@@ -56,7 +53,6 @@
 #include "eprop_archiving_node_recurrent.h"
 #include "exceptions.h"
 #include "kernel_manager.h"
-#include "logging_manager.h"
 #include "model_manager.h"
 #include "mpi_manager.h"
 #include "nest_names.h"

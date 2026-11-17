@@ -24,6 +24,7 @@
 #ifndef RATE_CONNECTION_DELAYED_H
 #define RATE_CONNECTION_DELAYED_H
 
+#include <cstddef>
 #include <memory>
 #include <string>
 

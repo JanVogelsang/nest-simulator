@@ -23,12 +23,11 @@
 #ifndef LOGGING_MANAGER_H
 #define LOGGING_MANAGER_H
 
+#include <cstddef>
 // C++ includes:
 #include <string>
 #include <vector>
 
-// Includes from libnestutil:
-#include "dictionary.h"
 #include "logging.h"
 #include "manager_interface.h"
 

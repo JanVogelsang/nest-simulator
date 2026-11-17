@@ -24,15 +24,18 @@
 #define SPIN_DETECTOR_H
 
 
+#include <cstddef>
+#include <string>
+
 // Includes from nestkernel:
 #include "event.h"
 #include "exceptions.h"
 #include "nest_names.h"
+#include "nest_time.h"
 #include "nest_timeconverter.h"
 #include "nest_types.h"
+#include "node.h"
 #include "recording_device.h"
-
-class Dictionary;
 
 namespace nest
 {

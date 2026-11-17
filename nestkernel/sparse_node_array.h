@@ -23,13 +23,9 @@
 #ifndef SPARSE_NODE_ARRAY_H
 #define SPARSE_NODE_ARRAY_H
 
+#include <cstddef>
 // C++ includes:
 #include <cassert>
-#include <map>
-
-// Includes from nestkernel:
-#include "exceptions.h"
-#include "nest_types.h"
 
 // Includes from libnestutil
 #include "block_vector.h"

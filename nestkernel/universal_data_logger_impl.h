@@ -23,14 +23,22 @@
 #ifndef UNIVERSAL_DATA_LOGGER_IMPL_H
 #define UNIVERSAL_DATA_LOGGER_IMPL_H
 
+#include <cassert>
+#include <cmath>
+#include <cstddef>
+#include <vector>
+
+#include "connection_manager.h"
+#include "event.h"
+#include "event_delivery_manager.h"
+#include "kernel_manager.h"
+#include "nest_time.h"
+#include "recordables_map.h"
 #include "simulation_manager.h"
 #include "universal_data_logger.h"
 
 namespace nest
 {
-
-
-
 
 
 template < typename HostNode >

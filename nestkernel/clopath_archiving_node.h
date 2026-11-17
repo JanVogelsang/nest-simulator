@@ -23,6 +23,7 @@
 #ifndef CLOPATH_ARCHIVING_NODE_H
 #define CLOPATH_ARCHIVING_NODE_H
 
+#include <cstddef>
 // C++ includes:
 #include <deque>
 #include <vector>
@@ -31,10 +32,6 @@
 #include "archiving_node.h"
 #include "histentry.h"
 #include "nest_time.h"
-#include "nest_types.h"
-#include "synaptic_element.h"
-
-class Dictionary;
 
 
 namespace nest

@@ -23,16 +23,15 @@
 #include "gif_cond_exp_multisynapse.h"
 
 #include <assert.h>
-#include <cmath>
 #include <gsl/gsl_errno.h>
+#include <cmath>
 
 #include "event_delivery_manager.h"
 #include "simulation_manager.h"
+#include "nest_time.h"
 
 #ifdef HAVE_GSL
 
-// Includes from libnestutil:
-#include "compose.hpp"
 #include "dict_util.h"
 #include "numerics.h"
 // Includes from nestkernel:

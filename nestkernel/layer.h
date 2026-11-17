@@ -23,6 +23,7 @@
 #ifndef LAYER_H
 #define LAYER_H
 
+#include <cstddef>
 // C++ includes:
 #include <bitset>
 #include <iosfwd>
@@ -32,8 +33,6 @@
 #include <utility>
 #include <vector>
 
-// Includes from spatial:
-#include "connection_creator.h"
 #include "mask.h"
 #include "node_collection.h"
 #include "ntree.h"
@@ -45,8 +44,6 @@ class Dictionary;
 namespace nest
 {
 
-template < int D >
-class GridLayer;
 class AbstractLayer;
 class ConnectionCreator;
 

@@ -23,11 +23,11 @@
 #ifndef REGULA_FALSI_H
 #define REGULA_FALSI_H
 
-#include "exceptions.h"
 #include <cassert>
 #include <cmath>
-#include <limits>
 #include <string>
+
+#include "exceptions.h"
 
 
 namespace nest

@@ -23,6 +23,7 @@
 #ifndef EPROP_LEARNING_SIGNAL_CONNECTION_H
 #define EPROP_LEARNING_SIGNAL_CONNECTION_H
 
+#include <cstddef>
 // C++
 #include <memory>
 #include <string>

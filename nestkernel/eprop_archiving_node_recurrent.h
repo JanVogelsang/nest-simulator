@@ -23,14 +23,19 @@
 #ifndef EPROP_ARCHIVING_NODE_RECURRENT_H
 #define EPROP_ARCHIVING_NODE_RECURRENT_H
 
-// models
-#include "eprop_archiving_node_impl.h"
+#include <cstddef>
+#include <map>
+#include <string>
+#include <vector>
 
-// nestkernel
-#include "histentry.h"
+// models
+#include "eprop_archiving_node.h"
+#include "eprop_archiving_node_impl.h"
 
 namespace nest
 {
+class HistEntryEpropFiringRateReg;
+class HistEntryEpropRecurrent;
 
 /**
  * Class implementing an intermediate archiving node model for recurrent node models supporting e-prop plasticity.

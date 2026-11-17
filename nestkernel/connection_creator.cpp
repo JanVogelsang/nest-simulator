@@ -23,6 +23,8 @@
 #include "connection_creator.h"
 
 #include <string>
+#include <compare>
+#include <variant>
 
 #include "exceptions.h"
 #include "kernel_manager.h"

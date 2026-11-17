@@ -24,13 +24,11 @@
 #define SPIKE_GENERATOR_H
 
 
+#include <cstddef>
 // C++ includes:
 #include <string>
 #include <vector>
 
-// Includes from nestkernel:
-#include "connection.h"
-#include "device_node.h"
 #include "dictionary.h"
 #include "event.h"
 #include "kernel_manager.h"

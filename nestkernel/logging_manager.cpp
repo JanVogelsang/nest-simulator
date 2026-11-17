@@ -31,6 +31,7 @@
 #include "kernel_manager.h"
 #include "logging_event.h"
 #include "nest_names.h"
+#include "compose.hpp"
 
 
 namespace nest

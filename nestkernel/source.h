@@ -23,10 +23,11 @@
 #ifndef SOURCE_H
 #define SOURCE_H
 
+#include <cassert>
+#include <cstdint>
+
 // Includes from nestkernel:
 #include "nest_types.h"
-
-#include <cassert>
 
 namespace nest
 {

@@ -23,17 +23,15 @@
 #ifndef LIN_RATE_H
 #define LIN_RATE_H
 
-#include <algorithm>
 #include <map>
-#include <math.h>
 #include <string>
 
-// Includes from models:
-#include "dict_util.h"
 #include "rate_neuron_ipn.h"
 #include "rate_neuron_opn.h"
 #include "rate_transformer_node.h"
 #include "recordables_map.h"
+#include "compose.hpp"
+#include "kernel_manager.h"
 
 class Dictionary;
 

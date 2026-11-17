@@ -22,6 +22,8 @@
 
 #include "pseudo_recording_device.h"
 
+#include "nest_time.h"
+
 namespace nest
 {
 

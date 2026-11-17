@@ -23,6 +23,7 @@
 #ifndef EPROP_LEARNING_SIGNAL_CONNECTION_BSSHSLM_2020_H
 #define EPROP_LEARNING_SIGNAL_CONNECTION_BSSHSLM_2020_H
 
+#include <cstddef>
 // C++
 #include <memory>
 #include <string>

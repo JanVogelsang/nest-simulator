@@ -23,17 +23,12 @@
 #ifndef TARGET_TABLE_H
 #define TARGET_TABLE_H
 
-// C++ includes:
-#include <cassert>
-#include <iostream>
-#include <map>
+#include <cstddef>
 #include <vector>
 
 // Includes from nestkernel:
 #include "nest_types.h"
-#include "spike_data.h"
 #include "target.h"
-#include "target_data.h"
 
 namespace nest
 {

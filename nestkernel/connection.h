@@ -23,21 +23,25 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
+#include <connector_model.h>
+#include <cstddef>
+#include <memory>
+#include <vector>
+
 // Includes from nestkernel:
 #include "connection_label.h"
-#include "event.h"
-#include "nest_time.h"
 #include "nest_types.h"
 #include "node.h"
-#include "spikecounter.h"
+#include "secondary_event.h"
 #include "syn_id_delay.h"
 
-#include <connector_model.h>
+class Dictionary;
 
 namespace nest
 {
-
-class ConnectorModel;
+class CommonSynapseProperties;
+class TimeConverter;
+class spikecounter;
 
 /**
  * Base class for dummy nodes used in connection testing.

@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <iterator>
 #include <vector>
+#include <variant>
 
 // Includes from nestkernel:
 #include "dictionary.h"

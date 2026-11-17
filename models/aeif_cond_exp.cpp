@@ -24,8 +24,10 @@
 
 #include <assert.h>
 #include <gsl/gsl_errno.h>
+#include <algorithm>
 
 #include "simulation_manager.h"
+#include "nest_time.h"
 
 #ifdef HAVE_GSL
 

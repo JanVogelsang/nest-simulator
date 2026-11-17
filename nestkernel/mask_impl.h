@@ -23,8 +23,17 @@
 #ifndef MASK_IMPL_H
 #define MASK_IMPL_H
 
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <string>
+#include <vector>
+
+#include "dictionary.h"
+#include "exceptions.h"
 #include "mask.h"
 #include "nest_names.h"
+#include "numerics.h"
 #include "position.h"
 
 namespace nest

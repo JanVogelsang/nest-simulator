@@ -22,12 +22,10 @@
 
 #include "correlospinmatrix_detector.h"
 
-#include <algorithm>
 #include <assert.h>
+#include <algorithm>
 #include <functional>
 
-// Includes from libnestutil:
-#include "compose.hpp"
 #include "dict_util.h"
 #include "genericmodel_impl.h"
 #include "logging.h"
@@ -36,7 +34,6 @@
 #include "dictionary.h"
 #include "event.h"
 #include "kernel_manager.h"
-#include "logging_manager.h"
 #include "nest_impl.h"
 #include "nest_timeconverter.h"
 

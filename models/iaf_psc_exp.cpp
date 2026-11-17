@@ -35,6 +35,7 @@
 #include "nest_impl.h"
 #include "ring_buffer_impl.h"
 #include "simulation_manager.h"
+#include "nest_time.h"
 
 
 namespace nest

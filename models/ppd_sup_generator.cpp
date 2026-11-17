@@ -35,6 +35,8 @@
 #include "nest_impl.h"
 #include "nest_names.h"
 #include "numerics.h"
+#include "event_delivery_manager.h"
+#include "nest_time.h"
 
 
 namespace nest

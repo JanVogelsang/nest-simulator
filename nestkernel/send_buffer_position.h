@@ -23,13 +23,8 @@
 #ifndef SEND_BUFFER_POSITION_H
 #define SEND_BUFFER_POSITION_H
 
-// C++ includes:
-#include <cassert>
-#include <limits>
+#include <cstddef>
 #include <vector>
-
-// Includes from nestkernel:
-#include "vp_manager.h"
 
 namespace nest
 {

@@ -33,6 +33,7 @@
 #include "recording_backend_screen.h"
 #include "recording_device.h"
 #include "vp_manager.h"
+#include "compose.hpp"
 
 
 namespace nest

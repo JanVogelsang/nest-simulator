@@ -23,7 +23,12 @@
 #ifndef URBANCZIK_ARCHIVING_NODE_IMPL_H
 #define URBANCZIK_ARCHIVING_NODE_IMPL_H
 
+#include <deque>
+
 #include "urbanczik_archiving_node.h"
+#include "archiving_node.h"
+#include "histentry.h"
+#include "nest_time.h"
 
 namespace nest
 {

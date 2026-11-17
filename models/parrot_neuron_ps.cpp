@@ -30,8 +30,7 @@
 #include "kernel_manager.h"
 #include "nest_impl.h"
 #include "simulation_manager.h"
-
-class Dictionary;
+#include "nest_time.h"
 
 
 namespace nest

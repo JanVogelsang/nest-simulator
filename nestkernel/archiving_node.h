@@ -23,6 +23,7 @@
 #ifndef ARCHIVING_NODE_H
 #define ARCHIVING_NODE_H
 
+#include <cstddef>
 // C++ includes:
 #include <deque>
 
@@ -31,8 +32,6 @@
 #include "ignore_and_spike_mechanism.h"
 #include "nest_time.h"
 #include "structural_plasticity_node.h"
-
-class Dictionary;
 
 #define DEBUG_ARCHIVER 1
 

@@ -35,7 +35,6 @@
 #include "dictionary.h"
 #include "exceptions.h"
 #include "kernel_manager.h"
-#include "logging_manager.h"
 #include "model_manager.h"
 #include "mpi_manager.h"
 #include "nest_names.h"

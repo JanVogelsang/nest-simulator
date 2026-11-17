@@ -23,20 +23,14 @@
 #ifndef NODE_COLLECTION_H
 #define NODE_COLLECTION_H
 
+#include <cstddef>
 // C++ includes:
 #include <iosfwd>
 #include <iterator>
 #include <memory>
-#include <stdexcept>  // out_of_range
 #include <string>
 #include <utility>
 #include <vector>
-
-// Includes from libnestuil:
-#include "exceptions.h"
-
-// Includes from thirdparty:
-#include "compose.hpp"
 
 class Dictionary;
 

@@ -23,13 +23,14 @@
 #include "glif_cond.h"
 
 #include <assert.h>
+#include <gsl/gsl_errno.h>
 #include <cmath>
 #include <cstddef>
-#include <gsl/gsl_errno.h>
 #include <sstream>
 
 #include "event_delivery_manager.h"
 #include "simulation_manager.h"
+#include "nest_time.h"
 
 #ifdef HAVE_GSL
 

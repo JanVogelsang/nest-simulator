@@ -23,8 +23,15 @@
 #ifndef EPROP_ARCHIVING_NODE_READOUT_IMPL_H
 #define EPROP_ARCHIVING_NODE_READOUT_IMPL_H
 
+#include <string>
+
 // models
 #include "eprop_archiving_node_readout.h"
+#include "dict_util.h"
+#include "dictionary.h"
+#include "eprop_archiving_node_impl.h"
+#include "exceptions.h"
+#include "nest_names.h"
 
 namespace nest
 {

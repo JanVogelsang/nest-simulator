@@ -25,6 +25,7 @@
 #include <assert.h>
 // C++ includes:
 #include <algorithm>
+#include <cmath>
 
 // Includes from libnestutil:
 #include "dict_util.h"
@@ -36,6 +37,7 @@
 #include "nest_impl.h"
 #include "nest_names.h"
 #include "simulation_manager.h"
+#include "nest_time.h"
 
 
 namespace nest

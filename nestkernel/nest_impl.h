@@ -23,15 +23,20 @@
 #ifndef NEST_IMPL_H
 #define NEST_IMPL_H
 
+#include <string>
+
 #include "connection_label_impl.h"
 #include "generic_factory_impl.h"
 #include "kernel_manager.h"
 #include "mask_impl.h"
 #include "model_manager_impl.h"
 #include "nest.h"
+#include "dictionary.h"
+#include "mask.h"
 
 namespace nest
 {
+class ModelManager;
 
 template < template < typename > class ConnectorModelT >
 void

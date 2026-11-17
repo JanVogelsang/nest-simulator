@@ -22,13 +22,14 @@
 
 #include "aeif_cond_beta_multisynapse.h"
 
-#include <algorithm>
 #include <assert.h>
-#include <cmath>
 #include <gsl/gsl_errno.h>
+#include <algorithm>
+#include <cmath>
 #include <sstream>
 
 #include "simulation_manager.h"
+#include "nest_time.h"
 
 #ifdef HAVE_GSL
 

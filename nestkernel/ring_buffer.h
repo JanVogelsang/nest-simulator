@@ -23,13 +23,11 @@
 #ifndef RING_BUFFER_H
 #define RING_BUFFER_H
 
+#include <cstddef>
 // C++ includes:
 #include <array>
 #include <list>
 #include <vector>
-
-// Includes from nestkernel:
-#include "event_delivery_manager.h"
 
 namespace nest
 {

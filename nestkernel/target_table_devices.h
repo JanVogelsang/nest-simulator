@@ -23,16 +23,12 @@
 #ifndef TARGET_TABLE_DEVICES_H
 #define TARGET_TABLE_DEVICES_H
 
+#include <cstddef>
 // C++ includes:
 #include <deque>
 #include <vector>
 
-// Includes from nestkernel:
-#include "connection_id.h"
-#include "connector_base.h"
-#include "event.h"
 #include "nest_types.h"
-#include "secondary_event.h"
 
 class Dictionary;
 

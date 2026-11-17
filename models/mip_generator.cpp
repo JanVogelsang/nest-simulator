@@ -22,6 +22,7 @@
 
 #include "mip_generator.h"
 
+#include <vector>
 
 // Includes from libnestutil:
 #include "dict_util.h"
@@ -32,6 +33,8 @@
 #include "kernel_manager.h"
 #include "nest_impl.h"
 #include "nest_names.h"
+#include "event_delivery_manager.h"
+#include "nest_time.h"
 
 
 namespace nest

@@ -23,6 +23,7 @@
 #ifndef GAP_JUNCTION_H
 #define GAP_JUNCTION_H
 
+#include <cstddef>
 #include <memory>
 #include <string>
 

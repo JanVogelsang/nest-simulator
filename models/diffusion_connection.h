@@ -23,6 +23,7 @@
 #ifndef DIFFUSION_CONNECTION_H
 #define DIFFUSION_CONNECTION_H
 
+#include <cstddef>
 #include <memory>
 #include <string>
 

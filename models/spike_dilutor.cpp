@@ -33,6 +33,8 @@
 #include "nest_impl.h"
 #include "simulation_manager.h"
 #include "vp_manager.h"
+#include "event_delivery_manager.h"
+#include "random_generators.h"
 
 namespace nest
 {

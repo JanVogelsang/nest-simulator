@@ -22,8 +22,8 @@
 
 #include "iaf_tum_2000.h"
 
-#include <array>
 #include <assert.h>
+#include <array>
 #include <cmath>
 
 // Includes from libnestutil:
@@ -37,6 +37,7 @@
 #include "nest_impl.h"
 #include "ring_buffer_impl.h"
 #include "simulation_manager.h"
+#include "nest_time.h"
 
 
 namespace nest

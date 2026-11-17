@@ -30,6 +30,7 @@
  *
  */
 
+#include <cstddef>
 // C++ includes:
 #include <exception>
 #include <map>
@@ -37,14 +38,12 @@
 #include <string>
 #include <vector>
 
-// Includes from libnestutil
-#include "block_vector.h"
 // Includes from nestkernel:
+#include "dictionary.h"
 #include "node_collection.h"
 #include "parameter.h"
 #include "random_generators.h"
 
-class Dictionary;
 template < typename value_type_ >
 class BlockVector;
 
@@ -53,9 +52,6 @@ namespace nest
 {
 class Node;
 class ConnParameter;
-class SparseNodeArray;
-class BipartiteConnBuilder;
-class ThirdInBuilder;
 class ThirdOutBuilder;
 
 

@@ -44,6 +44,7 @@
 #include "simulation_manager.h"
 #include "sparse_node_array.h"
 #include "vp_manager.h"
+#include "random_generators.h"
 
 namespace nest
 {

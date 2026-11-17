@@ -22,11 +22,11 @@
 
 #include "stdp_synapse_hom.h"
 
-#include <utility>
-
 // Includes from nestkernel:
 #include "common_synapse_properties.h"
 #include "nest_impl.h"
+#include "compose.hpp"
+#include "source.h"
 
 namespace nest
 {

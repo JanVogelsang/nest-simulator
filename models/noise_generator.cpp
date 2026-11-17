@@ -24,9 +24,8 @@
 
 #include <assert.h>
 #include <cmath>
+#include <algorithm>
 
-// Includes from libnestutil:
-#include "compose.hpp"
 #include "dict_util.h"
 #include "logging.h"
 #include "numerics.h"
@@ -37,7 +36,6 @@
 #include "exceptions.h"
 #include "genericmodel_impl.h"
 #include "kernel_manager.h"
-#include "logging_manager.h"
 #include "nest_impl.h"
 #include "nest_timeconverter.h"
 #include "simulation_manager.h"

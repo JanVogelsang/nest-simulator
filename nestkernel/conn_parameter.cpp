@@ -24,16 +24,12 @@
 
 #include <memory>
 #include <string>
+#include <compare>
+#include <variant>
 
 // Includes from nestkernel:
 #include "dictionary.h"
 #include "exceptions.h"
-
-
-namespace nest
-{
-class Node;
-}  // namespace nest
 
 namespace nest
 {

@@ -23,6 +23,7 @@
 #ifndef KERNEL_MANAGER_H
 #define KERNEL_MANAGER_H
 
+#include <cstddef>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -43,6 +44,19 @@
 
 namespace nest
 {
+class ConnectionManager;
+class EventDeliveryManager;
+class IOManager;
+class LoggingManager;
+class MPIManager;
+class MUSICManager;
+class ModelManager;
+class ModelRangeManager;
+class ModuleManager;
+class NodeManager;
+class SPManager;
+class SimulationManager;
+class VPManager;
 
 /**
  * @brief Global properties of the simulation kernel.

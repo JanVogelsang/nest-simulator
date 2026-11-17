@@ -21,8 +21,6 @@
  */
 
 
-#include "nest_impl.h"
-
 // C++ includes:
 #include <cassert>
 #include <deque>
@@ -32,9 +30,11 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <stdexcept>
+#include <type_traits>
+#include <variant>
 
-// Includes from nestkernel:
-#include "compose.hpp"
+#include "nest_impl.h"
 #include "connection_id.h"
 #include "connection_manager.h"
 #include "dictionary.h"

@@ -23,12 +23,20 @@
 #ifndef EPROP_ARCHIVING_NODE_IMPL_H
 #define EPROP_ARCHIVING_NODE_IMPL_H
 
+#include <algorithm>
+#include <limits>
+#include <vector>
+
 #include "simulation_manager.h"
-
 #include "eprop_archiving_node.h"
-
 // Includes from nestkernel:
 #include "kernel_manager.h"
+#include "exceptions.h"
+#include "flush_event_mechanism.h"
+#include "histentry.h"
+#include "ignore_and_spike_mechanism.h"
+#include "nest_time.h"
+#include "node.h"
 
 namespace nest
 {

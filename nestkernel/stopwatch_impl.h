@@ -23,10 +23,15 @@
 #ifndef STOPWATCH_IMPL_H
 #define STOPWATCH_IMPL_H
 
-#include "stopwatch.h"
+#include <algorithm>
+#include <ctime>
+#include <iosfwd>
+#include <string>
+#include <vector>
 
 #include "dictionary.h"
 #include "kernel_manager.h"
+#include "stopwatch.h"
 #include "vp_manager.h"
 
 namespace nest

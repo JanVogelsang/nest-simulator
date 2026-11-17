@@ -27,10 +27,11 @@
 #include <assert.h>
 #include <cmath>
 #include <limits>
+#include <algorithm>
+#include <vector>
 
 // libnestutil
 #include "dict_util.h"
-
 // nestkernel
 #include "eprop_archiving_node_impl.h"
 #include "eprop_archiving_node_recurrent_impl.h"
@@ -44,6 +45,9 @@
 #include "secondary_event_impl.h"
 #include "simulation_manager.h"
 #include "weight_optimizer.h"
+#include "flush_event_mechanism.h"
+#include "nest_time.h"
+#include "histentry.h"
 
 
 namespace nest

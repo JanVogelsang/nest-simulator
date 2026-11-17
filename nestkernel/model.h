@@ -23,6 +23,7 @@
 #ifndef MODEL_H
 #define MODEL_H
 
+#include <cstddef>
 // C++ includes:
 #include <string>
 #include <vector>

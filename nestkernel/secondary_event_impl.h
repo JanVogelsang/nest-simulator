@@ -23,10 +23,16 @@
 #ifndef SECONDARY_EVENT_IMPL_H
 #define SECONDARY_EVENT_IMPL_H
 
+#include <algorithm>
+#include <cstring>
+#include <set>
+#include <vector>
+
+#include "kernel_manager.h"
+#include "nest_types.h"
+#include "node.h"
 #include "secondary_event.h"
 #include "vp_manager.h"
-
-#include <set>
 
 namespace nest
 {

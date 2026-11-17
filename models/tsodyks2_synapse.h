@@ -23,6 +23,7 @@
 #ifndef TSODYKS2_SYNAPSE_H
 #define TSODYKS2_SYNAPSE_H
 
+#include <cstddef>
 // C++ includes:
 #include <cmath>
 #include <string>

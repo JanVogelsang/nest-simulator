@@ -28,7 +28,6 @@
 
 namespace nest
 {
-class Source;
 
 SourceTablePosition::SourceTablePosition()
   : tid( -1 )

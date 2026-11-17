@@ -22,12 +22,14 @@
 
 #include "node_collection.h"
 
-#include <algorithm>  // copy
 #include <assert.h>
+#include <algorithm>  // copy
 #include <limits>
 #include <ostream>
 #include <stdexcept>
 #include <tuple>
+#include <compare>
+#include <numeric>
 
 // Includes from libnestutil
 #include "numerics.h"
@@ -36,8 +38,6 @@
 #include "model_manager.h"
 #include "modelrange_manager.h"
 #include "node.h"
-// C++ includes:
-#include "compose.hpp"
 #include "exceptions.h"
 #include "model.h"
 #include "mpi_manager.h"

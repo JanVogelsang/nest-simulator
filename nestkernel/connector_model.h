@@ -23,6 +23,7 @@
 #ifndef CONNECTOR_MODEL_H
 #define CONNECTOR_MODEL_H
 
+#include <cstddef>
 // C++ includes:
 #include <cmath>
 #include <memory>
@@ -31,12 +32,8 @@
 
 // Includes from libnestutil:
 #include "enum_bitfield.h"
-#include "numerics.h"
-// Includes from nestkernel:
-#include "event.h"
 #include "nest_types.h"
 #include "secondary_event.h"
-#include "simulation_manager.h"
 
 class Dictionary;
 

@@ -23,8 +23,9 @@
 #include "kernel_manager.h"
 
 #include <assert.h>
-#include <stdexcept>
 #include <stdlib.h>
+#include <stdexcept>
+#include <new>
 
 // Include concrete manager headers only in the implementation.
 #include "compose.hpp"

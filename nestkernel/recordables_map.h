@@ -23,17 +23,15 @@
 #ifndef RECORDABLES_MAP_H
 #define RECORDABLES_MAP_H
 
-#include "exceptions.h"
+#include <cstddef>
 #include <vector>
-
 // C++ includes:
 #include <cassert>
 #include <map>
 #include <string>
 #include <utility>
 
-// Includes from nestkernel:
-#include "nest_types.h"
+#include "exceptions.h"
 
 namespace nest
 {

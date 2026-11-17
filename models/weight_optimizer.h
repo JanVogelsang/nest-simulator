@@ -23,6 +23,7 @@
 #ifndef WEIGHT_OPTIMIZER_H
 #define WEIGHT_OPTIMIZER_H
 
+#include <cstddef>
 // C++
 #include <string>
 

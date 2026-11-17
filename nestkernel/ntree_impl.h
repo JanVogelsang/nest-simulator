@@ -23,17 +23,23 @@
 #ifndef NTREE_IMPL_H
 #define NTREE_IMPL_H
 
+#include <bitset>
+#include <cassert>
+#include <cmath>
+#include <cstddef>
+#include <iterator>
+#include <limits>
+#include <utility>
+#include <vector>
+
 #include "ntree.h"
 #include "numerics.h"
 #include "position.h"
 
-#include <bitset>
-#include <iterator>
-#include <utility>
-#include <vector>
-
 namespace nest
 {
+template < int D >
+class Mask;
 
 
 template < int D, class T, int max_capacity, int max_depth >

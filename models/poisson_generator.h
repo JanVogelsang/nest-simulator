@@ -23,14 +23,10 @@
 #ifndef POISSON_GENERATOR_H
 #define POISSON_GENERATOR_H
 
+#include <cstddef>
 #include <string>
-#include <vector>
 
-// Includes from nestkernel:
-#include "connection.h"
-#include "device_node.h"
 #include "event.h"
-#include "nest_time.h"
 #include "nest_types.h"
 #include "node.h"
 #include "random_generators.h"

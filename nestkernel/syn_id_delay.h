@@ -23,8 +23,6 @@
 #ifndef SYN_ID_DELAY_H
 #define SYN_ID_DELAY_H
 
-// Includes from nestkernel:
-#include "nest_time.h"
 #include "nest_types.h"
 #include "static_assert.h"
 

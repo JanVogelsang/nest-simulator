@@ -23,6 +23,7 @@
 #ifndef BUFFER_RESIZE_LOG_H
 #define BUFFER_RESIZE_LOG_H
 
+#include <cstddef>
 // C++ includes:
 #include <vector>
 

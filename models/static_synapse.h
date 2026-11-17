@@ -23,6 +23,7 @@
 #ifndef STATICSYNAPSE_H
 #define STATICSYNAPSE_H
 
+#include <cstddef>
 #include <string>
 
 // Includes from nestkernel:
@@ -32,7 +33,6 @@
 #include "dictionary.h"
 #include "enum_bitfield.h"
 #include "event.h"
-#include "event_delivery_manager.h"
 #include "nest_names.h"
 #include "nest_types.h"
 

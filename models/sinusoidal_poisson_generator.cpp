@@ -25,6 +25,7 @@
 
 // C++ includes:
 #include <cmath>
+#include <vector>
 
 // Includes from libnestutil:
 #include "dict_util.h"
@@ -35,6 +36,8 @@
 #include "nest_impl.h"
 #include "numerics.h"
 #include "simulation_manager.h"
+#include "event_delivery_manager.h"
+#include "nest_time.h"
 
 
 namespace nest

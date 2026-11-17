@@ -23,10 +23,9 @@
 #ifndef TARGET_H
 #define TARGET_H
 
+#include <cstddef>
 #include <stdint.h>
 
-// Includes from nestkernel:
-#include "exceptions.h"
 #include "nest_types.h"
 #include "static_assert.h"
 

@@ -23,6 +23,7 @@
 #ifndef RECORDING_BACKEND_MEMORY_H
 #define RECORDING_BACKEND_MEMORY_H
 
+#include <cstddef>
 #include <map>
 #include <string>
 #include <vector>
@@ -102,7 +103,6 @@ EndUserDocs */
 namespace nest
 {
 class Event;
-class RecordingDevice;
 
 /**
  * Memory specialization of the RecordingBackend interface.

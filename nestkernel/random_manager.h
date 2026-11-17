@@ -23,6 +23,7 @@
 #ifndef RANDOM_MANAGER_H
 #define RANDOM_MANAGER_H
 
+#include <cstddef>
 // C++ includes:
 #include <cstdint>
 #include <map>
@@ -33,8 +34,6 @@
 #include "manager_interface.h"
 // Includes from nestkernel:
 #include "random_generators.h"
-
-class Dictionary;
 
 namespace nest
 {

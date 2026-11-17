@@ -28,6 +28,7 @@
 
 #include "event_delivery_manager.h"
 #include "simulation_manager.h"
+#include "nest_time.h"
 
 #ifdef HAVE_GSL
 

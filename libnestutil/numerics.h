@@ -23,14 +23,11 @@
 #ifndef NUMERICS_H
 #define NUMERICS_H
 
-// Generated includes:
-#include "config.h"
-
-// C++ includes:
-#include <cassert>
 #include <cmath>
 #include <cstddef>
-#include <limits>
+
+// Generated includes:
+#include "config.h"
 
 namespace numerics
 {

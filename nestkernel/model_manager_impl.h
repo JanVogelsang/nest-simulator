@@ -23,17 +23,30 @@
 #ifndef MODEL_MANAGER_IMPL_H
 #define MODEL_MANAGER_IMPL_H
 
-#include "model_manager.h"
+#include <cstddef>
+#include <memory>
+#include <string>
+#include <vector>
 
+#include "connection_manager.h"
+#include "connector_model.h"
 #include "connector_model_impl.h"
+#include "dictionary.h"
 #include "exceptions.h"
 #include "genericmodel.h"
+#include "kernel_manager.h"
 #include "logging.h"
-#include "nest.h"
+#include "model_manager.h"
+#include "nest_types.h"
+#include "secondary_event.h"
 #include "target_identifier.h"  // IWYU pragma: keep
+#include "vp_manager.h"
 
 namespace nest
 {
+class Model;
+template < typename ConnectionT >
+class ConnectionLabel;
 
 template < class ModelT >
 size_t

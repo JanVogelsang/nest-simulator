@@ -24,7 +24,15 @@
 #ifndef EVENT_DELIVERY_MANAGER_IMPL_H
 #define EVENT_DELIVERY_MANAGER_IMPL_H
 
+#include <cassert>
+#include <cstddef>
+
+#include "connection_manager.h"
+#include "event.h"
 #include "event_delivery_manager.h"
+#include "kernel_manager.h"
+#include "nest_time.h"
+#include "node.h"
 #include "simulation_manager.h"
 
 namespace nest

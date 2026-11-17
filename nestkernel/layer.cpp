@@ -20,20 +20,18 @@
  *
  */
 
-#include "layer_impl.h"
-
-#include <algorithm>
 #include <assert.h>
+#include <algorithm>
 #include <functional>
 #include <iterator>
-#include <math.h>
 #include <memory>
 #include <numeric>
 #include <string>
 #include <type_traits>
-#include <utility>
 #include <vector>
+#include <variant>
 
+#include "layer_impl.h"
 // Includes from nestkernel:
 #include "dictionary.h"
 #include "exceptions.h"

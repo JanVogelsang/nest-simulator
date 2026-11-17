@@ -23,6 +23,13 @@
 #ifndef RING_BUFFER_IMPL_H
 #define RING_BUFFER_IMPL_H
 
+#include <array>
+#include <cassert>
+#include <cstddef>
+#include <vector>
+
+#include "connection_manager.h"
+#include "kernel_manager.h"
 #include "ring_buffer.h"
 
 namespace nest

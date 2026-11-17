@@ -23,6 +23,7 @@
 #ifndef SIC_CONNECTION_H
 #define SIC_CONNECTION_H
 
+#include <cstddef>
 #include <memory>
 #include <string>
 

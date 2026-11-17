@@ -25,6 +25,7 @@
 
 #include <assert.h>
 #include <gsl/gsl_errno.h>
+#include <algorithm>
 
 #include "event_delivery_manager.h"
 #include "simulation_manager.h"

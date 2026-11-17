@@ -23,8 +23,8 @@
 #include "iaf_chxk_2008.h"
 
 #include <assert.h>
-#include <cmath>
 #include <gsl/gsl_errno.h>
+#include <cmath>
 
 #include "event_delivery_manager.h"
 #include "simulation_manager.h"

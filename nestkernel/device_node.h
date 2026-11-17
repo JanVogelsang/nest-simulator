@@ -24,6 +24,8 @@
 #define DEVICE_NODE_H
 
 
+#include <cstddef>
+
 // Includes from nestkernel:
 #include "node.h"
 

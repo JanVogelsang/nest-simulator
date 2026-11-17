@@ -24,6 +24,7 @@
 #define QUANTAL_STP_SYNAPSE_H
 
 #include <cmath>
+#include <cstddef>
 #include <string>
 
 // Includes from nestkernel:
@@ -39,6 +40,7 @@
 #include "nest_names.h"
 #include "nest_time.h"
 #include "nest_types.h"
+#include "random_generators.h"
 
 namespace nest
 {
