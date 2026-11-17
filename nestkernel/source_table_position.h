@@ -28,8 +28,8 @@
 #include <vector>
 
 // C++ includes:
-#include "block_vector.h"
-#include "source.h"
+#include "block_vector.h"  // IWYU pragma: keep
+#include "source.h"        // IWYU pragma: keep
 
 template < typename value_type_ >
 class BlockVector;
