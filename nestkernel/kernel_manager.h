@@ -23,8 +23,9 @@
 #ifndef KERNEL_MANAGER_H
 #define KERNEL_MANAGER_H
 
-#include <cstddef>
 #include <fstream>
+
+#include <cstddef>
 #include <string>
 #include <vector>
 

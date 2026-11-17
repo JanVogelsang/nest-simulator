@@ -23,9 +23,10 @@
 #ifndef MODELRANGEMANAGER_H
 #define MODELRANGEMANAGER_H
 
+#include <vector>
+
 #include <cstddef>
 // C++ includes:
-#include <vector>
 
 // Includes from libnestutil:
 #include "manager_interface.h"

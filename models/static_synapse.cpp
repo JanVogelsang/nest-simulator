@@ -23,8 +23,8 @@
 #include "static_synapse.h"
 
 // Includes from nestkernel:
-#include "nest_impl.h"
 #include "compose.hpp"
+#include "nest_impl.h"
 #include "source.h"
 
 

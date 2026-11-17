@@ -23,8 +23,9 @@
 #ifndef DIFFUSION_CONNECTION_H
 #define DIFFUSION_CONNECTION_H
 
-#include <cstddef>
 #include <memory>
+
+#include <cstddef>
 #include <string>
 
 #include "common_synapse_properties.h"

@@ -23,8 +23,9 @@
 #ifndef NEST_H
 #define NEST_H
 
-#include <cstddef>
 #include <deque>
+
+#include <cstddef>
 #include <iostream>
 #include <map>
 #include <string>

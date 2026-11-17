@@ -23,9 +23,10 @@
 #ifndef CONNECTOR_MODEL_H
 #define CONNECTOR_MODEL_H
 
+#include <cmath>
+
 #include <cstddef>
 // C++ includes:
-#include <cmath>
 #include <memory>
 #include <string>
 #include <vector>

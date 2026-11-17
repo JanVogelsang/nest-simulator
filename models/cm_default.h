@@ -23,8 +23,9 @@
 #ifndef CM_DEFAULT_H
 #define CM_DEFAULT_H
 
-#include <cstddef>
 #include <map>
+
+#include <cstddef>
 #include <sstream>
 #include <string>
 #include <vector>

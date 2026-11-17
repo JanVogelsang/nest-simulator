@@ -23,8 +23,9 @@
 #ifndef TARGET_DATA_H
 #define TARGET_DATA_H
 
-#include <cstddef>
 #include <stdint.h>
+
+#include <cstddef>
 
 // Includes from nestkernel:
 #include "nest_types.h"

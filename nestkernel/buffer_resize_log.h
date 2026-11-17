@@ -23,9 +23,10 @@
 #ifndef BUFFER_RESIZE_LOG_H
 #define BUFFER_RESIZE_LOG_H
 
+#include <vector>
+
 #include <cstddef>
 // C++ includes:
-#include <vector>
 
 class Dictionary;
 

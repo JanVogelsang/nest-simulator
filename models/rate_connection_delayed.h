@@ -24,8 +24,9 @@
 #ifndef RATE_CONNECTION_DELAYED_H
 #define RATE_CONNECTION_DELAYED_H
 
-#include <cstddef>
 #include <memory>
+
+#include <cstddef>
 #include <string>
 
 #include "common_synapse_properties.h"

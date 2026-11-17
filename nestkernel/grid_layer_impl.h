@@ -23,6 +23,8 @@
 #ifndef GRID_LAYER_IMPL_H
 #define GRID_LAYER_IMPL_H
 
+#include "grid_layer.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -36,7 +38,6 @@
 // Includes from spatial:
 #include "dictionary.h"
 #include "exceptions.h"
-#include "grid_layer.h"
 #include "layer.h"
 #include "nest_names.h"
 #include "node_collection.h"

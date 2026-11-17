@@ -23,9 +23,10 @@
 #ifndef TSODYKS_SYNAPSE_H
 #define TSODYKS_SYNAPSE_H
 
+#include <cmath>
+
 #include <cstddef>
 // C++ includes:
-#include <cmath>
 #include <string>
 
 // Includes from nestkernel:

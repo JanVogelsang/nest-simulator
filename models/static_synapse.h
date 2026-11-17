@@ -23,8 +23,9 @@
 #ifndef STATICSYNAPSE_H
 #define STATICSYNAPSE_H
 
-#include <cstddef>
 #include <string>
+
+#include <cstddef>
 
 // Includes from nestkernel:
 #include "common_synapse_properties.h"

@@ -23,8 +23,9 @@
 #ifndef MIP_GENERATOR_H
 #define MIP_GENERATOR_H
 
-#include <cstddef>
 #include <string>
+
+#include <cstddef>
 
 #include "event.h"
 #include "nest_types.h"

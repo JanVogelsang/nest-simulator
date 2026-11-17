@@ -23,9 +23,10 @@
 #ifndef RECORDING_BACKEND_ASCII_H
 #define RECORDING_BACKEND_ASCII_H
 
+#include <fstream>
+
 #include <cstddef>
 // C++ includes:
-#include <fstream>
 #include <map>
 #include <string>
 #include <vector>

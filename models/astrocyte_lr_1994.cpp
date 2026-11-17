@@ -23,16 +23,16 @@
 
 #include "astrocyte_lr_1994.h"
 
+#include <algorithm>
 #include <assert.h>
 #include <gsl/gsl_errno.h>
-#include <algorithm>
 
 #include "connection_manager.h"
 #include "event.h"
 #include "event_delivery_manager.h"
+#include "nest_time.h"
 #include "secondary_event_impl.h"
 #include "simulation_manager.h"
-#include "nest_time.h"
 
 #ifdef HAVE_GSL
 

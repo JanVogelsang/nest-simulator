@@ -23,8 +23,9 @@
 #ifndef AEIF_COND_BETA_MULTISYNAPSE_H
 #define AEIF_COND_BETA_MULTISYNAPSE_H
 
-#include <cstddef>
 #include <map>
+
+#include <cstddef>
 #include <string>
 #include <vector>
 

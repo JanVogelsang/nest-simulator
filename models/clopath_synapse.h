@@ -23,9 +23,10 @@
 #ifndef CLOPATH_SYNAPSE_H
 #define CLOPATH_SYNAPSE_H
 
+#include <cmath>
+
 #include <cstddef>
 // C++ includes:
-#include <cmath>
 #include <deque>
 #include <string>
 

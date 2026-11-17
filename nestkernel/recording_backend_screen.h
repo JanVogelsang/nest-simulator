@@ -23,8 +23,9 @@
 #ifndef RECORDING_BACKEND_SCREEN_H
 #define RECORDING_BACKEND_SCREEN_H
 
-#include <cstddef>
 #include <ios>
+
+#include <cstddef>
 #include <map>
 #include <string>
 #include <vector>

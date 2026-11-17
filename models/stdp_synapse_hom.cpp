@@ -24,8 +24,8 @@
 
 // Includes from nestkernel:
 #include "common_synapse_properties.h"
-#include "nest_impl.h"
 #include "compose.hpp"
+#include "nest_impl.h"
 #include "source.h"
 
 namespace nest

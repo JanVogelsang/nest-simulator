@@ -22,6 +22,8 @@
 #ifndef LAYER_IMPL_H
 #define LAYER_IMPL_H
 
+#include "connection_creator_impl.h"
+
 #include <algorithm>
 #include <bitset>
 #include <cassert>
@@ -35,7 +37,6 @@
 #include <typeinfo>
 #include <vector>
 
-#include "connection_creator_impl.h"
 #include "connection_id.h"
 #include "connection_manager.h"
 #include "dictionary.h"

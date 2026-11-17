@@ -23,13 +23,14 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
+#include "connection_label.h"
+
 #include <connector_model.h>
 #include <cstddef>
 #include <memory>
 #include <vector>
 
 // Includes from nestkernel:
-#include "connection_label.h"
 #include "nest_types.h"
 #include "node.h"
 #include "secondary_event.h"

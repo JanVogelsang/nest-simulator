@@ -22,11 +22,11 @@
 
 #include "gauss_rate.h"
 
+#include "dict_util.h"
 #include "dictionary.h"
 #include "genericmodel_impl.h"
 #include "nest_impl.h"
 #include "nest_names.h"
-#include "dict_util.h"
 
 
 namespace nest

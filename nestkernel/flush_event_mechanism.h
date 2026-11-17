@@ -24,7 +24,6 @@
 #define FLUSH_EVENT_MECHANISM_H
 
 
-
 class Dictionary;
 
 namespace nest

@@ -24,9 +24,10 @@
 #define CORRELATION_DETECTOR_H
 
 
+#include <deque>
+
 #include <cstddef>
 // C++ includes:
-#include <deque>
 #include <string>
 #include <vector>
 

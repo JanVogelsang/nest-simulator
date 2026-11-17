@@ -28,8 +28,8 @@
 
 // Includes from models:
 #include "binary_neuron.h"
-#include "random_generators.h"
 #include "kernel_manager.h"
+#include "random_generators.h"
 
 class Dictionary;
 

@@ -23,9 +23,10 @@
 #ifndef NODE_COLLECTION_H
 #define NODE_COLLECTION_H
 
+#include <iosfwd>
+
 #include <cstddef>
 // C++ includes:
-#include <iosfwd>
 #include <iterator>
 #include <memory>
 #include <string>

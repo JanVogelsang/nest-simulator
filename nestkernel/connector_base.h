@@ -23,9 +23,10 @@
 #ifndef CONNECTOR_BASE_H
 #define CONNECTOR_BASE_H
 
+#include <deque>
+
 #include <cstddef>
 // C++ includes:
-#include <deque>
 #include <string>
 #include <vector>
 

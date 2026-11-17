@@ -23,8 +23,9 @@
 #ifndef GLIF_COND_H
 #define GLIF_COND_H
 
-#include <cstddef>
 #include <map>
+
+#include <cstddef>
 #include <string>
 #include <vector>
 

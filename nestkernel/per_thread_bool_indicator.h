@@ -23,9 +23,10 @@
 #ifndef PER_THREAD_BOOL_INDICATOR_H
 #define PER_THREAD_BOOL_INDICATOR_H
 
+#include <atomic>
+
 #include <cstddef>
 // C++ includes:
-#include <atomic>
 #include <cstdint>
 #include <vector>
 

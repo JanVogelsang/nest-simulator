@@ -23,8 +23,9 @@
 #ifndef CONNECTION_CREATOR_H
 #define CONNECTION_CREATOR_H
 
-#include <cstddef>
 #include <iterator>
+
+#include <cstddef>
 #include <utility>
 #include <vector>
 

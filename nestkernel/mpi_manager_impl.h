@@ -23,10 +23,11 @@
 #ifndef MPI_MANAGER_IMPL_H
 #define MPI_MANAGER_IMPL_H
 
+#include "mpi_manager.h"
+
 #include <cstddef>
 #include <vector>
 
-#include "mpi_manager.h"
 #include "spike_data.h"
 #include "target_data.h"
 

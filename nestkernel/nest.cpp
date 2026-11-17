@@ -22,19 +22,20 @@
 
 
 // C++ includes:
+#include "nest_impl.h"
+
 #include <cassert>
 #include <deque>
 #include <map>
 #include <memory>
 #include <sstream>
-#include <string>
-#include <utility>
-#include <vector>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
+#include <utility>
 #include <variant>
+#include <vector>
 
-#include "nest_impl.h"
 #include "connection_id.h"
 #include "connection_manager.h"
 #include "dictionary.h"

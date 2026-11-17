@@ -23,6 +23,8 @@
 #ifndef FREE_LAYER_IMPL_H
 #define FREE_LAYER_IMPL_H
 
+#include "free_layer.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -38,7 +40,6 @@
 
 #include "dictionary.h"
 #include "exceptions.h"
-#include "free_layer.h"
 #include "kernel_manager.h"
 #include "layer.h"
 #include "mpi_manager.h"

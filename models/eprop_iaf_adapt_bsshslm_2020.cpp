@@ -24,10 +24,10 @@
 #include "eprop_iaf_adapt_bsshslm_2020.h"
 
 // C++
+#include <algorithm>
 #include <assert.h>
 #include <cmath>
 #include <limits>
-#include <algorithm>
 #include <vector>
 
 // libnestutil
@@ -37,15 +37,15 @@
 #include "eprop_archiving_node_recurrent_impl.h"
 #include "event_delivery_manager.h"
 #include "exceptions.h"
+#include "flush_event_mechanism.h"
 #include "genericmodel_impl.h"
+#include "histentry.h"
 #include "kernel_manager.h"
 #include "nest_impl.h"
+#include "nest_time.h"
 #include "secondary_event.h"
 #include "secondary_event_impl.h"
 #include "simulation_manager.h"
-#include "flush_event_mechanism.h"
-#include "nest_time.h"
-#include "histentry.h"
 
 
 namespace nest

@@ -23,14 +23,14 @@
 #ifndef ERFC_NEURON_H
 #define ERFC_NEURON_H
 
-#include <math.h>
 #include <map>
+#include <math.h>
 #include <string>
 
 // Includes from models:
 #include "binary_neuron.h"
-#include "random_generators.h"
 #include "kernel_manager.h"
+#include "random_generators.h"
 
 class Dictionary;
 

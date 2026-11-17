@@ -22,8 +22,8 @@
 
 #include "cycle_time_log.h"
 
-#include "nest_names.h"
 #include "dictionary.h"
+#include "nest_names.h"
 
 namespace nest
 {

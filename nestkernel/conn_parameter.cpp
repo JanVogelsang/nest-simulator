@@ -22,9 +22,9 @@
 
 #include "conn_parameter.h"
 
+#include <compare>
 #include <memory>
 #include <string>
-#include <compare>
 #include <variant>
 
 // Includes from nestkernel:

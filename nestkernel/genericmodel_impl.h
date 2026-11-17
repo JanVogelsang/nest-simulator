@@ -23,11 +23,12 @@
 #ifndef GENERICMODEL_IMPL_H
 #define GENERICMODEL_IMPL_H
 
+#include "genericmodel.h"
+
 #include <cstddef>
 #include <string>
 
 #include "dictionary.h"
-#include "genericmodel.h"
 #include "logging.h"
 #include "model.h"
 #include "nest_names.h"

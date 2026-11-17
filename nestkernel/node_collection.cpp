@@ -22,26 +22,26 @@
 
 #include "node_collection.h"
 
-#include <assert.h>
 #include <algorithm>  // copy
+#include <assert.h>
+#include <compare>
 #include <limits>
+#include <numeric>
 #include <ostream>
 #include <stdexcept>
 #include <tuple>
-#include <compare>
-#include <numeric>
 
 // Includes from libnestutil
 #include "numerics.h"
 // Includes from nestkernel:
+#include "exceptions.h"
 #include "kernel_manager.h"
+#include "model.h"
 #include "model_manager.h"
 #include "modelrange_manager.h"
-#include "node.h"
-#include "exceptions.h"
-#include "model.h"
 #include "mpi_manager.h"
 #include "nest_types.h"
+#include "node.h"
 #include "vp_manager.h"
 
 class Dictionary;

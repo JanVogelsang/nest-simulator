@@ -23,9 +23,10 @@
 #ifndef LOGGING_MANAGER_H
 #define LOGGING_MANAGER_H
 
+#include <string>
+
 #include <cstddef>
 // C++ includes:
-#include <string>
 #include <vector>
 
 #include "logging.h"

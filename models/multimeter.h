@@ -23,9 +23,10 @@
 #ifndef MULTIMETER_H
 #define MULTIMETER_H
 
+#include <string>
+
 #include <cstddef>
 // C++ includes:
-#include <string>
 #include <vector>
 
 #include "dictionary.h"

@@ -23,8 +23,9 @@
 #ifndef PARROT_NEURON_PS_H
 #define PARROT_NEURON_PS_H
 
-#include <cstddef>
 #include <string>
+
+#include <cstddef>
 
 // Includes from nestkernel:
 #include "archiving_node.h"

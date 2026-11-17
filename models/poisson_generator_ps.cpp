@@ -35,9 +35,9 @@
 // Includes from libnestutil:
 #include "device.h"
 #include "dict_util.h"
+#include "event_delivery_manager.h"
 #include "event_delivery_manager_impl.h"
 #include "exceptions.h"
-#include "event_delivery_manager.h"
 
 
 namespace nest

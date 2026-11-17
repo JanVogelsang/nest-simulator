@@ -23,6 +23,8 @@
 #ifndef MODEL_MANAGER_IMPL_H
 #define MODEL_MANAGER_IMPL_H
 
+#include "model_manager.h"
+
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -36,7 +38,6 @@
 #include "genericmodel.h"
 #include "kernel_manager.h"
 #include "logging.h"
-#include "model_manager.h"
 #include "nest_types.h"
 #include "secondary_event.h"
 #include "target_identifier.h"  // IWYU pragma: keep

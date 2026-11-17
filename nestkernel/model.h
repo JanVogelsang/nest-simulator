@@ -23,9 +23,10 @@
 #ifndef MODEL_H
 #define MODEL_H
 
+#include <string>
+
 #include <cstddef>
 // C++ includes:
-#include <string>
 #include <vector>
 
 // Includes from nestkernel:

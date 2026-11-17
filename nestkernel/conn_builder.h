@@ -30,9 +30,10 @@
  *
  */
 
+#include <exception>
+
 #include <cstddef>
 // C++ includes:
-#include <exception>
 #include <map>
 #include <set>
 #include <string>

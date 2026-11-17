@@ -24,9 +24,10 @@
 #define SPIKE_GENERATOR_H
 
 
+#include <string>
+
 #include <cstddef>
 // C++ includes:
-#include <string>
 #include <vector>
 
 #include "dictionary.h"

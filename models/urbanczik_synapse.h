@@ -23,9 +23,10 @@
 #ifndef URBANCZIK_SYNAPSE_H
 #define URBANCZIK_SYNAPSE_H
 
+#include <cmath>
+
 #include <cstddef>
 // C++ includes:
-#include <cmath>
 #include <deque>
 #include <string>
 

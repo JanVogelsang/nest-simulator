@@ -23,12 +23,13 @@
 #ifndef GRID_MASK_IMPL_H
 #define GRID_MASK_IMPL_H
 
+#include "grid_mask.h"
+
 #include <string>
 #include <vector>
 
 #include "dictionary.h"
 #include "exceptions.h"
-#include "grid_mask.h"
 #include "nest_names.h"
 #include "position.h"
 

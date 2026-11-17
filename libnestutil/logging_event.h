@@ -24,9 +24,10 @@
 #ifndef LOGGING_EVENT_H
 #define LOGGING_EVENT_H
 
+#include <ostream>
+
 #include <ctime>
 // C++ includes:
-#include <ostream>
 #include <string>
 
 // Includes from libnestutil:

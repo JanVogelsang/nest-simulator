@@ -23,12 +23,13 @@
 #ifndef BINARY_NEURON_H
 #define BINARY_NEURON_H
 
+#include "dict_util.h"
+
 #include <cassert>
 #include <cstddef>
 #include <string>
 
 // Includes from libnestutil:
-#include "dict_util.h"
 // Includes from nestkernel:
 #include "archiving_node.h"
 #include "dictionary.h"

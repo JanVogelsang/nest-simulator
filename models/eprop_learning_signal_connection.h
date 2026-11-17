@@ -23,9 +23,10 @@
 #ifndef EPROP_LEARNING_SIGNAL_CONNECTION_H
 #define EPROP_LEARNING_SIGNAL_CONNECTION_H
 
+#include <memory>
+
 #include <cstddef>
 // C++
-#include <memory>
 #include <string>
 
 // nestkernel

@@ -24,7 +24,6 @@
 #define IGNORE_AND_SPIKE_MECHANISM_H
 
 
-
 class Dictionary;
 
 namespace nest

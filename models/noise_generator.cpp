@@ -22,9 +22,9 @@
 
 #include "noise_generator.h"
 
+#include <algorithm>
 #include <assert.h>
 #include <cmath>
-#include <algorithm>
 
 #include "dict_util.h"
 #include "logging.h"

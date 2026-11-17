@@ -23,6 +23,8 @@
 #ifndef NTREE_IMPL_H
 #define NTREE_IMPL_H
 
+#include "ntree.h"
+
 #include <bitset>
 #include <cassert>
 #include <cmath>
@@ -32,7 +34,6 @@
 #include <utility>
 #include <vector>
 
-#include "ntree.h"
 #include "numerics.h"
 #include "position.h"
 

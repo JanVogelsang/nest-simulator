@@ -23,9 +23,10 @@
 #ifndef POISSON_GENERATOR_PS_H
 #define POISSON_GENERATOR_PS_H
 
+#include <string>
+
 #include <cstddef>
 // C++ includes:
-#include <string>
 #include <utility>
 #include <vector>
 

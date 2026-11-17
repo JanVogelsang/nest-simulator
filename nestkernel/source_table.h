@@ -23,9 +23,10 @@
 #ifndef SOURCE_TABLE_H
 #define SOURCE_TABLE_H
 
+#include <cassert>
+
 #include <cstddef>
 // C++ includes:
-#include <cassert>
 #include <map>
 #include <vector>
 

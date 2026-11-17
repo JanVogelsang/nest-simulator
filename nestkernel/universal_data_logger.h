@@ -23,9 +23,10 @@
 #ifndef UNIVERSAL_DATA_LOGGER_H
 #define UNIVERSAL_DATA_LOGGER_H
 
+#include <algorithm>
+
 #include <cstddef>
 // C++ includes:
-#include <algorithm>
 #include <string>
 #include <vector>
 

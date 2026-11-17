@@ -23,11 +23,12 @@
 #ifndef NUMERICS_H
 #define NUMERICS_H
 
+#include "config.h"
+
 #include <cmath>
 #include <cstddef>
 
 // Generated includes:
-#include "config.h"
 
 namespace numerics
 {

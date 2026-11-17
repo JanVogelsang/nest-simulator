@@ -27,11 +27,11 @@
 #include <map>
 #include <string>
 
+#include "compose.hpp"
+#include "kernel_manager.h"
 #include "rate_neuron_ipn.h"
 #include "rate_transformer_node.h"
 #include "recordables_map.h"
-#include "compose.hpp"
-#include "kernel_manager.h"
 
 class Dictionary;
 

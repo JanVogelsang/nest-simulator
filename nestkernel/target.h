@@ -23,8 +23,9 @@
 #ifndef TARGET_H
 #define TARGET_H
 
-#include <cstddef>
 #include <stdint.h>
+
+#include <cstddef>
 
 #include "nest_types.h"
 #include "static_assert.h"

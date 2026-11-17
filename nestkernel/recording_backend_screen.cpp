@@ -26,6 +26,7 @@
 #include <utility>
 
 // Includes from nestkernel:
+#include "compose.hpp"
 #include "dictionary.h"
 #include "event.h"
 #include "kernel_manager.h"
@@ -33,7 +34,6 @@
 #include "recording_backend_screen.h"
 #include "recording_device.h"
 #include "vp_manager.h"
-#include "compose.hpp"
 
 
 namespace nest

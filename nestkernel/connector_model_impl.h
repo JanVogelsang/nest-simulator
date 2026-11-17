@@ -22,6 +22,8 @@
 #ifndef CONNECTOR_MODEL_IMPL_H
 #define CONNECTOR_MODEL_IMPL_H
 
+#include "connection_impl.h"
+
 #include <cassert>
 #include <cstddef>
 #include <map>
@@ -30,7 +32,6 @@
 #include <utility>
 #include <vector>
 
-#include "connection_impl.h"
 #include "connection_manager.h"
 #include "connector_base.h"
 #include "connector_base_impl.h"

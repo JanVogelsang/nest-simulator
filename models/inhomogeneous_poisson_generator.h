@@ -23,9 +23,10 @@
 #ifndef INHOMOGENEOUS_POISSON_GENERATOR_H
 #define INHOMOGENEOUS_POISSON_GENERATOR_H
 
+#include <string>
+
 #include <cstddef>
 // C++ includes:
-#include <string>
 #include <vector>
 
 #include "event.h"

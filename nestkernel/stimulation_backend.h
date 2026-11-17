@@ -24,7 +24,6 @@
 #define STIMULATION_BACKEND_H
 
 
-
 class Dictionary;
 
 namespace nest

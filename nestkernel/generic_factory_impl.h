@@ -23,13 +23,14 @@
 #ifndef GENERIC_FACTORY_IMPL_H
 #define GENERIC_FACTORY_IMPL_H
 
+#include "generic_factory.h"
+
 #include <string>
 #include <utility>
 
-#include "generic_factory.h"
+#include "exceptions.h"
 #include "grid_mask_impl.h"
 #include "mask_impl.h"
-#include "exceptions.h"
 
 class Dictionary;
 

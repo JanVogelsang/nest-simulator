@@ -20,25 +20,26 @@
  *
  */
 
+#include "mpi_manager_impl.h"
+
 #include <unistd.h>
 // C++ includes
 #include <cmath>
+#include <cstdlib>
 #include <numeric>
 #include <string>
 #include <vector>
-#include <cstdlib>
 
-#include "mpi_manager_impl.h"
 #include "config.h"
 // Includes from nestkernel:
 #include "dictionary.h"
+#include "exceptions.h"
 #include "kernel_manager.h"
 #include "logging.h"
-#include "nest_names.h"
-#include "stopwatch_impl.h"
-#include "exceptions.h"
 #include "mpi_manager.h"
 #include "music_manager.h"
+#include "nest_names.h"
+#include "stopwatch_impl.h"
 
 namespace nest
 {

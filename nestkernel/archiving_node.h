@@ -23,9 +23,10 @@
 #ifndef ARCHIVING_NODE_H
 #define ARCHIVING_NODE_H
 
+#include <deque>
+
 #include <cstddef>
 // C++ includes:
-#include <deque>
 
 // Includes from nestkernel:
 #include "histentry.h"

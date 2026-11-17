@@ -23,8 +23,9 @@
 #ifndef STATICSYNAPSE_HOM_W_H
 #define STATICSYNAPSE_HOM_W_H
 
-#include <cstddef>
 #include <string>
+
+#include <cstddef>
 
 // Includes from nestkernel:
 #include "common_properties_hom_w.h"

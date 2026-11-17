@@ -23,9 +23,10 @@
 #ifndef CLOPATH_ARCHIVING_NODE_H
 #define CLOPATH_ARCHIVING_NODE_H
 
+#include <deque>
+
 #include <cstddef>
 // C++ includes:
-#include <deque>
 #include <vector>
 
 // Includes from nestkernel:

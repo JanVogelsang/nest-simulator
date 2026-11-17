@@ -23,8 +23,9 @@
 #ifndef CM_TREE_H
 #define CM_TREE_H
 
-#include <iterator>
 #include <map>
+
+#include <iterator>
 #include <string>
 #include <utility>
 #include <vector>

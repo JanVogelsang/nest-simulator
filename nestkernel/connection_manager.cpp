@@ -21,7 +21,10 @@
  */
 
 // C++ includes:
+#include "connection_manager_impl.h"
+
 #include <algorithm>
+#include <cmath>
 #include <deque>
 #include <exception>
 #include <iomanip>
@@ -31,11 +34,9 @@
 #include <sstream>
 #include <string>
 #include <utility>
-#include <vector>
-#include <cmath>
 #include <variant>
+#include <vector>
 
-#include "connection_manager_impl.h"
 #include "logging.h"
 // Includes from nestkernel:
 #include "block_vector.h"
@@ -1686,7 +1687,6 @@ ConnectionManager::deliver_secondary_events( const size_t tid,
 }
 
 
-
 void
 ConnectionManager::remove_disabled_connections_( const size_t tid )
 {
@@ -1726,7 +1726,6 @@ ConnectionManager::resize_connections()
 }
 
 
-
 void
 ConnectionManager::set_connections_have_changed()
 {
@@ -1743,8 +1742,6 @@ ConnectionManager::set_connections_have_changed()
 
   connections_have_changed_ = true;
 }
-
-
 
 
 void

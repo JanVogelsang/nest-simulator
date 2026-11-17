@@ -24,13 +24,13 @@
 
 // C++ includes:
 #include <algorithm>
+#include <compare>
 #include <exception>
 #include <iomanip>
 #include <iostream>
 #include <map>
 #include <utility>
 #include <vector>
-#include <compare>
 
 #include "dictionary.h"
 // Includes from nestkernel:

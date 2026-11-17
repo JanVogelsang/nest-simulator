@@ -23,11 +23,12 @@
 #ifndef OU_NOISE_GENERATOR_H
 #define OU_NOISE_GENERATOR_H
 
+#include <vector>
+
 #include <cstddef>
 // C++ includes:
 #include <map>
 #include <string>
-#include <vector>
 
 #include "dictionary.h"
 #include "exceptions.h"

@@ -24,8 +24,8 @@
 // Includes from nestkernel:
 #include "stimulation_device.h"
 
-#include <nest_names.h>
 #include <map>
+#include <nest_names.h>
 
 #include "io_manager.h"
 #include "kernel_manager.h"

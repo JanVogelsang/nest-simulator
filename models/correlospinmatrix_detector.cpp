@@ -22,8 +22,8 @@
 
 #include "correlospinmatrix_detector.h"
 
-#include <assert.h>
 #include <algorithm>
+#include <assert.h>
 #include <functional>
 
 #include "dict_util.h"

@@ -23,9 +23,10 @@
 #ifndef SPARSE_NODE_ARRAY_H
 #define SPARSE_NODE_ARRAY_H
 
+#include <cassert>
+
 #include <cstddef>
 // C++ includes:
-#include <cassert>
 
 // Includes from libnestutil
 #include "block_vector.h"

@@ -23,6 +23,8 @@
 #ifndef RATE_TRANSFORMER_NODE_H
 #define RATE_TRANSFORMER_NODE_H
 
+#include "config.h"
+
 #include <cstddef>
 // C++ includes:
 #include <cmath>
@@ -30,7 +32,6 @@
 #include <vector>
 
 // Generated includes:
-#include "config.h"
 // Includes from nestkernel:
 #include "archiving_node.h"
 #include "connection_manager.h"

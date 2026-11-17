@@ -23,6 +23,8 @@
 #ifndef CONNECTION_CREATOR_IMPL_H
 #define CONNECTION_CREATOR_IMPL_H
 
+#include "connection_creator.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -33,7 +35,6 @@
 #include <string>
 #include <vector>
 
-#include "connection_creator.h"
 #include "connection_manager.h"
 #include "dictionary.h"
 #include "exceptions.h"

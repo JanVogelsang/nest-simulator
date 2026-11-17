@@ -23,13 +23,14 @@
 #ifndef CONNECTION_IMPL_H
 #define CONNECTION_IMPL_H
 
+#include "connection.h"
+
 #include <cassert>
 #include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "connection.h"
 #include "connection_manager.h"
 #include "delay_checker.h"
 #include "dictionary.h"

@@ -23,6 +23,8 @@
 #ifndef CONNECTOR_BASE_IMPL_H
 #define CONNECTOR_BASE_IMPL_H
 
+#include "connection_label.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -34,7 +36,6 @@
 #include "block_vector.h"
 #include "common_synapse_properties.h"
 #include "connection_id.h"
-#include "connection_label.h"
 #include "connection_manager.h"
 #include "connector_base.h"
 #include "dictionary.h"

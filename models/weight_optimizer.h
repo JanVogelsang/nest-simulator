@@ -23,9 +23,10 @@
 #ifndef WEIGHT_OPTIMIZER_H
 #define WEIGHT_OPTIMIZER_H
 
+#include <string>
+
 #include <cstddef>
 // C++
-#include <string>
 
 class Dictionary;
 

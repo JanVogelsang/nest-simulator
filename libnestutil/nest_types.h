@@ -23,10 +23,10 @@
 #ifndef NEST_TYPES_H
 #define NEST_TYPES_H
 
-#include <stdint.h>
 #include <climits>
 #include <cstddef>
 #include <limits>
+#include <stdint.h>
 #include <type_traits>
 
 // Generated includes:

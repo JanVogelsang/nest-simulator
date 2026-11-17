@@ -23,9 +23,10 @@
 #ifndef TARGET_TABLE_DEVICES_H
 #define TARGET_TABLE_DEVICES_H
 
+#include <deque>
+
 #include <cstddef>
 // C++ includes:
-#include <deque>
 #include <vector>
 
 #include "nest_types.h"

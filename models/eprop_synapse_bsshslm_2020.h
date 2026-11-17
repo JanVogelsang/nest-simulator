@@ -24,8 +24,9 @@
 #define EPROP_SYNAPSE_BSSHSLM_2020_H
 
 // C++
-#include <algorithm>
 #include <assert.h>
+
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <string>

@@ -23,12 +23,13 @@
 #ifndef CONNECTION_LABEL_IMPL_H
 #define CONNECTION_LABEL_IMPL_H
 
+#include "exceptions.h"
+
 #include <connection_label.h>
 #include <string>
 
-#include "exceptions.h"
-#include "nest_names.h"
 #include "dictionary.h"
+#include "nest_names.h"
 
 namespace nest
 {

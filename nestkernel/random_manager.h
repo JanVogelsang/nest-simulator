@@ -23,9 +23,10 @@
 #ifndef RANDOM_MANAGER_H
 #define RANDOM_MANAGER_H
 
+#include <cstdint>
+
 #include <cstddef>
 // C++ includes:
-#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>

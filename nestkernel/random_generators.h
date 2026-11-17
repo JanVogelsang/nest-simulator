@@ -23,9 +23,10 @@
 #ifndef RANDOM_GENERATORS_H
 #define RANDOM_GENERATORS_H
 
+#include <algorithm>
+
 #include <cstddef>
 // C++ includes:
-#include <algorithm>
 #include <cstdint>
 #include <initializer_list>
 #include <iterator>

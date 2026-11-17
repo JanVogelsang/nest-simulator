@@ -23,13 +23,14 @@
 #ifndef GRID_LAYER_H
 #define GRID_LAYER_H
 
+#include "layer.h"
+
 #include <cstddef>
 #include <iterator>
 #include <utility>
 #include <vector>
 
 // Includes from spatial:
-#include "layer.h"
 #include "node_collection.h"
 #include "ntree.h"
 #include "position.h"

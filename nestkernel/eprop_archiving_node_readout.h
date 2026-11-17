@@ -24,8 +24,8 @@
 #define EPROP_ARCHIVING_NODE_READOUT_H
 
 // models
-#include "eprop_archiving_node_impl.h"
 #include "eprop_archiving_node.h"
+#include "eprop_archiving_node_impl.h"
 
 namespace nest
 {

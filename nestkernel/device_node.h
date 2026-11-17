@@ -24,10 +24,11 @@
 #define DEVICE_NODE_H
 
 
+#include "node.h"
+
 #include <cstddef>
 
 // Includes from nestkernel:
-#include "node.h"
 
 namespace nest
 {

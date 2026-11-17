@@ -23,9 +23,10 @@
 #ifndef NTREE_H
 #define NTREE_H
 
+#include <bitset>
+
 #include <cstddef>
 // C++ includes:
-#include <bitset>
 #include <iterator>
 #include <utility>
 #include <vector>

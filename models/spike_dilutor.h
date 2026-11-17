@@ -23,8 +23,9 @@
 #ifndef SPIKE_DILUTOR_H
 #define SPIKE_DILUTOR_H
 
-#include <cstddef>
 #include <string>
+
+#include <cstddef>
 
 #include "device_node.h"
 #include "event.h"

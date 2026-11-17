@@ -23,6 +23,8 @@
 #ifndef POSITION_IMPL_H
 #define POSITION_IMPL_H
 
+#include "position.h"
+
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -33,7 +35,6 @@
 #include <vector>
 
 #include "exceptions.h"
-#include "position.h"
 
 namespace nest
 {

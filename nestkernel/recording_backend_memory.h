@@ -23,8 +23,9 @@
 #ifndef RECORDING_BACKEND_MEMORY_H
 #define RECORDING_BACKEND_MEMORY_H
 
-#include <cstddef>
 #include <map>
+
+#include <cstddef>
 #include <string>
 #include <vector>
 

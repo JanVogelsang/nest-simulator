@@ -23,6 +23,8 @@
 #ifndef DICT_UTIL_H
 #define DICT_UTIL_H
 
+#include "dictionary.h"
+
 #include <cassert>
 #include <map>
 #include <memory>
@@ -30,7 +32,6 @@
 #include <utility>
 #include <variant>
 
-#include "dictionary.h"
 // Includes from nestkernel:
 #include "kernel_manager.h"
 #include "node.h"

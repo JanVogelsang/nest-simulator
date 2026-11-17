@@ -24,9 +24,10 @@
 #define CONT_DELAY_SYNAPSE_H
 
 
+#include <cmath>
+
 #include <cstddef>
 // C++ includes:
-#include <cmath>
 #include <string>
 
 // Includes from nestkernel:

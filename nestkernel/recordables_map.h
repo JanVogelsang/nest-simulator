@@ -23,6 +23,8 @@
 #ifndef RECORDABLES_MAP_H
 #define RECORDABLES_MAP_H
 
+#include "exceptions.h"
+
 #include <cstddef>
 #include <vector>
 // C++ includes:
@@ -31,7 +33,6 @@
 #include <string>
 #include <utility>
 
-#include "exceptions.h"
 
 namespace nest
 {

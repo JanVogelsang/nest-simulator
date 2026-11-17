@@ -23,6 +23,8 @@
 #ifndef UNIVERSAL_DATA_LOGGER_IMPL_H
 #define UNIVERSAL_DATA_LOGGER_IMPL_H
 
+#include "simulation_manager.h"
+
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -34,7 +36,6 @@
 #include "kernel_manager.h"
 #include "nest_time.h"
 #include "recordables_map.h"
-#include "simulation_manager.h"
 #include "universal_data_logger.h"
 
 namespace nest

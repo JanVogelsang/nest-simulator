@@ -21,11 +21,11 @@
  */
 
 #include <algorithm>
+#include <iterator>
 #include <memory>
 #include <set>
 #include <string>
 #include <utility>
-#include <iterator>
 
 // Includes from nestkernel:
 #include "block_vector.h"

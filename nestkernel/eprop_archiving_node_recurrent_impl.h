@@ -23,6 +23,8 @@
 #ifndef EPROP_ARCHIVING_NODE_RECURRENT_IMPL_H
 #define EPROP_ARCHIVING_NODE_RECURRENT_IMPL_H
 
+#include "kernel_manager.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -39,7 +41,6 @@
 #include "flush_event_mechanism.h"
 #include "histentry.h"
 #include "ignore_and_spike_mechanism.h"
-#include "kernel_manager.h"
 #include "nest_names.h"
 #include "nest_time.h"
 #include "simulation_manager.h"

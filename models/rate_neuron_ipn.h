@@ -23,9 +23,10 @@
 #ifndef RATE_NEURON_IPN_H
 #define RATE_NEURON_IPN_H
 
+#include <cmath>  // in case we need isnan() // fabs
+
 #include <cstddef>
 // C++ includes:
-#include <cmath>  // in case we need isnan() // fabs
 #include <string>
 #include <vector>
 

@@ -23,6 +23,8 @@
 #ifndef EPROP_ARCHIVING_NODE_RECURRENT_H
 #define EPROP_ARCHIVING_NODE_RECURRENT_H
 
+#include "eprop_archiving_node_impl.h"
+
 #include <cstddef>
 #include <map>
 #include <string>
@@ -30,7 +32,6 @@
 
 // models
 #include "eprop_archiving_node.h"
-#include "eprop_archiving_node_impl.h"
 
 namespace nest
 {

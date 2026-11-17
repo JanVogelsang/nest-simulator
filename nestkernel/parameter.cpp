@@ -20,8 +20,9 @@
  *
  */
 
-#include <assert.h>
 #include <algorithm>
+
+#include <assert.h>
 #include <cmath>
 #include <string>
 

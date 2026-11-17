@@ -23,8 +23,9 @@
 #ifndef WEIGHT_RECORDER_H
 #define WEIGHT_RECORDER_H
 
-#include <cstddef>
 #include <memory>
+
+#include <cstddef>
 #include <string>
 
 #include "exceptions.h"

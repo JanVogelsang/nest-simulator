@@ -23,8 +23,9 @@
 #ifndef VOLUME_TRANSMITTER_H
 #define VOLUME_TRANSMITTER_H
 
-#include <cstddef>
 #include <string>
+
+#include <cstddef>
 #include <vector>
 
 #include "exceptions.h"

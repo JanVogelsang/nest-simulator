@@ -23,9 +23,10 @@
 #ifndef URBANCZIK_ARCHIVING_NODE_IMPL_H
 #define URBANCZIK_ARCHIVING_NODE_IMPL_H
 
+#include "urbanczik_archiving_node.h"
+
 #include <deque>
 
-#include "urbanczik_archiving_node.h"
 #include "archiving_node.h"
 #include "histentry.h"
 #include "nest_time.h"
@@ -68,7 +69,8 @@ UrbanczikArchivingNode< urbanczik_parameters >::get_tau_syn_in( int comp )
   return urbanczik_params->tau_syn_in[ comp ];
 }
 
-template < class urbanczik_parameters >UrbanczikArchivingNode< urbanczik_parameters >::UrbanczikArchivingNode()
+template < class urbanczik_parameters >
+UrbanczikArchivingNode< urbanczik_parameters >::UrbanczikArchivingNode()
   : ArchivingNode()
 {
 }

@@ -23,8 +23,9 @@
 #ifndef POISSON_GENERATOR_H
 #define POISSON_GENERATOR_H
 
-#include <cstddef>
 #include <string>
+
+#include <cstddef>
 
 #include "event.h"
 #include "nest_types.h"

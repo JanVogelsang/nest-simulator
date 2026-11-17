@@ -31,9 +31,9 @@
 // Includes from libnestutil:
 #include "dict_util.h"
 #include "dictionary.h"
+#include "event_delivery_manager.h"
 #include "event_delivery_manager_impl.h"
 #include "nest_names.h"
-#include "event_delivery_manager.h"
 #include "nest_time.h"
 
 

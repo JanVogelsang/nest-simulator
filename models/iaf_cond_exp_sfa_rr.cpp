@@ -23,13 +23,13 @@
 
 #include "iaf_cond_exp_sfa_rr.h"
 
+#include <algorithm>
 #include <assert.h>
 #include <gsl/gsl_errno.h>
-#include <algorithm>
 
 #include "event_delivery_manager.h"
-#include "simulation_manager.h"
 #include "nest_time.h"
+#include "simulation_manager.h"
 
 #ifdef HAVE_GSL
 

@@ -23,9 +23,10 @@
 #ifndef SPIKE_RECORDER_H
 #define SPIKE_RECORDER_H
 
+#include <string>
+
 #include <cstddef>
 // C++ includes:
-#include <string>
 
 #include "exceptions.h"
 #include "nest_names.h"

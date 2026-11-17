@@ -23,9 +23,10 @@
 #ifndef SPATIAL_H
 #define SPATIAL_H
 
+#include <string>
+
 #include <cstddef>
 // C++ includes:
-#include <string>
 #include <vector>
 
 #include "node_collection.h"

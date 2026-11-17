@@ -22,8 +22,8 @@
 
 #include "connection_creator.h"
 
-#include <string>
 #include <compare>
+#include <string>
 #include <variant>
 
 #include "exceptions.h"

@@ -23,12 +23,12 @@
 #ifndef SORT_H
 #define SORT_H
 
-#include <vector>
 #include <cstdlib>
+#include <vector>
 
 // Generated includes:
-#include "config.h"
 #include "block_vector.h"
+#include "config.h"
 #include "sort.h"
 
 #ifdef HAVE_BOOST
