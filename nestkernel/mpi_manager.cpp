@@ -38,6 +38,7 @@
 #include "stopwatch_impl.h"
 #include "exceptions.h"
 #include "mpi_manager.h"
+#include "music_manager.h"
 
 namespace nest
 {
